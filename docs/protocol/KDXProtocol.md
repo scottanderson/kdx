@@ -404,8 +404,7 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 |---|---|---|---|
 | 0x00 | 0x20 | | 32 bytes from the user object (+0x74), probably a session ID for transfer connections [I] |
 | 0x20 | 4 | | server value (+0x260) |
-| 0x24 | 2 | your user ID | |
-| 0x26 | 2 | | |
+| 0x24 | 4 | your user ID | [O] 7 and 8 in successive probes |
 | 0x28 | 2 | server version | 0x0654 = 1620 |
 | 0x2a | 2 | can modify settings | 1 with Modify Server Settings |
 | 0x46 | 2 | | 2 |
@@ -498,10 +497,32 @@ zero (user +0x3b). The purpose is unknown.
 **Open Connection Monitor (140)** / **Close Connection Monitor (141)**
 Initiator: Client. **[S]**
 
-These need Get User Info (bit 40) and turn a per-user flag on or off.
-**Get Connection Monitor Info (142)** returns **Connection Monitor Info
-(143)**: one record per user and per active transfer, with
-progress. The layout is not read yet.
+These need Get User Info (bit 40) and turn a per-user flag on or off. There
+is no reply.
+
+**Get Connection Monitor Info (142)** → **Connection Monitor Info (143)**
+Initiator: Client. **[S `FUN_0804b9b0`; O]**
+
+The request is empty. Without a 140 first, the server replies with Status
+0x10003 (protocol breach) **[O]**. The reply is one record per connection,
+with no count in front, each padded to 4:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | user ID | |
+| 0x04 | 4 | | |
+| 0x08 | 8 | login time | |
+| 0x10 | 8 | time | |
+| 0x18 | 8 | time | probably the last activity [I] |
+| 0x20 | 0x40 | | transfer progress [I]; all zero with no transfers |
+| 0x60 | 1 | nick length | |
+| 0x61 | 1 | login length | |
+| 0x62 | 1 | account name length | |
+| 0x63 | 1 | address length | |
+| 0x68 | | nick, login, account name, address | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
+
+The server also sends per-transfer records [S]; that layout is not read
+yet.
 
 **Disconnect User (150)**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
@@ -537,7 +558,23 @@ Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 | 0x00 | 4 | user ID |
 
 If the user doesn't exist, the server replies with Status 0x1000c **[O]**.
-The 153 layout is not read yet.
+
+Reply (120 bytes for the prober itself), padded to 4:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | user ID | |
+| 0x04 | 4 | | |
+| 0x08 | 8 | login time | |
+| 0x10 | 8 | time | |
+| 0x18 | 8 | time | |
+| 0x20 | 0x1b | | |
+| 0x3b | 1 | address length | |
+| 0x3d | 1 | nick length | |
+| 0x3f | 1 | name length | `Administrator`; the class or the account name [I] |
+| 0x40 | 1 | login length | |
+| 0x41 | 1 | name length | `Administrator`; the class or the account name [I] |
+| 0x44 | | address, nick, name, login, name | |
 
 **Send Broadcast Message (154)**
 Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
@@ -764,7 +801,7 @@ entry per item, each padded to 4:
 | 0x20 | 4 | attributes | 0x01000002 for both folders; the server clears bit 24 and tests 0x42 [S] |
 | 0x24 | 0xa | | |
 | 0x2e | 2 | | 0xffff |
-| 0x30 | 2 | | 0x2c, 0x2b |
+| 0x30 | 2 | folder access item | 0x2c, 0x2b (see 1107) |
 | 0x32 | 2 | | |
 | 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]` |
 | 0x35 | 1 | name length | |
@@ -833,15 +870,64 @@ Reply: a u32 count (12 classes in the lab), then one record per class:
 - User: `28 30 00 03 f0 c0 04 08 03 20`
 - Guest: `28 30 00 03 80 00 00 08 02`
 
+**Get Account Class (502)** → **Account Class Info (503)**
+Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080552b8`; O]**
+
+The request is a u8 class index. The reply is the stored class record,
+padded to 4:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x10 | privileges | 11 bytes used |
+| 0x10 | 8 | time | |
+| 0x18 | 0xd | | |
+| 0x25 | 1 | | 0x50 for Administrator, 0x28 for Guest |
+| 0x26 | 0xa | | |
+| 0x30 | 1 | class index | 0, 2 |
+| 0x31 | 1 | | 0xff for Administrator, 0 for Guest; probably the colour [I] |
+| 0x34 | 1 | name length | |
+| 0x38 | | name | |
+
+**Get Account (509)** → **Account Info (510)**
+Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
+
+The request is the account's login, with no length byte. Reply (148 bytes
+for `admin`):
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x10 | | `80 00 00 00 00 00 02 00…`; probably a mask of privileges set on the account itself [I] |
+| 0x10 | 0x10 | | the same bytes; probably the privilege values [I] |
+| 0x20 | 1 | | 1 |
+| 0x40 | 8 | created | |
+| 0x48 | 8 | modified | |
+| 0x50 | 8 | last login | |
+| 0x7a | 1 | login length | |
+| 0x7b | 1 | name length | |
+| 0x80 | | login, name | `admin`, `Administrator` |
+
 **Get Account List (512)** → **Account List (513)**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080566bc`; O]**
 
-The reply lists the accounts (admin and guest in the lab). The layout is
-not read yet.
+The request is empty. Reply: a u32 count, then one entry per account, each
+padded to 4:
 
-Account Class (502/504), Create Account (507), Delete Account (508), Get
-Account (509), Set Account (511), and Change Own Password (550) are not
-read yet. Their handlers are listed in the table above.
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | created | |
+| 0x08 | 8 | last login | 0 if never |
+| 0x10 | 0xb | | |
+| 0x1b | 1 | | 1 for admin, 0 for guest |
+| 0x1c | 4 | | |
+| 0x20 | 1 | class index | 0 for admin, 2 for guest |
+| 0x21 | 1 | | 0xff for admin; matches 503 offset 0x31 |
+| 0x24 | 1 | login length | |
+| 0x25 | 1 | name length | |
+| 0x28 | | login, name | |
+
+Set Account Class (504), Create Account (507), Delete Account (508), Set
+Account (511), and Change Own Password (550) are not read yet. Their
+handlers are listed in the table above.
 
 ### News
 
@@ -914,10 +1000,74 @@ The reply is one news message record, padded to 4:
 Post (611), Delete (612), Posted (613), Deleted (614), and the newsgroup
 management messages (600, 601, 604) are not read yet.
 
+### Processes
+
+**Open Process Monitor (800)** / **Close Process Monitor (801)**
+Initiator: Client. Privilege: View Processes (80).
+**[S `FUN_0805b394`, `FUN_0805b418`]**
+
+**Get Process List (802)** → **Process List (803)**
+Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b454`; O]**
+
+The request is empty. The server runs `/bin/ps auxwww` (its own child shows
+up in the list) and replies:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | | about 33 GB; host memory [I] |
+| 0x08 | 8 | | about 33 GB [I] |
+| 0x10 | 0xc | | |
+| 0x1c | 4 | count | |
+| 0x20 | | process entries | |
+
+Each process entry is padded to 4:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | PID | |
+| 0x04 | 4 | | |
+| 0x08 | 8 | start time | |
+| 0x10 | 0x29 | | |
+| 0x39 | 1 | user length | |
+| 0x3a | 1 | command length | at most 0xff; longer commands are cut |
+| 0x3c | | command, user | |
+
+**Exit/Terminate Process (804)**
+Initiator: Client. Privilege: Terminate Processes (81).
+**[S `FUN_0805b8f4`]**
+
+Not probed.
+
+### Folder access
+
+A folder access item is a named set of rules. A folder refers to one by ID
+(the u16 at offset 0x30 of a 401 entry). Item `[Default]` applies when a
+folder and its parents name no item.
+
+**Get Folder Access List (1106)** → **Folder Access List (1107)**
+Initiator: Client. Privilege: View Folder Access (27).
+**[S `FUN_080578d8`; O]**
+
+The request is empty or a u32. If the u32's top byte has bit 0 set, a user
+without the privilege gets no reply instead of Status 0x10014.
+
+Reply: a u32 count, then one entry per item, each padded to 4:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | | 1, 2, 0 in the lab |
+| 0x04 | 4 | item ID | 0 for `[Default]`, 0x2c `DB`, 0x2b `UL` |
+| 0x08 | 8 | | not written by the server |
+| 0x10 | 1 | | |
+| 0x11 | 1 | name length | |
+| 0x12 | 1 | description length | |
+| 0x13 | 1 | third string length | |
+| 0x14 | | name, description, third string | |
+
+Create (1100), Delete (1101), Get (1103), and Set (1105) are not read yet.
+
 ### Not yet documented
 
-- Processes: 800–804.
-- Folder access: 1100–1107.
 - View display: 900–905.
 - Voice: 1000–1003.
 - The tracker: 700–721, using the LCG XOR at `0x0804a454`/`0x0804a4b4`.
