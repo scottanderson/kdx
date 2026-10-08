@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+# Isolated lab for running the original Haxial KDX binaries and capturing traffic.
+# Everything runs in a private user+network namespace that only has loopback;
+# each program additionally runs in its own bwrap filesystem sandbox.
+set -euo pipefail
+
+LAB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(dirname "$LAB")"
+VENDOR="$ROOT/vendor/haxial"
+RUN="$LAB/run"
+CACHE="$LAB/cache"
+CAPTURES="$ROOT/captures"
+
+LIBSTDCXX5_URL="https://archive.debian.org/debian/pool/main/g/gcc-3.3/libstdc++5_3.3.6-30_i386.deb"
+LIBSTDCXX5_SHA256="c88f93cd5b7b32ca88b40f671fc09f3387c7fb514902b4737b471bd812786ee6"
+
+SERVER_BIN="$VENDOR/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
+TRACKER_BIN="$VENDOR/KDXTrackerServ1110-Lnx/extracted/KDXTrackerServ1110-Lnx/KDXTrackerServ.lexe"
+CLIENT_WIN_DIR="$VENDOR/KDXClient1600-Win/extracted/KDXClient1600-Win"
+CLIENT_LNX_BIN="$VENDOR/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClient.lexe"
+
+HOST_UID="$(id -u)"
+HOST_GID="$(id -g)"
+
+die() { echo "kdx-lab: $*" >&2; exit 1; }
+
+usage() {
+  cat <<EOF
+usage: kdx-lab <command> [args]
+
+  setup               fetch and verify the i386 libstdc++.so.5 the Linux builds need
+  up <scenario>       create the isolated network and start capturing to captures/<scenario>.pcapng
+  down                stop the capture and tear down the network
+  status              show whether the lab is up and what it is capturing
+  server [-d]         run KDX Server 1.620 (Linux); -d detaches (needs first-run setup done)
+  tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
+  client [win|linux]  run KDX Client 1.600 under Wine (default) or the Linux beta 5 client
+  shell               open a shell inside the lab network (for nc, tshark, ip, ...)
+  reset <component>   wipe persistent state for server|tracker|client-win|client-linux
+
+Inside the lab the server is reachable at 127.0.0.1:10700 (or address "0" in the client).
+EOF
+}
+
+ns_pid() {
+  [[ -f "$RUN/ns.pid" ]] || return 1
+  local pid; pid="$(cat "$RUN/ns.pid")"
+  kill -0 "$pid" 2>/dev/null || return 1
+  echo "$pid"
+}
+
+require_up() { ns_pid >/dev/null || die "lab is not up; run: kdx-lab up <scenario>"; }
+
+# Run a command as namespace-root inside the lab network namespace.
+in_ns() {
+  local pid; pid="$(ns_pid)"
+  nsenter --target "$pid" --user --net --preserve-credentials -- "$@"
+}
+
+# Run an untrusted program: lab network, read-only system, writable state dir mounted at /kdx.
+sandbox() {
+  local state="$1"; shift
+  local extra=()
+  while [[ "${1:-}" != "--" ]]; do extra+=("$1"); shift; done
+  shift
+  mkdir -p "$state"
+  in_ns bwrap \
+    --unshare-user --uid "$HOST_UID" --gid "$HOST_GID" \
+    --unshare-pid --unshare-ipc --unshare-uts --unshare-cgroup-try \
+    --hostname kdx-lab --die-with-parent \
+    --ro-bind /usr /usr --ro-bind /etc /etc \
+    --symlink usr/bin /bin --symlink usr/sbin /sbin \
+    --symlink usr/lib /lib --symlink usr/lib32 /lib32 --symlink usr/lib64 /lib64 \
+    --proc /proc --dev /dev --tmpfs /tmp \
+    --ro-bind "$CACHE/i386/usr/lib/i386-linux-gnu" /opt/compat/lib \
+    --bind "$state" /kdx --chdir /kdx \
+    --clearenv \
+    --setenv HOME /kdx --setenv PATH /usr/bin:/bin \
+    --setenv TERM "${TERM:-xterm}" --setenv LANG C.UTF-8 \
+    --setenv LD_LIBRARY_PATH /opt/compat/lib \
+    "${extra[@]}" \
+    -- "$@"
+}
+
+
+# Copy a pristine binary into the state dir on every start so a run cannot alter the reference copy.
+install_bin() {
+  local src="$1" state="$2"
+  [[ -f "$src" ]] || die "missing $src (see vendor/MANIFEST.md)"
+  [[ -d "$CACHE/i386" ]] || die "run: kdx-lab setup"
+  mkdir -p "$state"
+  install -m 0755 "$src" "$state/$(basename "$src")"
+}
+
+cmd_setup() {
+  local dir="$CACHE/deps" deb
+  deb="$dir/$(basename "$LIBSTDCXX5_URL")"
+  mkdir -p "$dir"
+  [[ -f "$deb" ]] || curl -fsSL -o "$deb" "$LIBSTDCXX5_URL"
+  echo "$LIBSTDCXX5_SHA256  $deb" | sha256sum -c --quiet || die "checksum mismatch for $deb"
+  rm -rf "$CACHE/i386"
+  dpkg-deb -x "$deb" "$CACHE/i386"
+  echo "libstdc++.so.5 ready in $CACHE/i386"
+}
+
+cmd_up() {
+  local scenario="${1:-}"
+  [[ "$scenario" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || die "scenario name must match [a-z0-9][a-z0-9_-]*"
+  ns_pid >/dev/null && die "lab already up ($(cat "$RUN/scenario")); run: kdx-lab down"
+  mkdir -p "$RUN" "$CAPTURES"
+  local pcap="$CAPTURES/$scenario.pcapng"
+  [[ -e "$pcap" ]] && die "$pcap already exists; pick a new scenario name"
+
+  # unshare execs sleep in place, so $! is the namespace holder's PID.
+  setsid unshare --user --map-root-user --net sleep infinity </dev/null >/dev/null 2>&1 &
+  echo $! > "$RUN/ns.pid"
+  # unshare needs a moment before the new namespace exists.
+  local tries=50 ns
+  until ns="$(readlink "/proc/$(cat "$RUN/ns.pid")/ns/net" 2>/dev/null)" &&
+        [[ "$ns" != "$(readlink /proc/self/ns/net)" ]]; do
+    (( --tries )) || die "the lab namespace did not start"
+    sleep 0.1
+  done
+  in_ns ip link set lo up
+
+  # Call nsenter directly (not via in_ns) so $! is dumpcap itself and SIGINT reaches it on down.
+  nsenter --target "$(ns_pid)" --user --net --preserve-credentials -- \
+    dumpcap -q -i lo -w "$pcap" </dev/null >"$RUN/dumpcap.log" 2>&1 &
+  echo $! > "$RUN/dumpcap.pid"
+  echo "$scenario" > "$RUN/scenario"
+
+  local notes="$CAPTURES/$scenario.md"
+  [[ -e "$notes" ]] || cat > "$notes" <<EOF
+# Scenario: $scenario
+
+- Date: $(date -u +%Y-%m-%dT%H:%MZ)
+- Server: KDXServer 1.620 Linux (sha256 $(sha256sum "$SERVER_BIN" 2>/dev/null | cut -c1-16))
+- Client: <win 1.600 | linux beta5>
+- Server state: <fresh | describe accounts/settings>
+
+## Steps
+1.
+
+## Observations
+EOF
+  echo "lab up: capturing loopback to $pcap; describe the steps in $notes"
+}
+
+cmd_down() {
+  local pid
+  if [[ -f "$RUN/dumpcap.pid" ]]; then
+    pid="$(cat "$RUN/dumpcap.pid")"
+    kill -INT "$pid" 2>/dev/null && while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done
+    rm -f "$RUN/dumpcap.pid"
+  fi
+  if pid="$(ns_pid)"; then
+    # Stop everything still running in the lab network, including detached servers.
+    local netns p
+    netns="$(readlink "/proc/$pid/ns/net")"
+    for p in /proc/[0-9]*; do
+      [[ "$(readlink "$p/ns/net" 2>/dev/null)" == "$netns" ]] && kill "${p#/proc/}" 2>/dev/null
+    done
+  fi
+  rm -f "$RUN/ns.pid"
+  [[ -f "$RUN/scenario" ]] && echo "lab down: $(cat "$RUN/scenario")" && rm -f "$RUN/scenario"
+  true
+}
+
+cmd_status() {
+  if ns_pid >/dev/null; then
+    echo "up: scenario $(cat "$RUN/scenario"), namespace pid $(ns_pid)"
+    in_ns ss -lntup 2>/dev/null || true
+  else
+    echo "down"
+  fi
+}
+
+# Foreground by default (the console takes commands); -d detaches with an idle stdin and logs to run/<name>.log.
+run_console() {
+  local name="$1" bin="$2"; shift 2
+  require_up
+  install_bin "$bin" "$RUN/$name"
+  if [[ "${1:-}" == "-d" ]]; then
+    tail -f /dev/null | sandbox "$RUN/$name" -- "./$(basename "$bin")" >"$RUN/$name.log" 2>&1 &
+    disown
+    echo "$name detached; log: $RUN/$name.log (stopped by kdx-lab down)"
+  else
+    sandbox "$RUN/$name" -- "./$(basename "$bin")"
+  fi
+}
+
+cmd_server() { run_console server "$SERVER_BIN" "$@"; }
+cmd_tracker() { run_console tracker "$TRACKER_BIN" "$@"; }
+
+cmd_client() {
+  require_up
+  local kind="${1:-win}" state
+  [[ -S /tmp/.X11-unix/X0 ]] || die "no X server socket at /tmp/.X11-unix/X0 (WSLg not running?)"
+  local x11=(--ro-bind /tmp/.X11-unix/X0 /tmp/.X11-unix/X0 --setenv DISPLAY :0)
+  case "$kind" in
+    win)
+      state="$RUN/client-win"
+      mkdir -p "$state/app"
+      cp -f "$CLIENT_WIN_DIR"/* "$state/app/"
+      sandbox "$state" "${x11[@]}" \
+        --setenv WINEPREFIX /kdx/prefix --setenv WINEDEBUG -all \
+        --setenv WINEDLLOVERRIDES "mscoree,mshtml=" \
+        -- wine /kdx/app/KDXClient.exe
+      ;;
+    linux)
+      state="$RUN/client-linux"
+      install_bin "$CLIENT_LNX_BIN" "$state"
+      sandbox "$state" "${x11[@]}" -- ./KDXClient.lexe
+      ;;
+    *) die "client kind must be win or linux" ;;
+  esac
+}
+
+cmd_shell() {
+  require_up
+  in_ns env PS1='kdx-lab# ' bash --norc -i
+}
+
+cmd_reset() {
+  case "${1:-}" in
+    server|tracker|client-win|client-linux) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
+    *) die "reset what? server|tracker|client-win|client-linux" ;;
+  esac
+}
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  setup|up|down|status|server|tracker|client|shell|reset) "cmd_$cmd" "$@" ;;
+  ""|-h|--help|help) usage ;;
+  *) usage; exit 2 ;;
+esac

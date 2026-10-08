@@ -1,0 +1,61 @@
+# KDX lab
+
+Runs the original Haxial binaries (see `vendor/MANIFEST.md`) and captures their
+traffic. Docker isn't needed. The isolation comes from two layers:
+
+- **Network.** `kdx-lab up` creates a private user and network namespace that
+  only has `lo`. Nothing inside it can reach the host network or the internet.
+  `dumpcap` records everything on that loopback interface to
+  `captures/<scenario>.pcapng`.
+- **Filesystem.** Each program runs in its own `bwrap` sandbox. It sees a
+  read-only `/usr` and `/etc`, a private `/tmp`, and one writable state
+  directory mounted at `/kdx` (`lab/run/<component>/`). The binary is copied
+  fresh into that directory on every start.
+
+The GUI clients also get the WSLg X socket (`/tmp/.X11-unix/X0`). X11 offers no
+isolation between its clients, so don't type anything sensitive into other
+windows while a client is running.
+
+Requires: `bwrap`, `unshare`/`nsenter`, `dumpcap`/`tshark`, 32-bit Wine (for
+the Windows client), and unprivileged user namespaces.
+
+## Usage
+
+```sh
+lab/kdx-lab setup            # once: fetch + checksum the i386 libstdc++.so.5 from archive.debian.org
+lab/kdx-lab up login-guest   # start the network and capture to captures/login-guest.pcapng
+lab/kdx-lab server           # foreground; console accepts: exit, quit, about, info, setport
+lab/kdx-lab server -d        # or detached, logging to lab/run/server.log
+lab/kdx-lab client           # KDX Client 1.600 under Wine (or: client linux)
+lab/kdx-lab shell            # shell inside the lab network (nc, tshark, ss, python3 -I ...)
+lab/kdx-lab down             # stop capture, kill everything in the lab network
+```
+
+In the client, connect to `127.0.0.1` (or `0`). The default port is 10700.
+
+`up` also writes `captures/<scenario>.md`. Fill in its steps and observations,
+because a capture without its GUI steps is hard to interpret later. Use one
+scenario per feature you're exercising, and keep scenarios small.
+
+## Server first run
+
+The first `kdx-lab server` (foreground) runs the console setup:
+press Enter, then give the admin login, the password twice, and the guest
+access answer (`yes`/`no`). The lab convention is login `admin`, password
+`lab-only-pw!1`, guest access `yes`. The state persists in `lab/run/server/`
+(`Accounts.dat`, `KDXServer.stg`, `News.dat`, `Bases/Default/`). Use
+`kdx-lab reset server` to start over.
+
+## Things to know
+
+- The client speaks first. The server sends nothing until the client's first
+  packet. If it can't parse that packet, it logs
+  `The network protocol is unknown. (ID 4/113 @ TRN941)` and disconnects.
+  These `ID x/y @ TRNnnn` codes look like internal error-site identifiers and
+  should help with static analysis.
+- Wine also probes CUPS (`127.0.0.1:631`). Filter captures with
+  `tcp.port == 10700`.
+- On first launch, the Windows client shows Haxial's license agreement.
+  Accepting it is the operator's decision. Clause 3 prohibits reverse
+  engineering the software "or its transmission protocols (except where
+  permitted by law)".
