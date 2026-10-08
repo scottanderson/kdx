@@ -5,8 +5,10 @@ use kdx_proto::msg::chat::{
     PUBLIC_CHAT,
 };
 use kdx_proto::msg::file::{FileInfo, FileListEntry, ATTR_FOLDER};
-use kdx_proto::msg::{FilePath, UserInfo};
+use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
+use kdx_proto::msg::{FilePath, ServerInfo, UserInfo};
 use kdx_proto::session::{Header, MessageType};
+use kdx_proto::AccountKey;
 
 mod common;
 
@@ -134,4 +136,99 @@ fn user_info() {
     assert_eq!(info.login, b"admin");
     assert_eq!(info.name_3f, b"Administrator");
     assert_eq!(info.encode().unwrap(), wire);
+}
+
+/// The session of a transfer connection, opened with the key from its parent's 105 Server Info.
+macro_rules! transfer {
+    ($parent:literal, $port:literal) => {{
+        let parent = connection!($parent);
+        let info = ServerInfo::decode(one(&parent, MessageType::SERVER_INFO)).unwrap();
+        let session = common::session_with_key(
+            include_bytes!(concat!("fixtures/probe-", $port, ".c2s.bin")),
+            include_bytes!(concat!("fixtures/probe-", $port, ".s2c.bin")),
+            &AccountKey(info.session_key),
+        );
+        (info.user_id, session)
+    }};
+}
+
+/// The data of each 414 Download File (D), in order.
+fn download_data(session: &[(Header, Vec<u8>)]) -> Vec<&[u8]> {
+    payloads(session, MessageType::DOWNLOAD_FILE_DATA)
+}
+
+#[test]
+fn downloads() {
+    let probe_dl = FilePath::new(["probe-dl.bin"]);
+    let (_, full) = transfer!("33068", "33082");
+    let (_, resumed) = transfer!("53514", "53518");
+    let (_, past_end) = transfer!("56346", "56352");
+    let mut whole = Vec::new();
+    for (session, offset, data_len) in [
+        (&full, 0, 70000),
+        (&resumed, 5000, 70000 - 0x1000),
+        (&past_end, 70000, 0),
+    ] {
+        let wire = one(session, MessageType::DOWNLOAD_FILE);
+        let request = DownloadFile::decode(wire).unwrap();
+        assert_eq!(request.data_offset, offset);
+        assert_eq!(request.path, probe_dl);
+        assert_eq!(request.encode().unwrap(), wire);
+
+        let wire = one(session, MessageType::DOWNLOAD_FILE_REPLY);
+        let info = DownloadInfo::decode(wire).unwrap();
+        assert_eq!(info.data_size, 70000);
+        assert_eq!(info.strings.name, b"probe-dl.bin");
+        assert_eq!(info.strings.second, b"exttype/bin");
+        assert_eq!(info.encode().unwrap(), wire);
+
+        // The data fork comes as a reply to the request, then the resource fork on its own.
+        let request_txid = session
+            .iter()
+            .find(|(h, _)| h.kind == MessageType::DOWNLOAD_FILE)
+            .unwrap()
+            .0
+            .txid;
+        let data: Vec<_> = session
+            .iter()
+            .filter(|(h, _)| h.kind == MessageType::DOWNLOAD_FILE_DATA)
+            .collect();
+        assert_eq!(data.len(), 2);
+        assert!(data[0].0.is_reply() && data[0].0.txid == request_txid);
+        assert!(!data[1].0.is_reply() && data[1].1.is_empty());
+        assert_eq!(data[0].1.len(), data_len);
+        if offset == 0 {
+            whole = data[0].1.clone();
+        }
+    }
+    assert_eq!(download_data(&resumed)[0], &whole[0x1000..]);
+}
+
+#[test]
+fn upload() {
+    let (_, session) = transfer!("48784", "48796");
+    let wire = one(&session, MessageType::UPLOAD_FILE);
+    let request = UploadFile::decode(wire).unwrap();
+    assert_eq!(request.data_size, 100);
+    assert_eq!(request.strings.name, b"probe-ul.bin");
+    assert_eq!(request.folder, FilePath::new(["Uploads [UL]"]));
+    assert_eq!(request.encode().unwrap(), wire);
+
+    let wire = one(&session, MessageType::UPLOAD_FILE_REPLY);
+    let reply = UploadReply::decode(wire).unwrap();
+    assert_eq!((reply.data_offset, reply.rsrc_offset), (0, u64::MAX));
+    assert_eq!(reply.encode(), wire);
+
+    let data = payloads(&session, MessageType::UPLOAD_FILE_DATA);
+    assert_eq!(data.iter().map(|d| d.len()).collect::<Vec<_>>(), [100, 0]);
+    assert!(data[0].iter().enumerate().all(|(i, &b)| b == i as u8));
+    assert!(one(&session, MessageType::UPLOAD_FILE_COMPLETE).is_empty());
+
+    let listing = payloads(&session, MessageType::FILE_LIST);
+    let names: Vec<_> = FileListEntry::decode_list(listing[0])
+        .unwrap()
+        .into_iter()
+        .map(|e| (e.name, e.size))
+        .collect();
+    assert_eq!(names, [(b"probe-ul.bin".to_vec(), 100)]);
 }

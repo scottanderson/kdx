@@ -11,6 +11,7 @@ pub mod path;
 pub mod private_message;
 pub mod server_info;
 pub mod status;
+pub mod transfer;
 pub mod user;
 pub mod user_info;
 

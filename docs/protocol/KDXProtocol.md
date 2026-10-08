@@ -897,9 +897,11 @@ Initiator: Client, on a transfer connection. Privilege: Download (10).
 | 0x18 | | file path | |
 
 The payload must be at least 0x1a bytes. Each offset is rounded down to a
-multiple of 0x1000. An offset past the end means nothing is sent for that
-fork. [O]: offset 5000 resumed at 4096, and 70000 − 4096 = 65904 bytes
-came back.
+multiple of 0x1000. An offset at or past the end still gets its 414
+Download File (D), with length 0. [O]: offset 5000 resumed at 4096, and the
+65904 bytes that came back equal the full download from 0x1000; offset
+70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng`
+frames 271–281, 383–389, and 348–351; test `downloads`).
 
 A file over 0x40000 bytes is refused with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25

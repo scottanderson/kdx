@@ -14,7 +14,7 @@ pub fn messages(stream: &[u8], cipher: &SessionCipher) -> Vec<(Header, Vec<u8>)>
     let mut out = Vec::new();
     while at < stream.len() {
         let header = cipher
-            .open_header(stream[at..at + 16].try_into().unwrap())
+            .open_data_header(stream[at..at + 16].try_into().unwrap())
             .unwrap();
         at += Header::LEN;
         let payload = cipher.open_payload(&header, &stream[at..]).unwrap();
@@ -28,7 +28,13 @@ pub fn messages(stream: &[u8], cipher: &SessionCipher) -> Vec<(Header, Vec<u8>)>
 /// Both directions of a connection logged in with [`PASSWORD`], client first.
 #[allow(dead_code)]
 pub fn session(c2s: &[u8], s2c: &[u8]) -> Vec<(Header, Vec<u8>)> {
-    let cipher = SessionCipher::new(&AccountKey::from_password(PASSWORD));
+    session_with_key(c2s, s2c, &AccountKey::from_password(PASSWORD))
+}
+
+/// Both directions of a connection authenticated with `key`, client first.
+#[allow(dead_code)]
+pub fn session_with_key(c2s: &[u8], s2c: &[u8], key: &AccountKey) -> Vec<(Header, Vec<u8>)> {
+    let cipher = SessionCipher::new(key);
     let mut all = messages(c2s, &cipher);
     all.extend(messages(s2c, &cipher));
     all

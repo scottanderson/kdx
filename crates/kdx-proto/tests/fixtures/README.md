@@ -26,3 +26,16 @@ cargo run -p kdx-dissect -- captures/probe.pcapng --password 'lab-only-pw!1' --e
 | 50984 | 1, 143, 153 |
 | 54328 | 401, 410, 606, 608 |
 | 59006 | 1, 503, 510, 513, 803, 1107 |
+
+The transfer connections use the session key from their parent's 105
+Server Info:
+
+| Parent | Transfer | Messages |
+|---|---|---|
+| 33068 | 33082 | 400 Get File List, then a whole download of 70000 bytes |
+| 48784 | 48796 | a 100-byte upload, then 400 Get File List |
+| 53514 | 53518 | a download resumed at 5000 |
+| 56346 | 56352 | a download from offset 70000, past the end |
+
+`probe-dl.bin` and `probe-ul.bin` were generated test data; in
+`probe-ul.bin`, byte *i* is `i`.
