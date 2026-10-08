@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/kdx-proto", "crates/kdx-dissect"]
+members = ["crates/kdx-proto", "crates/kdx-dissect", "crates/kdx-client"]
 
 [workspace.package]
 version = "0.1.0"

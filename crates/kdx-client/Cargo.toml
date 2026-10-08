@@ -1,0 +1,16 @@
+[package]
+name = "kdx-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "KDX client connection, and kdx-probe for exercising a server"
+
+[dependencies]
+kdx-proto.workspace = true
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+getrandom = "0.3"
+
+[lints]
+workspace = true

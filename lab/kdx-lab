@@ -36,6 +36,7 @@ usage: kdx-lab <command> [args]
   tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
   client [win|linux]  run KDX Client 1.600 under Wine (default) or the Linux beta 5 client
   shell               open a shell inside the lab network (for nc, tshark, ip, ...)
+  run <cmd...>        run a trusted host command inside the lab network (e.g. a Rust probe)
   reset <component>   wipe persistent state for server|tracker|client-win|client-linux
 
 Inside the lab the server is reachable at 127.0.0.1:10700 (or address "0" in the client).
@@ -221,6 +222,12 @@ cmd_shell() {
   in_ns env PS1='kdx-lab# ' bash --norc -i
 }
 
+cmd_run() {
+  require_up
+  [[ $# -gt 0 ]] || die "run what?"
+  in_ns "$@"
+}
+
 cmd_reset() {
   case "${1:-}" in
     server|tracker|client-win|client-linux) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
@@ -230,7 +237,7 @@ cmd_reset() {
 
 cmd="${1:-}"; shift || true
 case "$cmd" in
-  setup|up|down|status|server|tracker|client|shell|reset) "cmd_$cmd" "$@" ;;
+  setup|up|down|status|server|tracker|client|shell|run|reset) "cmd_$cmd" "$@" ;;
   ""|-h|--help|help) usage ;;
   *) usage; exit 2 ;;
 esac
