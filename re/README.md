@@ -31,6 +31,10 @@ Scripts (PyGhidra / Python 3):
 - `callers.py <addr>...` lists call sites.
 - `fnptr_stores.py <offset>` finds code that stores a function pointer at
   `[reg + offset]`, which is how callbacks and hooks get installed.
+- `disasm.py <addr> [count]` prints instructions with their references, for
+  code the decompiler mangles (regparm calls, tail jumps).
+- `xrefs.py <text>...` finds a byte string and what references it, two levels
+  deep.
 
 `re/out/` holds decompiled Haxial code, so it stays local and is never
 committed. Write findings into `docs/protocol/` instead, citing function
@@ -60,3 +64,13 @@ addresses.
 | `0x0807aac0` | RNG |
 | `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`; tracker UDP according to hlwiki, call sites not yet read) |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |
+| `0x080528c8` | session read loop: drops replies, updates idle time, calls the dispatcher |
+| `0x0804fdac` | message dispatcher (type → handler); catch at `0x0805090c` sends Status (1) |
+| `0x08086640` / `0x080865c0` | send Status (1): error form / success form |
+| `0x08049d14` | message type → name (jump table at `0x080abc6c`) |
+| `0x08066d04` | error code → text (codes at `0x080b1dc0`, text at `0x080b1f00`) |
+| `0x0804ad64` | broadcast a message to all users |
+| `0x0804af04` | encode a user record |
+| `0x0804b114` | post-login: sends 105, 107, 106, 213 |
+| `0x08061d80` | write a server history record and push 183 |
+| `0x080969f8` / `0x08069880` / `0x08096b4c` | file path: decode / validate / join to a host path |

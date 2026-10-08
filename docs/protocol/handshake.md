@@ -148,14 +148,17 @@ halves of the code, and the module tag is three ASCII bytes passed as an
 integer (`0x54524e` is `TRN`, the transport module). So
 `ID 4/113 @ TRN941` means code 0x40071 at TRN line 941 (bad magic).
 
+The full code table is in [KDXProtocol.md](KDXProtocol.md#error-codes).
+These are the codes the handshake raises:
+
 | Code | Meaning (from log strings and call sites) |
 |---|---|
 | 0x40070 | authentication failed (bad proof or challenge) |
 | 0x40071 | unknown protocol (magic or service mismatch) |
 | 0x40072 | peer's protocol version too old |
 | 0x40073 | peer's protocol version too new |
-| 0x40074 | connected to self (nonce echo) |
-| 0x40075 | hello too long (> 0x800) |
+| 0x40074 | invalid protocol data; the handshake raises it for a nonce echo (a connection to ourselves) |
+| 0x40075 | protocol limit exceeded; the handshake raises it for a hello over 0x800 bytes |
 
 ## Open questions
 

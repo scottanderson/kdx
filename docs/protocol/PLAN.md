@@ -61,8 +61,9 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
 - Find anchors using constants: `0x4878` (the XOR key step), the LCG constants,
   MD5 init constants, Twofish q-tables, the CRC32 table. Follow cross-references
   from `send`/`recv`/`sendto` to the framing and then to the message dispatch.
-- Recover the dispatch table that maps message type to handler. That gives the
-  full list of message types, including admin-only and rare ones.
+- Recover the dispatch table that maps message type to handler. Done: the
+  dispatcher is `FUN_0804fdac`, and the name table at `FUN_08049d14` names
+  every type. Both are listed in `KDXProtocol.md`.
 - Use the length-prefixed UI and error strings to name handlers ("Get Tracker
   Server List", "protocol breach", "limit in the net protocol was exceeded").
 - Keep the analysis scripts and a table of function addresses
@@ -90,9 +91,12 @@ which build introduced it:
    protocol work.
 
 ### Phase 4: Spec format
-- `docs/protocol/` gets one Markdown file per area (`transport.md`, `crypto.md`,
-  `login.md`, `chat.md`, `files.md`, `tracker.md`, ...) and a `messages.md`
-  index of every type ID.
+- `KDXProtocol.md` is the single reference: the message catalog, a
+  description of each message, error codes, privileges, and sequences. It
+  grows as each area is read and probed.
+- `handshake.md` and `session.md` hold the long write-ups that are too
+  detailed for the reference. Add another such file only when an area needs
+  one (file transfers, the tracker).
 - Each field or message gets an evidence tag. **Observed** means a capture file
   and frame number. **Static** means a binary, build, and address.
   **Inferred** means a guess not yet verified. The goal is to turn every
@@ -112,7 +116,7 @@ The project is dual-licensed MIT OR Apache-2.0.
 ## Rust layout
 Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
 `kdx-dissect` (pcap to text), `kdx-client`, and later `kdx-server`. The first
-two exist; `kdx-proto` covers the handshake and session layer so far.
+three exist; `kdx-proto` covers the handshake and session layer so far.
 
 ## Open decisions
 - None currently.

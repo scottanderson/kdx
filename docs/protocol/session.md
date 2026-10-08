@@ -55,23 +55,7 @@ The sender also has a header-only path (`FUN_080868b4`) followed by
 separately encrypted chunks (`FUN_08086a9c`). It's probably used for large or
 streamed payloads such as file transfers **[I]**.
 
-## Message types seen so far
+## Messages
 
-Types come in request/notification pairs that differ by one: N from the
-client, N+1 from the server **[O]**.
-
-| Type | Dir | Seen as | Payload notes |
-|---|---|---|---|
-| 100 (0x64) | C→S | login / user info | 565 bytes, mostly a 2-bit-per-pixel icon bitmap **[O]** |
-| 101 (0x65) | S→C | user info (this user) | 568 bytes, same layout as 100 with a 4-byte user ID (1) in front **[O]** |
-| 105 (0x69) | S→C | server info | 32-byte value, IDs, server name `New Server` **[O]** |
-| 300 (0x12c) | C→S | send private message | `u32 target user id` (1 = self here), 12 zero bytes, then the text (`test`, `hi`) **[O]** |
-| 301 (0x12d) | S→C | private message delivered | same layout. The ID is the sender **[I]** **[O]** |
-| 605 (0x25d) | C→S | list newsgroups | empty **[O]** |
-| 606 (0x25e) | S→C reply | newsgroup list | count, group ID, timestamp-like value, name `General News` **[O]** |
-| 607 (0x25f) | C→S | get newsgroup messages | `u32 group id` (1) **[O]** |
-| 608 (0x260) | S→C reply | newsgroup messages | message records ("Welcome to KDX! …") **[O]** |
-
-Field-level layouts of these payloads come next. The plan is to locate the
-server's dispatch table (by message type) and read each handler, using the
-capture to check each field.
+Message types, payload layouts, the Status (1) reply, and error codes are in
+[KDXProtocol.md](KDXProtocol.md).
