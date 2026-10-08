@@ -29,6 +29,8 @@ Scripts (PyGhidra / Python 3):
   `re/out/<binary>/decomp/`.
 - `find_scalars.py <hex>...` lists instructions that use the given constants.
 - `callers.py <addr>...` lists call sites.
+- `fnptr_stores.py <offset>` finds code that stores a function pointer at
+  `[reg + offset]`, which is how callbacks and hooks get installed.
 
 `re/out/` holds decompiled Haxial code, so it stays local and is never
 committed. Write findings into `docs/protocol/` instead, citing function
@@ -47,10 +49,14 @@ addresses.
 | `0x0808584c` | verify the peer's PROOF against a candidate key |
 | `0x0805270c` | server login callback (guest, session-attach, account lookup via `0x08054900`) |
 | `0x08052ad0` | server accept: creates the connection with `%KDX`, version 0x20, story table |
+| `0x080863b4` / `0x080868b4` / `0x08086a9c` | session: send message / send header only / send encrypted chunk |
+| `0x08086108` / `0x080879c4` | session: receive and validate header / ECB-decrypt buffered data |
+| `0x0804a510` | header scramble hook, installed by `0x08052ad0` |
+| `0x08066024` | Twofish decrypt block |
 | `0x080669cc` | account_key(password): SHA-1 + FNV-1 |
 | `0x0807bbfc` / `0x0807bc64` | SHA-1 (one-shot / init) |
 | `0x0806565c` / `0x08062840` | Twofish encrypt block / key schedule |
 | `0x0806fcbc` | FNV-1 variant (seeded) |
 | `0x0807aac0` | RNG |
-| `0x0804a454` / `0x0804a4b4` | tracker UDP LCG |
+| `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`; tracker UDP according to hlwiki, call sites not yet read) |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |

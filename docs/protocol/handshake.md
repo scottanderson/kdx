@@ -127,8 +127,19 @@ it's at file offset `0x635a0`. Without a table, the code falls back to
 `"All your base are belong to us!"` **[S `FUN_0808529c`]**.
 
 The blob is Haxial's copyrighted text, so **don't commit it**. The Rust
-implementation should load it at runtime from a user-supplied KDX binary
-(search for the start of the story, take 1739 bytes, check the SHA-256).
+implementation treats it as a required input, obtained once and then cached:
+
+1. Use the cached copy if one exists and its SHA-256 matches.
+2. Otherwise, offer to fetch it. Download the smallest known Haxial archive
+   that contains it, `KDXTrackerServ1110-Win.zip` (about 249 KB, a plain zip
+   with no StuffIt; see `vendor/MANIFEST.md` for the Wayback URL). Extract
+   the blob from it.
+3. Otherwise, ask the user for either a KDX file to extract it from (any
+   client, server or tracker build; zip archives are opened) or the blob
+   itself.
+
+Extraction: find `This program including the following story`, take 1739
+bytes from there, and check the SHA-256 above.
 
 ## Error codes [S `FUN_08066fd8`, `FUN_08066c14`]
 
@@ -148,9 +159,7 @@ integer (`0x54524e` is `TRN`, the transport module). So
 
 ## Open questions
 
-- The traffic after the handshake (C→S frame 22 onwards) isn't the XOR
-  framing. Next step: find out whether it's Twofish under the session key,
-  and work out the message framing.
+- Everything after the handshake is covered in `session.md`.
 - The server's version-acceptance callback (`+0x88`, set by the server code).
 - What the `0x00`+ID login is used for. Confirm it with a file-transfer
   capture.
