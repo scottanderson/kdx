@@ -73,6 +73,15 @@ impl Header {
 
     /// Parses and checks plaintext bytes, after unscrambling.
     pub fn from_bytes(bytes: &[u8; Self::LEN]) -> Result<Self, SessionError> {
+        let header = Self::from_bytes_unbounded(bytes)?;
+        if header.len > MAX_PAYLOAD_LEN {
+            return Err(SessionError::TooLong(header.len));
+        }
+        Ok(header)
+    }
+
+    /// Like [`Self::from_bytes`], but allows any length, as transfer data headers need.
+    pub fn from_bytes_unbounded(bytes: &[u8; Self::LEN]) -> Result<Self, SessionError> {
         let word = |i: usize| u32::from_be_bytes(bytes[i..i + 4].try_into().unwrap());
         let header = Self {
             txid: word(0),
@@ -88,8 +97,6 @@ impl Header {
             Err(SessionError::ZeroType)
         } else if reserved != 0 {
             Err(SessionError::Reserved(reserved))
-        } else if header.len > MAX_PAYLOAD_LEN {
-            Err(SessionError::TooLong(header.len))
         } else {
             Ok(header)
         }
@@ -99,6 +106,13 @@ impl Header {
     pub const fn padded_len(&self) -> usize {
         padded_len(self.len as usize)
     }
+}
+
+/// The bytes the original programs pad a payload with: an LCG step of the txid, repeated.
+pub const fn padding_fill(txid: u32) -> [u8; 4] {
+    txid.wrapping_mul(0x41c6_4e6d)
+        .wrapping_add(0x3039)
+        .to_le_bytes()
 }
 
 /// Rounds a payload length up to whole cipher blocks.
@@ -165,30 +179,54 @@ impl SessionCipher {
             len: payload.len() as u32,
             ..header
         };
-        let mut block = header.to_bytes();
-        scramble(&mut block);
-
         let mut out = Vec::with_capacity(Header::LEN + header.padded_len());
-        out.extend_from_slice(&block);
-        let fill = header
-            .txid
-            .wrapping_mul(0x41c6_4e6d)
-            .wrapping_add(0x3039)
-            .to_le_bytes();
+        out.extend_from_slice(&self.seal_header(header));
+        let fill = padding_fill(header.txid);
         out.extend((0..header.padded_len()).map(|i| fill[i % 4]));
         out[Header::LEN..Header::LEN + payload.len()].copy_from_slice(payload);
-        for block in out.chunks_exact_mut(BLOCK_LEN) {
-            self.0.encrypt_block(block_mut(block));
-        }
+        self.encrypt_blocks(&mut out[Header::LEN..]);
         out
+    }
+
+    /// Encrypts a header as given, for a transfer data stream whose bytes follow separately.
+    pub fn seal_header(&self, header: Header) -> [u8; Header::LEN] {
+        let mut block = header.to_bytes();
+        scramble(&mut block);
+        self.0.encrypt_block(block_mut(&mut block));
+        block
     }
 
     /// Decrypts and checks a header block.
     pub fn open_header(&self, block: &[u8; Header::LEN]) -> Result<Header, SessionError> {
+        Header::from_bytes(&self.decrypt_header(block))
+    }
+
+    /// Decrypts a transfer data header, whose length may exceed [`MAX_PAYLOAD_LEN`].
+    pub fn open_data_header(&self, block: &[u8; Header::LEN]) -> Result<Header, SessionError> {
+        Header::from_bytes_unbounded(&self.decrypt_header(block))
+    }
+
+    fn decrypt_header(&self, block: &[u8; Header::LEN]) -> [u8; Header::LEN] {
         let mut plain = *block;
         self.0.decrypt_block(block_mut(&mut plain));
         unscramble(&mut plain);
-        Header::from_bytes(&plain)
+        plain
+    }
+
+    /// Encrypts whole blocks in place; `data.len()` must be a multiple of [`BLOCK_LEN`].
+    pub fn encrypt_blocks(&self, data: &mut [u8]) {
+        assert_eq!(data.len() % BLOCK_LEN, 0, "partial block");
+        for block in data.chunks_exact_mut(BLOCK_LEN) {
+            self.0.encrypt_block(block_mut(block));
+        }
+    }
+
+    /// Decrypts whole blocks in place; `data.len()` must be a multiple of [`BLOCK_LEN`].
+    pub fn decrypt_blocks(&self, data: &mut [u8]) {
+        assert_eq!(data.len() % BLOCK_LEN, 0, "partial block");
+        for block in data.chunks_exact_mut(BLOCK_LEN) {
+            self.0.decrypt_block(block_mut(block));
+        }
     }
 
     /// Decrypts the payload that follows `header`. `data` must hold at least `header.padded_len()` bytes.
@@ -198,9 +236,7 @@ impl SessionCipher {
             .get(..padded)
             .ok_or(SessionError::Incomplete(padded))?
             .to_vec();
-        for block in out.chunks_exact_mut(BLOCK_LEN) {
-            self.0.decrypt_block(block_mut(block));
-        }
+        self.decrypt_blocks(&mut out);
         out.truncate(header.len as usize);
         Ok(out)
     }

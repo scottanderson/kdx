@@ -11,7 +11,9 @@ server and a tracker, all compatible with the original KDX programs (Server
   message framing, and typed payloads (`msg`). It does no I/O.
 - `crates/kdx-dissect` decodes KDX connections in a pcap or pcapng capture.
   It prints each message as a hex dump, with a `=` summary line for the
-  payloads `kdx_proto::msg` knows:
+  payloads `kdx_proto::msg` knows. It decrypts transfer connections with the
+  session keys from the capture's 105 Server Info messages, and `--export
+  DIR` writes each connection's streams for use as fixtures:
 
   ```sh
   cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'

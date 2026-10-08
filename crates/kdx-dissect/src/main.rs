@@ -9,7 +9,7 @@ use std::fmt::Write as _;
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
@@ -20,6 +20,9 @@ use kdx_proto::{AccountKey, MessageType};
 use pcap_file::pcap::PcapReader;
 use pcap_file::pcapng::{Block, PcapNgReader};
 use pcap_file::DataLink;
+
+/// Longest payload prefix to hex dump; file data can run to megabytes.
+const MAX_DUMP: usize = 0x400;
 
 #[derive(Parser)]
 #[command(about = "Decode KDX traffic from a packet capture")]
@@ -127,8 +130,8 @@ fn main() -> Result<()> {
     if connections.is_empty() {
         println!("no TCP connections on port {}", args.port);
     }
+    let mut pending = Vec::new();
     for ((client, server), [c2s, s2c]) in &connections {
-        println!("connection {client} -> {server}");
         let streams = [reassemble(c2s), reassemble(s2c)];
         if let Some(dir) = &args.export {
             for (stream, suffix) in streams.iter().zip(["c2s", "s2c"]) {
@@ -137,21 +140,60 @@ fn main() -> Result<()> {
                     .with_context(|| format!("writing {}", path.display()))?;
             }
         }
-        if let Err(err) = dissect(&streams, &keys) {
-            println!("  stopped: {err:#}");
+        pending.push((format!("connection {client} -> {server}\n"), streams, None));
+    }
+
+    // Transfer connections use a session key from another connection's 105
+    // Server Info, so retry until no new key turns up.
+    loop {
+        let mut found = Vec::new();
+        for (_, streams, output) in pending.iter_mut().filter(|(_, _, o)| o.is_none()) {
+            let mut out = String::new();
+            match dissect(streams, &keys, &mut out) {
+                Ok(Some(new_keys)) => {
+                    found.extend(new_keys);
+                    *output = Some(out);
+                }
+                Ok(None) => {}
+                Err(err) => {
+                    writeln!(out, "  stopped: {err:#}").unwrap();
+                    *output = Some(out);
+                }
+            }
         }
-        println!();
+        if found.is_empty() {
+            break;
+        }
+        keys.extend(found);
+    }
+
+    for (title, streams, output) in pending {
+        let output = output.unwrap_or_else(|| {
+            let mut out = String::new();
+            dissect(&streams, &keys, &mut out).ok();
+            out.push_str(
+                "  stopped: no candidate key matches the client's proof; try --password\n",
+            );
+            out
+        });
+        println!("{title}{output}");
     }
     Ok(())
 }
 
-/// Prints one connection.
-fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
+/// Writes one connection to `out`, and returns the session keys its 105 Server
+/// Info messages carry, or `None` if no key matches its proof.
+fn dissect(
+    streams: &[Stream; 2],
+    keys: &[(String, AccountKey)],
+    out: &mut String,
+) -> Result<Option<Vec<(String, AccountKey)>>> {
     let dirs = [Dir::ClientToServer, Dir::ServerToClient];
     let mut hellos = Vec::new();
     for (stream, dir) in streams.iter().zip(dirs) {
         let (hello, len) = Hello::decode(&stream.data).with_context(|| format!("{dir} hello"))?;
-        println!(
+        writeln!(
+            out,
             "  [{}] {dir} hello: service {} format {} version {:#04x} challenge {} nonce {} name {}",
             stream.frame_at(0),
             fourcc(hello.service),
@@ -160,7 +202,7 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
             hello.challenge,
             hex::encode(hello.nonce),
             quoted(&hello.name)
-        );
+        )?;
         hellos.push((hello, len));
     }
 
@@ -168,13 +210,14 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
     for ((stream, dir), (_, hello_len)) in streams.iter().zip(dirs).zip(&hellos) {
         let proof =
             Proof::decode(&stream.data[*hello_len..]).with_context(|| format!("{dir} proof"))?;
-        println!(
+        writeln!(
+            out,
             "  [{}] {dir} proof: status {:?} auth {} response {}",
             stream.frame_at(*hello_len),
             proof.status,
             hex::encode(proof.auth),
             quoted(&proof.response)
-        );
+        )?;
         proofs.push(proof);
     }
 
@@ -183,17 +226,18 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
         .iter()
         .find(|(_, key)| proofs[0].auth == compute_auth(key, server_nonce))
     else {
-        bail!("no candidate password matches the client's proof; try --password");
+        return Ok(None);
     };
     let server_ok = proofs[1].auth == compute_auth(key, &hellos[0].0.nonce);
-    println!(
+    writeln!(
+        out,
         "  key: {label} (server proof {})",
         if server_ok {
             "matches"
         } else {
             "DOES NOT match"
         }
-    );
+    )?;
 
     let cipher = SessionCipher::new(key);
     let mut messages = Vec::new();
@@ -209,7 +253,7 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
                 ));
                 break;
             };
-            let header = match cipher.open_header(block.try_into().unwrap()) {
+            let header = match cipher.open_data_header(block.try_into().unwrap()) {
                 Ok(header) => header,
                 Err(err) => {
                     messages.push((
@@ -233,27 +277,40 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
     }
 
     messages.sort_by_key(|(frame, dir, _)| (*frame, *dir));
+    let mut new_keys = Vec::new();
     for (frame, dir, message) in messages {
         match message {
             Ok((header, payload)) => {
-                println!(
+                writeln!(
+                    out,
                     "  [{frame}] {dir} txid {:08x} type {}{} len {}",
                     header.txid,
                     header.kind,
                     if header.is_reply() { " reply" } else { "" },
                     header.len
-                );
-                match summary(header.kind, &payload) {
-                    Ok(Some(text)) => println!("      = {text}"),
-                    Ok(None) => {}
-                    Err(err) => println!("      ! {err}"),
+                )?;
+                if header.kind == MessageType::SERVER_INFO {
+                    if let Ok(info) = ServerInfo::decode(&payload) {
+                        new_keys.push((
+                            format!("session key of user {}", info.user_id),
+                            AccountKey(info.session_key),
+                        ));
+                    }
                 }
-                print!("{}", hexdump(&payload, "      "));
+                match summary(header.kind, &payload) {
+                    Ok(Some(text)) => writeln!(out, "      = {text}")?,
+                    Ok(None) => {}
+                    Err(err) => writeln!(out, "      ! {err}")?,
+                }
+                out.push_str(&hexdump(&payload[..payload.len().min(MAX_DUMP)], "      "));
+                if payload.len() > MAX_DUMP {
+                    writeln!(out, "      … {} more bytes", payload.len() - MAX_DUMP)?;
+                }
             }
-            Err(err) => println!("  [{frame}] {dir} {err}"),
+            Err(err) => writeln!(out, "  [{frame}] {dir} {err}")?,
         }
     }
-    Ok(())
+    Ok(Some(new_keys))
 }
 
 /// Describes a payload whose layout `kdx_proto::msg` knows.
