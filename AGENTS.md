@@ -90,3 +90,20 @@ re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly \
 - End each commit message with a `Co-Authored-By:` line naming the AI model
   that wrote it, such as
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown under `.scratch/<feature>/`. See
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default roles, each label equal to its name. See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See
+`docs/agents/domain.md`.
