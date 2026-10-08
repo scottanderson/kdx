@@ -227,7 +227,7 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
                 println!(
                     "  [{frame}] {dir} txid {:08x} type {}{} len {}",
                     header.txid,
-                    header.kind.0,
+                    header.kind,
                     if header.is_reply() { " reply" } else { "" },
                     header.len
                 );

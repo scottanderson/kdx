@@ -201,7 +201,7 @@ status.
 
 | Type | Name | Initiator | Handler |
 |---:|---|---|---|
-| 1 | Status | Server | `FUN_08086640` |
+| 1 | Status (this project's name; the server's table has none) | Server | `FUN_08086640` |
 | 100 | Set Identity | Client | `FUN_0804b304` |
 | 101 | User List | Server | |
 | 102 | User Changed | Server | |
@@ -274,9 +274,9 @@ status.
 | 403 | Create Alias | Client | `FUN_0804e4ec` |
 | 404 | Delete File/Folder | Client | |
 | 405 | Move To Trash | Client | `FUN_0804e980` |
-| 406 | Rename | Client | |
-| 407 | Move | Client | `FUN_0804ebd8` |
-| 408 | Copy | Client | |
+| 406 | Rename File/Folder | Client | |
+| 407 | Move File/Folder | Client | `FUN_0804ebd8` |
+| 408 | Copy File/Folder | Client | |
 | 409 | Get File/Folder Info | Client | `FUN_0804ef00` |
 | 410 | File/Folder Info | Server | |
 | 411 | Set File/Folder Info | Client | `FUN_0804f684` |
@@ -972,9 +972,11 @@ writes a 189 Finished File Upload history record, and sends an empty
 **418 Upload File (C)** with its own txid **[O]**. [O]: 100 bytes uploaded
 to `Uploads [UL]` arrived byte for byte.
 
-**404 Delete File/Folder**, **406 Rename**, **408 Copy**
-Server 1.620 has no handler for these. 405 Move To Trash, 407 Move, and 411
-Set File/Folder Info cover the same ground **[S `FUN_0804fdac`]**.
+**404 Delete File/Folder**, **406 Rename File/Folder**, **408 Copy
+File/Folder**
+Server 1.620 has no handler for these. 405 Move To Trash, 407 Move
+File/Folder, and 411 Set File/Folder Info cover the same ground **[S
+`FUN_0804fdac`]**.
 
 **450 Generate Catalog**, **452 File Search**
 These are not read yet.
@@ -1297,7 +1299,7 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 11 | Upload | 402 Create Folder, 415 Upload File |
 | 13 | Empty Trash | 421 Empty Trash |
 | 15 | Create Aliases | 403 Create Alias |
-| 16 | Move | 407 Move |
+| 16 | Move | 407 Move File/Folder |
 | 17 | Rename [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
 | 18 | Delete | 405 Move To Trash |
 | 20 | Set Attributes [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |

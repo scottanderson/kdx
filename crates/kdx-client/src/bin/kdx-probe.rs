@@ -61,11 +61,14 @@ fn main() -> Result<()> {
     // The login connection must stay open while an attached one is in use.
     let mut _login_conn = None;
     if args.attach {
-        let txid = conn.send(MessageType(100), &login_record(args.nick.as_bytes()))?;
-        println!(">> txid {txid:08x} type 100 (login)");
+        let txid = conn.send(
+            MessageType::SET_IDENTITY,
+            &login_record(args.nick.as_bytes()),
+        )?;
+        println!(">> txid {txid:08x} type {}", MessageType::SET_IDENTITY);
         let info = loop {
             let (header, payload) = conn.recv().context("waiting for server info")?;
-            if header.kind == MessageType(105) {
+            if header.kind == MessageType::SERVER_INFO {
                 break payload;
             }
         };
@@ -79,7 +82,10 @@ fn main() -> Result<()> {
             .set_read_timeout(Some(Duration::from_millis(args.wait)))?;
         _login_conn = Some(std::mem::replace(&mut conn, attached));
     } else if !args.no_login {
-        requests.push((MessageType(100), login_record(args.nick.as_bytes())));
+        requests.push((
+            MessageType::SET_IDENTITY,
+            login_record(args.nick.as_bytes()),
+        ));
     }
     for request in &args.requests {
         let (kind, hex) = request.split_once(':').unwrap_or((request, ""));
@@ -94,7 +100,7 @@ fn main() -> Result<()> {
 
     for (kind, payload) in requests {
         let txid = conn.send(kind, &payload)?;
-        println!(">> txid {txid:08x} type {} len {}", kind.0, payload.len());
+        println!(">> txid {txid:08x} type {} len {}", kind, payload.len());
         print!("{}", hexdump(&payload));
         drain(&mut conn)?;
     }
@@ -109,7 +115,7 @@ fn drain(conn: &mut Connection) -> Result<()> {
                 let reply = if header.is_reply() { " reply" } else { "" };
                 println!(
                     "<< txid {:08x} type {}{reply} len {}",
-                    header.txid, header.kind.0, header.len
+                    header.txid, header.kind, header.len
                 );
                 print!("{}", hexdump(&payload));
             }

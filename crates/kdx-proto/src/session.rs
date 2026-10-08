@@ -35,30 +35,7 @@ pub enum SessionError {
     Incomplete(usize),
 }
 
-/// A message type number.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct MessageType(pub u32);
-
-impl MessageType {
-    /// Client login and user info. Provisional name.
-    pub const LOGIN: Self = Self(100);
-    /// The logged-in user's own info, from the server. Provisional name.
-    pub const OWN_USER_INFO: Self = Self(101);
-    /// Server info. Provisional name.
-    pub const SERVER_INFO: Self = Self(105);
-    /// Send a private message. Provisional name.
-    pub const SEND_PRIVATE_MESSAGE: Self = Self(300);
-    /// A private message delivered to the client. Provisional name.
-    pub const PRIVATE_MESSAGE: Self = Self(301);
-    /// List newsgroups. Provisional name.
-    pub const LIST_NEWSGROUPS: Self = Self(605);
-    /// Newsgroup list reply. Provisional name.
-    pub const NEWSGROUP_LIST: Self = Self(606);
-    /// Get a newsgroup's messages. Provisional name.
-    pub const GET_NEWS_MESSAGES: Self = Self(607);
-    /// Newsgroup messages reply. Provisional name.
-    pub const NEWS_MESSAGES: Self = Self(608);
-}
+pub use crate::message_type::MessageType;
 
 /// The plaintext message header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

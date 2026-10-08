@@ -116,9 +116,9 @@ fn session() {
     let c2s = messages(C2S, &cipher);
     let s2c = messages(S2C, &cipher);
     let kinds = |list: &[(Header, Vec<u8>)]| list.iter().map(|(h, _)| h.kind).collect::<Vec<_>>();
-    assert!(kinds(&c2s).contains(&MessageType::LOGIN));
+    assert!(kinds(&c2s).contains(&MessageType::SET_IDENTITY));
     assert!(kinds(&c2s).contains(&MessageType::GET_NEWS_MESSAGES));
-    assert!(kinds(&s2c).contains(&MessageType::OWN_USER_INFO));
+    assert!(kinds(&s2c).contains(&MessageType::USER_LIST));
     assert!(kinds(&s2c).contains(&MessageType::NEWS_MESSAGES));
 
     // Sealing the decrypted messages again must give the captured bytes, padding included.

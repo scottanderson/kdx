@@ -14,8 +14,10 @@
 pub mod account;
 pub mod challenge;
 pub mod handshake;
+pub mod message_type;
 pub mod session;
 mod xor;
 
 pub use account::AccountKey;
 pub use challenge::ChallengeTable;
+pub use message_type::MessageType;
