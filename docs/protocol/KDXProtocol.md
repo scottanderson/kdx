@@ -7,7 +7,8 @@ reading of the binaries. The deeper write-ups are in
 [session.md](session.md) (message encryption and framing).
 
 Each claim carries its evidence: **[O]** observed in a capture or lab probe,
-**[S]** read in a binary (with the function address), **[I]** inferred.
+**[S]** read in a binary (with the function address), **[I]** inferred. The
+lab probes are in `captures/probe.pcapng` (see `captures/probe.md`).
 Unmarked rows in a layout table share the tag in the message's heading line.
 Offsets and lengths are hex. All multi-byte numbers are big-endian.
 A message is named by its type and title, as in 412 Download File.
