@@ -8,7 +8,7 @@ server and a tracker, all compatible with the original KDX programs (Server
   `docs/protocol/KDXProtocol.md` is the reference, and `docs/protocol/PLAN.md`
   is the plan.
 - `crates/kdx-proto` handles the wire format: handshake, session encryption,
-  and message framing. It does no I/O.
+  message framing, and typed payloads (`msg`). It does no I/O.
 - `crates/kdx-dissect` decodes KDX connections in a pcap or pcapng capture:
 
   ```sh

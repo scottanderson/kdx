@@ -116,7 +116,8 @@ The project is dual-licensed MIT OR Apache-2.0.
 ## Rust layout
 Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
 `kdx-dissect` (pcap to text), `kdx-client`, and later `kdx-server`. The first
-three exist; `kdx-proto` covers the handshake and session layer so far.
+three exist. `kdx-proto` covers the handshake, the session layer, and the
+payloads of the first-connect capture (`msg`).
 
 ## Open decisions
 - None currently.

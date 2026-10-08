@@ -143,21 +143,24 @@ This record is used in 100 Set Identity (client to server, user ID 0) and in
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 2 | user ID | assigned by the server |
-| 0x02 | 2 | 0 | |
+| 0x00 | 4 | user ID | assigned by the server; 0 in 100 Set Identity |
 | 0x04 | 1 | status | the value set by 110 Set Mini User Icon |
-| 0x05 | 5 | | |
+| 0x05 | 5 | 0 | |
 | 0x0a | 2 | voice UDP port | 10600 in the capture [O] |
 | 0x0c | 2 | icon length | < 0x709 |
-| 0x0e | 6 | | probably two RGB colours [I] |
-| 0x14 | 2 | | set by the server |
-| 0x16 | 1 | | set by the server |
+| 0x0e | 6 | | from the client; `00 00 00 ff cc 00` in the capture, probably two RGB colours [I] |
+| 0x14 | 1 | | set by the server; 0 from the client, 0xff for admin [O] |
+| 0x15 | 2 | | set by the server |
 | 0x17 | 1 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
 | 0x18 | 1 | extra length | skipped by the server |
 | 0x19 | 1 | nick length | |
 | 0x1a | 1 | info length | ≤ 0x7f |
-| 0x1b | 1 | | |
-| 0x1c | | icon, nick, info | then padding to a multiple of 4 |
+| 0x1b | 1 | 0 | |
+| 0x1c | | icon, extra, nick, info | in that order |
+
+- The client sends 100 Set Identity unpadded (565 bytes in the capture). The
+  server pads each record of 101 User List with zeros to a multiple of 4
+  (568 bytes) **[O]**. `kdx_proto::msg::UserRecord` re-encodes both.
 
 - The icon is a 2-bit-per-pixel bitmap (about 0x200 bytes in the capture)
   **[O]**.
@@ -1372,12 +1375,13 @@ and Disable Encryption are not yet mapped to bit numbers.
 1. Client and server exchange hellos and proofs
    ([handshake.md](handshake.md)).
 2. The client sends **100 Set Identity**.
-3. The server sends 101 User List, 105 Server Info, 107 Server Greeting, and
-   possibly 106 Server Icon and 213 Must Join Chat. Everyone else receives
-   103 User Joined.
-4. The client then asks for whatever it shows: 214 Get Chat List, 605 Get
-   Newsgroup List, 607 Get News Messages, and
-   202 Join Chat for Public Chat (`captures/first-connect.pcapng`) **[O]**.
+3. The server sends 101 User List and 105 Server Info, and may send 106
+   Server Icon, 107 Server Greeting, and 213 Must Join Chat (see 100 Set
+   Identity). Everyone else receives 103 User Joined.
+4. The client then asks for whatever it shows. In
+   `captures/first-connect.pcapng` the server sends only 101 and 105 (frames
+   23–24), and the user's later actions bring 300 Send Private Message
+   twice, 605 Get Newsgroup List, and 607 Get News Messages **[O]**.
 
 ## Logout
 

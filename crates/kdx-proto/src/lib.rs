@@ -15,6 +15,7 @@ pub mod account;
 pub mod challenge;
 pub mod handshake;
 pub mod message_type;
+pub mod msg;
 pub mod session;
 mod xor;
 

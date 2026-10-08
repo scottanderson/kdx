@@ -127,3 +127,69 @@ fn session() {
         assert_eq!(resealed, stream[side(stream).hello_len + Proof::LEN..]);
     }
 }
+
+#[test]
+fn payloads() {
+    use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry};
+    use kdx_proto::msg::{PrivateMessage, ServerInfo, UserRecord};
+
+    let cipher = SessionCipher::new(&AccountKey::from_password(PASSWORD));
+    let mut seen = Vec::new();
+    for (header, payload) in messages(C2S, &cipher)
+        .into_iter()
+        .chain(messages(S2C, &cipher))
+    {
+        let payload = payload.as_slice();
+        match header.kind {
+            MessageType::SET_IDENTITY => {
+                let (me, len) = UserRecord::decode(payload).unwrap();
+                assert_eq!(len, payload.len());
+                assert_eq!(me.user_id, 0);
+                assert_eq!(me.nick, b"kdx@gitbran.ch");
+                assert_eq!(me.encode().unwrap(), payload);
+            }
+            MessageType::USER_LIST => {
+                let list = UserRecord::decode_list(payload).unwrap();
+                assert_eq!(list.len(), 1);
+                assert_eq!(list[0].nick, b"kdx@gitbran.ch");
+                assert_ne!(list[0].user_id, 0);
+                assert_eq!(UserRecord::encode_list(&list).unwrap(), payload);
+            }
+            MessageType::SERVER_INFO => {
+                let info = ServerInfo::decode(payload).unwrap();
+                assert_eq!(info.name, b"New Server");
+                assert_eq!(info.version, 0x0654);
+                assert!(!format!("{info:?}").contains(&format!("{:?}", info.session_key)));
+                assert_eq!(info.encode().unwrap(), payload);
+            }
+            MessageType::SEND_PRIVATE_MESSAGE | MessageType::INCOMING_PRIVATE_MESSAGE => {
+                let message = PrivateMessage::decode(payload).unwrap();
+                assert!([&b"test"[..], b"hi"].contains(&message.text.as_slice()));
+                assert_eq!(message.encode(), payload);
+            }
+            MessageType::NEWSGROUP_LIST => {
+                let list = NewsgroupEntry::decode_list(payload).unwrap();
+                assert!(!list.is_empty());
+                assert_eq!(NewsgroupEntry::encode_list(&list).unwrap(), payload);
+            }
+            MessageType::NEWS_MESSAGES => {
+                let news = NewsMessages::decode(payload).unwrap();
+                assert!(!news.messages.is_empty());
+                assert_eq!(news.encode().unwrap(), payload);
+            }
+            _ => continue,
+        }
+        seen.push(header.kind);
+    }
+    for kind in [
+        MessageType::SET_IDENTITY,
+        MessageType::USER_LIST,
+        MessageType::SERVER_INFO,
+        MessageType::SEND_PRIVATE_MESSAGE,
+        MessageType::INCOMING_PRIVATE_MESSAGE,
+        MessageType::NEWSGROUP_LIST,
+        MessageType::NEWS_MESSAGES,
+    ] {
+        assert!(seen.contains(&kind), "{kind} not in the capture");
+    }
+}
