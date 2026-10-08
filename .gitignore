@@ -1,0 +1,10 @@
+# Original Haxial binaries: re-fetch via vendor/MANIFEST.md
+/vendor/haxial/
+# Lab state (server data, Wine prefix, logs) and downloaded runtime deps
+/lab/run/
+/lab/cache/
+/target/
+# Ghidra projects and raw exports (decompiled Haxial code stays local)
+/re/projects/
+/re/out/
+/vendor/refs/
