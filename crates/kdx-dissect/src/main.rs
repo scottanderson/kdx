@@ -17,8 +17,13 @@ use kdx_proto::msg::admin::{
     AccountClass, AccountInfo, AccountListEntry, ExtraServerInfo, FolderAccessItem,
     MonitoredConnection, ProcessList, YourAddress,
 };
+use kdx_proto::msg::chat::{
+    ChatListEntry, ChatRecord, ChatText, ChatTopicChanged, ChatWindowInfo, JoinChat, SetChatTopic,
+};
+use kdx_proto::msg::file::{FileInfo, FileListEntry};
 use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry, NewsgroupInfo};
-use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserRecord};
+use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
+use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
 use pcap_file::pcap::PcapReader;
@@ -374,10 +379,127 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             let message = PrivateMessage::decode(payload)?;
             format!("user {} text {}", message.user_id, quoted(&message.text))
         }
-        MessageType::GET_FILE_LIST => {
-            let path = FilePath::decode(payload)?;
-            let names: Vec<String> = path.0.iter().map(|n| quoted(n)).collect();
-            format!("path /{}", names.join("/"))
+        MessageType::GET_FILE_LIST | MessageType::GET_FILE_FOLDER_INFO => {
+            path(&FilePath::decode(payload)?)
+        }
+        MessageType::USER_INFO => {
+            let info = UserInfo::decode(payload)?;
+            format!(
+                "user {} {} login {} from {}",
+                info.user_id,
+                quoted(&info.nick),
+                quoted(&info.login),
+                quoted(&info.address)
+            )
+        }
+        MessageType::JOIN_CHAT => {
+            let join = JoinChat::decode(payload)?;
+            format!("chat {} key {:#x}", join.chat_id, join.key)
+        }
+        MessageType::CHAT_WINDOW_INFO => {
+            let window = ChatWindowInfo::decode(payload)?;
+            format!(
+                "chat {} {} members {:?}",
+                window.chat_id,
+                quoted(window.name()),
+                window.members
+            )
+        }
+        MessageType::SEND_CHAT_TEXT | MessageType::RECEIVE_CHAT_TEXT => {
+            let chat = ChatText::decode(payload)?;
+            format!(
+                "chat {} user {} text {}",
+                chat.chat_id,
+                chat.user_id,
+                quoted(&chat.text)
+            )
+        }
+        MessageType::SET_CHAT_TOPIC => {
+            let set = SetChatTopic::decode(payload)?;
+            format!("chat {} topic {}", set.chat_id, quoted(&set.topic))
+        }
+        MessageType::CHAT_TOPIC_CHANGED => {
+            let topic = ChatTopicChanged::decode(payload)?;
+            format!(
+                "chat {} topic {} by {} {}",
+                topic.chat_id,
+                quoted(&topic.topic),
+                topic.user_id,
+                quoted(&topic.nick)
+            )
+        }
+        MessageType::CHAT_LIST => ChatListEntry::decode_list(payload)?
+            .iter()
+            .map(|c| {
+                format!(
+                    "chat {} {} ({} members)",
+                    c.chat_id,
+                    quoted(&c.name),
+                    c.member_count
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::CHAT_INFO => {
+            let chat = ChatRecord::decode(payload)?;
+            format!(
+                "chat {} {} {}",
+                chat.chat_id,
+                quoted(&chat.name),
+                quoted(&chat.description)
+            )
+        }
+        MessageType::FILE_LIST => FileListEntry::decode_list(payload)?
+            .iter()
+            .map(|e| {
+                if e.is_folder() {
+                    format!("{}/", quoted(&e.name))
+                } else {
+                    format!("{} {} bytes", quoted(&e.name), e.size)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::FILE_FOLDER_INFO => {
+            let info = FileInfo::decode(payload)?;
+            format!(
+                "{} kind {} size {}",
+                quoted(&info.name),
+                quoted(&info.kind),
+                info.size
+            )
+        }
+        MessageType::DOWNLOAD_FILE => {
+            let request = DownloadFile::decode(payload)?;
+            format!(
+                "{} from {} options {:#x}",
+                path(&request.path),
+                request.data_offset,
+                request.options
+            )
+        }
+        MessageType::DOWNLOAD_FILE_REPLY => {
+            let info = DownloadInfo::decode(payload)?;
+            format!(
+                "{} data {} bytes rsrc {} bytes",
+                quoted(&info.strings.name),
+                info.data_size,
+                info.rsrc_size
+            )
+        }
+        MessageType::UPLOAD_FILE => {
+            let request = UploadFile::decode(payload)?;
+            format!(
+                "{} into {} data {} bytes options {:#x}",
+                quoted(&request.strings.name),
+                path(&request.folder),
+                request.data_size,
+                request.options
+            )
+        }
+        MessageType::UPLOAD_FILE_REPLY => {
+            let reply = UploadReply::decode(payload)?;
+            format!("send data from {}", reply.data_offset)
         }
         MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
             .iter()
@@ -489,6 +611,9 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .join("; "),
         _ => return Ok(None),
     };
+    if text.is_empty() {
+        return Ok(Some("(empty)".to_owned()));
+    }
     Ok(Some(text))
 }
 
@@ -603,6 +728,11 @@ fn reassemble(flow: &Flow) -> Stream {
         }
     }
     stream
+}
+
+fn path(path: &FilePath) -> String {
+    let names: Vec<String> = path.0.iter().map(|n| quoted(n)).collect();
+    format!("/{}", names.join("/"))
 }
 
 fn hex(bytes: &[u8]) -> String {
