@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Run Ghidra 12.1.4 headless (PyGhidra) in Docker with no network access.
+# Mounts: vendor/haxial (read-only) at /work/bin, re/scripts (read-only) at /work/scripts,
+# re/projects at /work/projects and re/out at /work/out (both git-ignored).
+#
+#   re/ghidra <analyzeHeadless args...>
+#   e.g. re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -postScript overview.py
+set -euo pipefail
+RE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(dirname "$RE")"
+IMAGE="${GHIDRA_IMAGE:-ghidra/ghidra:12.1.4_PUBLIC}"
+mkdir -p "$RE/projects" "$RE/out"
+exec docker run --rm -i --network none \
+  --user "$(id -u):$(id -g)" -e HOME=/tmp/home -e MODE=pyghidra -e MAXMEM="${MAXMEM:-4G}" \
+  -v "$ROOT/vendor/haxial:/work/bin:ro" \
+  -v "$RE/scripts:/work/scripts:ro" \
+  -v "$RE/projects:/work/projects" \
+  -v "$RE/out:/work/out" \
+  "$IMAGE" -H "$@"
