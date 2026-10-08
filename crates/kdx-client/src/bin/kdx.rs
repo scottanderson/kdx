@@ -8,6 +8,7 @@ use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use kdx_client::{table, Client, Login};
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
+use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
 use kdx_proto::ChallengeTable;
@@ -73,7 +74,17 @@ enum Command {
     News {
         /// Newsgroup ID; omit to list the newsgroups.
         group: Option<u32>,
+        /// Message ID; omit to list the group's messages.
+        message: Option<u32>,
     },
+    /// Post a news message; the body is read from standard input if omitted.
+    Post {
+        group: u32,
+        subject: String,
+        body: Option<String>,
+    },
+    /// Delete a news message.
+    DeleteNews { group: u32, message: u32 },
     /// Say something in a chat.
     Say {
         /// Chat ID.
@@ -167,7 +178,7 @@ fn main() -> Result<()> {
             let start = client.upload(&parse_path(&folder), name.as_bytes(), len, &mut source)?;
             println!("uploaded {} bytes as {name}", len - start);
         }
-        Command::News { group: None } => {
+        Command::News { group: None, .. } => {
             for group in client.newsgroups()? {
                 println!(
                     "{:>5}  {} ({} messages)",
@@ -177,17 +188,33 @@ fn main() -> Result<()> {
                 );
             }
         }
-        Command::News { group: Some(group) } => {
+        Command::News {
+            group: Some(group),
+            message: None,
+        } => {
             for message in client.news(group)?.messages {
-                println!(
-                    "#{} {} — {}\n\n{}\n",
-                    message.message_id,
-                    text(&message.subject),
-                    text(&message.poster),
-                    text(&message.body).replace('\r', "\n")
-                );
+                print_news(&message);
             }
         }
+        Command::News {
+            group: Some(group),
+            message: Some(message),
+        } => print_news(&client.news_message(group, message)?),
+        Command::Post {
+            group,
+            subject,
+            body,
+        } => {
+            let body = match body {
+                Some(body) => body,
+                None => std::io::read_to_string(std::io::stdin())?,
+            };
+            // KDX separates lines with CR.
+            let body = body.trim_end_matches(['\r', '\n']);
+            let body = body.replace("\r\n", "\r").replace('\n', "\r");
+            client.post_news(group, subject.as_bytes(), body.as_bytes())?;
+        }
+        Command::DeleteNews { group, message } => client.delete_news(group, message)?,
         Command::Say { chat, text: line } => {
             client.join_chat(chat, 0)?;
             client.send_chat(chat, line.as_bytes())?;
@@ -356,9 +383,31 @@ fn print_event(kind: MessageType, payload: &[u8]) -> Result<()> {
             };
             println!("user {} {what}: {}", user.user_id, text(&user.nick));
         }
+        MessageType::NEWS_MESSAGE_POSTED | MessageType::NEWS_MESSAGE_DELETED => {
+            let change = NewsMessageChange::decode(payload)?;
+            let what = if kind == MessageType::NEWS_MESSAGE_POSTED {
+                "posted"
+            } else {
+                "deleted"
+            };
+            println!(
+                "news {what}: group {} message {}, now {} messages",
+                change.group_id, change.message_id, change.message_count
+            );
+        }
         other => println!("{other} ({} bytes)", payload.len()),
     }
     Ok(())
+}
+
+fn print_news(message: &NewsMessage) {
+    println!(
+        "#{} {} — {}\n\n{}\n",
+        message.message_id,
+        text(&message.subject),
+        text(&message.poster),
+        text(&message.body).replace('\r', "\n")
+    );
 }
 
 /// Splits `a/b/c` into a file path; empty for the root.

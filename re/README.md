@@ -70,6 +70,7 @@ addresses.
 | `0x08049d14` | message type → name (jump table at `0x080abc6c`) |
 | `0x08066d04` | error code → text (codes at `0x080b1dc0`, text at `0x080b1f00`) |
 | `0x0804ad64` | broadcast a message to all users |
+| `0x0805c87c` | send a message to the users whose class is in a class bitmap (613 News Message Posted) |
 | `0x0804af04` | encode a user record |
 | `0x0804b114` | post-login: sends 105, 107, 106, 213 |
 | `0x08061d80` | write a server history record and push 183 |

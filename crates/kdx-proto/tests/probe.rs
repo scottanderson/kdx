@@ -366,7 +366,10 @@ fn newsgroup_info() {
     let group = NewsgroupInfo::decode(wire).unwrap();
     assert_eq!(group.group_id, 1);
     assert_eq!(group.name, b"General News");
-    assert_eq!(group.classes, u64::MAX);
-    assert_eq!((group.message_count, group.message_limit), (1, 0x32));
+    assert_eq!(
+        (group.read_classes, group.post_classes),
+        (u32::MAX, u32::MAX)
+    );
+    assert_eq!((group.message_count, group.size_limit_kib), (1, 50));
     assert_eq!(group.encode().unwrap(), wire);
 }

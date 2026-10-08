@@ -98,7 +98,7 @@ Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
 | 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
 | 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
 | 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
-| 4. News | reading; posting not read | yes | reading |
+| 4. News | reading, posting, deleting; newsgroup management not read | yes | read, post, delete |
 | 5. Files | list, info, download, upload, resume; search and the 402–423 edits not read | yes | ls, get, put |
 | 6. Accounts, admin | the read replies; the 504–511 writes not read | the read replies | no |
 | 7. Tracker | not started | no | no |

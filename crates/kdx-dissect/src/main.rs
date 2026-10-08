@@ -21,7 +21,9 @@ use kdx_proto::msg::chat::{
     ChatListEntry, ChatRecord, ChatText, ChatTopicChanged, ChatWindowInfo, JoinChat, SetChatTopic,
 };
 use kdx_proto::msg::file::{FileInfo, FileListEntry};
-use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry, NewsgroupInfo};
+use kdx_proto::msg::news::{
+    NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
+};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
@@ -513,6 +515,42 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::GET_NEWS_MESSAGE | MessageType::DELETE_NEWS_MESSAGE => {
+            need(payload, 8)?;
+            format!(
+                "group {} message {}",
+                u32::from_be_bytes(payload[..4].try_into()?),
+                u32::from_be_bytes(payload[4..8].try_into()?)
+            )
+        }
+        MessageType::NEWS_MESSAGE => {
+            let (m, _) = NewsMessage::decode(payload)?;
+            format!(
+                "group {} message {} {} by {} login {}, {} bytes",
+                m.group_id,
+                m.message_id,
+                quoted(&m.subject),
+                quoted(&m.poster),
+                quoted(&m.login),
+                m.body.len()
+            )
+        }
+        MessageType::POST_NEWS_MESSAGE => {
+            let post = PostNewsMessage::decode(payload)?;
+            format!(
+                "group {} subject {} body {}",
+                post.group_id,
+                quoted(&post.subject),
+                quoted(&post.body)
+            )
+        }
+        MessageType::NEWS_MESSAGE_POSTED | MessageType::NEWS_MESSAGE_DELETED => {
+            let change = NewsMessageChange::decode(payload)?;
+            format!(
+                "group {} message {}, {} messages now",
+                change.group_id, change.message_id, change.message_count
+            )
+        }
         MessageType::NEWS_MESSAGES => {
             let news = NewsMessages::decode(payload)?;
             let subjects: Vec<String> = news
@@ -527,16 +565,23 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                     )
                 })
                 .collect();
-            format!("group {}: {}", news.group_id, subjects.join("; "))
+            format!(
+                "group {} permissions {:#x}: {}",
+                news.group_id,
+                news.permissions,
+                subjects.join("; ")
+            )
         }
         MessageType::NEWSGROUP_INFO => {
             let group = NewsgroupInfo::decode(payload)?;
             format!(
-                "group {} {} ({} messages, limit {})",
+                "group {} {} ({} messages, limit {} KiB) read {:#010x} post {:#010x}",
                 group.group_id,
                 quoted(&group.name),
                 group.message_count,
-                group.message_limit
+                group.size_limit_kib,
+                group.read_classes,
+                group.post_classes
             )
         }
         MessageType::EXTRA_SERVER_INFO => {
@@ -728,6 +773,11 @@ fn reassemble(flow: &Flow) -> Stream {
         }
     }
     stream
+}
+
+fn need(payload: &[u8], len: usize) -> Result<()> {
+    anyhow::ensure!(payload.len() >= len, "payload too short: need {len} bytes");
+    Ok(())
 }
 
 fn path(path: &FilePath) -> String {

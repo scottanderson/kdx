@@ -7,7 +7,7 @@ use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use anyhow::{bail, Context, Result};
 use kdx_proto::msg::chat::{ChatListEntry, ChatText, ChatWindowInfo, JoinChat};
 use kdx_proto::msg::file::FileListEntry;
-use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry};
+use kdx_proto::msg::news::{NewsMessage, NewsMessages, NewsgroupEntry, PostNewsMessage};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, MessageType};
@@ -163,6 +163,52 @@ impl Client {
     pub fn news(&mut self, group_id: u32) -> Result<NewsMessages> {
         let reply = self.request(MessageType::GET_NEWS_MESSAGES, &group_id.to_be_bytes())?;
         Ok(NewsMessages::decode(&reply)?)
+    }
+
+    /// 609 Get News Message.
+    pub fn news_message(&mut self, group_id: u32, message_id: u32) -> Result<NewsMessage> {
+        let mut request = group_id.to_be_bytes().to_vec();
+        request.extend_from_slice(&message_id.to_be_bytes());
+        let reply = self.request(MessageType::GET_NEWS_MESSAGE, &request)?;
+        Ok(NewsMessage::decode(&reply)?.0)
+    }
+
+    /// 611 Post News Message.
+    pub fn post_news(&mut self, group_id: u32, subject: &[u8], body: &[u8]) -> Result<()> {
+        let request = PostNewsMessage {
+            group_id,
+            subject: subject.to_vec(),
+            body: body.to_vec(),
+        };
+        self.send_checked(MessageType::POST_NEWS_MESSAGE, &request.encode()?)
+    }
+
+    /// 612 Delete News Message.
+    pub fn delete_news(&mut self, group_id: u32, message_id: u32) -> Result<()> {
+        let mut request = group_id.to_be_bytes().to_vec();
+        request.extend_from_slice(&message_id.to_be_bytes());
+        self.send_checked(MessageType::DELETE_NEWS_MESSAGE, &request)
+    }
+
+    /// Sends a request that has no reply on success and checks that no error came back.
+    ///
+    /// The server handles requests in order, so an error reply arrives before
+    /// the reply to a 115 Get My Address sent after the request.
+    pub fn send_checked(&mut self, kind: MessageType, payload: &[u8]) -> Result<()> {
+        let txid = self.conn.send(kind, payload)?;
+        self.request(MessageType::GET_MY_ADDRESS, &[])?;
+        let Some(at) = self
+            .events
+            .iter()
+            .position(|(h, _)| h.txid == txid && h.is_reply())
+        else {
+            return Ok(());
+        };
+        let (header, payload) = self.events.remove(at).expect("found above");
+        match header.kind {
+            MessageType::STATUS => Err(status_error(kind, &payload)),
+            other => bail!("unexpected {other} reply to {kind}"),
+        }
     }
 
     /// Downloads a file's data fork from `offset` into `sink` on a new transfer connection.

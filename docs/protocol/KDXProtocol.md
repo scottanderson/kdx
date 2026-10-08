@@ -1115,20 +1115,31 @@ Reply: a u32 count, then one entry per group:
 | 0x18 | | name | `General News` |
 
 **602 Get Newsgroup** → **603 Newsgroup Info**
-Initiator: Client. **[S `FUN_0805cc24`; O 76 bytes]**
+Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
+`FUN_0805cc24`; O 76 bytes]**
 
-The request is a u32 group ID. Reply:
+The request is a u32 group ID. An unknown group gets 1 Status 0x1000c. The
+reply is padded to 4:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | group ID | |
-| 0x10 | 8 | time | |
-| 0x18 | 8 | | all ones; probably class bitmaps [I] |
-| 0x20 | 1 | | 1 |
-| 0x30 | 2 | | 1, probably the message count [I] |
-| 0x32 | 2 | | 0x32, probably the message limit [I] |
-| 0x3c | 1 | name length | |
-| 0x40 | | name | |
+| 0x04 | 0xc | | 0 |
+| 0x10 | 8 | time of the last post | 611 Post News Message sets it |
+| 0x18 | 4 | read classes | a class bitmap, class 0 in the top bit; `ffffffff` |
+| 0x1c | 4 | post classes | the same; `ffffffff` |
+| 0x20 | 4 | | `01 00 00 00` |
+| 0x24 | 0xc | | 0 |
+| 0x30 | 2 | message count | 1 |
+| 0x32 | 2 | | a stored value shifted right by 10, so probably a size limit in KiB [I]; 0x32 |
+| 0x34 | 8 | | 0 |
+| 0x3c | 1 | name length | at most 0x3f |
+| 0x3d | 1 | description length | at most 0x7f; 0 in the lab |
+| 0x3e | 2 | | 0 |
+| 0x40 | | name, description | `General News` |
+
+The read and post class bitmaps are the ones 607 Get News Messages and 611
+Post News Message check **[S]**.
 
 **607 Get News Messages** → **608 News Messages**
 Initiator: Client. **[S `FUN_0805d2e8`; O]**
@@ -1138,10 +1149,15 @@ The request is a u32 group ID. Reply:
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | group ID | |
-| 0x04 | 4 | | 7 |
+| 0x04 | 4 | permissions | 1 post, 2 delete any message, 4 read; 7 for admin, 4 for guest |
 | 0x08 | 4 | | |
 | 0x0c | 4 | count | |
 | 0x10 | | news message records | same as 610 News Message |
+
+The server computes the permissions from the user's privileges and the
+group's class bitmaps **[S `FUN_0805d2e8`; O `captures/kdx-news.pcapng`
+frames 77 and 204]**. Without read access but with post access, the reply is
+just the 16-byte header with permissions 1 and count 0 **[S]**.
 
 **609 Get News Message** → **610 News Message**
 Initiator: Client. **[S `FUN_0805d54c`; O]**
@@ -1159,15 +1175,56 @@ The reply is one news message record, padded to 4:
 | 0x10 | 8 | | 0 |
 | 0x18 | 2 | body length | 0x82c |
 | 0x1a | 2 | | 0 |
-| 0x1c | 1 | poster name length | `KDX` |
-| 0x1d | 1 | poster login length | `KDX` [I] |
+| 0x1c | 1 | poster name length | the poster's nick; `KDX` |
+| 0x1d | 1 | poster login length | `KDX`; `admin` in `captures/kdx-news.pcapng` frame 138 **[S `FUN_0805d758`; O]** |
 | 0x1e | 1 | subject length | `Welcome` |
 | 0x1f | 1 | | 0 |
 | 0x20 | | name, login, subject, body | |
 
-611 Post News Message, 612 Delete News Message, 613 News Message Posted, 614
-News Message Deleted, and the newsgroup management messages (600 Create
-Newsgroup, 601 Delete Newsgroup, 604 Set Newsgroup) are not read yet.
+**611 Post News Message**
+Initiator: Client. Privilege: Post News (71), and the user's class must be in
+the group's post classes unless the user has privilege 0. **[S
+`FUN_0805d758`; O `captures/kdx-news.pcapng`]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | group ID | |
+| 0x04 | 8 | | not read |
+| 0x0c | 2 | body length | the server keeps at most 0x4000 bytes |
+| 0x0e | 1 | subject length | the server keeps at most 0x80 bytes |
+| 0x0f | 1 | | not read |
+| 0x10 | | subject, body | lines end in CR |
+
+There is no reply on success (frames 356–361). The server stores a 610 News
+Message record, with the user's nick and login, under the group's next
+message ID, then sends 613 News Message Posted to every user whose class may
+read the group, the poster included. Errors **[O]**: 0x1000c for an unknown
+group (frame 160) and 0x10014 for a guest (frame 182).
+
+**612 Delete News Message**
+Initiator: Client. **[S `FUN_0805db44`; O]**
+
+Request: {u32 group ID, u32 message ID}. The user's class must be in the
+group's read classes unless the user has privilege 0. Without Delete News
+Messages (72), the user may delete only the group's last message, and only
+if they posted it (the login at 0x1d matches); otherwise 1 Status 0x10014
+(frame 226, a guest).
+
+There is no reply on success. The server broadcasts 614 News Message Deleted
+to every user (frames 409–411). An unknown group or message gets no reply
+and no 614 (frame 435).
+
+**613 News Message Posted**, **614 News Message Deleted**
+Initiator: Server. **[S; O]**
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 4 | group ID |
+| 0x04 | 4 | message ID |
+| 0x08 | 4 | messages in the group afterwards |
+
+The newsgroup management messages (600 Create Newsgroup, 601 Delete
+Newsgroup, 604 Set Newsgroup) are not read yet.
 
 ### Processes
 
@@ -1413,6 +1470,13 @@ and Disable Encryption are not yet mapped to bit numbers.
    `captures/first-connect.pcapng` the server sends only 101 and 105 (frames
    23–24), and the user's later actions bring 300 Send Private Message
    twice, 605 Get Newsgroup List, and 607 Get News Messages **[O]**.
+
+## Posting news
+
+A client confirms a request that has no success reply, such as 611 Post News
+Message, by sending 115 Get My Address after it. The server handles one
+connection's requests in order, so an error for the post arrives before 116
+Your Address **[O `captures/kdx-news.pcapng` frames 356–361]**.
 
 ## Logout
 

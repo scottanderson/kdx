@@ -39,3 +39,14 @@ Server Info:
 
 `probe-dl.bin` and `probe-ul.bin` were generated test data; in
 `probe-ul.bin`, byte *i* is `i`.
+
+`kdx-news-<port>.c2s.bin` and `kdx-news-<port>.s2c.bin` come from
+`captures/kdx-news.pcapng` the same way. Port 40434 is a guest, so its key is
+the empty password's.
+
+| Port | Messages |
+|---|---|
+| 40426 | 609 Get News Message and its 610 reply |
+| 40434 | 611 Post News Message refused with 1 Status 0x10014 |
+| 53204 | 611 Post News Message, 613 News Message Posted, 115 Get My Address |
+| 53224 | 612 Delete News Message, 614 News Message Deleted, 115 Get My Address |
