@@ -32,6 +32,9 @@ struct Args {
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
+    /// Write each connection's reassembled streams to DIR as `<client port>.c2s.bin` and `.s2c.bin`.
+    #[arg(long, value_name = "DIR")]
+    export: Option<PathBuf>,
 }
 
 /// One captured frame, numbered from 1 as in Wireshark.
@@ -127,6 +130,13 @@ fn main() -> Result<()> {
     for ((client, server), [c2s, s2c]) in &connections {
         println!("connection {client} -> {server}");
         let streams = [reassemble(c2s), reassemble(s2c)];
+        if let Some(dir) = &args.export {
+            for (stream, suffix) in streams.iter().zip(["c2s", "s2c"]) {
+                let path = dir.join(format!("{}.{suffix}.bin", client.port()));
+                std::fs::write(&path, &stream.data)
+                    .with_context(|| format!("writing {}", path.display()))?;
+            }
+        }
         if let Err(err) = dissect(&streams, &keys) {
             println!("  stopped: {err:#}");
         }

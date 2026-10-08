@@ -672,9 +672,12 @@ Reply (51 bytes in the lab):
 | 0x0c | 4 | key |
 | 0x14 | 2 | flags |
 | 0x16 | 2 | member count |
-| 0x1e–0x22 | 1 each | string lengths |
+| 0x1e–0x22 | 1 each | five string lengths; the third is the name [O] |
 | 0x24 | 4 × count | member user IDs |
-| … | | name, topic, … |
+| … | | the five strings |
+
+In frame 68 of `captures/probe.pcapng` only the name (`Public Chat`) is
+set; the payload is not padded.
 
 The other members receive **205 Chat User Joined** {u32 chat ID, u32 user
 ID, u32 0}.
@@ -710,8 +713,9 @@ classes. **[S `FUN_08058eac`; O]**
 | 0x0a | 1 | topic length |
 | 0x0c | | topic |
 
-[O]: a probe that put the topic at 0x10 with length 5 got the topic `Hprob`,
-so the server reads from 0x0c.
+[O]: a probe that put `Hello` at 0x10 with length 5 got the topic
+`00 00 00 00 48`, so the server reads from 0x0c (`captures/probe.pcapng`
+frames 73–74).
 
 Members receive 210 Chat Topic Changed:
 
@@ -834,9 +838,9 @@ The request is a file path. Reply (82 bytes for `Uploads [UL]`):
 | 0x08 | 8 | size | |
 | 0x10 | 8 | created | |
 | 0x18 | 8 | modified | |
-| 0x20 | 0xc | | |
-| 0x2c | 4 | | 2 |
-| 0x30 | 0xd | | |
+| 0x20 | 8 | | |
+| 0x28 | 4 | | 2 (frame 138 of `captures/probe.pcapng`) |
+| 0x2c | 0x11 | | |
 | 0x3d | 1 | name length | |
 | 0x3e | 1 | kind length | |
 | 0x40 | | name, kind | kind = `folder` |

@@ -6,9 +6,11 @@ use kdx_proto::handshake::{
 use kdx_proto::session::{Header, MessageType, SessionCipher};
 use kdx_proto::{AccountKey, ChallengeTable};
 
+mod common;
+use common::{messages, PASSWORD};
+
 const C2S: &[u8] = include_bytes!("fixtures/first-connect.c2s.bin");
 const S2C: &[u8] = include_bytes!("fixtures/first-connect.s2c.bin");
-const PASSWORD: &[u8] = b"lab-only-pw!1";
 
 struct Side {
     hello: Hello,
@@ -24,22 +26,6 @@ fn side(stream: &[u8]) -> Side {
         hello_len,
         proof,
     }
-}
-
-fn messages(stream: &[u8], cipher: &SessionCipher) -> Vec<(Header, Vec<u8>)> {
-    let mut at = side(stream).hello_len + Proof::LEN;
-    let mut out = Vec::new();
-    while at < stream.len() {
-        let header = cipher
-            .open_header(stream[at..at + 16].try_into().unwrap())
-            .unwrap();
-        at += Header::LEN;
-        let payload = cipher.open_payload(&header, &stream[at..]).unwrap();
-        out.push((header, payload));
-        at += header.padded_len();
-    }
-    assert_eq!(at, stream.len());
-    out
 }
 
 #[test]

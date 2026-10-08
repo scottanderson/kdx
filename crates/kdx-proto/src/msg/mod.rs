@@ -4,18 +4,22 @@
 //! session [`Header`](crate::session::Header). Layouts are documented in
 //! `docs/protocol/KDXProtocol.md`.
 
+pub mod chat;
+pub mod file;
 pub mod news;
 pub mod path;
 pub mod private_message;
 pub mod server_info;
 pub mod status;
 pub mod user;
+pub mod user_info;
 
 pub use path::FilePath;
 pub use private_message::PrivateMessage;
 pub use server_info::ServerInfo;
 pub use status::Status;
 pub use user::UserRecord;
+pub use user_info::UserInfo;
 
 /// Errors from decoding a payload.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
