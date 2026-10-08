@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use kdx_client::{load_table, Connection, Login};
+use kdx_client::{table, Connection, Login};
 use kdx_proto::session::MessageType;
 
 #[derive(Parser)]
@@ -22,9 +22,9 @@ struct Args {
     /// Account password.
     #[arg(long, default_value = "")]
     password: String,
-    /// Challenge table, or any KDX program file that contains it.
+    /// Challenge table, or any KDX program file or archive that contains it; defaults to the cache.
     #[arg(long)]
-    table: PathBuf,
+    table: Option<PathBuf>,
     /// Nickname sent in the login message.
     #[arg(long, default_value = "probe")]
     nick: String,
@@ -44,7 +44,10 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let table = load_table(&args.table)?;
+    let table = match &args.table {
+        Some(path) => table::load(path)?,
+        None => table::cached().context("no cached challenge table; pass --table")?,
+    };
     let login = Login {
         name: args.login.into_bytes(),
         password: args.password.into_bytes(),

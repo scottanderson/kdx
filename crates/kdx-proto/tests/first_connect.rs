@@ -5,6 +5,7 @@ use kdx_proto::handshake::{
 };
 use kdx_proto::session::{Header, MessageType, SessionCipher};
 use kdx_proto::{AccountKey, ChallengeTable};
+use std::path::PathBuf;
 
 mod common;
 use common::{messages, PASSWORD};
@@ -75,16 +76,11 @@ fn proofs() {
 
 #[test]
 fn challenge_responses() {
-    // The table is not in the repository; skip unless the lab binaries are present.
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
-    );
-    let Ok(file) = std::fs::read(path) else {
-        eprintln!("skipping: {path} not found");
+    // The table is not in the repository; skip unless the lab binaries or `kdx table fetch` provide it.
+    let Some(table) = vendor_table().or_else(cached_table) else {
+        eprintln!("skipping: no challenge table in vendor/haxial or the kdx cache");
         return;
     };
-    let table = ChallengeTable::extract(&file).unwrap();
     let (client, server) = (side(C2S), side(S2C));
     assert_eq!(
         table.response(server.hello.challenge),
@@ -178,4 +174,23 @@ fn payloads() {
     ] {
         assert!(seen.contains(&kind), "{kind} not in the capture");
     }
+}
+
+/// The table extracted from the server binary that `vendor/fetch` downloads.
+fn vendor_table() -> Option<ChallengeTable> {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
+    );
+    Some(ChallengeTable::extract(&std::fs::read(path).ok()?).unwrap())
+}
+
+/// The table `kdx table fetch` saved, at the path `kdx_client::table::cache_path` uses.
+fn cached_table() -> Option<ChallengeTable> {
+    let dir = std::env::var_os("XDG_CACHE_HOME")
+        .filter(|d| !d.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
+    let bytes = std::fs::read(dir.join("kdx").join("challenge-table.bin")).ok()?;
+    Some(ChallengeTable::from_bytes(&bytes).unwrap())
 }

@@ -1,15 +1,21 @@
-//! A blocking KDX client connection.
+//! A blocking KDX client.
 //!
+//! [`Client::login`] logs in and offers typed requests. Underneath,
 //! [`Connection::connect`] runs the handshake and returns a connection that
-//! sends and receives session messages.
+//! sends and receives raw session messages.
 
 use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use kdx_proto::handshake::{Hello, Proof, CLIENT_VERSION, FORMAT, NONCE_LEN, SERVICE_KDX};
-use kdx_proto::session::{Header, MessageType, SessionCipher};
+use kdx_proto::session::{padded_len, padding_fill, Header, MessageType, SessionCipher};
 use kdx_proto::{AccountKey, ChallengeTable};
+
+mod client;
+pub mod table;
+
+pub use client::{Client, Event, ServerError};
 
 /// Login details for [`Connection::connect`].
 #[derive(Debug, Clone, Default)]
@@ -108,8 +114,7 @@ impl Connection {
 
     /// Sends a request and returns its transaction ID.
     pub fn send(&mut self, kind: MessageType, payload: &[u8]) -> Result<u32> {
-        let txid = self.next_txid;
-        self.next_txid = self.next_txid.wrapping_add(1).max(1);
+        let txid = self.next_txid();
         let header = Header {
             txid,
             kind,
@@ -130,23 +135,77 @@ impl Connection {
         Ok((header, self.cipher.open_payload(&header, &data)?))
     }
 
+    /// Receives a transfer data header and streams its data into `sink`.
+    ///
+    /// The data is framed like a message, but its length can exceed the cap on
+    /// normal payloads, so it is decrypted in chunks rather than held in memory.
+    pub fn recv_data(&mut self, sink: &mut impl Write) -> Result<Header> {
+        let mut block = [0; Header::LEN];
+        self.stream.read_exact(&mut block)?;
+        let header = self.cipher.open_data_header(&block)?;
+        let mut left = u64::from(header.len);
+        let mut padded = padded_len(header.len as usize) as u64;
+        let mut chunk = vec![0; DATA_CHUNK];
+        while padded > 0 {
+            let n = padded.min(DATA_CHUNK as u64) as usize;
+            self.stream.read_exact(&mut chunk[..n])?;
+            self.cipher.decrypt_blocks(&mut chunk[..n]);
+            let keep = left.min(n as u64) as usize;
+            sink.write_all(&chunk[..keep])?;
+            left -= keep as u64;
+            padded -= n as u64;
+        }
+        Ok(header)
+    }
+
+    /// Sends a transfer data header for `len` bytes, then the bytes from `source`.
+    pub fn send_data(
+        &mut self,
+        kind: MessageType,
+        len: u32,
+        source: &mut impl Read,
+    ) -> Result<u32> {
+        let txid = self.next_txid();
+        let header = Header {
+            txid,
+            kind,
+            flags: 0,
+            len,
+        };
+        self.stream.write_all(&self.cipher.seal_header(header))?;
+        let fill = padding_fill(txid);
+        let mut left = u64::from(len);
+        let mut chunk = vec![0; DATA_CHUNK];
+        while left > 0 {
+            let n = left.min(DATA_CHUNK as u64) as usize;
+            source
+                .read_exact(&mut chunk[..n])
+                .context("reading upload source")?;
+            let padded = padded_len(n);
+            for (i, byte) in chunk[n..padded].iter_mut().enumerate() {
+                *byte = fill[(n + i) % 4];
+            }
+            self.cipher.encrypt_blocks(&mut chunk[..padded]);
+            self.stream.write_all(&chunk[..padded])?;
+            left -= n as u64;
+        }
+        Ok(txid)
+    }
+
+    fn next_txid(&mut self) -> u32 {
+        let txid = self.next_txid;
+        self.next_txid = self.next_txid.wrapping_add(1).max(1);
+        txid
+    }
+
     /// The underlying socket, for timeouts.
     pub const fn stream(&self) -> &TcpStream {
         &self.stream
     }
 }
 
-/// Reads the challenge table from a saved copy or from a KDX program file.
-pub fn load_table(path: &std::path::Path) -> Result<ChallengeTable> {
-    let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-    match ChallengeTable::from_bytes(&bytes) {
-        Ok(table) => Ok(table),
-        Err(_) => match ChallengeTable::extract(&bytes) {
-            Ok(table) => Ok(table),
-            Err(err) => bail!("{}: {err}", path.display()),
-        },
-    }
-}
+/// Bytes of transfer data handled at a time; a multiple of the cipher block.
+const DATA_CHUNK: usize = 0x10000;
 
 fn random_bytes<const N: usize>() -> Result<[u8; N]> {
     let mut bytes = [0; N];

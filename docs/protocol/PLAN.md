@@ -90,6 +90,20 @@ which build introduced it:
    bridge is server-side only and uses standard IRC, so it needs little
    protocol work.
 
+Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
+1.620 in the lab (`captures/kdx-cli.md`):
+
+| Area | Documented | Codec tested on a capture | Client works |
+|---|---|---|---|
+| 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
+| 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
+| 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
+| 4. News | reading; posting not read | yes | reading |
+| 5. Files | list, info, download, upload, resume; search and the 402–423 edits not read | yes | ls, get, put |
+| 6. Accounts, admin | read from the server and probed | not yet | no |
+| 7. Tracker | not started | no | no |
+| 8. Voice, view display | not started | no | no |
+
 ### Phase 4: Spec format
 - `KDXProtocol.md` is the single reference: the message catalog, a
   description of each message, error codes, privileges, and sequences. It
@@ -115,9 +129,10 @@ The project is dual-licensed MIT OR Apache-2.0.
 
 ## Rust layout
 Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
-`kdx-dissect` (pcap to text), `kdx-client`, and later `kdx-server`. The first
-three exist. `kdx-proto` covers the handshake, the session layer, and the
-payloads of the first-connect capture (`msg`).
+`kdx-dissect` (pcap to text), `kdx-client` (the `Client` library, the `kdx`
+CLI, and `kdx-probe`), and later `kdx-server` and `kdx-tracker`. The first
+three exist.
+`kdx-proto::msg` has codecs for the payloads in areas 1–5 above.
 
 ## Open decisions
 - None currently.
