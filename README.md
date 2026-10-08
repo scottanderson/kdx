@@ -9,7 +9,9 @@ server and a tracker, all compatible with the original KDX programs (Server
   is the plan.
 - `crates/kdx-proto` handles the wire format: handshake, session encryption,
   message framing, and typed payloads (`msg`). It does no I/O.
-- `crates/kdx-dissect` decodes KDX connections in a pcap or pcapng capture:
+- `crates/kdx-dissect` decodes KDX connections in a pcap or pcapng capture.
+  It prints each message as a hex dump, with a `=` summary line for the
+  payloads `kdx_proto::msg` knows:
 
   ```sh
   cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'

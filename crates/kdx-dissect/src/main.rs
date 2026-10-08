@@ -13,8 +13,10 @@ use anyhow::{bail, Context, Result};
 use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
+use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry};
+use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
-use kdx_proto::AccountKey;
+use kdx_proto::{AccountKey, MessageType};
 use pcap_file::pcap::PcapReader;
 use pcap_file::pcapng::{Block, PcapNgReader};
 use pcap_file::DataLink;
@@ -231,12 +233,104 @@ fn dissect(streams: &[Stream; 2], keys: &[(String, AccountKey)]) -> Result<()> {
                     if header.is_reply() { " reply" } else { "" },
                     header.len
                 );
+                match summary(header.kind, &payload) {
+                    Ok(Some(text)) => println!("      = {text}"),
+                    Ok(None) => {}
+                    Err(err) => println!("      ! {err}"),
+                }
                 print!("{}", hexdump(&payload, "      "));
             }
             Err(err) => println!("  [{frame}] {dir} {err}"),
         }
     }
     Ok(())
+}
+
+/// Describes a payload whose layout `kdx_proto::msg` knows.
+fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
+    let user = |u: &UserRecord| {
+        format!(
+            "user {} {} status {} flags {:#04x} icon {} bytes info {}",
+            u.user_id,
+            quoted(&u.nick),
+            u.status,
+            u.flags,
+            u.icon.len(),
+            quoted(&u.info)
+        )
+    };
+    let text = match kind {
+        MessageType::STATUS => match Status::decode(payload)? {
+            Status::Success { value } => format!("success {value:#x}"),
+            Status::Error {
+                code,
+                request,
+                module,
+                line,
+                extra,
+            } => format!(
+                "error {code:#x} for {request} at module {module:#x} line {line} extra {extra:#x}"
+            ),
+        },
+        MessageType::SET_IDENTITY | MessageType::USER_CHANGED | MessageType::USER_JOINED => {
+            user(&UserRecord::decode(payload)?.0)
+        }
+        MessageType::USER_LIST => UserRecord::decode_list(payload)?
+            .iter()
+            .map(user)
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::SERVER_INFO => {
+            let info = ServerInfo::decode(payload)?;
+            format!(
+                "you are user {}, server {} version {} name {} description {}",
+                info.user_id,
+                info.server_value,
+                info.version,
+                quoted(&info.name),
+                quoted(&info.description)
+            )
+        }
+        MessageType::SEND_PRIVATE_MESSAGE | MessageType::INCOMING_PRIVATE_MESSAGE => {
+            let message = PrivateMessage::decode(payload)?;
+            format!("user {} text {}", message.user_id, quoted(&message.text))
+        }
+        MessageType::GET_FILE_LIST => {
+            let path = FilePath::decode(payload)?;
+            let names: Vec<String> = path.0.iter().map(|n| quoted(n)).collect();
+            format!("path /{}", names.join("/"))
+        }
+        MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
+            .iter()
+            .map(|g| {
+                format!(
+                    "group {} {} ({} messages)",
+                    g.group_id,
+                    quoted(&g.name),
+                    g.message_count
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::NEWS_MESSAGES => {
+            let news = NewsMessages::decode(payload)?;
+            let subjects: Vec<String> = news
+                .messages
+                .iter()
+                .map(|m| {
+                    format!(
+                        "{} {} by {}",
+                        m.message_id,
+                        quoted(&m.subject),
+                        quoted(&m.poster)
+                    )
+                })
+                .collect();
+            format!("group {}: {}", news.group_id, subjects.join("; "))
+        }
+        _ => return Ok(None),
+    };
+    Ok(Some(text))
 }
 
 fn read_frames(path: &PathBuf) -> Result<Vec<Frame>> {
