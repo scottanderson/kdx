@@ -13,7 +13,11 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
-use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry};
+use kdx_proto::msg::admin::{
+    AccountClass, AccountInfo, AccountListEntry, ExtraServerInfo, FolderAccessItem,
+    MonitoredConnection, ProcessList, YourAddress,
+};
+use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry, NewsgroupInfo};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
@@ -326,6 +330,14 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             quoted(&u.info)
         )
     };
+    let class = |c: &AccountClass| {
+        format!(
+            "class {} {} privileges {}",
+            c.index,
+            quoted(&c.name),
+            hex(&c.privileges)
+        )
+    };
     let text = match kind {
         MessageType::STATUS => match Status::decode(payload)? {
             Status::Success { value } => format!("success {value:#x}"),
@@ -395,6 +407,86 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 .collect();
             format!("group {}: {}", news.group_id, subjects.join("; "))
         }
+        MessageType::NEWSGROUP_INFO => {
+            let group = NewsgroupInfo::decode(payload)?;
+            format!(
+                "group {} {} ({} messages, limit {})",
+                group.group_id,
+                quoted(&group.name),
+                group.message_count,
+                group.message_limit
+            )
+        }
+        MessageType::EXTRA_SERVER_INFO => {
+            let info = ExtraServerInfo::decode(payload)?;
+            format!("uptime {} s, os {}", info.uptime, quoted(&info.os))
+        }
+        MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.0),
+        MessageType::CONNECTION_MONITOR_INFO => MonitoredConnection::decode_list(payload)?
+            .iter()
+            .map(|c| {
+                format!(
+                    "user {} {} login {} from {}",
+                    c.user_id,
+                    quoted(&c.nick),
+                    quoted(&c.login),
+                    quoted(&c.address)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::ACCOUNT_CLASS_INFO => class(&AccountClass::decode_info(payload)?),
+        MessageType::ACCOUNT_CLASS_LIST => AccountClass::decode_list(payload)?
+            .iter()
+            .map(class)
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::ACCOUNT_INFO => {
+            let account = AccountInfo::decode(payload)?;
+            format!(
+                "login {} name {} privileges {}",
+                quoted(&account.login),
+                quoted(&account.name),
+                hex(&account.privileges)
+            )
+        }
+        MessageType::ACCOUNT_LIST => AccountListEntry::decode_list(payload)?
+            .iter()
+            .map(|a| {
+                format!(
+                    "login {} name {} class {}",
+                    quoted(&a.login),
+                    quoted(&a.name),
+                    a.class_index
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::PROCESS_LIST => ProcessList::decode(payload)?
+            .processes
+            .iter()
+            .map(|p| {
+                format!(
+                    "pid {} user {} {}",
+                    p.pid,
+                    quoted(&p.user),
+                    quoted(&p.command)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::FOLDER_ACCESS_LIST => FolderAccessItem::decode_list(payload)?
+            .iter()
+            .map(|i| {
+                format!(
+                    "item {:#x} {} {}",
+                    i.item_id,
+                    quoted(&i.name),
+                    quoted(&i.description)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
         _ => return Ok(None),
     };
     Ok(Some(text))
@@ -511,6 +603,10 @@ fn reassemble(flow: &Flow) -> Stream {
         }
     }
     stream
+}
+
+fn hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 fn fourcc(value: u32) -> String {

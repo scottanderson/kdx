@@ -1,10 +1,15 @@
 //! Checks against `captures/probe.pcapng`: kdx-probe sessions as `admin` on Server 1.620.
 
+use kdx_proto::msg::admin::{
+    AccountClass, AccountInfo, AccountListEntry, ExtraServerInfo, FolderAccessItem,
+    MonitoredConnection, ProcessList, YourAddress,
+};
 use kdx_proto::msg::chat::{
     ChatListEntry, ChatRecord, ChatText, ChatTopicChanged, ChatWindowInfo, JoinChat, SetChatTopic,
     PUBLIC_CHAT,
 };
 use kdx_proto::msg::file::{FileInfo, FileListEntry, ATTR_FOLDER};
+use kdx_proto::msg::news::NewsgroupInfo;
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, ServerInfo, UserInfo};
 use kdx_proto::session::{Header, MessageType};
@@ -231,4 +236,137 @@ fn upload() {
         .map(|e| (e.name, e.size))
         .collect();
     assert_eq!(names, [(b"probe-ul.bin".to_vec(), 100)]);
+}
+
+#[test]
+fn server_info() {
+    let session = connection!("50770");
+    let wire = one(&session, MessageType::EXTRA_SERVER_INFO);
+    let info = ExtraServerInfo::decode(wire).unwrap();
+    assert_eq!(info.uptime, 301);
+    assert_eq!(info.now - info.start_time, 301_740);
+    assert_eq!((info.os_value_24, info.os_value_28), (0x1000, 1000));
+    assert!(info.os.starts_with(b"Linux "));
+    assert_eq!(info.encode().unwrap(), wire);
+
+    let wire = one(&session, MessageType::YOUR_ADDRESS);
+    let address = YourAddress::decode(wire).unwrap();
+    assert_eq!(address.0, b"127.0.0.1:50770");
+    assert_eq!(address.encode().unwrap(), wire);
+}
+
+#[test]
+fn connection_monitor() {
+    let session = connection!("50984");
+    let wire = one(&session, MessageType::CONNECTION_MONITOR_INFO);
+    let list = MonitoredConnection::decode_list(wire).unwrap();
+    let [me] = &list[..] else { panic!("{list:?}") };
+    assert_eq!(me.user_id, 8);
+    assert_eq!(me.nick, b"probe");
+    assert_eq!(me.login, b"admin");
+    assert_eq!(me.account, b"Administrator");
+    assert_eq!(me.address, b"127.0.0.1:50984");
+    // The server leaves the padding uninitialised.
+    let mut expected = wire.to_vec();
+    expected[wire.len() - 2..].fill(0);
+    assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), expected);
+}
+
+#[test]
+fn account_classes() {
+    let session = connection!("50770");
+    let wire = one(&session, MessageType::ACCOUNT_CLASS_LIST);
+    let list = AccountClass::decode_list(wire).unwrap();
+    assert_eq!(list.len(), 12);
+    let names: Vec<&[u8]> = list[..3].iter().map(|c| c.name.as_slice()).collect();
+    assert_eq!(names, [&b"Administrator"[..], b"User", b"Guest"]);
+    assert!(list
+        .iter()
+        .enumerate()
+        .all(|(i, c)| usize::from(c.index) == i));
+    assert_eq!(list[0].unknown_after_index, [0xff, 0, 0]);
+    assert_eq!(list[1].unknown_after_index, [0, 0, 0xff]);
+    assert_eq!(AccountClass::encode_list(&list).unwrap(), wire);
+
+    let session = connection!("59006");
+    let replies = payloads(&session, MessageType::ACCOUNT_CLASS_INFO);
+    for (wire, index, unknown_25) in [(replies[0], 0, 0x50), (replies[1], 2, 0x28)] {
+        let class = AccountClass::decode_info(wire).unwrap();
+        assert_eq!(
+            class,
+            AccountClass {
+                unknown_25,
+                ..list[index].clone()
+            }
+        );
+        // The server leaves the padding uninitialised.
+        let mut expected = wire.to_vec();
+        let end = 0x38 + class.name.len();
+        expected[end..].fill(0);
+        assert_eq!(class.encode_info().unwrap(), expected);
+    }
+}
+
+#[test]
+fn accounts() {
+    for session in [connection!("50770"), connection!("59006")] {
+        let wire = one(&session, MessageType::ACCOUNT_LIST);
+        let list = AccountListEntry::decode_list(wire).unwrap();
+        let logins: Vec<&[u8]> = list.iter().map(|a| a.login.as_slice()).collect();
+        assert_eq!(logins, [&b"admin"[..], b"guest"]);
+        assert_eq!((list[0].class_index, list[1].class_index), (0, 2));
+        assert_eq!(list[1].last_login, 0);
+        assert_eq!(AccountListEntry::encode_list(&list).unwrap(), wire);
+    }
+
+    let session = connection!("59006");
+    let wire = one(&session, MessageType::ACCOUNT_INFO);
+    let account = AccountInfo::decode(wire).unwrap();
+    assert_eq!(account.login, b"admin");
+    assert_eq!(account.name, b"Administrator");
+    assert_eq!(account.privilege_mask, account.privileges);
+    assert_eq!(account.encode().unwrap(), wire);
+}
+
+#[test]
+fn processes() {
+    let session = connection!("59006");
+    let wire = one(&session, MessageType::PROCESS_LIST);
+    let list = ProcessList::decode(wire).unwrap();
+    let pids: Vec<u32> = list.processes.iter().map(|p| p.pid).collect();
+    assert_eq!(pids, [1, 2, 3]);
+    assert_eq!(list.processes[1].command, b"./KDXServer.lexe");
+    assert_eq!(list.processes[2].command, b"/bin/ps auxwww");
+    assert_eq!(list.processes[0].command.len(), 0xff);
+    assert_eq!(list.encode().unwrap(), wire);
+}
+
+#[test]
+fn folder_access() {
+    let session = connection!("59006");
+    let wire = one(&session, MessageType::FOLDER_ACCESS_LIST);
+    let list = FolderAccessItem::decode_list(wire).unwrap();
+    let items: Vec<(u32, &[u8])> = list
+        .iter()
+        .map(|i| (i.item_id, i.name.as_slice()))
+        .collect();
+    assert_eq!(
+        items,
+        [(0, &b"[Default]"[..]), (0x2c, b"DB"), (0x2b, b"UL")]
+    );
+    assert!(list.iter().all(|i| i.second.is_empty()));
+    assert_eq!(list[1].description, b"Dropbox.");
+    assert_eq!(FolderAccessItem::encode_list(&list).unwrap(), wire);
+}
+
+#[test]
+fn newsgroup_info() {
+    let session = connection!("32980");
+    let wire = one(&session, MessageType::NEWSGROUP_INFO);
+    let group = NewsgroupInfo::decode(wire).unwrap();
+    assert_eq!(group.group_id, 1);
+    assert_eq!(group.name, b"General News");
+    assert_eq!(group.classes, u64::MAX);
+    assert_eq!((group.message_count, group.message_limit), (1, 0x32));
+    assert_eq!(group.encode().unwrap(), wire);
 }

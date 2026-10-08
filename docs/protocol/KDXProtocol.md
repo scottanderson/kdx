@@ -534,6 +534,8 @@ one record per connection, with no count in front, each padded to 4:
 | 0x63 | 1 | address length | |
 | 0x68 | | nick, login, account name, address | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
+The padding after the address is uninitialised **[O]**.
+
 The server also sends per-transfer records [S]; that layout is not read yet.
 
 **150 Disconnect User**
@@ -1013,14 +1015,19 @@ Initiator: Client. Any one of View Folder Access (27), Create/Modify Chats
 (37), View Accounts (50), or Create/Modify Newsgroups (73), since every
 class-list editor uses it [I]. **[S `FUN_0805572c`; O]**
 
-Reply: a u32 count (12 classes in the lab), then one record per class:
+Reply: a u32 count (12 classes in the lab), then one record per class,
+padded to 4 with zeros. A record is the 503 Account Class Info record
+without the 8 bytes at 0x28 **[O probe.pcapng, port 50770]**:
 
-| Off | Size | Field |
-|---|---|---|
-| 0x00 | 0xb | privilege bytes (see Access Privileges) |
-| … | 8 | time |
-| 0x2c | 1 | name length |
-| 0x30 | | name |
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x10 | privileges | 11 bytes used (see Access Privileges) |
+| 0x10 | 8 | time | |
+| 0x18 | 0x10 | | 0 |
+| 0x28 | 1 | class index | 0 to 11, in list order |
+| 0x29 | 3 | | `ff 00 00` for Administrator, `00 00 ff` for User, else 0 |
+| 0x2c | 1 | name length | |
+| 0x30 | | name | |
 
 [O] privilege bytes:
 
@@ -1045,6 +1052,8 @@ padded to 4:
 | 0x31 | 1 | | 0xff for Administrator, 0 for Guest; probably the colour [I] |
 | 0x34 | 1 | name length | |
 | 0x38 | | name | |
+
+The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**.
 
 **509 Get Account** → **510 Account Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
@@ -1220,9 +1229,9 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 | 0x08 | 8 | | not written by the server |
 | 0x10 | 1 | | |
 | 0x11 | 1 | name length | |
-| 0x12 | 1 | description length | |
-| 0x13 | 1 | third string length | |
-| 0x14 | | name, description, third string | |
+| 0x12 | 1 | second string length | 0 in the lab |
+| 0x13 | 1 | description length | |
+| 0x14 | | name, second string, description | `[Default]`, empty, `If a folder and its parents…` |
 
 1100 Create Folder Access, 1101 Delete Folder Access, 1103 Get Folder
 Access, and 1105 Set Folder Access are not read yet.

@@ -4,6 +4,7 @@
 //! session [`Header`](crate::session::Header). Layouts are documented in
 //! `docs/protocol/KDXProtocol.md`.
 
+pub mod admin;
 pub mod chat;
 pub mod file;
 pub mod news;

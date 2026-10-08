@@ -1,4 +1,4 @@
-//! News: 606 Newsgroup List, 608 News Messages and 610 News Message.
+//! News: 603 Newsgroup Info, 606 Newsgroup List, 608 News Messages and 610 News Message.
 
 use super::{len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError};
 
@@ -58,6 +58,60 @@ impl NewsgroupEntry {
             out.extend_from_slice(&entry.description);
             out.resize(pad4(out.len()), 0);
         }
+        Ok(out)
+    }
+}
+
+/// 603 Newsgroup Info.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct NewsgroupInfo {
+    /// Newsgroup ID.
+    pub group_id: u32,
+    /// Time in milliseconds.
+    pub time: u64,
+    /// All ones in the lab; probably class bitmaps.
+    pub classes: u64,
+    /// Meaning unknown; 1 in the lab.
+    pub unknown_20: u8,
+    /// Probably the message count.
+    pub message_count: u16,
+    /// Probably the message limit; 0x32 in the lab.
+    pub message_limit: u16,
+    /// Newsgroup name.
+    pub name: Vec<u8>,
+}
+
+impl NewsgroupInfo {
+    /// Size of the fixed part before the name.
+    pub const HEADER_LEN: usize = 0x40;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let ([name], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x3c])])?;
+        Ok(Self {
+            group_id: u32_at(buf, 0),
+            time: u64_at(buf, 0x10),
+            classes: u64_at(buf, 0x18),
+            unknown_20: buf[0x20],
+            message_count: u16_at(buf, 0x30),
+            message_limit: u16_at(buf, 0x32),
+            name,
+        })
+    }
+
+    /// Encodes the payload, padded with zeros to 4.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
+        out[0x10..0x18].copy_from_slice(&self.time.to_be_bytes());
+        out[0x18..0x20].copy_from_slice(&self.classes.to_be_bytes());
+        out[0x20] = self.unknown_20;
+        out[0x30..0x32].copy_from_slice(&self.message_count.to_be_bytes());
+        out[0x32..0x34].copy_from_slice(&self.message_limit.to_be_bytes());
+        out[0x3c] = len_u8(&self.name, "newsgroup name")?;
+        out.extend_from_slice(&self.name);
+        out.resize(pad4(out.len()), 0);
         Ok(out)
     }
 }
