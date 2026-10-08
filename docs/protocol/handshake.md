@@ -94,15 +94,15 @@ then compares the 20 challenge bytes with its own table **[S
 ### account_key(password) [S `FUN_080669cc`; O]
 
 ```
-password empty: fixed bytes  da39a3ee caaebe6e 5e6b4b0d ba8e29ba 3255bfef 18a2b5c4 95601890 afd87d90
+password empty: fixed bytes  da39a3ee caaebe6e 5e6b4b0d ba8e29ba 3255bfef 18a2b5c4 95601890 afd80709
 otherwise:      d = SHA-1(password)
                 d[0:20] || d[0:8] || BE32(fnv1(password, seed = 1))
 fnv1(h, b) = (h * 0x01000193) ^ b   for each byte, starting at h = 1
 ```
 
 The empty-password constant isn't what the formula gives for an empty input.
-Words 0, 2, 4 and 6 are the first four words of SHA-1(""), interleaved with
-other values. Use the bytes exactly as written above. They haven't been
+Words 0, 2, 4, 6 and 7 are the five words of SHA-1(""), and words 1, 3 and 5
+are other values. Use the bytes exactly as written above. They haven't been
 checked against traffic yet.
 
 The server stores this 32-byte key per account, so the password can't be

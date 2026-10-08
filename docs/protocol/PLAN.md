@@ -38,7 +38,7 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
   `The network protocol is unknown. (ID 4/113 @ TRN941)`.
 - Still open: whether an unregistered server or client limits any features.
 
-### Phase 1: Transport and crypto
+### Phase 1: Transport and crypto (done; see `handshake.md`, `session.md`)
 1. Confirm the framing and XOR stream against real captures.
    Decide whether the 4-byte key is random per packet, and whether the key
    stream continues across the header and payload.
@@ -109,9 +109,10 @@ which build introduced it:
 ## Licensing
 The project is dual-licensed MIT OR Apache-2.0.
 
-## Suggested Rust layout (once Phase 1 starts)
+## Rust layout
 Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
-`kdx-dissect` (pcap to text), `kdx-client`, and later `kdx-server`.
+`kdx-dissect` (pcap to text), `kdx-client`, and later `kdx-server`. The first
+two exist; `kdx-proto` covers the handshake and session layer so far.
 
 ## Open decisions
 - None currently.

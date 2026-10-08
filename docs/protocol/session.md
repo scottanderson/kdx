@@ -2,8 +2,8 @@
 
 Evidence tags as in `handshake.md`. Captures: `captures/first-connect.pcapng`
 (session data starts at C→S frame 22 and S→C frame 23). The whole session was
-decrypted and parsed with nothing left over (824 bytes C→S, 3040 bytes S→C)
-**[O]**.
+decrypted and parsed with nothing left over (824 bytes C→S and 3120 bytes S→C,
+handshakes included) **[O]**.
 
 ## Encryption
 
@@ -15,7 +15,7 @@ decrypted and parsed with nothing left over (824 bytes C→S, 3040 bytes S→C)
   `ceil(len/16)` payload blocks, and each block is encrypted on its own.
 - **Padding:** the unused tail of the last payload block is filled with
   `p = txid * 0x41c64e6d + 0x3039` (the 32-bit value repeated as memory words)
-  before the payload bytes are copied over it **[S]**. Receivers ignore it.
+  before the payload bytes are copied over it **[S, O]**. Receivers ignore it.
 
 ## Header scramble
 
@@ -36,9 +36,9 @@ w2 = rotl(h0, 7)  ^ 0xa95a759b                h2 = rotl(w1 ^ 0xe152da04, 6)
 w3 = rotr(h3, 3)  ^ 0x06992e25                h3 = rotl(w3 ^ 0x06992e25, 3)
 ```
 
-The decode side has been verified on every header in the capture **[O]**. The
-encode side is its algebraic inverse **[S]**, and a Rust round-trip test
-should confirm it.
+Both sides are verified: `kdx-proto` re-seals every decrypted message in the
+capture and gets the captured bytes back exactly, including the padding
+**[O]**.
 
 ## Header
 

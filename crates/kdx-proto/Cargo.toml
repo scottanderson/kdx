@@ -1,0 +1,16 @@
+[package]
+name = "kdx-proto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Wire format of the Haxial KDX protocol: handshake, session encryption and message framing"
+
+[dependencies]
+sha1 = "0.11.0"
+sha2 = "0.11.0"
+thiserror = "2.0.21"
+twofish = "0.8.0"
+
+[lints]
+workspace = true
