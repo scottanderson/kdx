@@ -402,9 +402,13 @@ Initiator: Server. **[S]**
 One user record.
 
 **104 User Departed**
-Initiator: Server.
+Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429]**
 
-Carries the departing user's ID. The layout is not read yet.
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | user ID | |
+| 0x04 | 1 | | 7 in both samples |
+| 0x05 | 3 | 0 | |
 
 **105 Server Info**
 Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
@@ -680,14 +684,15 @@ In frame 68 of `captures/probe.pcapng` only the name (`Public Chat`) is
 set; the payload is not padded.
 
 The other members receive **205 Chat User Joined** {u32 chat ID, u32 user
-ID, u32 0}.
+ID, u32 0} (`captures/kdx-cli.pcapng` frame 417) **[O]**.
 
 **204 Leave Chat**
 Initiator: Client. **[S `FUN_08058c0c`]**
 
 The request is a u32 chat ID. The other members receive **206 Chat User
-Departed** {u32 chat ID, u32 user ID, u32 1}. A private chat that becomes
-empty is deleted.
+Departed** {u32 chat ID, u32 user ID, u8 1, 3 zero bytes}
+(`captures/kdx-cli.pcapng` frame 424) **[O]**. A private chat that becomes empty
+is deleted.
 
 **207 Send Chat Text** → **208 Receive Chat Text**
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
@@ -808,19 +813,24 @@ entry per item, each padded to 4:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 8 | size | 0x1000 for these folders |
+| 0x00 | 8 | size | 0x1000 for folders |
 | 0x08 | 8 | created | time |
 | 0x10 | 8 | modified | time |
 | 0x18 | 8 | | |
 | 0x20 | 4 | attributes | 1 for a file, 0x01000002 for a folder [O]; the server clears bit 24 and tests 0x42 [S] |
 | 0x24 | 0xa | | |
-| 0x2e | 2 | | 0xffff |
-| 0x30 | 2 | folder access item | 0x2c, 0x2b (see 1107 Folder Access List) |
+| 0x2e | 2 | | 0xffff for folders, 0 for a file |
+| 0x30 | 2 | folder access item | 0x2c, 0x2b for the folders, 0 for a file (see 1107 Folder Access List) |
 | 0x32 | 2 | | |
-| 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]` |
+| 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, 0 for a file |
 | 0x35 | 1 | name length | |
-| 0x36 | 2 | | |
-| 0x38 | | name | |
+| 0x36 | 1 | kind length | 0 for folders; `exttype/bin` for a `.bin` file, as in 413 Download File (R) |
+| 0x37 | 1 | | |
+| 0x38 | | name, kind | |
+
+[O] `captures/kdx-cli.pcapng`: a 600000-byte `cli-big.bin` is listed with
+size 0x927c0 and kind `exttype/bin`. `kdx_proto::msg::file::FileListEntry`
+decodes both kinds of entry.
 
 When the folder access check (`FUN_08057e5c`) fails or the folder can't be
 read, the server also replies with an empty 401 File List, and logs a
@@ -934,7 +944,11 @@ extension, since Linux files have no type code [I]. Then it streams:
    The length is the resource-fork bytes that remain (0 here). The data
    follows.
 
-Data is read in chunks starting at 0x10000 and growing to 0x80000. With a
+One 414 header covers the whole fork, even past the 0x20000 limit on
+normal payloads: a 600000-byte file came as a single 414 of length 600000,
+byte for byte, and a resume from 300000 as one of 300992 from 299008
+(`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**. Data is read in
+chunks starting at 0x10000 and growing to 0x80000. With a
 speed limit, chunks are multiples of 0x1000. At the end the server writes a
 188 Finished File Download history record.
 
@@ -980,7 +994,8 @@ The client then sends:
 When both forks are complete, the server renames the file into place,
 writes a 189 Finished File Upload history record, and sends an empty
 **418 Upload File (C)** with its own txid **[O]**. [O]: 100 bytes uploaded
-to `Uploads [UL]` arrived byte for byte.
+to `Uploads [UL]` arrived byte for byte, and so did 300000 bytes sent under
+one 417 header (`captures/kdx-cli.pcapng` frame 244).
 
 **404 Delete File/Folder**, **406 Rename File/Folder**, **408 Copy
 File/Folder**

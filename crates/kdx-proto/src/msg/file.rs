@@ -18,12 +18,16 @@ pub struct FileListEntry {
     pub modified: u64,
     /// [`ATTR_FILE`] or [`ATTR_FOLDER`].
     pub attributes: u32,
+    /// Meaning unknown; 0xffff for folders and 0 for files in the lab.
+    pub unknown_2e: u16,
     /// The folder access item that applies, as in 1107 Folder Access List.
     pub access_item: u16,
     /// Meaning unknown; 4 or 5 in the lab.
     pub unknown_34: u8,
     /// Item name.
     pub name: Vec<u8>,
+    /// For files, probably a type derived from the extension, such as `exttype/bin`.
+    pub kind: Vec<u8>,
 }
 
 impl FileListEntry {
@@ -47,15 +51,18 @@ impl FileListEntry {
         for _ in 0..count {
             let entry = &buf[at..];
             need(entry, Self::HEADER_LEN)?;
-            let ([name], end) = strings(entry, Self::HEADER_LEN, [usize::from(entry[0x35])])?;
+            let lens = [usize::from(entry[0x35]), usize::from(entry[0x36])];
+            let ([name, kind], end) = strings(entry, Self::HEADER_LEN, lens)?;
             list.push(Self {
                 size: u64_at(entry, 0),
                 created: u64_at(entry, 8),
                 modified: u64_at(entry, 0x10),
                 attributes: u32_at(entry, 0x20),
+                unknown_2e: u16::from_be_bytes([entry[0x2e], entry[0x2f]]),
                 access_item: u16::from_be_bytes([entry[0x30], entry[0x31]]),
                 unknown_34: entry[0x34],
                 name,
+                kind,
             });
             at += pad4(end).min(entry.len());
         }
@@ -75,12 +82,14 @@ impl FileListEntry {
             fixed[8..0x10].copy_from_slice(&entry.created.to_be_bytes());
             fixed[0x10..0x18].copy_from_slice(&entry.modified.to_be_bytes());
             fixed[0x20..0x24].copy_from_slice(&entry.attributes.to_be_bytes());
-            fixed[0x2e..0x30].copy_from_slice(&[0xff, 0xff]);
+            fixed[0x2e..0x30].copy_from_slice(&entry.unknown_2e.to_be_bytes());
             fixed[0x30..0x32].copy_from_slice(&entry.access_item.to_be_bytes());
             fixed[0x34] = entry.unknown_34;
             fixed[0x35] = len_u8(&entry.name, "file name")?;
+            fixed[0x36] = len_u8(&entry.kind, "kind")?;
             out.extend_from_slice(&fixed);
             out.extend_from_slice(&entry.name);
+            out.extend_from_slice(&entry.kind);
             out.resize(pad4(out.len()), 0);
         }
         Ok(out)
