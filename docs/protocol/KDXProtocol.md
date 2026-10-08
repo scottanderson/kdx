@@ -10,11 +10,12 @@ Each claim carries its evidence: **[O]** observed in a capture or lab probe,
 **[S]** read in a binary (with the function address), **[I]** inferred.
 Unmarked rows in a layout table share the tag in the message's heading line.
 Offsets and lengths are hex. All multi-byte numbers are big-endian.
+A message is named by its type and title, as in 412 Download File.
 
 # Protocol Overview
 
-KDX is a client/server system for chat, private messages, file sharing, news,
-and server administration. Trackers list servers.
+KDX is a client/server system for chat, private messages, file sharing,
+news, and server administration. Trackers list servers.
 
 | Port | Transport | Use |
 |---|---|---|
@@ -45,8 +46,8 @@ A connection has two phases:
 | 0x0a | 2 | 0 | |
 | 0x0c | 4 | len | payload length, at most 0x20000 |
 
-The payload is padded to a multiple of 16 before encryption; the length field
-gives the real size.
+The payload is padded to a multiple of 16 before encryption; the length
+field gives the real size.
 
 ## Requests, replies, and notifications
 
@@ -59,27 +60,28 @@ gives the real size.
   user logs in **[O]**.
 - The server only handles messages with flag 0. Replies arriving from a
   client are dropped **[S `FUN_080528c8`]**.
-- Every message except 108, 142, and 609 resets the sender's idle timer
-  **[S `FUN_080528c8`]**.
+- Every message except 108 Ping, 142 Get Connection Monitor Info, and 609
+  Get News Message resets the sender's idle timer **[S `FUN_080528c8`]**.
 
 Message types come in pairs: request N gets reply N+1. A request that fails
-gets the generic **Status (1)** reply instead. Some requests have no reply
-on success **[S, O]**.
+gets the generic **1 Status** reply instead. Some requests have no reply on
+success **[S, O]**.
 
-## Status (1)
+## 1 Status
 
-Initiator: Server. Sent as a reply. **[S `FUN_08086640`, `FUN_080865c0`; O]**
+Initiator: Server. Sent as a reply. **[S `FUN_08086640`, `FUN_080865c0`;
+O]**
 
 The dispatcher (`FUN_0804fdac`) runs each handler inside a C++ `try`. The
-catch at 0x0805090c turns the exception into a Status reply to the request's
-txid. Some handlers also send Status on success.
+catch at 0x0805090c turns the exception into a 1 Status reply to the
+request's txid. Some handlers also send 1 Status on success.
 
 Error form, 24 bytes:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | code | an error code (see Error Codes) |
-| 0x04 | 4 | request type | e.g. 0x98 for a failed 152 [O] |
+| 0x04 | 4 | request type | e.g. 0x98 for a failed 152 Get User Info [O] |
 | 0x08 | 4 | module | source module tag of the raise site, ASCII packed into an integer (`0x54524e` = `TRN`; 0x46 for the path code) |
 | 0x0c | 4 | line | source line of the raise site |
 | 0x10 | 4 | extra | a value the raise site passes along |
@@ -87,11 +89,11 @@ Error form, 24 bytes:
 
 [O] examples:
 
-- `152:00000003` (no user 3) returns
-  `00 01 00 0c 00 00 00 98 00…`, which is 0x1000c item does not exist.
-- `400:0000` (malformed path) returns
-  `00 01 00 0a 00 00 01 90 00 00 00 46 00 00 00 98…`, which is 0x1000a
-  corrupt, raised in module 0x46 at line 0x98 of `FUN_080969f8`.
+- `152:00000003` (no user 3) returns `00 01 00 0c 00 00 00 98 00…`, which is
+  0x1000c item does not exist.
+- `400:0000` (malformed path) returns `00 01 00 0a 00 00 01 90 00 00 00 46
+  00 00 00 98…`, which is 0x1000a corrupt, raised in module 0x46 at line
+  0x98 of `FUN_080969f8`.
 
 Success form, 8 bytes: `u32 0`, then `u32 value`, often the request type
 **[S `FUN_080865c0`]**.
@@ -105,9 +107,10 @@ code's class and number, the module, and the line **[S]**.
 
 Strings have no terminator, and their lengths are not stored with them. A
 fixed-size part of the record holds the lengths (usually u8). The strings
-follow that part in a fixed order. Most variable records are then padded to a
-multiple of 4. The padding bytes are uninitialized memory, so ignore them
-(the `86 ab` at the end of the first entry in the 401 example) **[O]**.
+follow that part in a fixed order. Most variable records are then padded to
+a multiple of 4. The padding bytes are uninitialized memory, so ignore them
+(the `86 ab` at the end of the first entry in the 401 File List example)
+**[O]**.
 
 ## Times
 
@@ -116,8 +119,8 @@ fits a date in 2026. This is not yet verified **[I]**.
 
 ## File paths
 
-A path is a list of names. Each name gives one folder level below the
-user's base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
+A path is a list of names. Each name gives one folder level below the user's
+base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
 
 | Size | Field |
 |---|---|
@@ -135,14 +138,14 @@ names with `/` and checks each one with `FUN_08094084` **[S]**. For example,
 
 **[S `FUN_0804af04`, `FUN_0804b304`; O `captures/first-connect.pcapng`]**
 
-This record is used in 100 (client to server, user ID 0) and in 101, 102,
-and 103.
+This record is used in 100 Set Identity (client to server, user ID 0) and in
+101 User List, 102 User Changed, and 103 User Joined.
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 2 | user ID | assigned by the server |
 | 0x02 | 2 | 0 | |
-| 0x04 | 1 | status | the value set by 110 |
+| 0x04 | 1 | status | the value set by 110 Set Mini User Icon |
 | 0x05 | 5 | | |
 | 0x0a | 2 | voice UDP port | 10600 in the capture [O] |
 | 0x0c | 2 | icon length | < 0x709 |
@@ -166,9 +169,9 @@ and 103.
 
 ## Chat record
 
-**[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O 219]**
+**[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O 219 Chat Info]**
 
-This record is used in 217, 219, and 220.
+This record is used in 217 Create Chat, 219 Chat Info, and 220.
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -361,43 +364,45 @@ A type the dispatcher doesn't know is ignored without a reply **[S]**.
 
 ### Session
 
-**Set Identity (100)**
+**100 Set Identity**
 Initiator: Client. **[S `FUN_0804b304`; O]**
 
 The client's first message after the handshake. It is also sent again
-whenever the user changes nick, icon, or info. The payload is a user
-record with user ID 0.
+whenever the user changes nick, icon, or info. The payload is a user record
+with user ID 0.
 
 - The nick takes effect only with the Use Any Name privilege; otherwise the
   account name is used. Changes are logged as `Set Name: <…> (…)`.
-- No direct reply. On the first 100, the server sends, in order:
+- No direct reply. On the first 100 Set Identity, the server sends, in
+  order:
   - 101 User List;
   - 105 Server Info;
   - 107 Server Greeting, unless the account has Don't Show Greeting;
   - 106 Server Icon, if one is set;
-  - 213 Must Join Chat, when Join Chat On Connect and Join Chat are both set.
+  - 213 Must Join Chat, when Join Chat On Connect and Join Chat are both
+    set.
 
-  It also sends 103 User Joined to everyone else and writes a 184 (Login)
-  history record.
-- A later 100 broadcasts 102 User Changed.
+  It also sends 103 User Joined to everyone else and writes a 184 Login history
+  record.
+- A later 100 Set Identity broadcasts 102 User Changed.
 
-**User List (101)**
+**101 User List**
 Initiator: Server. **[S `FUN_0804af04`; O]**
 
-A sequence of user records, one per user who is logged in (all of them
-on login).
+A sequence of user records, one per user who is logged in (all of them on
+login).
 
-**User Changed (102)** / **User Joined (103)**
+**102 User Changed** / **103 User Joined**
 Initiator: Server. **[S]**
 
 One user record.
 
-**User Departed (104)**
+**104 User Departed**
 Initiator: Server.
 
 Carries the departing user's ID. The layout is not read yet.
 
-**Server Info (105)**
+**105 Server Info**
 Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 
 | Off | Size | Field | Notes |
@@ -415,12 +420,12 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 
 The whole message is at most 0x400 bytes.
 
-**Server Icon (106)**
+**106 Server Icon**
 Initiator: Server.
 
 The server's icon bitmap. The layout is not read yet.
 
-**Server Greeting (107)**
+**107 Server Greeting**
 Initiator: Server. **[S `FUN_0804b738`; O]**
 
 | Off | Size | Field |
@@ -430,13 +435,13 @@ Initiator: Server. **[S `FUN_0804b738`; O]**
 
 When no greeting is set, the server sends `(No greeting.)` **[O]**.
 
-**Ping (108)** → **Pong (109)**
+**108 Ping** → **109 Pong**
 Initiator: Client. **[S]**
 
-The request is empty, and so is the reply (109). Ping does not reset the
-idle timer.
+The request is empty, and so is the reply (109 Pong). Ping does not reset
+the idle timer.
 
-**Set Mini User Icon (110)**
+**110 Set Mini User Icon**
 Initiator: Client. **[S `FUN_0804b6d4`]**
 
 | Off | Size | Field | Notes |
@@ -444,8 +449,8 @@ Initiator: Client. **[S `FUN_0804b6d4`]**
 | 0x00 | 1 | status | |
 | 0x01 | 3 | | the payload must be at least 4 bytes |
 
-There is no reply. If the value changed, the server broadcasts **Mini User
-Icon Changed (111)** to everyone, the sender included:
+There is no reply. If the value changed, the server broadcasts **111 Mini
+User Icon Changed** to everyone, the sender included:
 
 | Off | Size | Field |
 |---|---|---|
@@ -453,14 +458,14 @@ Icon Changed (111)** to everyone, the sender included:
 | 0x02 | 2 | 0 |
 | 0x04 | 4 | status |
 
-**(112)**
+**112 (unnamed)**
 Initiator: Client. **[S `FUN_0804b738`; O]**
 
 The request is empty. The server answers with 107 Server Greeting as a new
 message (its own txid), not as a reply. The client uses this to re-read the
 greeting.
 
-**Get Extra Server Info (113)** → **Extra Server Info (114)**
+**113 Get Extra Server Info** → **114 Extra Server Info**
 Initiator: Client. **[S `FUN_080619d8`; O]**
 
 The request is empty. Reply:
@@ -476,36 +481,36 @@ The request is empty. Reply:
 | 0x2c | 1 | OS string length |
 | 0x30 | | OS string |
 
-**Get My Address (115)** → **Your Address (116)**
+**115 Get My Address** → **116 Your Address**
 Initiator: Client. **[S; O]**
 
-The request is empty. The reply is a u8 length followed by
-`"a.b.c.d:port"`: the client's address as the server sees it.
+The request is empty. The reply is a u8 length followed by `"a.b.c.d:port"`:
+the client's address as the server sees it.
 
-**(118)**
+**118 (unnamed)**
 Initiator: Client. **[S `FUN_0804fdac`]**
 
 | Off | Size | Field |
 |---|---|---|
 | 0x00 | 4 | value |
 
-No reply. The server stores 1 if the value is nonzero and 2 if it is
-zero (user +0x3b). The purpose is unknown.
+No reply. The server stores 1 if the value is nonzero and 2 if it is zero
+(user +0x3b). The purpose is unknown.
 
 ### Monitoring and administration
 
-**Open Connection Monitor (140)** / **Close Connection Monitor (141)**
+**140 Open Connection Monitor** / **141 Close Connection Monitor**
 Initiator: Client. **[S]**
 
 These need Get User Info (bit 40) and turn a per-user flag on or off. There
 is no reply.
 
-**Get Connection Monitor Info (142)** → **Connection Monitor Info (143)**
+**142 Get Connection Monitor Info** → **143 Connection Monitor Info**
 Initiator: Client. **[S `FUN_0804b9b0`; O]**
 
-The request is empty. Without a 140 first, the server replies with Status
-0x10003 (protocol breach) **[O]**. The reply is one record per connection,
-with no count in front, each padded to 4:
+The request is empty. Without a 140 Open Connection Monitor first, the
+server replies with 1 Status 0x10003 (protocol breach) **[O]**. The reply is
+one record per connection, with no count in front, each padded to 4:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -521,10 +526,9 @@ with no count in front, each padded to 4:
 | 0x63 | 1 | address length | |
 | 0x68 | | nick, login, account name, address | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
-The server also sends per-transfer records [S]; that layout is not read
-yet.
+The server also sends per-transfer records [S]; that layout is not read yet.
 
-**Disconnect User (150)**
+**150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
 ban. **[S `FUN_0804c42c`]**
 
@@ -536,8 +540,8 @@ ban. **[S `FUN_0804c42c`]**
 | 0x14 | 1 | message length | |
 | 0x18 | | message | |
 
-A target with Cannot Be Disconnected is refused unless the server's
-address check passes. The target receives **Disconnect Message (151)**:
+A target with Cannot Be Disconnected is refused unless the server's address
+check passes. The target receives **151 Disconnect Message**:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -550,14 +554,14 @@ address check passes. The target receives **Disconnect Message (151)**:
 | 0x13 | 1 | name length | |
 | 0x14 | | message, sender name | |
 
-**Get User Info (152)** → **User Info (153)**
+**152 Get User Info** → **153 User Info**
 Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 
 | Off | Size | Field |
 |---|---|---|
 | 0x00 | 4 | user ID |
 
-If the user doesn't exist, the server replies with Status 0x1000c **[O]**.
+If the user doesn't exist, the server replies with 1 Status 0x1000c **[O]**.
 
 Reply (120 bytes for the prober itself), padded to 4:
 
@@ -576,7 +580,7 @@ Reply (120 bytes for the prober itself), padded to 4:
 | 0x41 | 1 | name length | `Administrator`; the class or the account name [I] |
 | 0x44 | | address, nick, name, login, name | |
 
-**Send Broadcast Message (154)**
+**154 Send Broadcast Message**
 Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
 
 | Off | Size | Field |
@@ -585,20 +589,20 @@ Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
 | 0x02 | 2 | (copied through) |
 | 0x04 | | text, ≤ 0x800 |
 
-Everyone receives **Rcv Broadcast Message (155)**: {u32 sender ID, 8 zero
+Everyone receives **155 Rcv Broadcast Message**: {u32 sender ID, 8 zero
 bytes, u16 0, u16 (copied from the request), text}.
 
-**Get Server Settings (170)** → **Server Settings Info (171)**
-Initiator: Client. Privilege: Modify Server Settings (61).
-**[S `FUN_0805f598`; O 216 bytes]**
+**170 Get Server Settings** → **171 Server Settings Info**
+Initiator: Client. Privilege: Modify Server Settings (61). **[S
+`FUN_0805f598`; O 216 bytes]**
 
-The reply is the server's settings file. It starts with the magic
-`%KDXSSTG` and a version, followed by a table of section offsets and the
-sections. The server name appears near the end. **Set Server Settings
-(172)** sends the same blob back, and the server answers with 173. The field
-layout is not read yet.
+The reply is the server's settings file. It starts with the magic `%KDXSSTG`
+and a version, followed by a table of section offsets and the sections. The
+server name appears near the end. **172 Set Server Settings** sends the same
+blob back, and the server answers with 173 Set Server Settings Done. The
+field layout is not read yet.
 
-**Shutdown Server (174)**
+**174 Shutdown Server**
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 
 | Off | Size | Field | Notes |
@@ -606,28 +610,30 @@ Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 | 0x00 | 1 | mode | low 3 bits nonzero |
 | 0x04 | | message | ≤ 0xff |
 
-The server broadcasts 151 with flag 4, then exits after 5 seconds.
+The server broadcasts 151 Disconnect Message with flag 4, then exits after 5
+seconds.
 
-**Upgrade Server Software (175)**
+**175 Upgrade Server Software**
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
 (82). **[S `FUN_0806172c`]**
 
 The server broadcasts "Upgrading server software, be back in 5 seconds!".
 
-**Server History Join (180)** / **Leave (182)**
-Initiator: Client. Privilege: View Server History (63).
-**[S `FUN_08062674`, `FUN_080627f8`, `FUN_08061d80`]**
+**180 Server History Join** / **182 Server History Leave**
+Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
+`FUN_080627f8`, `FUN_08061d80`]**
 
-The reply (181) is {u32 0, u32 count, buffered records}. While joined, the
-client receives **Server History Added (183)** for each new record. A
-record's kind is one of 184–191 (Login, Disconnected, Abort File Download,
-…), or the type of the logged request (e.g. 400 for a failed file list).
+The reply (181 Server History Join (R)) is {u32 0, u32 count, buffered
+records}. While joined, the client receives **183 Server History Added** for
+each new record. A record's kind is one of 184–191 (Login, Disconnected,
+Abort File Download, …), or the type of the logged request (e.g. 400 Get
+File List for a failed file list).
 
 ### Chat
 
-**Create Private Chat (200)** → **(216)**
-Initiator: Client. Privilege: Create Private Chat (34).
-**[S `FUN_08058420`]**
+**200 Create Private Chat** → **216 Create Private Chat (R)**
+Initiator: Client. Privilege: Create Private Chat (34). **[S
+`FUN_08058420`]**
 
 A user can have at most 10 private chats. Reply:
 
@@ -640,14 +646,14 @@ A user can have at most 10 private chats. Reply:
 | 0x24 | 4 | creator user ID |
 | … | | name, e.g. `Private 1` |
 
-**Delete Chat (201)**
-Initiator: Client. Privilege: Create/Modify Chats (37).
-**[S `FUN_08059774`]**
+**201 Delete Chat**
+Initiator: Client. Privilege: Create/Modify Chats (37). **[S
+`FUN_08059774`]**
 
-The request is a u32 chat ID. Every member receives **Chat Deleted (221)**
+The request is a u32 chat ID. Every member receives **221 Chat Deleted**
 {u32 chat ID, u32 user ID}.
 
-**Join Chat (202)** → **Chat Window Info (203)**
+**202 Join Chat** → **203 Chat Window Info**
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
 **[S `FUN_08058710`; O]**
 
@@ -666,17 +672,17 @@ Reply (51 bytes in the lab):
 | 0x24 | 4 × count | member user IDs |
 | … | | name, topic, … |
 
-The other members receive **Chat User Joined (205)** {u32 chat ID, u32 user
+The other members receive **205 Chat User Joined** {u32 chat ID, u32 user
 ID, u32 0}.
 
-**Leave Chat (204)**
+**204 Leave Chat**
 Initiator: Client. **[S `FUN_08058c0c`]**
 
-The request is a u32 chat ID. The other members receive **Chat User
-Departed (206)** {u32 chat ID, u32 user ID, u32 1}. A private chat that
-becomes empty is deleted.
+The request is a u32 chat ID. The other members receive **206 Chat User
+Departed** {u32 chat ID, u32 user ID, u32 1}. A private chat that becomes
+empty is deleted.
 
-**Send Chat Text (207)** → **Receive Chat Text (208)**
+**207 Send Chat Text** → **208 Receive Chat Text**
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
 **[S `FUN_08058d74`; O]**
 
@@ -687,10 +693,10 @@ Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
 | 0x08 | 4 | |
 | 0x0c | | text, ≤ 0x1000 |
 
-The server forwards the same layout as 208 to every member, the sender
-included.
+The server forwards the same layout as 208 Receive Chat Text to every
+member, the sender included.
 
-**Set Chat Topic (209)** → **Chat Topic Changed (210)**
+**209 Set Chat Topic** → **210 Chat Topic Changed**
 Initiator: Client. Privilege: Set Chat Topic (35) and the chat's topic
 classes. **[S `FUN_08058eac`; O]**
 
@@ -700,10 +706,10 @@ classes. **[S `FUN_08058eac`; O]**
 | 0x0a | 1 | topic length |
 | 0x0c | | topic |
 
-[O]: a probe that put the topic at 0x10 with length 5 got the topic
-`Hprob`, so the server reads from 0x0c.
+[O]: a probe that put the topic at 0x10 with length 5 got the topic `Hprob`,
+so the server reads from 0x0c.
 
-Members receive 210:
+Members receive 210 Chat Topic Changed:
 
 | Off | Size | Field |
 |---|---|---|
@@ -716,7 +722,7 @@ Members receive 210:
 | 0x1a | 2 | 0 |
 | 0x1c | | topic, setter name |
 
-**Chat Invite (211)** → **Chat Invitation (212)**
+**211 Chat Invite** → **212 Chat Invitation**
 Initiator: Client. **[S `FUN_080591ac`]**
 
 | Off | Size | Field |
@@ -727,13 +733,13 @@ Initiator: Client. **[S `FUN_080591ac`]**
 | 0x10 | 4 × count | invitee user IDs |
 | … | | message |
 
-**Must Join Chat (213)**
+**213 Must Join Chat**
 Initiator: Server.
 
-Sent after login to accounts with Join Chat On Connect. It tells the
-client which chat to join.
+Sent after login to accounts with Join Chat On Connect. It tells the client
+which chat to join.
 
-**Get Chat List (214)** → **Chat List (215)**
+**214 Get Chat List** → **215 Chat List**
 Initiator: Client. **[S `FUN_080594dc`; O]**
 
 The request is empty. Reply: a u32 count, then one entry per chat, each
@@ -751,25 +757,24 @@ padded to 4:
 
 [O]: Public Chat (1), Voice Chat (2, flags 2), Admin Lounge (3).
 
-**Create Chat (217)** / **Get Chat (218)** → **Chat Info (219)** / **Set Chat
-(220)** Initiator: Client. Privilege: Create/Modify Chats (37) for 217 and 220.
-**[S; O 219]**
+**217 Create Chat** / **218 Get Chat** → **219 Chat Info** / **220 Set Chat**
+Initiator: Client. Privilege: Create/Modify Chats (37) for 217 Create Chat
+and 220. **[S; O 219 Chat Info]**
 
-217 and 220 carry a chat record. 218 is a u32 chat ID, and 219 is a chat
-record. 220 refuses private chats.
+217 Create Chat and 220 Set Chat carry a chat record. 218 Get Chat is a u32
+chat ID, and 219 Chat Info is a chat record. 220 Set Chat refuses private
+chats.
 
-**Get Chat DCC Addresses (222)** → **Chat DCC Addresses (223)**
+**222 Get Chat DCC Addresses** → **223 Chat DCC Addresses**
 Initiator: Client. **[S `FUN_0805a110`]**
 
-The sender must be a member of a voice chat. Reply entries: {u32 user ID,
-…, 0x0e u8 length, `"ip:port"`}. Voice data then goes peer-to-peer over
-UDP.
+The sender must be a member of a voice chat. Reply entries: {u32 user ID, …,
+0x0e u8 length, `"ip:port"`}. Voice data then goes peer-to-peer over UDP.
 
 ### Private messages
 
-**Send Private Message (300)** → **Incoming Private Message (301)**
-Initiator: Client. Privilege: Send Messages (32).
-**[S `FUN_0804d2d0`; O]**
+**300 Send Private Message** → **301 Incoming Private Message**
+Initiator: Client. Privilege: Send Messages (32). **[S `FUN_0804d2d0`; O]**
 
 | Off | Size | Field |
 |---|---|---|
@@ -777,15 +782,16 @@ Initiator: Client. Privilege: Send Messages (32).
 | 0x04 | 0xc | |
 | 0x10 | | text |
 
-The payload must be at least 0x11 bytes. The server forwards the same
-layout to the target as 301, with the sender's ID in place of the target's.
+The payload must be at least 0x11 bytes. The server forwards the same layout
+to the target as 301 Incoming Private Message, with the sender's ID in place
+of the target's.
 
 ### Files
 
 File requests address items with a file path. Each user is confined to a
 base folder.
 
-**Get File List (400)** → **File List (401)**
+**400 Get File List** → **401 File List**
 Initiator: Client. **[S `FUN_0804d938`; O]**
 
 The request is a file path (empty for the root). A folder with no entries
@@ -801,7 +807,7 @@ entry per item, each padded to 4:
 | 0x20 | 4 | attributes | 0x01000002 for both folders; the server clears bit 24 and tests 0x42 [S] |
 | 0x24 | 0xa | | |
 | 0x2e | 2 | | 0xffff |
-| 0x30 | 2 | folder access item | 0x2c, 0x2b (see 1107) |
+| 0x30 | 2 | folder access item | 0x2c, 0x2b (see 1107 Folder Access List) |
 | 0x32 | 2 | | |
 | 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]` |
 | 0x35 | 1 | name length | |
@@ -809,10 +815,10 @@ entry per item, each padded to 4:
 | 0x38 | | name | |
 
 When the folder access check (`FUN_08057e5c`) fails or the folder can't be
-read, the server also replies with an empty 401, and logs a history record
-of kind 400.
+read, the server also replies with an empty 401 File List, and logs a
+history record of kind 400 Get File List.
 
-**Get File/Folder Info (409)** → **File/Folder Info (410)**
+**409 Get File/Folder Info** → **410 File/Folder Info**
 Initiator: Client. **[S `FUN_0804ef00`; O]**
 
 The request is a file path. Reply (82 bytes for `Uploads [UL]`):
@@ -831,26 +837,26 @@ The request is a file path. Reply (82 bytes for `Uploads [UL]`):
 | 0x3e | 1 | kind length | |
 | 0x40 | | name, kind | kind = `folder` |
 
-**Create Folder (402)**, **Create Alias (403)**, **Move To Trash (405)**,
-**Move (407)**, **Set File/Folder Info (411)**, **Launch File (420)**,
-**Empty Trash (421)**, **Set Volume Info (423)**
+**402 Create Folder**, **403 Create Alias**, **405 Move To Trash**, **407
+Move**, **411 Set File/Folder Info**, **420 Launch File**, **421 Empty
+Trash**, **423 Set Volume Info**
 Initiator: Client. **[S]**
 
 Handlers are listed in the table above. Each one checks privileges (see
 Access Privileges) and takes one or two file paths. Their layouts are not
 read yet.
 
-**Download (412–414)**, **Upload (415–418)**
-These are not read yet. The 32-byte value in 105 and the handshake's
-session-attach login (a login name that starts with 0x00) suggest that
-transfers run on a second connection to the same port **[I]**.
+**412–414 Download File**, **415–418 Upload File**
+These are not read yet. The 32-byte value in 105 Server Info and the
+handshake's session-attach login (a login name that starts with 0x00)
+suggest that transfers run on a second connection to the same port **[I]**.
 
-**Generate Catalog (450)**, **File Search (452)**
+**450 Generate Catalog**, **452 File Search**
 These are not read yet.
 
 ### Accounts
 
-**Get Account Class List (505)** → **Account Class List (506)**
+**505 Get Account Class List** → **506 Account Class List**
 Initiator: Client. Any one of View Folder Access (27), Create/Modify Chats
 (37), View Accounts (50), or Create/Modify Newsgroups (73), since every
 class-list editor uses it [I]. **[S `FUN_0805572c`; O]**
@@ -870,7 +876,7 @@ Reply: a u32 count (12 classes in the lab), then one record per class:
 - User: `28 30 00 03 f0 c0 04 08 03 20`
 - Guest: `28 30 00 03 80 00 00 08 02`
 
-**Get Account Class (502)** → **Account Class Info (503)**
+**502 Get Account Class** → **503 Account Class Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080552b8`; O]**
 
 The request is a u8 class index. The reply is the stored class record,
@@ -888,7 +894,7 @@ padded to 4:
 | 0x34 | 1 | name length | |
 | 0x38 | | name | |
 
-**Get Account (509)** → **Account Info (510)**
+**509 Get Account** → **510 Account Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
 
 The request is the account's login, with no length byte. Reply (148 bytes
@@ -906,7 +912,7 @@ for `admin`):
 | 0x7b | 1 | name length | |
 | 0x80 | | login, name | `admin`, `Administrator` |
 
-**Get Account List (512)** → **Account List (513)**
+**512 Get Account List** → **513 Account List**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080566bc`; O]**
 
 The request is empty. Reply: a u32 count, then one entry per account, each
@@ -920,18 +926,18 @@ padded to 4:
 | 0x1b | 1 | | 1 for admin, 0 for guest |
 | 0x1c | 4 | | |
 | 0x20 | 1 | class index | 0 for admin, 2 for guest |
-| 0x21 | 1 | | 0xff for admin; matches 503 offset 0x31 |
+| 0x21 | 1 | | 0xff for admin; matches 503 Account Class Info offset 0x31 |
 | 0x24 | 1 | login length | |
 | 0x25 | 1 | name length | |
 | 0x28 | | login, name | |
 
-Set Account Class (504), Create Account (507), Delete Account (508), Set
-Account (511), and Change Own Password (550) are not read yet. Their
-handlers are listed in the table above.
+504 Set Account Class, 507 Create Account, 508 Delete Account, 511 Set
+Account, and 550 Change Own Password are not read yet. Their handlers are
+listed in the table above.
 
 ### News
 
-**Get Newsgroup List (605)** → **Newsgroup List (606)**
+**605 Get Newsgroup List** → **606 Newsgroup List**
 Initiator: Client. Privilege: View News (70). **[S `FUN_0805d038`; O]**
 
 Reply: a u32 count, then one entry per group:
@@ -947,7 +953,7 @@ Reply: a u32 count, then one entry per group:
 | 0x17 | 1 | | 0, probably the description length [I] |
 | 0x18 | | name | `General News` |
 
-**Get Newsgroup (602)** → **Newsgroup Info (603)**
+**602 Get Newsgroup** → **603 Newsgroup Info**
 Initiator: Client. **[S `FUN_0805cc24`; O 76 bytes]**
 
 The request is a u32 group ID. Reply:
@@ -963,7 +969,7 @@ The request is a u32 group ID. Reply:
 | 0x3c | 1 | name length | |
 | 0x40 | | name | |
 
-**Get News Messages (607)** → **News Messages (608)**
+**607 Get News Messages** → **608 News Messages**
 Initiator: Client. **[S `FUN_0805d2e8`; O]**
 
 The request is a u32 group ID. Reply:
@@ -974,12 +980,13 @@ The request is a u32 group ID. Reply:
 | 0x04 | 4 | | 7 |
 | 0x08 | 4 | | |
 | 0x0c | 4 | count | |
-| 0x10 | | news message records | same as 610 |
+| 0x10 | | news message records | same as 610 News Message |
 
-**Get News Message (609)** → **News Message (610)**
+**609 Get News Message** → **610 News Message**
 Initiator: Client. **[S `FUN_0805d54c`; O]**
 
-Request: {u32 group ID, u32 message ID}. 609 does not reset the idle timer.
+Request: {u32 group ID, u32 message ID}. 609 Get News Message does not reset
+the idle timer.
 
 The reply is one news message record, padded to 4:
 
@@ -997,16 +1004,17 @@ The reply is one news message record, padded to 4:
 | 0x1f | 1 | | 0 |
 | 0x20 | | name, login, subject, body | |
 
-Post (611), Delete (612), Posted (613), Deleted (614), and the newsgroup
-management messages (600, 601, 604) are not read yet.
+611 Post News Message, 612 Delete News Message, 613 News Message Posted, 614
+News Message Deleted, and the newsgroup management messages (600 Create
+Newsgroup, 601 Delete Newsgroup, 604 Set Newsgroup) are not read yet.
 
 ### Processes
 
-**Open Process Monitor (800)** / **Close Process Monitor (801)**
-Initiator: Client. Privilege: View Processes (80).
-**[S `FUN_0805b394`, `FUN_0805b418`]**
+**800 Open Process Monitor** / **801 Close Process Monitor**
+Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b394`,
+`FUN_0805b418`]**
 
-**Get Process List (802)** → **Process List (803)**
+**802 Get Process List** → **803 Process List**
 Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b454`; O]**
 
 The request is empty. The server runs `/bin/ps auxwww` (its own child shows
@@ -1032,24 +1040,24 @@ Each process entry is padded to 4:
 | 0x3a | 1 | command length | at most 0xff; longer commands are cut |
 | 0x3c | | command, user | |
 
-**Exit/Terminate Process (804)**
-Initiator: Client. Privilege: Terminate Processes (81).
-**[S `FUN_0805b8f4`]**
+**804 Exit/Terminate Process**
+Initiator: Client. Privilege: Terminate Processes (81). **[S
+`FUN_0805b8f4`]**
 
 Not probed.
 
 ### Folder access
 
 A folder access item is a named set of rules. A folder refers to one by ID
-(the u16 at offset 0x30 of a 401 entry). Item `[Default]` applies when a
-folder and its parents name no item.
+(the u16 at offset 0x30 of a 401 File List entry). Item `[Default]` applies
+when a folder and its parents name no item.
 
-**Get Folder Access List (1106)** → **Folder Access List (1107)**
-Initiator: Client. Privilege: View Folder Access (27).
-**[S `FUN_080578d8`; O]**
+**1106 Get Folder Access List** → **1107 Folder Access List**
+Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`;
+O]**
 
 The request is empty or a u32. If the u32's top byte has bit 0 set, a user
-without the privilege gets no reply instead of Status 0x10014.
+without the privilege gets no reply instead of 1 Status 0x10014.
 
 Reply: a u32 count, then one entry per item, each padded to 4:
 
@@ -1064,7 +1072,8 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 | 0x13 | 1 | third string length | |
 | 0x14 | | name, description, third string | |
 
-Create (1100), Delete (1101), Get (1103), and Set (1105) are not read yet.
+1100 Create Folder Access, 1101 Delete Folder Access, 1103 Get Folder
+Access, and 1105 Set Folder Access are not read yet.
 
 ### Not yet documented
 
@@ -1148,56 +1157,56 @@ give the class.
 # Access Privileges
 
 An account's privileges are a bit string of at least 11 bytes. It is stored
-at user +0x44 and sent in the class records (506). Bit n is byte n/8, mask
-0x80 >> (n % 8) **[S]**.
+at user +0x44 and sent in the class records (506 Account Class List). Bit n
+is byte n/8, mask 0x80 >> (n % 8) **[S]**.
 
-Bits that server handlers test, found by scanning every handler for tests
-of user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that
-sends 105, 107, and 213.
+Bits that server handlers test, found by scanning every handler for tests of
+user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
+105 Server Info, 107 Server Greeting, and 213.
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
-| 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | 202, 207, 209, 400, 508, 511, 607, 609, 611, 612 |
+| 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | 202 Join Chat, 207 Send Chat Text, 209 Set Chat Topic, 400 Get File List, 508 Delete Account, 511 Set Account, 607 Get News Messages, 609 Get News Message, 611 Post News Message, 612 Delete News Message |
 | 3 | (login) | `FUN_08054900` account lookup |
-| 11 | Upload [I] | 402 |
-| 13 | Empty Trash | 421 |
-| 15 | Create Aliases | 403 |
-| 16 | Move | 407 |
-| 17 | Rename [I] | 409, 411 |
-| 18 | Delete | 405 |
-| 20 | Set Attributes [I] | 409, 411 |
-| 22 | See All Volumes [I] | 400, 423 |
-| 27 | View Folder Access | 505, 1103, 1106 |
-| 28 | Modify Folder Access | 402, 403, 411, 1100, 1101, 1105 |
-| 30 | Join Chat | 202, 214, login |
-| 31 | Send Chat | 207 |
-| 32 | Send Messages | 300 |
-| 33 | Broadcast | 154 |
-| 34 | Create Private Chat | 200 |
-| 35 | Set Chat Topic | 209 |
+| 11 | Upload [I] | 402 Create Folder |
+| 13 | Empty Trash | 421 Empty Trash |
+| 15 | Create Aliases | 403 Create Alias |
+| 16 | Move | 407 Move |
+| 17 | Rename [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
+| 18 | Delete | 405 Move To Trash |
+| 20 | Set Attributes [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
+| 22 | See All Volumes [I] | 400 Get File List, 423 Set Volume Info |
+| 27 | View Folder Access | 505 Get Account Class List, 1103 Get Folder Access, 1106 Get Folder Access List |
+| 28 | Modify Folder Access | 402 Create Folder, 403 Create Alias, 411 Set File/Folder Info, 1100 Create Folder Access, 1101 Delete Folder Access, 1105 Set Folder Access |
+| 30 | Join Chat | 202 Join Chat, 214 Get Chat List, login |
+| 31 | Send Chat | 207 Send Chat Text |
+| 32 | Send Messages | 300 Send Private Message |
+| 33 | Broadcast | 154 Send Broadcast Message |
+| 34 | Create Private Chat | 200 Create Private Chat |
+| 35 | Set Chat Topic | 209 Set Chat Topic |
 | 36 | Join Chat On Connect | login |
-| 37 | Create/Modify Chats | 201, 217, 218, 220, 505 |
-| 40 | Get User Info | 140, 141, 142, 152 |
-| 41 | Disconnect Users | 150 |
+| 37 | Create/Modify Chats | 201 Delete Chat, 217 Create Chat, 218 Get Chat, 220 Set Chat, 505 Get Account Class List |
+| 40 | Get User Info | 140 Open Connection Monitor, 141 Close Connection Monitor, 142 Get Connection Monitor Info, 152 Get User Info |
+| 41 | Disconnect Users | 150 Disconnect User |
 | 42 | Cannot Be Disconnected | 150 (target) |
-| 43 | Ban Users | 150 |
-| 50 | View Accounts | 502, 505, 509, 512 |
-| 51 | Create Accounts | 507 |
-| 52 | Modify Accounts | 504, 508, 511 |
-| 53 | Change Own Password | 550 |
-| 60 | Use Any Name | 100, login |
-| 61 | Modify Server Settings | 113, 170, 172, 450, login (105) |
+| 43 | Ban Users | 150 Disconnect User |
+| 50 | View Accounts | 502 Get Account Class, 505 Get Account Class List, 509 Get Account, 512 Get Account List |
+| 51 | Create Accounts | 507 Create Account |
+| 52 | Modify Accounts | 504 Set Account Class, 508 Delete Account, 511 Set Account |
+| 53 | Change Own Password | 550 Change Own Password |
+| 60 | Use Any Name | 100 Set Identity, login |
+| 61 | Modify Server Settings | 113 Get Extra Server Info, 170 Get Server Settings, 172 Set Server Settings, 450 Generate Catalog, login (105) |
 | 62 | Don't Show Greeting | login |
-| 63 | View Server History | 180 |
-| 64 | Shutdown Server | 174, 175 |
-| 70 | View News | 605, 607, 609 |
-| 71 | Post News | 607, 611 |
-| 72 | Delete News Messages | 607, 612 |
-| 73 | Create/Modify Newsgroups | 505, 600, 601, 602, 604 |
-| 74 | See Logins In News | 609 |
-| 80 | View Processes | 800, 802 |
-| 81 | Terminate Processes | 804 |
-| 82 | Launch Programs | 175, 420 |
+| 63 | View Server History | 180 Server History Join |
+| 64 | Shutdown Server | 174 Shutdown Server, 175 Upgrade Server Software |
+| 70 | View News | 605 Get Newsgroup List, 607 Get News Messages, 609 Get News Message |
+| 71 | Post News | 607 Get News Messages, 611 Post News Message |
+| 72 | Delete News Messages | 607 Get News Messages, 612 Delete News Message |
+| 73 | Create/Modify Newsgroups | 505 Get Account Class List, 600 Create Newsgroup, 601 Delete Newsgroup, 602 Get Newsgroup, 604 Set Newsgroup |
+| 74 | See Logins In News | 609 Get News Message |
+| 80 | View Processes | 800 Open Process Monitor, 802 Get Process List |
+| 81 | Terminate Processes | 804 Exit/Terminate Process |
+| 82 | Launch Programs | 175 Upgrade Server Software, 420 Launch File |
 
 Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. One of them is
 probably Can Login **[I]**.
@@ -1230,15 +1239,17 @@ and Disable Encryption are not yet mapped to bit numbers.
 
 ## Login
 
-1. Client and server exchange hellos and proofs ([handshake.md](handshake.md)).
-2. The client sends **Set Identity (100)**.
-3. The server sends 101, 105, 107, and possibly 106 and 213. Everyone else
-   receives 103.
-4. The client then asks for whatever it shows: 214 Get Chat List, 605
-   Newsgroup List, 607 News Messages, and 202 Join Chat for Public Chat
-   (`captures/first-connect.pcapng`) **[O]**.
+1. Client and server exchange hellos and proofs
+   ([handshake.md](handshake.md)).
+2. The client sends **100 Set Identity**.
+3. The server sends 101 User List, 105 Server Info, 107 Server Greeting, and
+   possibly 106 Server Icon and 213 Must Join Chat. Everyone else receives
+   103 User Joined.
+4. The client then asks for whatever it shows: 214 Get Chat List, 605 Get
+   Newsgroup List, 607 Get News Messages, and
+   202 Join Chat for Public Chat (`captures/first-connect.pcapng`) **[O]**.
 
 ## Logout
 
-When a connection closes, the other users receive **User Departed (104)**,
-and the server writes a 185 (Disconnected) history record.
+When a connection closes, the other users receive **104 User Departed**, and
+the server writes a 185 Disconnected history record.

@@ -57,5 +57,5 @@ streamed payloads such as file transfers **[I]**.
 
 ## Messages
 
-Message types, payload layouts, the Status (1) reply, and error codes are in
+Message types, payload layouts, the 1 Status reply, and error codes are in
 [KDXProtocol.md](KDXProtocol.md).
