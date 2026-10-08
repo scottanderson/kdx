@@ -74,3 +74,6 @@ addresses.
 | `0x0804b114` | post-login: sends 105, 107, 106, 213 |
 | `0x08061d80` | write a server history record and push 183 |
 | `0x080969f8` / `0x08069880` / `0x08096b4c` | file path: decode / validate / join to a host path |
+| `0x08052194` / `0x0805234c` | transfer connection: dispatcher / read loop that switches to streaming |
+| `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
+| `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |

@@ -37,9 +37,33 @@ impl Connection {
         login: &Login,
         table: &ChallengeTable,
     ) -> Result<Self> {
+        let key = AccountKey::from_password(&login.password);
+        Self::connect_with_key(addr, login.name.clone(), key, table)
+    }
+
+    /// Opens a second connection on behalf of a logged-in user, as file
+    /// transfers do.
+    ///
+    /// `session_key` is the first 32 bytes of the user's 105 Server Info.
+    pub fn attach(
+        addr: impl ToSocketAddrs,
+        user_id: u32,
+        session_key: [u8; AccountKey::LEN],
+        table: &ChallengeTable,
+    ) -> Result<Self> {
+        let mut name = vec![0];
+        name.extend_from_slice(&user_id.to_be_bytes());
+        Self::connect_with_key(addr, name, AccountKey(session_key), table)
+    }
+
+    fn connect_with_key(
+        addr: impl ToSocketAddrs,
+        name: Vec<u8>,
+        key: AccountKey,
+        table: &ChallengeTable,
+    ) -> Result<Self> {
         let mut stream = TcpStream::connect(addr).context("connecting")?;
         stream.set_nodelay(true)?;
-        let key = AccountKey::from_password(&login.password);
 
         let hello = Hello {
             service: SERVICE_KDX,
@@ -47,7 +71,7 @@ impl Connection {
             version: CLIENT_VERSION,
             challenge: random_u32()? as u16 % ChallengeTable::OFFSETS,
             nonce: random_bytes()?,
-            name: login.name.clone(),
+            name,
         };
         stream.write_all(&hello.encode(random_u32()?)?)?;
 

@@ -162,8 +162,8 @@ These are the codes the handshake raises:
 
 ## Open questions
 
+- Resolved: the `0x00`+ID login opens a transfer connection. See
+  [KDXProtocol.md](KDXProtocol.md#transfer-connections).
 - Everything after the handshake is covered in `session.md`.
 - The server's version-acceptance callback (`+0x88`, set by the server code).
-- What the `0x00`+ID login is used for. Confirm it with a file-transfer
-  capture.
 - Guest login (empty password constant) against traffic.

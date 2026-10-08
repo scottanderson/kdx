@@ -31,6 +31,10 @@ struct Args {
     /// Skip the login message (type 100).
     #[arg(long)]
     no_login: bool,
+    /// Send the requests on a second, attached connection (as file transfers
+    /// do) instead of the login connection.
+    #[arg(long)]
+    attach: bool,
     /// How long to wait for more messages after each request, in milliseconds.
     #[arg(long, default_value_t = 700)]
     wait: u64,
@@ -54,7 +58,27 @@ fn main() -> Result<()> {
         .set_read_timeout(Some(Duration::from_millis(args.wait)))?;
 
     let mut requests = Vec::new();
-    if !args.no_login {
+    // The login connection must stay open while an attached one is in use.
+    let mut _login_conn = None;
+    if args.attach {
+        let txid = conn.send(MessageType(100), &login_record(args.nick.as_bytes()))?;
+        println!(">> txid {txid:08x} type 100 (login)");
+        let info = loop {
+            let (header, payload) = conn.recv().context("waiting for server info")?;
+            if header.kind == MessageType(105) {
+                break payload;
+            }
+        };
+        anyhow::ensure!(info.len() >= 0x28, "server info too short");
+        let key: [u8; 32] = info[..32].try_into()?;
+        let user_id = u32::from_be_bytes(info[0x24..0x28].try_into()?);
+        println!("attaching as user {user_id}");
+        let attached = Connection::attach(&args.addr, user_id, key, &table)?;
+        attached
+            .stream()
+            .set_read_timeout(Some(Duration::from_millis(args.wait)))?;
+        _login_conn = Some(std::mem::replace(&mut conn, attached));
+    } else if !args.no_login {
         requests.push((MessageType(100), login_record(args.nick.as_bytes())));
     }
     for request in &args.requests {

@@ -280,10 +280,10 @@ status.
 | 409 | Get File/Folder Info | Client | `FUN_0804ef00` |
 | 410 | File/Folder Info | Server | |
 | 411 | Set File/Folder Info | Client | `FUN_0804f684` |
-| 412 | Download File | Client | |
+| 412 | Download File | Client | `FUN_08050984` (transfer connection) |
 | 413 | Download File (R) | Server | |
 | 414 | Download File (D) | Server | |
-| 415 | Upload File | Client | |
+| 415 | Upload File | Client | `FUN_08051750` (transfer connection) |
 | 416 | Upload File (R) | Server | |
 | 417 | Upload File (D) | Client | |
 | 418 | Upload File (C) | Server | |
@@ -804,7 +804,7 @@ entry per item, each padded to 4:
 | 0x08 | 8 | created | time |
 | 0x10 | 8 | modified | time |
 | 0x18 | 8 | | |
-| 0x20 | 4 | attributes | 0x01000002 for both folders; the server clears bit 24 and tests 0x42 [S] |
+| 0x20 | 4 | attributes | 1 for a file, 0x01000002 for a folder [O]; the server clears bit 24 and tests 0x42 [S] |
 | 0x24 | 0xa | | |
 | 0x2e | 2 | | 0xffff |
 | 0x30 | 2 | folder access item | 0x2c, 0x2b (see 1107 Folder Access List) |
@@ -846,10 +846,135 @@ Handlers are listed in the table above. Each one checks privileges (see
 Access Privileges) and takes one or two file paths. Their layouts are not
 read yet.
 
-**412–414 Download File**, **415–418 Upload File**
-These are not read yet. The 32-byte value in 105 Server Info and the
-handshake's session-attach login (a login name that starts with 0x00)
-suggest that transfers run on a second connection to the same port **[I]**.
+#### Transfer connections
+
+Files move on a second connection to the same port, attached to a user who
+is already logged in. **[S `FUN_0805270c`, `FUN_080528c8`, `FUN_08052194`;
+O kdx-probe `--attach`]**
+
+1. The client connects and runs the normal handshake with a special login:
+   - the login name is 5 bytes: `00`, then the u32 user ID from 105 Server
+     Info offset 0x24;
+   - the account key is the 32 bytes at 105 Server Info offset 0x00, not a
+     password hash.
+2. The server accepts it only if that user is logged in, is not itself an
+   attached connection, and connects from the same IP address. The attached
+   connection gets its own user ID, but it acts with the parent's
+   privileges and base folder. The server log calls it a transfer, and on
+   close it logs `Transfer Disconnect` **[O]**.
+3. On this connection, the server handles only 400 Get File List, 402
+   Create Folder, 412 Download File, 415 Upload File, and 900, 904, 905
+   (view display). It ignores everything else, including 108 Ping **[S, O]**.
+4. One transfer runs at a time per connection. A second 412 Download File or
+   415 Upload File during a transfer gets 1 Status 0x10003. Afterwards the
+   connection takes requests again **[S]**.
+
+The stream is encrypted unless the client asks for plain mode (request
+offset 0x17 bit 0, which needs privilege bit 65, probably Disable
+Encryption [I]). Encrypted data is framed exactly like a message: a header
+whose length gives the byte count, followed by that many bytes in 16-byte
+Twofish blocks. A client can read it with its normal receive path **[O]**.
+Plain mode has not been tried.
+
+**412 Download File**
+Initiator: Client, on a transfer connection. Privilege: Download (10).
+**[S `FUN_08050984`, `FUN_080512b4`; O]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | data fork offset | where to resume |
+| 0x08 | 8 | resource fork offset | |
+| 0x10 | 7 | | |
+| 0x17 | 1 | options | bit 0: plain (unencrypted) transfer |
+| 0x18 | | file path | |
+
+The payload must be at least 0x1a bytes. Each offset is rounded down to a
+multiple of 0x1000. An offset past the end means nothing is sent for that
+fork. [O]: offset 5000 resumed at 4096, and 70000 − 4096 = 65904 bytes
+came back.
+
+A file over 0x40000 bytes is refused with code 0x640003 while the same
+user already has a download running, unless the user has privilege bit 25
+(probably Allow Simultaneous Downloads [I]).
+
+The server answers with **413 Download File (R)**, 99 bytes for a plain
+Linux file:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | data fork size | 0x11170 = 70000 |
+| 0x08 | 8 | resource fork size | |
+| 0x10 | 8 | 0 | |
+| 0x18 | 8 | created | |
+| 0x20 | 8 | modified | |
+| 0x28 | 0xc | | 0, 0, 1 |
+| 0x34 | 0x14 | 0 | |
+| 0x48 | 1 | name length | |
+| 0x49 | 1 | second string length | |
+| 0x4a | 1 | third string length | |
+| 0x4b | 1 | fourth string length | at most 0x41 |
+| 0x4c | | name, strings 2–4 | `probe-dl.bin`, `exttype/bin`, empty, empty [O] |
+
+The second string is probably a type that the server derives from the file
+extension, since Linux files have no type code [I]. Then it streams:
+
+1. **414 Download File (D)** with the request's txid and the reply flag.
+   The length is the data-fork bytes that remain. The data follows.
+2. **414 Download File (D)** with the server's own txid and no reply flag.
+   The length is the resource-fork bytes that remain (0 here). The data
+   follows.
+
+Data is read in chunks starting at 0x10000 and growing to 0x80000. With a
+speed limit, chunks are multiples of 0x1000. At the end the server writes a
+188 Finished File Download history record.
+
+**415 Upload File**
+Initiator: Client, on a transfer connection. Privilege: Upload (11).
+**[S `FUN_08051750`, `FUN_08051dec`; O]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | data fork size | |
+| 0x08 | 8 | resource fork size | |
+| 0x10 | 7 | | |
+| 0x17 | 1 | options | bit 0: plain (unencrypted) transfer |
+| 0x18 | 0x2e | | |
+| 0x46 | 2 | path length | of the destination folder path |
+| 0x48 | 1 | name length | nonzero |
+| 0x49 | 1 | second string length | |
+| 0x4a | 1 | third string length | |
+| 0x4b | 1 | fourth string length | |
+| 0x4c | | name, strings 2–4, folder path | |
+
+The server writes to a temporary name until the upload finishes. If the
+name already exists, it fails with 0x30073. An earlier partial upload of
+the same name is resumed. At the end, the server applies the second to
+fourth strings to the file. They probably carry type and comment
+information [I].
+
+The server answers with **416 Upload File (R)**, 24 bytes:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | bytes already on the server | from a partial upload; the server resumes at this value rounded down to 0x1000 |
+| 0x08 | 8 | resource fork | always all ones; resource forks don't resume |
+| 0x10 | 8 | 0 | |
+
+The client then sends:
+
+1. A **417 Upload File (D)** header. Its length must equal the data-fork
+   bytes that remain, or the server fails with 0x40074. The data follows.
+2. A **417 Upload File (D)** header for the resource fork, then its data.
+   This build expects length 0 here [S].
+
+When both forks are complete, the server renames the file into place,
+writes a 189 Finished File Upload history record, and sends an empty
+**418 Upload File (C)** with its own txid **[O]**. [O]: 100 bytes uploaded
+to `Uploads [UL]` arrived byte for byte.
+
+**404 Delete File/Folder**, **406 Rename**, **408 Copy**
+Server 1.620 has no handler for these. 405 Move To Trash, 407 Move, and 411
+Set File/Folder Info cover the same ground **[S `FUN_0804fdac`]**.
 
 **450 Generate Catalog**, **452 File Search**
 These are not read yet.
@@ -1168,7 +1293,8 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 |---:|---|---|
 | 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | 202 Join Chat, 207 Send Chat Text, 209 Set Chat Topic, 400 Get File List, 508 Delete Account, 511 Set Account, 607 Get News Messages, 609 Get News Message, 611 Post News Message, 612 Delete News Message |
 | 3 | (login) | `FUN_08054900` account lookup |
-| 11 | Upload [I] | 402 Create Folder |
+| 10 | Download | 412 Download File |
+| 11 | Upload | 402 Create Folder, 415 Upload File |
 | 13 | Empty Trash | 421 Empty Trash |
 | 15 | Create Aliases | 403 Create Alias |
 | 16 | Move | 407 Move |
@@ -1176,6 +1302,7 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 18 | Delete | 405 Move To Trash |
 | 20 | Set Attributes [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
 | 22 | See All Volumes [I] | 400 Get File List, 423 Set Volume Info |
+| 25 | Allow Simultaneous Downloads [I] | 412 Download File (large files) |
 | 27 | View Folder Access | 505 Get Account Class List, 1103 Get Folder Access, 1106 Get Folder Access List |
 | 28 | Modify Folder Access | 402 Create Folder, 403 Create Alias, 411 Set File/Folder Info, 1100 Create Folder Access, 1101 Delete Folder Access, 1105 Set Folder Access |
 | 30 | Join Chat | 202 Join Chat, 214 Get Chat List, login |
@@ -1195,10 +1322,11 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 52 | Modify Accounts | 504 Set Account Class, 508 Delete Account, 511 Set Account |
 | 53 | Change Own Password | 550 Change Own Password |
 | 60 | Use Any Name | 100 Set Identity, login |
-| 61 | Modify Server Settings | 113 Get Extra Server Info, 170 Get Server Settings, 172 Set Server Settings, 450 Generate Catalog, login (105) |
+| 61 | Modify Server Settings | 113 Get Extra Server Info, 170 Get Server Settings, 172 Set Server Settings, 450 Generate Catalog, login (105 Server Info) |
 | 62 | Don't Show Greeting | login |
 | 63 | View Server History | 180 Server History Join |
 | 64 | Shutdown Server | 174 Shutdown Server, 175 Upgrade Server Software |
+| 65 | Disable Encryption [I] | 412 Download File, 415 Upload File (plain mode) |
 | 70 | View News | 605 Get Newsgroup List, 607 Get News Messages, 609 Get News Message |
 | 71 | Post News | 607 Get News Messages, 611 Post News Message |
 | 72 | Delete News Messages | 607 Get News Messages, 612 Delete News Message |
