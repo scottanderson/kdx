@@ -260,61 +260,104 @@ impl AccountClass {
     }
 }
 
-/// 510 Account Info.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct AccountInfo {
-    /// Probably a mask of the privileges set on the account itself.
-    pub privilege_mask: [u8; 16],
-    /// Probably the values of those privileges.
+/// An account record: the request of 507 Create Account and 511 Set Account, and 510 Account Info.
+#[derive(Clone, Default, PartialEq, Eq)]
+pub struct Account {
+    /// Values of the privileges set in the mask.
     pub privileges: [u8; 16],
-    /// Meaning unknown; 1 in the lab.
-    pub unknown_20: u8,
-    /// Creation time in milliseconds.
+    /// Privileges the account sets itself, overriding its class.
+    pub privilege_mask: [u8; 16],
+    /// The account key; all zero in 511 to keep the current one.
+    ///
+    /// 510 Account Info never holds the key: byte 0 is 1 if the account has a password.
+    pub key: [u8; 32],
+    /// Creation time in milliseconds; the server sets it.
     pub created: u64,
-    /// Modification time in milliseconds.
+    /// Modification time in milliseconds; the server sets it.
     pub modified: u64,
-    /// Last login time in milliseconds.
+    /// Last login time in milliseconds; 0 if never.
     pub last_login: u64,
+    /// Class index.
+    pub class_index: u8,
+    /// The three bytes after the class index, stored as given.
+    pub unknown_77: [u8; 3],
     /// Login.
     pub login: Vec<u8>,
     /// Account name.
     pub name: Vec<u8>,
+    /// A third string, stored as given; empty in the lab.
+    pub third: Vec<u8>,
+    /// In 511, the login of the account to change; in 510, the login of whoever last saved it.
+    pub editor: Vec<u8>,
 }
 
-impl AccountInfo {
+impl std::fmt::Debug for Account {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Account")
+            .field("privileges", &self.privileges)
+            .field("privilege_mask", &self.privilege_mask)
+            .field("key", &"..")
+            .field("created", &self.created)
+            .field("modified", &self.modified)
+            .field("last_login", &self.last_login)
+            .field("class_index", &self.class_index)
+            .field("unknown_77", &self.unknown_77)
+            .field("login", &self.login)
+            .field("name", &self.name)
+            .field("third", &self.third)
+            .field("editor", &self.editor)
+            .finish()
+    }
+}
+
+impl Account {
     /// Size of the fixed part before the strings.
     pub const HEADER_LEN: usize = 0x80;
+
+    /// Whether 510 Account Info says the account has a password.
+    pub const fn has_password(&self) -> bool {
+        self.key[0] != 0
+    }
 
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let lens = [usize::from(buf[0x7a]), usize::from(buf[0x7b])];
-        let ([login, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let lens = [0x7a, 0x7b, 0x7c, 0x7d].map(|at| usize::from(buf[at]));
+        let ([login, name, third, editor], _) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
-            privilege_mask: buf[..0x10].try_into().expect("16 bytes"),
-            privileges: buf[0x10..0x20].try_into().expect("16 bytes"),
-            unknown_20: buf[0x20],
+            privileges: buf[..0x10].try_into().expect("16 bytes"),
+            privilege_mask: buf[0x10..0x20].try_into().expect("16 bytes"),
+            key: buf[0x20..0x40].try_into().expect("32 bytes"),
             created: u64_at(buf, 0x40),
             modified: u64_at(buf, 0x48),
             last_login: u64_at(buf, 0x50),
+            class_index: buf[0x76],
+            unknown_77: buf[0x77..0x7a].try_into().expect("3 bytes"),
             login,
             name,
+            third,
+            editor,
         })
     }
 
     /// Encodes the payload, padded with zeros to 4.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..0x10].copy_from_slice(&self.privilege_mask);
-        out[0x10..0x20].copy_from_slice(&self.privileges);
-        out[0x20] = self.unknown_20;
+        out[..0x10].copy_from_slice(&self.privileges);
+        out[0x10..0x20].copy_from_slice(&self.privilege_mask);
+        out[0x20..0x40].copy_from_slice(&self.key);
         out[0x40..0x48].copy_from_slice(&self.created.to_be_bytes());
         out[0x48..0x50].copy_from_slice(&self.modified.to_be_bytes());
         out[0x50..0x58].copy_from_slice(&self.last_login.to_be_bytes());
+        out[0x76] = self.class_index;
+        out[0x77..0x7a].copy_from_slice(&self.unknown_77);
         out[0x7a] = len_u8(&self.login, "login")?;
         out[0x7b] = len_u8(&self.name, "account name")?;
-        out.extend_from_slice(&self.login);
-        out.extend_from_slice(&self.name);
+        out[0x7c] = len_u8(&self.third, "third string")?;
+        out[0x7d] = len_u8(&self.editor, "editor login")?;
+        for s in [&self.login, &self.name, &self.third, &self.editor] {
+            out.extend_from_slice(s);
+        }
         out.resize(pad4(out.len()), 0);
         Ok(out)
     }

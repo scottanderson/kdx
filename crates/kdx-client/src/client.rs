@@ -5,13 +5,14 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 
 use anyhow::{bail, Context, Result};
+use kdx_proto::msg::admin::{Account, AccountClass, AccountListEntry};
 use kdx_proto::msg::chat::{ChatListEntry, ChatText, ChatWindowInfo, JoinChat};
 use kdx_proto::msg::file::FileListEntry;
 use kdx_proto::msg::news::{NewsMessage, NewsMessages, NewsgroupEntry, PostNewsMessage};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, MessageType};
-use kdx_proto::ChallengeTable;
+use kdx_proto::{AccountKey, ChallengeTable};
 
 use crate::{Connection, Login};
 
@@ -209,6 +210,48 @@ impl Client {
             MessageType::STATUS => Err(status_error(kind, &payload)),
             other => bail!("unexpected {other} reply to {kind}"),
         }
+    }
+
+    /// 505 Get Account Class List.
+    pub fn account_classes(&mut self) -> Result<Vec<AccountClass>> {
+        let reply = self.request(MessageType::GET_ACCOUNT_CLASS_LIST, &[])?;
+        Ok(AccountClass::decode_list(&reply)?)
+    }
+
+    /// 512 Get Account List.
+    pub fn accounts(&mut self) -> Result<Vec<AccountListEntry>> {
+        let reply = self.request(MessageType::GET_ACCOUNT_LIST, &[])?;
+        Ok(AccountListEntry::decode_list(&reply)?)
+    }
+
+    /// 509 Get Account.
+    pub fn account(&mut self, login: &[u8]) -> Result<Account> {
+        let reply = self.request(MessageType::GET_ACCOUNT, login)?;
+        Ok(Account::decode(&reply)?)
+    }
+
+    /// 507 Create Account.
+    pub fn create_account(&mut self, account: &Account) -> Result<()> {
+        self.request(MessageType::CREATE_ACCOUNT, &account.encode()?)?;
+        Ok(())
+    }
+
+    /// 511 Set Account; `account.editor` names the account to change.
+    pub fn set_account(&mut self, account: &Account) -> Result<()> {
+        self.request(MessageType::SET_ACCOUNT, &account.encode()?)?;
+        Ok(())
+    }
+
+    /// 508 Delete Account.
+    pub fn delete_account(&mut self, login: &[u8]) -> Result<()> {
+        self.send_checked(MessageType::DELETE_ACCOUNT, login)
+    }
+
+    /// 550 Change Own Password.
+    pub fn change_password(&mut self, password: &[u8]) -> Result<()> {
+        let key = AccountKey::from_password(password);
+        self.request(MessageType::CHANGE_OWN_PASSWORD, &key.0)?;
+        Ok(())
     }
 
     /// Downloads a file's data fork from `offset` into `sink` on a new transfer connection.

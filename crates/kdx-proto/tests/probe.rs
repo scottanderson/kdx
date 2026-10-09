@@ -1,7 +1,7 @@
 //! Checks against `captures/probe.pcapng`: kdx-probe sessions as `admin` on Server 1.620.
 
 use kdx_proto::msg::admin::{
-    AccountClass, AccountInfo, AccountListEntry, ExtraServerInfo, FolderAccessItem,
+    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccessItem,
     MonitoredConnection, ProcessList, YourAddress,
 };
 use kdx_proto::msg::chat::{
@@ -321,10 +321,13 @@ fn accounts() {
 
     let session = connection!("59006");
     let wire = one(&session, MessageType::ACCOUNT_INFO);
-    let account = AccountInfo::decode(wire).unwrap();
+    let account = Account::decode(wire).unwrap();
     assert_eq!(account.login, b"admin");
     assert_eq!(account.name, b"Administrator");
     assert_eq!(account.privilege_mask, account.privileges);
+    assert!(account.has_password());
+    assert_eq!(account.class_index, 0);
+    assert!(account.editor.is_empty());
     assert_eq!(account.encode().unwrap(), wire);
 }
 

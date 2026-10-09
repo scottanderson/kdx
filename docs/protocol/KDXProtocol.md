@@ -97,7 +97,8 @@ Error form, 24 bytes:
   0x98 of `FUN_080969f8`.
 
 Success form, 8 bytes: `u32 0`, then `u32 value`, often the request type
-**[S `FUN_080865c0`]**.
+**[S `FUN_080865c0`]**. 507 Create Account gets value 0x1fb and 511 Set
+Account 0x1ff **[O `captures/kdx-accounts.pcapng` frames 235, 413]**.
 
 The client renders an error as `ID ^0/^1 [^2] @ ^3 #^4`, filling in the
 code's class and number, the module, and the line **[S]**.
@@ -1058,20 +1059,107 @@ The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**.
 **509 Get Account** → **510 Account Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
 
-The request is the account's login, with no length byte. Reply (148 bytes
-for `admin`):
+The request is the account's login, with no length byte. An unknown login
+gets 1 Status 0x1000c (`captures/kdx-accounts.pcapng` frame 554). The reply
+is the stored account record, with the key replaced by a flag. Its padding is
+uninitialised (frame 590) **[O]**.
+
+**Account record.** 507 Create Account, 510 Account Info, and 511 Set
+Account share this layout **[S `FUN_08055928`, `FUN_08055ff4`; O]**:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 0x10 | | `80 00 00 00 00 00 02 00…`; probably a mask of privileges set on the account itself [I] |
-| 0x10 | 0x10 | | the same bytes; probably the privilege values [I] |
-| 0x20 | 1 | | 1 |
-| 0x40 | 8 | created | |
-| 0x48 | 8 | modified | |
-| 0x50 | 8 | last login | |
+| 0x00 | 0x10 | privileges | values of the bits set in the mask; `80 00 00 00 00 00 02 00…` for admin, 0 for new accounts **[S `FUN_080551b0`]** |
+| 0x10 | 0x10 | privilege mask | bits the account sets itself; the rest come from its class **[S `FUN_080551b0`]** |
+| 0x20 | 0x20 | account key | see below |
+| 0x40 | 8 | created | set by the server |
+| 0x48 | 8 | modified | set by the server |
+| 0x50 | 8 | last login | 0 if never |
+| 0x58 | 0x1e | | 0 |
+| 0x76 | 1 | class index | must name an existing class, else 0x10002 |
+| 0x77 | 3 | | stored as given |
 | 0x7a | 1 | login length | |
-| 0x7b | 1 | name length | |
-| 0x80 | | login, name | `admin`, `Administrator` |
+| 0x7b | 1 | name length | the server filters the name (`FUN_08081ffc`) |
+| 0x7c | 1 | third string length | stored as given; 0 in the lab |
+| 0x7d | 1 | editor length | see below |
+| 0x80 | | login, name, third string, editor | |
+
+The key field:
+
+- 507 Create Account: the new account's key (see
+  [handshake.md](handshake.md)). The CLI sends the empty password's key for an
+  account with no password.
+- 511 Set Account: the new key. All zero keeps the current key.
+- 510 Account Info: byte 0 is 1 if the account has a password, i.e. its key
+  is not the empty password's key (`FUN_08066a90`), and 0 otherwise. The
+  rest is zero (frames 253 and 590).
+
+The editor field:
+
+- In a request it is ignored by 507, and in 511 it names the account to
+  change.
+- The server stores the requester's login there. 510 shows `admin` for the
+  accounts admin created (frame 253). The setup-created `admin` account shows
+  an empty editor.
+
+**507 Create Account**
+Initiator: Client. Privilege: Create Accounts (51). **[S `FUN_08055928`; O]**
+
+The request is an account record. The server sets the times and the
+editor, then replies with 1 Status success 0x1fb (frame 235). Errors:
+
+- 0x1000d if the login exists (frame 289);
+- 0x10002 for an invalid login (`FUN_08057f88`) or class;
+- 0x640005 when the account would hold a privilege the requester lacks
+  (`FUN_080551b0`, below).
+
+The privilege check (`FUN_080551b0`) **[S]**: the account's effective
+privileges are its class's bits, with the bits in the mask taken from the
+record instead. Bits 3 and 36 are ignored, and so is bit 23 if the requester
+has bit 24. The request fails if any remaining bit is one the requester lacks.
+A requester with bit 0 passes.
+
+**511 Set Account**
+Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_08055ff4`; O]**
+
+The request is an account record whose editor field holds the current login.
+If the login field differs, the server renames the account, failing with
+0x1000d if the new login exists. It keeps the creation and last-login times,
+sets the modified time, and replies with 1 Status success 0x1ff (frames
+412–413). Users logged in to the account are updated in place with the new
+login and privileges.
+
+Errors:
+
+- 0x1000c for an unknown account;
+- 0x10014 if the account has privilege 54 (not yet named) set in both the mask
+  and the values and the requester lacks privilege 0;
+- the same checks as 507 Create Account otherwise.
+
+**508 Delete Account**
+Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_08055d50`; O]**
+
+The request is the login, with no length byte. On success the server sends
+**515 Account Deleted**, whose payload is the same login, to the requester
+as a notification (its own txid, no reply flag). It sends no reply (frames
+607–610).
+
+Errors:
+
+- 0x1000c for an unknown login (frame 630);
+- 0x10014 without the privilege (frame 391);
+- 0x10014 if the target has privilege 0 set in both its mask and its
+  values;
+- 0x10014 if the target has privilege 54 (not yet named) set in both and the
+  requester lacks privilege 0.
+
+**550 Change Own Password** → **551 Change Own Password Done**
+Initiator: Client. Privilege: Change Own Password (53). **[S `FUN_08056a04`;
+O]**
+
+The request is the 32-byte key of the new password, not the password. The
+server stores it as the account's key and replies with an empty 551
+(frames 323–324). The old password stops working at once.
 
 **512 Get Account List** → **513 Account List**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080566bc`; O]**
@@ -1092,9 +1180,7 @@ padded to 4:
 | 0x25 | 1 | name length | |
 | 0x28 | | login, name | |
 
-504 Set Account Class, 507 Create Account, 508 Delete Account, 511 Set
-Account, and 550 Change Own Password are not read yet. Their handlers are
-listed in the table above.
+504 Set Account Class and 514 Account Changed are not read yet.
 
 ### News
 
@@ -1372,6 +1458,10 @@ give the class.
 | 0x40077 | Banned for flooding. |
 | 0x50064–0x50066 | sound errors |
 
+Codes outside the table also occur. 507 Create Account and 511 Set Account
+raise 0x640005 when the account would hold a privilege the requester lacks
+**[S `FUN_080551b0`]**.
+
 # Access Privileges
 
 An account's privileges are a bit string of at least 11 bytes. It is stored
@@ -1470,6 +1560,15 @@ and Disable Encryption are not yet mapped to bit numbers.
    `captures/first-connect.pcapng` the server sends only 101 and 105 (frames
    23–24), and the user's later actions bring 300 Send Private Message
    twice, 605 Get Newsgroup List, and 607 Get News Messages **[O]**.
+
+## Flood ban
+
+After 30 connections from 127.0.0.1 in about a minute, the server logged
+"Banned for flooding. (ID 4/119)" and then closed each new connection
+before sending its hello (`captures/kdx-accounts.pcapng`, the connections
+after frame 467) **[O]**. The ban lasted at least five minutes and ended
+when the server restarted. The checks are in `FUN_0804a8c0` and
+`FUN_0804fc40`, which are not read yet.
 
 ## Posting news
 

@@ -100,7 +100,7 @@ Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
 | 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
 | 4. News | reading, posting, deleting; newsgroup management not read | yes | read, post, delete |
 | 5. Files | list, info, download, upload, resume; search and the 402–423 edits not read | yes | ls, get, put |
-| 6. Accounts, admin | the read replies; the 504–511 writes not read | the read replies | no |
+| 6. Accounts, admin | the read replies, 507, 508, 511, 550; 504 not read | yes | account list, show, add, set, rm; passwd |
 | 7. Tracker | not started | no | no |
 | 8. Voice, view display | not started | no | no |
 
@@ -132,8 +132,9 @@ Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
 `kdx-dissect` (pcap to text), `kdx-client` (the `Client` library, the `kdx`
 CLI, and `kdx-probe`), and later `kdx-server` and `kdx-tracker`. The first
 three exist.
-`kdx-proto::msg` has codecs for the payloads in areas 1–5 and for the admin
-replies of area 6.
+`kdx-proto::msg` has codecs for the payloads in areas 1–5, and in area 6 for the
+account messages (except 504 Set Account Class) and the 114, 116, 143, 803,
+and 1107 replies.
 
 ## Open decisions
 - None currently.

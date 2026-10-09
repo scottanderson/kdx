@@ -78,3 +78,5 @@ addresses.
 | `0x08052194` / `0x0805234c` | transfer connection: dispatcher / read loop that switches to streaming |
 | `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
 | `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
+| `0x080551b0` | account privilege check for 507/511: effective bits vs the requester's (0x640005) |
+| `0x08066a90` | is the key the empty password's key |

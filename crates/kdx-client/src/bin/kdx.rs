@@ -7,11 +7,12 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use kdx_client::{table, Client, Login};
+use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
 use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
-use kdx_proto::ChallengeTable;
+use kdx_proto::{AccountKey, ChallengeTable};
 
 #[derive(Parser)]
 #[command(about = "A KDX client")]
@@ -85,6 +86,17 @@ enum Command {
     },
     /// Delete a news message.
     DeleteNews { group: u32, message: u32 },
+    /// List, show, create, change, or delete accounts.
+    Account {
+        #[command(subcommand)]
+        action: AccountAction,
+    },
+    /// Change your own password.
+    Passwd {
+        /// The new password; also read from KDX_NEW_PASSWORD.
+        #[arg(env = "KDX_NEW_PASSWORD", hide_env_values = true)]
+        new_password: String,
+    },
     /// Say something in a chat.
     Say {
         /// Chat ID.
@@ -99,6 +111,55 @@ enum Command {
         /// Chat ID.
         #[arg(long, default_value_t = PUBLIC_CHAT)]
         chat: u32,
+    },
+}
+
+#[derive(Subcommand)]
+enum AccountAction {
+    /// List the accounts.
+    List,
+    /// List the account classes.
+    Classes,
+    /// Show an account.
+    Show {
+        #[arg(value_name = "LOGIN")]
+        account: String,
+    },
+    /// Create an account.
+    Add {
+        #[arg(value_name = "LOGIN")]
+        account: String,
+        /// Account name; defaults to the login.
+        #[arg(long)]
+        name: Option<String>,
+        /// Class index, from `account classes`.
+        #[arg(long, default_value_t = 1)]
+        class: u8,
+        /// Password; also read from KDX_NEW_PASSWORD. Omit for none.
+        #[arg(long, env = "KDX_NEW_PASSWORD", hide_env_values = true)]
+        new_password: Option<String>,
+    },
+    /// Change an account.
+    Set {
+        #[arg(value_name = "LOGIN")]
+        account: String,
+        /// New login.
+        #[arg(long)]
+        rename: Option<String>,
+        /// New account name.
+        #[arg(long)]
+        name: Option<String>,
+        /// New class index.
+        #[arg(long)]
+        class: Option<u8>,
+        /// New password; also read from KDX_NEW_PASSWORD.
+        #[arg(long, env = "KDX_NEW_PASSWORD", hide_env_values = true)]
+        new_password: Option<String>,
+    },
+    /// Delete an account.
+    Rm {
+        #[arg(value_name = "LOGIN")]
+        account: String,
     },
 }
 
@@ -215,6 +276,8 @@ fn main() -> Result<()> {
             client.post_news(group, subject.as_bytes(), body.as_bytes())?;
         }
         Command::DeleteNews { group, message } => client.delete_news(group, message)?,
+        Command::Account { action } => account_command(&mut client, action)?,
+        Command::Passwd { new_password } => client.change_password(new_password.as_bytes())?,
         Command::Say { chat, text: line } => {
             client.join_chat(chat, 0)?;
             client.send_chat(chat, line.as_bytes())?;
@@ -398,6 +461,90 @@ fn print_event(kind: MessageType, payload: &[u8]) -> Result<()> {
         other => println!("{other} ({} bytes)", payload.len()),
     }
     Ok(())
+}
+
+fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
+    match action {
+        AccountAction::List => {
+            for account in client.accounts()? {
+                println!(
+                    "{:<16} class {:>2}  {}",
+                    text(&account.login),
+                    account.class_index,
+                    text(&account.name)
+                );
+            }
+        }
+        AccountAction::Classes => {
+            for class in client.account_classes()? {
+                println!("{:>2}  {}", class.index, text(&class.name));
+            }
+        }
+        AccountAction::Show { account: login } => {
+            let account = client.account(login.as_bytes())?;
+            println!("login:      {}", text(&account.login));
+            println!("name:       {}", text(&account.name));
+            println!("class:      {}", account.class_index);
+            println!(
+                "password:   {}",
+                if account.has_password() {
+                    "set"
+                } else {
+                    "none"
+                }
+            );
+            println!("saved by:   {}", text(&account.editor));
+            println!(
+                "privileges: {} of {}",
+                hex(&account.privileges),
+                hex(&account.privilege_mask)
+            );
+        }
+        AccountAction::Add {
+            account: login,
+            name,
+            class,
+            new_password,
+        } => {
+            let account = Account {
+                key: AccountKey::from_password(new_password.unwrap_or_default().as_bytes()).0,
+                class_index: class,
+                name: name.unwrap_or_else(|| login.clone()).into_bytes(),
+                login: login.into_bytes(),
+                ..Account::default()
+            };
+            client.create_account(&account)?;
+        }
+        AccountAction::Set {
+            account: login,
+            rename,
+            name,
+            class,
+            new_password,
+        } => {
+            let mut account = client.account(login.as_bytes())?;
+            // 510 holds a password flag where 511 takes a key; zero keeps the key.
+            account.key =
+                new_password.map_or([0; 32], |p| AccountKey::from_password(p.as_bytes()).0);
+            account.editor = login.into_bytes();
+            if let Some(rename) = rename {
+                account.login = rename.into_bytes();
+            }
+            if let Some(name) = name {
+                account.name = name.into_bytes();
+            }
+            if let Some(class) = class {
+                account.class_index = class;
+            }
+            client.set_account(&account)?;
+        }
+        AccountAction::Rm { account: login } => client.delete_account(login.as_bytes())?,
+    }
+    Ok(())
+}
+
+fn hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 fn print_news(message: &NewsMessage) {

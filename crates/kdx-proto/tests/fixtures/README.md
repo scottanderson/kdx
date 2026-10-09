@@ -50,3 +50,17 @@ the empty password's.
 | 40434 | 611 Post News Message refused with 1 Status 0x10014 |
 | 53204 | 611 Post News Message, 613 News Message Posted, 115 Get My Address |
 | 53224 | 612 Delete News Message, 614 News Message Deleted, 115 Get My Address |
+
+`kdx-accounts-<port>.c2s.bin` and `kdx-accounts-<port>.s2c.bin` come from
+`captures/kdx-accounts.pcapng`. Port 58336 logged in as `rs-test` with
+password `rs-test-pw`; the rest are admin.
+
+| Port | Messages |
+|---|---|
+| 33090 | 508 Delete Account refused with 0x1000c |
+| 47988 | 509 Get Account, then 511 Set Account renaming `rs-test` to `rs-test2` |
+| 50184 | 510 Account Info for `rs-nopw`, which has no password |
+| 50188 | 508 Delete Account and 515 Account Deleted |
+| 58284 | 507 Create Account for `rs-test` |
+| 58290 | 510 Account Info for `rs-test` |
+| 58336 | 550 Change Own Password and 551 |

@@ -14,7 +14,7 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
 use kdx_proto::msg::admin::{
-    AccountClass, AccountInfo, AccountListEntry, ExtraServerInfo, FolderAccessItem,
+    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccessItem,
     MonitoredConnection, ProcessList, YourAddress,
 };
 use kdx_proto::msg::chat::{
@@ -608,15 +608,30 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .map(class)
             .collect::<Vec<_>>()
             .join("; "),
-        MessageType::ACCOUNT_INFO => {
-            let account = AccountInfo::decode(payload)?;
+        MessageType::ACCOUNT_INFO | MessageType::CREATE_ACCOUNT | MessageType::SET_ACCOUNT => {
+            let account = Account::decode(payload)?;
+            // The key is the account's secret; show only whether one is set.
+            let key = if account.key == [0; 32] {
+                "none"
+            } else if kind == MessageType::ACCOUNT_INFO {
+                "flag set"
+            } else {
+                "given"
+            };
             format!(
-                "login {} name {} privileges {}",
+                "login {} name {} class {} key {key} editor {} privileges {} of {}",
                 quoted(&account.login),
                 quoted(&account.name),
-                hex(&account.privileges)
+                account.class_index,
+                quoted(&account.editor),
+                hex(&account.privileges),
+                hex(&account.privilege_mask)
             )
         }
+        MessageType::GET_ACCOUNT | MessageType::DELETE_ACCOUNT | MessageType::ACCOUNT_DELETED => {
+            format!("login {}", quoted(payload))
+        }
+        MessageType::CHANGE_OWN_PASSWORD => format!("new key, {} bytes", payload.len()),
         MessageType::ACCOUNT_LIST => AccountListEntry::decode_list(payload)?
             .iter()
             .map(|a| {
