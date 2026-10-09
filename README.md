@@ -27,9 +27,10 @@ server and a tracker, all compatible with the original KDX programs (Server
   cargo run -p kdx-client --bin kdx -- -s host:10700 -l user ls 'Uploads [UL]'
   ```
 
-  Its subcommands are `who`, `chats`, `ls`, `get`, `put`, `news`, `say`,
-  `msg`, and `listen`, and the password comes from `--password` or
-  `KDX_PASSWORD`. `kdx-probe` sends raw requests and dumps the replies.
+  Its subcommands are `who`, `chats`, `ls`, `get`, `put`, `news`, `post`,
+  `delete-news`, `account`, `passwd`, `say`, `msg`, and `listen`, and the
+  password comes from `--password` or `KDX_PASSWORD`. `kdx help` lists them.
+  `kdx-probe` sends raw requests and dumps the replies.
 - `lab/` runs the original programs in a sandbox and captures their traffic.
 - `re/` holds the headless Ghidra tooling used for static analysis.
 
@@ -40,6 +41,23 @@ table, so `kdx` keeps a copy in `~/.cache/kdx/`. `kdx table fetch` downloads
 the smallest Haxial archive (248 KB) from the Internet Archive, checks its
 SHA-256, and extracts the table. `kdx table import FILE` takes it from any
 KDX program, zip archive of one, or saved table instead.
+
+## Getting started
+
+The crates need Rust 1.96 or newer. What else you need depends on the work:
+
+- **The client, the dissector, and the tests** need only `cargo`. Run `kdx
+  table fetch` once before connecting to a server; the tests that need the
+  table read it from `vendor/haxial/` or that cache, and skip without either.
+- **Captures in the lab** need the Haxial binaries (`vendor/fetch`) and the
+  packages in `lab/README.md`.
+- **Static analysis** needs the binaries, Docker, and Ghidra (`re/README.md`).
+
+Running the lab means using Haxial's software, so the Windows client shows
+its license agreement. Whether to accept it is your decision.
+
+See `CONTRIBUTING.md` for the checks, the doc conventions, and the legal
+rules.
 
 ## License
 
