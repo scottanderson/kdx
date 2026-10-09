@@ -53,7 +53,7 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 | 0x04 | 4 | magic | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
 | 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]** |
 | 0x0c | 1 | format | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | version | Client 1.600 sends `0x10`, Server 1.620 sends `0x20` **[O]**. The server's acceptance rule is in a callback that hasn't been read yet |
+| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**. The server's acceptance rule is in a callback that hasn't been read yet |
 | 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
