@@ -34,7 +34,7 @@ usage: kdx-lab <command> [args]
   status              show whether the lab is up and what it is capturing
   server [-d]         run KDX Server 1.620 (Linux); -d detaches (needs first-run setup done)
   tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
-  client [win|linux]  run KDX Client 1.600 under Wine (default) or the Linux beta 5 client
+  client [win|linux]  run KDX Client 1.600 under Wine (default) or Client 1.620 beta 5 (Linux)
   shell               open a shell inside the lab network (for nc, tshark, ip, ...)
   run <cmd...>        run a trusted host command inside the lab network (e.g. a Rust probe)
   reset <component>   wipe persistent state for server|tracker|client-win|client-linux
@@ -136,7 +136,7 @@ cmd_up() {
 
 - Date: $(date -u +%Y-%m-%dT%H:%MZ)
 - Server: KDXServer 1.620 Linux (sha256 $(sha256sum "$SERVER_BIN" 2>/dev/null | cut -c1-16))
-- Client: <win 1.600 | linux beta5>
+- Client: <win 1.600 | linux 1.620 beta 5>
 - Server state: <fresh | describe accounts/settings>
 
 ## Steps

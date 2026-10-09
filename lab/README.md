@@ -17,7 +17,25 @@ isolation between its clients, so don't type anything sensitive into other
 windows while a client is running.
 
 Requires: `bwrap`, `unshare`/`nsenter`, `dumpcap`/`tshark`, 32-bit Wine (for
-the Windows client), and unprivileged user namespaces.
+the Windows client), and unprivileged user namespaces. On Ubuntu 24.04:
+
+```sh
+sudo dpkg --add-architecture i386 && sudo apt update
+sudo apt install bubblewrap tshark unar curl wine wine32:i386
+```
+
+The lab has been tested only on Ubuntu 24.04 under WSL2 with WSLg. `client`
+needs the WSLg X socket, and native Ubuntu may block unprivileged user
+namespaces through AppArmor.
+
+The server and tracker run natively. Haxial released Client 1.600, the
+reference client so far, only for Windows and Mac, so it needs Wine. The
+Linux client (`client linux`) is Client 1.620 beta 5: its about string reads
+"KDX 1.620", and it was built in December 2004, after 1.600. Its strings show
+the same features as 1.600, without the Windows tray options. It has not yet
+been run in the lab.
+
+Fetch the binaries first with `vendor/fetch` (see `vendor/MANIFEST.md`).
 
 ## Usage
 
@@ -26,7 +44,7 @@ lab/kdx-lab setup            # once: fetch + checksum the i386 libstdc++.so.5 fr
 lab/kdx-lab up login-guest   # start the network and capture to captures/login-guest.pcapng
 lab/kdx-lab server           # foreground; console accepts: exit, quit, about, info, setport
 lab/kdx-lab server -d        # or detached, logging to lab/run/server.log
-lab/kdx-lab client           # KDX Client 1.600 under Wine (or: client linux)
+lab/kdx-lab client           # KDX Client 1.600 under Wine (or: client linux, for 1.620 beta 5)
 lab/kdx-lab shell            # shell inside the lab network (nc, tshark, ss, python3 -I ...)
 lab/kdx-lab down             # stop capture, kill everything in the lab network
 ```

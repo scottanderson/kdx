@@ -26,9 +26,9 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
 
 ### Phase 0: Isolated lab (done; see `lab/README.md`)
 - `lab/kdx-lab` runs Server 1.620 and Tracker 1.110 (Linux builds) and Client
-  1.600 (under Wine) or the Linux beta 5 client. Each runs in a `bwrap` sandbox
-  inside a private network namespace that only has loopback. Docker isn't used,
-  because WSL integration is off and bwrap needs no root.
+  1.600 (under Wine) or Client 1.620 beta 5 (Linux). Each runs in a `bwrap`
+  sandbox inside a private network namespace that only has loopback. Docker
+  isn't used, because WSL integration is off and bwrap needs no root.
 - `dumpcap` records `lo` to `captures/<scenario>.pcapng`. Each capture has a
   `captures/<scenario>.md` listing the GUI steps performed.
 - Server state lives in `lab/run/server/`. The lab admin login is in
