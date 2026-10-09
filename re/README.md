@@ -1,7 +1,8 @@
 # Static analysis
 
-Ghidra 12.1.4 runs headless in Docker, with no network, as your UID. Build the
-image with the script in the Ghidra 12.1.4 release from GitHub:
+Ghidra 12.1.4 runs headless in Docker, with no network, as your UID. It needs
+Docker, the binaries from `vendor/fetch`, and an image built with the script
+in the Ghidra 12.1.4 release from GitHub:
 
 ```sh
 ghidra_12.1.4_PUBLIC/docker/build-docker-image.sh   # -> ghidra/ghidra:12.1.4_PUBLIC
@@ -15,6 +16,7 @@ Paths inside the container are:
 ```sh
 # import + auto-analyze (done once per binary; ~1 min)
 re/ghidra /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
+re/ghidra /work/projects kdxclient -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \
   -postScript decompile.py 0x08085a04 -postScript callers.py 0x08085328
