@@ -1,0 +1,13 @@
+[package]
+name = "kdx-codec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Framing for KDX sessions over async I/O"
+
+[dependencies]
+kdx-proto.workspace = true
+
+[lints]
+workspace = true

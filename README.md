@@ -19,18 +19,26 @@ server and a tracker, all compatible with the original KDX programs (Server
   cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
   ```
 
-- `crates/kdx-client` is a blocking client library (`Client`) and two
-  programs. `kdx` is a command-line client:
+- `crates/kdx-client` is a blocking library for writing KDX clients.
+  `Connection` runs the handshake and sends raw session messages, and
+  `Client` logs in and offers typed requests on top of it.
+- `crates/kdx-cli` holds two programs built on `kdx-client`. `kdx` is a
+  command-line client:
 
   ```sh
-  cargo run -p kdx-client --bin kdx -- table fetch    # once; see below
-  cargo run -p kdx-client --bin kdx -- -s host:10700 -l user ls 'Uploads [UL]'
+  cargo run -p kdx-cli --bin kdx -- table fetch    # once; see below
+  cargo run -p kdx-cli --bin kdx -- -s host:10700 -l user ls 'Uploads [UL]'
   ```
 
   Its subcommands are `who`, `chats`, `ls`, `get`, `put`, `news`, `post`,
   `delete-news`, `account`, `passwd`, `say`, `msg`, and `listen`, and the
   password comes from `--password` or `KDX_PASSWORD`. `kdx help` lists them.
   `kdx-probe` sends raw requests and dumps the replies.
+- The other crates are empty placeholders for the work in
+  `docs/protocol/PLAN.md`. `crates/kdx-codec` will frame sessions over async
+  I/O. `crates/kdx-server` will be a library for writing KDX servers, and
+  `crates/kdx-daemon` the server built on it. `crates/kdx-tracker` will be
+  the tracker.
 - `lab/` runs the original programs in a sandbox and captures their traffic.
 - `re/` holds the headless Ghidra tooling used for static analysis.
 

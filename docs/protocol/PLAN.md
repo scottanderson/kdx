@@ -128,10 +128,20 @@ Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
 The project is dual-licensed MIT OR Apache-2.0.
 
 ## Rust layout
-Cargo workspace with `kdx-proto` (framing, crypto, message types; no I/O),
-`kdx-dissect` (pcap to text), `kdx-client` (the `Client` library, the `kdx`
-CLI, and `kdx-probe`), and later `kdx-server` and `kdx-tracker`. The first
-three exist.
+Cargo workspace. Every crate builds on `kdx-proto`, and on `kdx-codec` where
+it does async I/O.
+
+| Crate | Kind | Role |
+|---|---|---|
+| `kdx-proto` | library | framing, crypto, message types; no I/O |
+| `kdx-codec` | library | framing over async I/O (placeholder) |
+| `kdx-client` | library | for writing KDX clients (`Connection`, `Client`) |
+| `kdx-cli` | programs | `kdx`, the command-line client, and `kdx-probe` |
+| `kdx-server` | library | for writing KDX servers (placeholder) |
+| `kdx-daemon` | program | the server built on `kdx-server` (placeholder) |
+| `kdx-tracker` | program | the tracker (placeholder) |
+| `kdx-dissect` | program | pcap to text |
+
 `kdx-proto::msg` has codecs for the payloads in areas 1–5, and in area 6 for the
 account messages (except 504 Set Account Class) and the 114, 116, 143, 803,
 and 1107 replies.

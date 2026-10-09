@@ -341,17 +341,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
-name = "kdx-client"
+name = "kdx-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "kdx-client",
+ "kdx-proto",
+]
+
+[[package]]
+name = "kdx-client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "flate2",
  "getrandom 0.3.4",
  "kdx-proto",
  "sha2",
  "thiserror 2.0.21",
  "ureq",
+]
+
+[[package]]
+name = "kdx-codec"
+version = "0.1.0"
+dependencies = [
+ "kdx-proto",
+]
+
+[[package]]
+name = "kdx-daemon"
+version = "0.1.0"
+dependencies = [
+ "kdx-server",
 ]
 
 [[package]]
@@ -374,6 +397,20 @@ dependencies = [
  "sha2",
  "thiserror 2.0.21",
  "twofish",
+]
+
+[[package]]
+name = "kdx-server"
+version = "0.1.0"
+dependencies = [
+ "kdx-proto",
+]
+
+[[package]]
+name = "kdx-tracker"
+version = "0.1.0"
+dependencies = [
+ "kdx-proto",
 ]
 
 [[package]]

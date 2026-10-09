@@ -1,6 +1,15 @@
 [workspace]
 resolver = "2"
-members = ["crates/kdx-proto", "crates/kdx-dissect", "crates/kdx-client"]
+members = [
+    "crates/kdx-proto",
+    "crates/kdx-codec",
+    "crates/kdx-client",
+    "crates/kdx-cli",
+    "crates/kdx-server",
+    "crates/kdx-daemon",
+    "crates/kdx-tracker",
+    "crates/kdx-dissect",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -17,3 +26,6 @@ missing_const_for_fn = "warn"
 
 [workspace.dependencies]
 kdx-proto = { path = "crates/kdx-proto", version = "0.1.0" }
+kdx-codec = { path = "crates/kdx-codec", version = "0.1.0" }
+kdx-client = { path = "crates/kdx-client", version = "0.1.0" }
+kdx-server = { path = "crates/kdx-server", version = "0.1.0" }
