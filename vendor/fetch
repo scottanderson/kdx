@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Download the Haxial archives listed in vendor/MANIFEST.md, verify them, and extract them.
+#
+#   vendor/fetch            the four builds the lab runs
+#   vendor/fetch all        every archive in the manifest
+#   vendor/fetch NAME...    named archives, e.g. KDXServer1620-Lnx.zip
+#
+# Each archive lands in vendor/haxial/<name>/ with its contents in extracted/.
+# Nothing downloaded is executed; extraction uses unar.
+set -euo pipefail
+
+VENDOR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HAXIAL="${KDX_HAXIAL_DIR:-$VENDOR/haxial}"
+URL="https://web.archive.org/web/%sid_/http://www.haxial.com:80/download/%s"
+LAB=(KDXServer1620-Lnx.zip KDXTrackerServ1110-Lnx.zip KDXClient1600-Win.zip KDXClient-Lnx-beta5.zip)
+
+die() { echo "fetch: $*" >&2; exit 1; }
+command -v unar >/dev/null || die "needs unar (apt install unar)"
+
+# Rows of the manifest table: archive, Wayback timestamp, SHA-256.
+manifest() {
+  awk -F'|' '$2 ~ /\.(zip|sit)/ { gsub(/ /, "", $2); gsub(/ /, "", $4); gsub(/ /, "", $5); print $2, $4, $5 }' \
+    "$VENDOR/MANIFEST.md"
+}
+
+fetch_one() {
+  local archive="$1" ts="$2" sha="$3"
+  local dir="$HAXIAL/${archive%.*}"
+  local file="$dir/$archive"
+  mkdir -p "$dir"
+  if [[ ! -f "$file" ]] || ! echo "$sha  $file" | sha256sum -c --quiet 2>/dev/null; then
+    echo "fetch: downloading $archive"
+    # shellcheck disable=SC2059
+    curl -fsSL --retry 3 -o "$file.part" "$(printf "$URL" "$ts" "$archive")"
+    echo "$sha  $file.part" | sha256sum -c --quiet || { rm -f "$file.part"; die "checksum mismatch for $archive"; }
+    mv "$file.part" "$file"
+    rm -rf "$dir/extracted"
+  fi
+  if [[ ! -d "$dir/extracted" ]]; then
+    local tmp; tmp="$(mktemp -d "$dir/.extract.XXXXXX")"
+    unar -q -o "$tmp" "$file" >/dev/null || { rm -rf "$tmp"; die "could not extract $archive"; }
+    mv "$tmp" "$dir/extracted"
+  fi
+  echo "fetch: $archive ok"
+}
+
+want=("$@")
+[[ ${#want[@]} -eq 0 ]] && want=("${LAB[@]}")
+[[ "${want[0]}" == all ]] && mapfile -t want < <(manifest | cut -d' ' -f1)
+
+for archive in "${want[@]}"; do
+  row="$(manifest | awk -v a="$archive" '$1 == a')"
+  [[ -n "$row" ]] || die "$archive is not in vendor/MANIFEST.md"
+  # shellcheck disable=SC2086
+  fetch_one $row
+done

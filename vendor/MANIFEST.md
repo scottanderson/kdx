@@ -8,12 +8,13 @@ site's "latest version" links, resolve to the same builds; the Windows server
 archive was byte-identical.
 
 Treat everything here as untrusted, 20-year-old closed-source code. **Never run
-it on the host.** Run it only inside the lab container or VM described in
-`docs/protocol/PLAN.md`.
+it on the host.** Run it only through `lab/kdx-lab` (see `lab/README.md`).
 
 `vendor/haxial/` is git-ignored: KDX was commercial shareware, and the archives
-can be fetched again from the URLs below. Each archive is unpacked into its own
-`extracted/` directory.
+can be fetched again from the URLs below. `vendor/fetch` downloads the four
+builds the lab runs (`vendor/fetch all` for every archive), checks each
+SHA-256, and unpacks it with `unar` into `vendor/haxial/<name>/extracted/`.
+It reads this table, so keep the table's columns as they are.
 
 | Archive | Version | Wayback timestamp | SHA-256 |
 |---|---|---|---|
