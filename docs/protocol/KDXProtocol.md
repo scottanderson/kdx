@@ -388,8 +388,11 @@ with user ID 0.
     set.
 
   It also sends 103 User Joined to everyone else and writes a 184 Login history
-  record.
-- A later 100 Set Identity broadcasts 102 User Changed.
+  record. [O]: 105, 107, 106 in that order
+  (`captures/linux-server-settings.pcapng` frames 80, 82, 83).
+- A later 100 Set Identity broadcasts 102 User Changed to everyone, the
+  sender included (`captures/linux-server-settings.pcapng` frames 196, 199,
+  201) **[O]**.
 
 **101 User List**
 Initiator: Server. **[S `FUN_0804af04`; O]**
@@ -398,7 +401,7 @@ A sequence of user records, one per user who is logged in (all of them on
 login).
 
 **102 User Changed** / **103 User Joined**
-Initiator: Server. **[S]**
+Initiator: Server. **[S; O]**
 
 One user record.
 
@@ -432,7 +435,10 @@ The whole message is at most 0x400 bytes.
 **106 Server Icon**
 Initiator: Server.
 
-The server's icon bitmap. The layout is not read yet.
+The server's icon bitmap, the same bytes as the icon section of the settings
+blob (see 171 Server Settings Info). [O]: 524 bytes for a 32×32 icon pasted
+from the user icon, starting `01 20 20 04 00 01 00 00 00 ff cc 00`
+(`captures/linux-server-settings.pcapng` frame 83).
 
 **107 Server Greeting**
 Initiator: Server. **[S `FUN_0804b738`; O]**
@@ -442,7 +448,10 @@ Initiator: Server. **[S `FUN_0804b738`; O]**
 | 0x00 | 4 | 0 |
 | 0x04 | | greeting text, to the end of the payload |
 
-When no greeting is set, the server sends `(No greeting.)` **[O]**.
+When no greeting is set, the server sends `(No greeting.)` **[O]**. When a
+greeting is set but not enabled, it sends `(Greeting disabled.)`
+(`captures/linux-server-settings.pcapng` frame 46) **[O]**. The enable
+option is bit 1 of byte 0x93 of the settings blob.
 
 **108 Ping** → **109 Pong**
 Initiator: Client. **[S]**
@@ -451,21 +460,24 @@ The request is empty, and so is the reply (109 Pong). Ping does not reset
 the idle timer.
 
 **110 Set Mini User Icon**
-Initiator: Client. **[S `FUN_0804b6d4`]**
+Initiator: Client. **[S `FUN_0804b6d4`; O]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 1 | status | |
-| 0x01 | 3 | | the payload must be at least 4 bytes |
+| 0x00 | 1 | status | 1 after `/away`, 0 after `/back` [O] |
+| 0x01 | 3 | 0 | the payload must be at least 4 bytes |
 
 There is no reply. If the value changed, the server broadcasts **111 Mini
 User Icon Changed** to everyone, the sender included:
 
 | Off | Size | Field |
 |---|---|---|
-| 0x00 | 2 | user ID |
-| 0x02 | 2 | 0 |
-| 0x04 | 4 | status |
+| 0x00 | 4 | user ID |
+| 0x04 | 4 | the 110 payload |
+
+[O]: `/away` sent `01 00 00 00`, and the peer received `00 00 00 03 01 00 00
+00` for user 3 (`captures/linux-server-settings.pcapng` frames 210, 211,
+213).
 
 **112 (unnamed)**
 Initiator: Client. **[S `FUN_0804b738`; O]**
@@ -605,13 +617,31 @@ bytes, u16 0, u16 (copied from the request), text}.
 
 **170 Get Server Settings** → **171 Server Settings Info**
 Initiator: Client. Privilege: Modify Server Settings (61). **[S
-`FUN_0805f598`; O 216 bytes]**
+`FUN_0805f598`; O 216 and 764 bytes]**
 
 The reply is the server's settings file. It starts with the magic `%KDXSSTG`
-and a version, followed by a table of section offsets and the sections. The
-server name appears near the end. **172 Set Server Settings** sends the same
-blob back, and the server answers with 173 Set Server Settings Done. The
-field layout is not read yet.
+and a version, followed by a table of section offsets and the sections.
+**172 Set Server Settings** sends the same blob back, and the server answers
+with 173 Set Server Settings Done **[O]**.
+
+What the captures show (`captures/linux-server-settings.pcapng` frames 36,
+40, 56, 221, 225) **[O]**:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | magic | `%KDXSSTG` |
+| 0x08 | 2 | version | 1 |
+| 0x0c | 8 | main section | u32 offset, u32 length: 0x70, 0x68 |
+| 0x24 | 8 | greeting section | 0xd8, 0x17; length 0 when no greeting is set |
+| 0x34 | 8 | icon section | 0xf0, 0x20c |
+| 0x93 | 1 | flags | bit 1: greeting enabled |
+| 0xa8 | 4 | total outgoing speed limit | bytes per second; 0x5000, or 0 when off |
+| 0xcc | | server name | NUL-terminated, at the end of the main section |
+
+The greeting section has the layout of 107 Server Greeting, and the icon
+section holds the bytes of 106 Server Icon. A 172 may give the icon section
+length 0, and the server keeps its icon: frames 56 and 225 sent none, and
+the 171 at frame 221 still holds it.
 
 **174 Shutdown Server**
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
@@ -954,6 +984,18 @@ byte for byte, and a resume from 300000 as one of 300992 from 299008
 chunks starting at 0x10000 and growing to 0x80000. With a
 speed limit, chunks are multiples of 0x1000. At the end the server writes a
 188 Finished File Download history record.
+
+**419 Notify Speed Limit**
+Initiator: Server. **[O]**
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 4 | speed limit, in bytes per second |
+
+It came on the session, not on the transfer connection, when a download
+started under the total outgoing speed limit. [O]: `00 00 50 00`, the
+20480 bytes per second set in the server settings, came right after the 413
+(`captures/linux-server-settings.pcapng` frames 106, 110).
 
 **415 Upload File**
 Initiator: Client, on a transfer connection. Privilege: Upload (11).
