@@ -16,6 +16,12 @@ builds the lab runs (`vendor/fetch all` for every archive), checks each
 SHA-256, and unpacks it with `unar` into `vendor/haxial/<name>/extracted/`.
 It reads this table, so keep the table's columns as they are.
 
+If the archives are already at hand from some other source, put each one
+where `vendor/fetch` would download it, `vendor/haxial/<name>/<archive>`
+(for example `vendor/haxial/KDXServer1620-Lnx/KDXServer1620-Lnx.zip`), then
+run `vendor/fetch`. It skips the download when the checksum matches, and
+still verifies and unpacks the archive.
+
 | Archive | Version | Wayback timestamp | SHA-256 |
 |---|---|---|---|
 | KDXServer1620-Lnx.zip | Server 1.620, Linux i386 (newest server) | 20051014063537 | a270a27180b9551b31e3d09fe99d863e88e93926fc7595fb62e975681ce12e74 |
