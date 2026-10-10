@@ -46,6 +46,44 @@ Scripts (PyGhidra / Python 3):
 committed. Write findings into `docs/protocol/` instead, citing function
 addresses.
 
+## Without Docker
+
+Cloud sessions may have no Docker daemon and no access to GitHub release
+downloads. Alpine's package works instead: Ghidra 12.1.2 in edge/testing,
+a near match for 12.1.4. Its native decompiler links against musl, so
+rebuild it from the source the package ships. This needs a JDK 21, Python 3,
+`make`, and `g++`.
+
+```sh
+# unpack the package (an .apk is a gzipped tar)
+curl -fsSO https://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/ghidra-12.1.2-r1.apk
+mkdir pkg && tar -xzf ghidra-12.1.2-r1.apk -C pkg && mv pkg/usr/share/ghidra /opt/ghidra
+# rebuild the decompiler for glibc; the x86 .sla files ship compiled, so skip sleigh
+cp -r /opt/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp /tmp/decomp
+make -C /tmp/decomp -j4 ghidra_opt   # one goal per make run, or it builds every tool
+cp /tmp/decomp/ghidra_opt /opt/ghidra/Ghidra/Features/Decompiler/os/linux_x86_64/decompile
+# PyGhidra from the bundled wheels
+python3 -m venv /opt/pyghidra-venv
+/opt/pyghidra-venv/bin/pip install --no-index -f /opt/ghidra/Ghidra/Features/PyGhidra/pypkg/dist pyghidra
+# the same /work paths the scripts expect
+mkdir -p /work re/projects re/out
+ln -s "$PWD/vendor/haxial" /work/bin;   ln -s "$PWD/re/scripts" /work/scripts
+ln -s "$PWD/re/projects" /work/projects; ln -s "$PWD/re/out" /work/out
+```
+
+Then run it where the examples above say `re/ghidra`. `unshare -n` keeps it
+off the network, and `PYTHONDONTWRITEBYTECODE` keeps `__pycache__` out of
+`re/scripts`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 unshare -n /opt/pyghidra-venv/bin/python3 \
+  /opt/ghidra/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py /opt/ghidra -H \
+  /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
+```
+
+Projects made by 12.1.4 may not open in 12.1.2, so import the binaries again.
+The addresses are the same.
+
 ## Server 1.620 landmarks
 
 | Address | What |
