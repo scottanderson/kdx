@@ -94,4 +94,6 @@ Other binaries, by Ghidra project:
 | Binary (project) | Address | What |
 |---|---|---|
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08126aac` | message name jump table, indexed by type − 8 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804d7b4` | message dispatcher (type → handler) |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send 202 Join Chat |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |

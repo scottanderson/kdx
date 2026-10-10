@@ -99,6 +99,9 @@ Error form, 24 bytes:
 Success form, 8 bytes: `u32 0`, then `u32 value`, often the request type
 **[S `FUN_080865c0`]**. 507 Create Account gets value 0x1fb and 511 Set
 Account 0x1ff **[O `captures/kdx-accounts.pcapng` frames 235, 413]**.
+201 Delete Chat gets 0xc9, 217 Create Chat 0xd9, 220 Set Chat 0xdc, and 504
+Set Account Class 0x1f8 **[O `captures/linux-chat-rooms.pcapng` frames 81,
+45, 55, 148]**.
 
 The client renders an error as `ID ^0/^1 [^2] @ ^3 #^4`, filling in the
 code's class and number, the module, and the line **[S]**.
@@ -389,7 +392,8 @@ with user ID 0.
 
   It also sends 103 User Joined to everyone else and writes a 184 Login history
   record. [O]: 105, 107, 106 in that order
-  (`captures/linux-server-settings.pcapng` frames 80, 82, 83).
+  (`captures/linux-server-settings.pcapng` frames 80, 82, 83), and 213
+  after 106 (`captures/linux-chat-rooms.pcapng` frame 167).
 - A later 100 Set Identity broadcasts 102 User Changed to everyone, the
   sender included (`captures/linux-server-settings.pcapng` frames 196, 199,
   201) **[O]**.
@@ -687,12 +691,24 @@ A user can have at most 10 private chats. Reply:
 | 0x24 | 4 | creator user ID |
 | … | | name, e.g. `Private 1` |
 
+[O]: 200 Create Private Chat is empty, and the 49-byte reply holds chat ID
+0xb06d05e6, key 0x4ca93520, 1 member, creator 2, and `Private 1`
+(`captures/linux-chat-admin.pcapng` frames 84, 85).
+
 **201 Delete Chat**
 Initiator: Client. Privilege: Create/Modify Chats (37). **[S
-`FUN_08059774`]**
+`FUN_08059774`; O]**
 
-The request is a u32 chat ID. Every member receives **221 Chat Deleted**
-{u32 chat ID, u32 user ID}.
+The request is a u32 chat ID. Every member, the requester included,
+receives **221 Chat Deleted** {u32 chat ID, u32 user ID of the requester}
+before the requester's 1 Status success. Users outside the chat receive
+nothing.
+
+[O] `captures/linux-chat-rooms.pcapng`: deleting `lab-chat` (0xe8df4d29)
+with two members sent `e8 df 4d 29 00 00 00 02` to both (frames 125, 127),
+then Status at 129. Deleting the empty `lab-room` sent no 221 to a user in
+Public Chat (frames 77–83). The client deleted a chat whose window was open
+without sending 204 Leave Chat first (frame 122).
 
 **202 Join Chat** → **203 Chat Window Info**
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
@@ -715,6 +731,10 @@ Reply (51 bytes in the lab):
 
 In frame 68 of `captures/probe.pcapng` only the name (`Public Chat`) is
 set; the payload is not padded.
+
+[O] `captures/linux-chat-rooms.pcapng`: flags is 2 for a voice chat (frames
+70, 115) and 0 for Public Chat (frame 176). The time is set for Public Chat
+and 0 for chats made with 217 Create Chat.
 
 The other members receive **205 Chat User Joined** {u32 chat ID, u32 user
 ID, u32 0} (`captures/kdx-cli.pcapng` frame 417) **[O]**.
@@ -780,10 +800,19 @@ Initiator: Client. **[S `FUN_080591ac`]**
 | … | | message |
 
 **213 Must Join Chat**
-Initiator: Server.
+Initiator: Server. **[S `FUN_0804b114`; O]**
 
-Sent after login to accounts with Join Chat On Connect. It tells the client
-which chat to join.
+Sent after login when the account has Join Chat (30) and Join Chat On
+Connect (36). The payload is empty, so it names no chat. The client always
+joins chat 1, Public Chat: its 213 handler ignores the payload and calls the
+join helper with chat ID 1 and key 0, which opens the chat window and sends
+202 Join Chat {1, 0} **[S Client 1.620 beta 5 `FUN_08084020`,
+`FUN_08080734`]**. If the window for chat 1 is already open, the helper only
+brings it to the front and sends nothing.
+
+[O] `captures/linux-chat-rooms.pcapng`: with bit 36 set in the
+Administrator class (504 Set Account Class at frame 145), 213 arrived after
+106 Server Icon (frame 167), and the client sent 202 for chat 1 (frame 175).
 
 **214 Get Chat List** → **215 Chat List**
 Initiator: Client. **[S `FUN_080594dc`; O]**
@@ -801,21 +830,55 @@ padded to 4:
 | 0x13 | 1 | description length |
 | 0x14 | | name, description |
 
-[O]: Public Chat (1), Voice Chat (2, flags 2), Admin Lounge (3).
+[O]: Public Chat (1), Voice Chat (2, flags 2), Admin Lounge (3). Chats
+made with 217 Create Chat follow, with a random chat ID (0xc217598c and
+0xe8df4d29 in `captures/linux-chat-rooms.pcapng` frames 47, 90).
 
 **217 Create Chat** / **218 Get Chat** → **219 Chat Info** / **220 Set Chat**
 Initiator: Client. Privilege: Create/Modify Chats (37) for 217 Create Chat
-and 220. **[S; O 219 Chat Info]**
+and 220. **[S; O]**
 
 217 Create Chat and 220 Set Chat carry a chat record. 218 Get Chat is a u32
 chat ID, and 219 Chat Info is a chat record. 220 Set Chat refuses private
-chats.
+chats. 217 and 220 get 1 Status success.
+
+Chat record, not padded:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | chat ID | 0 in 217 Create Chat |
+| 0x04 | 0x10 | | 0 |
+| 0x14 | 4 | class mask | |
+| 0x18 | 4 | class mask | |
+| 0x1c | 4 | class mask | |
+| 0x20 | 8 | | 0 |
+| 0x28 | 2 | flags | bit 1 voice |
+| 0x2a | 1 | name length | |
+| 0x2b | 1 | description length | |
+| 0x2c | 4 | | 0 |
+| 0x30 | | name, description | |
+
+[O] `captures/linux-chat-rooms.pcapng`: 217 for `lab-room` / `lab` (frame
+42), 219 and 220 for `lab edited` (frames 50, 52), 220 with Voice Chat ticked
+(flags 2, frame 62), and 219 for Public Chat (frame 137). The three class
+masks are `ff ff ff ff` for Public Chat and `80 00 00 00` for a chat whose
+Access was left at the default. Their bits are probably account classes,
+MSB first (Administrator is class 0), for join, send, and topic [I]. The
+client sends 505 Get Account Class List before it opens the new-chat window
+(frame 39).
 
 **222 Get Chat DCC Addresses** → **223 Chat DCC Addresses**
-Initiator: Client. **[S `FUN_0805a110`]**
+Initiator: Client. **[S `FUN_0805a110`; O]**
 
-The sender must be a member of a voice chat. Reply entries: {u32 user ID, …,
-0x0e u8 length, `"ip:port"`}. Voice data then goes peer-to-peer over UDP.
+The request is a u32 chat ID. The sender must be a member of a voice chat.
+Reply entries: {u32 user ID, …, 0x0e u8 length, `"ip:port"`}. Voice data
+then goes peer-to-peer over UDP.
+
+[O] `captures/linux-chat-rooms.pcapng`: the client sends 222 right after
+joining a voice chat. The reply was empty (len 0) when the client was alone
+(frames 72–73) and when a `kdx` CLI peer was also a member (frames
+119–120), probably because the CLI registers no address [I]. An entry has
+not been seen.
 
 ### Private messages
 
