@@ -73,7 +73,8 @@ The tracker's name table has the same names (entry for 100 at 0x080c5b1c)
 | 712 Set TrackerServ Settings | `FUN_0804cc10` |
 | 720 Get TrackerServ Statistics | `FUN_0804b180` |
 
-Servers register with the tracker over UDP, not through this dispatcher [I].
+Servers register with the tracker over UDP, not through this dispatcher
+**[S `FUN_0804c048`]**. See `docs/protocol/tracker.md`.
 
 ## Still to read
 
