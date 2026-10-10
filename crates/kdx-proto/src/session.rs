@@ -12,8 +12,10 @@ use crate::account::AccountKey;
 
 /// Cipher block length in bytes.
 pub const BLOCK_LEN: usize = 16;
-/// Largest payload that Server 1.620 accepts.
-pub const MAX_PAYLOAD_LEN: u32 = 0x2_0000;
+/// Largest payload that Server 1.620 accepts from a client.
+pub const SERVER_MAX_PAYLOAD_LEN: u32 = 0x2_0000;
+/// Largest payload that Client 1.600 accepts from a server.
+pub const CLIENT_MAX_PAYLOAD_LEN: u32 = 0x10_0000;
 
 /// Errors from opening a received message.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -27,7 +29,7 @@ pub enum SessionError {
     /// A header byte that must be zero is not.
     #[error("reserved header bytes are not zero: {0:#06x}")]
     Reserved(u32),
-    /// The payload is longer than [`MAX_PAYLOAD_LEN`].
+    /// The payload is longer than the receiver accepts.
     #[error("payload too long ({0} bytes)")]
     TooLong(u32),
     /// Fewer bytes were given than the payload needs.
@@ -72,9 +74,11 @@ impl Header {
     }
 
     /// Parses and checks plaintext bytes, after unscrambling.
-    pub fn from_bytes(bytes: &[u8; Self::LEN]) -> Result<Self, SessionError> {
+    ///
+    /// `max_len` is the receiver's payload limit, such as [`SERVER_MAX_PAYLOAD_LEN`].
+    pub fn from_bytes(bytes: &[u8; Self::LEN], max_len: u32) -> Result<Self, SessionError> {
         let header = Self::from_bytes_unbounded(bytes)?;
-        if header.len > MAX_PAYLOAD_LEN {
+        if header.len > max_len {
             return Err(SessionError::TooLong(header.len));
         }
         Ok(header)
@@ -196,12 +200,16 @@ impl SessionCipher {
         block
     }
 
-    /// Decrypts and checks a header block.
-    pub fn open_header(&self, block: &[u8; Header::LEN]) -> Result<Header, SessionError> {
-        Header::from_bytes(&self.decrypt_header(block))
+    /// Decrypts and checks a header block against the receiver's payload limit.
+    pub fn open_header(
+        &self,
+        block: &[u8; Header::LEN],
+        max_len: u32,
+    ) -> Result<Header, SessionError> {
+        Header::from_bytes(&self.decrypt_header(block), max_len)
     }
 
-    /// Decrypts a transfer data header, whose length may exceed [`MAX_PAYLOAD_LEN`].
+    /// Decrypts a transfer data header, whose length may exceed any payload limit.
     pub fn open_data_header(&self, block: &[u8; Header::LEN]) -> Result<Header, SessionError> {
         Header::from_bytes_unbounded(&self.decrypt_header(block))
     }
@@ -273,7 +281,9 @@ mod tests {
         };
         let wire = cipher.seal(header, b"hello there, seventeen+");
         assert_eq!(wire.len(), 16 + 32);
-        let opened = cipher.open_header(wire[..16].try_into().unwrap()).unwrap();
+        let opened = cipher
+            .open_header(wire[..16].try_into().unwrap(), SERVER_MAX_PAYLOAD_LEN)
+            .unwrap();
         assert_eq!(opened, Header { len: 23, ..header });
         assert_eq!(
             cipher.open_payload(&opened, &wire[16..]).unwrap(),
@@ -290,8 +300,39 @@ mod tests {
             len: 0,
         }
         .to_bytes();
-        assert!(Header::from_bytes(&bytes).unwrap().is_reply());
+        assert!(Header::from_bytes(&bytes, SERVER_MAX_PAYLOAD_LEN)
+            .unwrap()
+            .is_reply());
         bytes[11] = 1;
-        assert_eq!(Header::from_bytes(&bytes), Err(SessionError::Reserved(1)));
+        assert_eq!(
+            Header::from_bytes(&bytes, SERVER_MAX_PAYLOAD_LEN),
+            Err(SessionError::Reserved(1))
+        );
+    }
+
+    #[test]
+    fn length_limits() {
+        let header = |len| {
+            Header {
+                txid: 1,
+                kind: MessageType(1),
+                flags: 1,
+                len,
+            }
+            .to_bytes()
+        };
+        let reply = header(SERVER_MAX_PAYLOAD_LEN + 1);
+        assert_eq!(
+            Header::from_bytes(&reply, SERVER_MAX_PAYLOAD_LEN),
+            Err(SessionError::TooLong(SERVER_MAX_PAYLOAD_LEN + 1))
+        );
+        assert!(Header::from_bytes(&reply, CLIENT_MAX_PAYLOAD_LEN).is_ok());
+        assert!(
+            Header::from_bytes(&header(CLIENT_MAX_PAYLOAD_LEN), CLIENT_MAX_PAYLOAD_LEN).is_ok()
+        );
+        assert_eq!(
+            Header::from_bytes(&header(CLIENT_MAX_PAYLOAD_LEN + 1), CLIENT_MAX_PAYLOAD_LEN),
+            Err(SessionError::TooLong(CLIENT_MAX_PAYLOAD_LEN + 1))
+        );
     }
 }

@@ -49,7 +49,7 @@ capture and gets the captured bytes back exactly, including the padding
 | 0x08 | 1 | 0 | |
 | 0x09 | 1 | flags | bit 0 = this is a reply **[S, O]** |
 | 0x0a | 2 | 0 | the receiver rejects nonzero values with 0x40075 **[S `FUN_08086108`]** |
-| 0x0c | 4 | len | payload length. The server caps it at 0x20000 **[S `FUN_080856cc` call in `FUN_08052ad0`]**, with error 0x40075 if exceeded |
+| 0x0c | 4 | len | payload length. Each side caps what it receives and fails with 0x40075 past the cap. Server 1.620 caps messages from a client at 0x20000 **[S `FUN_080856cc` call in `FUN_08052ad0`]**. Client 1.600 caps messages from a server at 0x100000 **[S `FUN_0046d430` call in `FUN_00402310`, check in `FUN_0046e860`]** |
 
 The sender also has a header-only path (`FUN_080868b4`) followed by
 separately encrypted chunks (`FUN_08086a9c`). It's probably used for large or

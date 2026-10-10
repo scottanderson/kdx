@@ -9,7 +9,9 @@ use std::net::{TcpStream, ToSocketAddrs};
 
 use anyhow::{Context, Result};
 use kdx_proto::handshake::{Hello, Proof, CLIENT_VERSION, FORMAT, NONCE_LEN, SERVICE_KDX};
-use kdx_proto::session::{padded_len, padding_fill, Header, MessageType, SessionCipher};
+use kdx_proto::session::{
+    padded_len, padding_fill, Header, MessageType, SessionCipher, CLIENT_MAX_PAYLOAD_LEN,
+};
 use kdx_proto::{AccountKey, ChallengeTable};
 
 mod client;
@@ -129,7 +131,7 @@ impl Connection {
     pub fn recv(&mut self) -> Result<(Header, Vec<u8>)> {
         let mut block = [0; Header::LEN];
         self.stream.read_exact(&mut block)?;
-        let header = self.cipher.open_header(&block)?;
+        let header = self.cipher.open_header(&block, CLIENT_MAX_PAYLOAD_LEN)?;
         let mut data = vec![0; header.padded_len()];
         self.stream.read_exact(&mut data)?;
         Ok((header, self.cipher.open_payload(&header, &data)?))

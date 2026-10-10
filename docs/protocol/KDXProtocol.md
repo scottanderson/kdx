@@ -45,7 +45,7 @@ A connection has two phases:
 | 0x08 | 1 | 0 | |
 | 0x09 | 1 | flags | bit 0: this message is a reply |
 | 0x0a | 2 | 0 | |
-| 0x0c | 4 | len | payload length, at most 0x20000 |
+| 0x0c | 4 | len | payload length: at most 0x20000 to the server, 0x100000 to the client |
 
 The payload is padded to a multiple of 16 before encryption; the length
 field gives the real size.
@@ -1040,7 +1040,7 @@ extension, since Linux files have no type code [I]. Then it streams:
    The length is the resource-fork bytes that remain (0 here). The data
    follows.
 
-One 414 header covers the whole fork, even past the 0x20000 limit on
+One 414 header covers the whole fork, even past the limits on
 normal payloads: a 600000-byte file came as a single 414 of length 600000,
 byte for byte, and a resume from 300000 as one of 300992 from 299008
 (`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**. Data is read in

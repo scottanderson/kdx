@@ -96,4 +96,7 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08126aac` | message name jump table, indexed by type − 8 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804d7b4` | message dispatcher (type → handler) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send 202 Join Chat |
+| Client 1.600 Win (`kdxclient`) | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
+| Client 1.600 Win (`kdxclient`) | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
+| Client 1.600 Win (`kdxclient`) | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |
