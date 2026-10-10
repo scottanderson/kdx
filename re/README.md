@@ -37,6 +37,10 @@ Scripts (PyGhidra / Python 3):
   code the decompiler mangles (regparm calls, tail jumps).
 - `xrefs.py <text>...` finds a byte string and what references it, two levels
   deep.
+- `jumptable.py <table> <count>` prints each jump table entry with the string
+  its target loads, such as the message name tables.
+- `import_callers.py <name>...` lists the call sites of imported functions,
+  such as `send` or `connect`.
 
 `re/out/` holds decompiled Haxial code, so it stays local and is never
 committed. Write findings into `docs/protocol/` instead, citing function
@@ -77,8 +81,17 @@ addresses.
 | `0x0804b114` | post-login: sends 105, 107, 106, 213 |
 | `0x08061d80` | write a server history record and push 183 |
 | `0x080969f8` / `0x08069880` / `0x08096b4c` | file path: decode / validate / join to a host path |
-| `0x08052194` / `0x0805234c` | transfer connection: dispatcher / read loop that switches to streaming |
+| `0x08052194` / `0x0805234c` | transfer connection: dispatcher (400, 402, 412, 415, 900, 904, 905) / read loop that switches to streaming |
 | `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
 | `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
 | `0x080551b0` | account privilege check for 507/511: effective bits vs the requester's (0x640005) |
 | `0x08066a90` | is the key the empty password's key |
+| `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies 902, 903) / 904 mouse / 905 keyboard |
+| `0x0804a310` | "Unknown!" stub of the name table at `0x080abc6c` |
+
+Other binaries, by Ghidra project:
+
+| Binary (project) | Address | What |
+|---|---|---|
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08126aac` | message name jump table, indexed by type − 8 |
+| Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |
