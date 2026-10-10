@@ -22,7 +22,7 @@ news, and server administration. Trackers list servers.
 |---|---|---|
 | 10700 | TCP | client ↔ server: every message, and file transfers on extra connections [O] |
 | 10600 | UDP | voice chat; the client advertises its port in the user record [O] |
-| tracker | UDP/TCP | server registration and listing (not yet documented) |
+| 10800 | UDP, TCP | tracker: server registration (UDP) and listing (TCP); see [tracker.md](tracker.md) [S] |
 
 A connection has two phases:
 
@@ -335,12 +335,12 @@ status.
 | 612 | Delete News Message | Client | `FUN_0805db44` |
 | 613 | News Message Posted | Server | |
 | 614 | News Message Deleted | Server | |
-| 700 | Get Tracker Group List | Client | (tracker) |
+| 700 | Get Tracker Group List | Client | tracker `FUN_0804abf4` |
 | 701 | Tracker Group List | Tracker | |
-| 702 | Get Tracker Server List | Client | (tracker) |
+| 702 | Get Tracker Server List | Client | tracker `FUN_0804adcc` |
 | 703 | Tracker Server List | Tracker | |
-| 710–713 | Get / Info / Set / Done TrackerServ Settings | | (tracker) |
-| 720 | Get TrackerServ Statistics | Client | (tracker) |
+| 710–713 | Get / Info / Set / Done TrackerServ Settings | | tracker `FUN_0804cb90`, `FUN_0804cc10` |
+| 720 | Get TrackerServ Statistics | Client | tracker `FUN_0804b180` |
 | 721 | TrackerServ Statistics | Tracker | |
 | 800 | Open Process Monitor | Client | `FUN_0805b394` |
 | 801 | Close Process Monitor | Client | `FUN_0805b418` |
@@ -1488,7 +1488,8 @@ Access, and 1105 Set Folder Access are not read yet.
 
 - View display: 900–905.
 - Voice: 1000–1003.
-- The tracker: 700–721, using the LCG XOR at `0x0804a454`/`0x0804a4b4`.
+- The tracker: 700–721 and UDP registration are read statically but not
+  captured. See [tracker.md](tracker.md).
 - 117 SKPK.
 
 # Error Codes

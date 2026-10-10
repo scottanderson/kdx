@@ -90,7 +90,7 @@ which build introduced it:
    bridge is server-side only and uses standard IRC, so it needs little
    protocol work.
 
-Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
+Status (2026-10-10). "Client works" means the `kdx` CLI did it against Server
 1.620 in the lab (`captures/kdx-cli.md`):
 
 | Area | Documented | Codec tested on a capture | Client works |
@@ -101,16 +101,16 @@ Status (2026-10-08). "Client works" means the `kdx` CLI did it against Server
 | 4. News | reading, posting, deleting; newsgroup management not read | yes | read, post, delete |
 | 5. Files | list, info, download, upload, resume; search and the 402–423 edits not read | yes | ls, get, put |
 | 6. Accounts, admin | the read replies, 507, 508, 511, 550; 504 not read | yes | account list, show, add, set, rm; passwd |
-| 7. Tracker | not started | no | no |
+| 7. Tracker | registration, 700–703, 711, 721 read statically (`tracker.md`); not captured | no | no |
 | 8. Voice, view display | not started | no | no |
 
 ### Phase 4: Spec format
 - `KDXProtocol.md` is the single reference: the message catalog, a
   description of each message, error codes, privileges, and sequences. It
   grows as each area is read and probed.
-- `handshake.md` and `session.md` hold the long write-ups that are too
-  detailed for the reference. Add another such file only when an area needs
-  one (file transfers, the tracker).
+- `handshake.md`, `session.md`, and `tracker.md` hold the long write-ups
+  that are too detailed for the reference. Add another such file only when an
+  area needs one (file transfers).
 - Each field or message gets an evidence tag. **Observed** means a capture file
   and frame number. **Static** means a binary, build, and address.
   **Inferred** means a guess not yet verified. The goal is to turn every

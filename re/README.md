@@ -46,6 +46,44 @@ Scripts (PyGhidra / Python 3):
 committed. Write findings into `docs/protocol/` instead, citing function
 addresses.
 
+## Without Docker
+
+Cloud sessions may have no Docker daemon and no access to GitHub release
+downloads. Alpine's package works instead: Ghidra 12.1.2 in edge/testing,
+a near match for 12.1.4. Its native decompiler links against musl, so
+rebuild it from the source the package ships. This needs a JDK 21, Python 3,
+`make`, and `g++`.
+
+```sh
+# unpack the package (an .apk is a gzipped tar)
+curl -fsSO https://dl-cdn.alpinelinux.org/alpine/edge/testing/x86_64/ghidra-12.1.2-r1.apk
+mkdir pkg && tar -xzf ghidra-12.1.2-r1.apk -C pkg && mv pkg/usr/share/ghidra /opt/ghidra
+# rebuild the decompiler for glibc; the x86 .sla files ship compiled, so skip sleigh
+cp -r /opt/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp /tmp/decomp
+make -C /tmp/decomp -j4 ghidra_opt   # one goal per make run, or it builds every tool
+cp /tmp/decomp/ghidra_opt /opt/ghidra/Ghidra/Features/Decompiler/os/linux_x86_64/decompile
+# PyGhidra from the bundled wheels
+python3 -m venv /opt/pyghidra-venv
+/opt/pyghidra-venv/bin/pip install --no-index -f /opt/ghidra/Ghidra/Features/PyGhidra/pypkg/dist pyghidra
+# the same /work paths the scripts expect
+mkdir -p /work re/projects re/out
+ln -s "$PWD/vendor/haxial" /work/bin;   ln -s "$PWD/re/scripts" /work/scripts
+ln -s "$PWD/re/projects" /work/projects; ln -s "$PWD/re/out" /work/out
+```
+
+Then run it where the examples above say `re/ghidra`. `unshare -n` keeps it
+off the network, and `PYTHONDONTWRITEBYTECODE` keeps `__pycache__` out of
+`re/scripts`:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 unshare -n /opt/pyghidra-venv/bin/python3 \
+  /opt/ghidra/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py /opt/ghidra -H \
+  /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
+```
+
+Projects made by 12.1.4 may not open in 12.1.2, so import the binaries again.
+The addresses are the same.
+
 ## Server 1.620 landmarks
 
 | Address | What |
@@ -68,7 +106,11 @@ addresses.
 | `0x0806565c` / `0x08062840` | Twofish encrypt block / key schedule |
 | `0x0806fcbc` | FNV-1 variant (seeded) |
 | `0x0807aac0` | RNG |
-| `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`; tracker UDP according to hlwiki, call sites not yet read) |
+| `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`) for tracker registration datagrams |
+| `0x08060e4c` | send a registration datagram to each tracker in the settings |
+| `0x0806fa28` | CRC-32 (poly 0x04c11db7, MSB first, caller's initial value) |
+| `0x080535b4` | settings defaults: port 10700, user count 0x2ba9 (kept XOR'd), random 12-byte server ID |
+| `0x080526e0` | handshake version callback: `%KDX` with version 0x10 only |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |
 | `0x080528c8` | session read loop: drops replies, updates idle time, calls the dispatcher |
 | `0x0804fdac` | message dispatcher (type → handler); catch at `0x0805090c` sends Status (1) |
@@ -96,7 +138,22 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08126aac` | message name jump table, indexed by type − 8 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804d7b4` | message dispatcher (type → handler) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send 202 Join Chat |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08069578` | tracker connection: sends 700, dispatches 1, 107, 116, 701, 703, 711, 713, 721 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send 702 |
 | Client 1.600 Win (`kdxclient`) | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
 | Client 1.600 Win (`kdxclient`) | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
 | Client 1.600 Win (`kdxclient`) | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |
+| Tracker 1.110 (`kdxtracker`) | `0x0804bd9c` | TCP accept: connection with `%KDX`, version 0x30, story table; 5 per IP |
+| Tracker 1.110 (`kdxtracker`) | `0x0804bb78` / `0x0804bb4c` | login callback (guest or admin) / version callback |
+| Tracker 1.110 (`kdxtracker`) | `0x0804bbf8` | session read loop: sends 107, calls the dispatcher, drops idle connections |
+| Tracker 1.110 (`kdxtracker`) | `0x0804c048` | UDP receive: decrypt and validate a registration |
+| Tracker 1.110 (`kdxtracker`) | `0x0804b960` / `0x0804b604` | register or refresh a server / build a server record |
+| Tracker 1.110 (`kdxtracker`) | `0x0804a370` / `0x0804a3d0` | LCG XOR copy / in place |
+| Tracker 1.110 (`kdxtracker`) | `0x08067ee4` | CRC-32 (same as server `0x0806fa28`) |
+| Tracker 1.110 (`kdxtracker`) | `0x0804abf4` / `0x0804adcc` | 700 handler (also expires servers) / 702 handler |
+| Tracker 1.110 (`kdxtracker`) | `0x0804cb90` / `0x0804cc10` / `0x0804cd88` | 710 handler / 712 handler / serialize settings (`%KDXTSTG`) |
+| Tracker 1.110 (`kdxtracker`) | `0x0804b180` | 720 handler |
+| Tracker 1.110 (`kdxtracker`) | `0x0804df70` | register with upstream trackers (flags bit 0) |
+| Tracker 1.110 (`kdxtracker`) | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |
