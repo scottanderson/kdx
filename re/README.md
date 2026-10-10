@@ -69,6 +69,7 @@ addresses.
 | `0x0806fcbc` | FNV-1 variant (seeded) |
 | `0x0807aac0` | RNG |
 | `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`; tracker UDP according to hlwiki, call sites not yet read) |
+| `0x080526e0` | handshake version callback: `%KDX` with version 0x10 only |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |
 | `0x080528c8` | session read loop: drops replies, updates idle time, calls the dispatcher |
 | `0x0804fdac` | message dispatcher (type → handler); catch at `0x0805090c` sends Status (1) |
