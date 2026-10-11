@@ -19,9 +19,10 @@ server and a tracker, all compatible with the original KDX programs (Server
   cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
   ```
 
-- `crates/kdx-client` is a blocking library for writing KDX clients.
-  `Connection` runs the handshake and sends raw session messages, and
-  `Client` logs in and offers typed requests on top of it.
+- `crates/kdx-client` is an async library on tokio for writing KDX
+  clients. `Connection` runs the handshake and sends raw session messages
+  through `kdx-codec`, and `Client` logs in and offers typed requests on top
+  of it.
 - `crates/kdx-cli` holds two programs built on `kdx-client`. `kdx` is a
   command-line client:
 

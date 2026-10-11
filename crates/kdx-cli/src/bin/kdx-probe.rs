@@ -42,7 +42,8 @@ struct Args {
     requests: Vec<String>,
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let args = Args::parse();
     let table = match &args.table {
         Some(path) => table::load(path)?,
@@ -52,25 +53,25 @@ fn main() -> Result<()> {
         name: args.login.into_bytes(),
         password: args.password.into_bytes(),
     };
-    let mut conn = Connection::connect(&args.addr, &login, &table)?;
+    let mut conn = Connection::connect(&args.addr, &login, &table).await?;
     println!(
         "connected; server version {:#04x}",
         conn.server_hello.version
     );
-    conn.stream()
-        .set_read_timeout(Some(Duration::from_millis(args.wait)))?;
 
     let mut requests = Vec::new();
     // The login connection must stay open while an attached one is in use.
     let mut _login_conn = None;
     if args.attach {
-        let txid = conn.send(
-            MessageType::SET_IDENTITY,
-            &login_record(args.nick.as_bytes()),
-        )?;
+        let txid = conn
+            .send(
+                MessageType::SET_IDENTITY,
+                &login_record(args.nick.as_bytes()),
+            )
+            .await?;
         println!(">> txid {txid:08x} type {}", MessageType::SET_IDENTITY);
         let info = loop {
-            let (header, payload) = conn.recv().context("waiting for server info")?;
+            let (header, payload) = conn.recv().await.context("waiting for server info")?;
             if header.kind == MessageType::SERVER_INFO {
                 break payload;
             }
@@ -79,10 +80,7 @@ fn main() -> Result<()> {
         let key: [u8; 32] = info[..32].try_into()?;
         let user_id = u32::from_be_bytes(info[0x24..0x28].try_into()?);
         println!("attaching as user {user_id}");
-        let attached = Connection::attach(&args.addr, user_id, key, &table)?;
-        attached
-            .stream()
-            .set_read_timeout(Some(Duration::from_millis(args.wait)))?;
+        let attached = Connection::attach(&args.addr, user_id, key, &table).await?;
         _login_conn = Some(std::mem::replace(&mut conn, attached));
     } else if !args.no_login {
         requests.push((
@@ -102,37 +100,27 @@ fn main() -> Result<()> {
     }
 
     for (kind, payload) in requests {
-        let txid = conn.send(kind, &payload)?;
+        let txid = conn.send(kind, &payload).await?;
         println!(">> txid {txid:08x} type {} len {}", kind, payload.len());
         print!("{}", hexdump(&payload));
-        drain(&mut conn)?;
+        drain(&mut conn, Duration::from_millis(args.wait)).await?;
     }
     Ok(())
 }
 
-/// Prints messages until the read times out.
-fn drain(conn: &mut Connection) -> Result<()> {
-    loop {
-        match conn.recv() {
-            Ok((header, payload)) => {
-                let reply = if header.is_reply() { " reply" } else { "" };
-                println!(
-                    "<< txid {:08x} type {}{reply} len {}",
-                    header.txid, header.kind, header.len
-                );
-                print!("{}", hexdump(&payload));
-            }
-            Err(err) => {
-                let timed_out = err.downcast_ref::<std::io::Error>().is_some_and(|e| {
-                    matches!(
-                        e.kind(),
-                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
-                    )
-                });
-                return if timed_out { Ok(()) } else { Err(err) };
-            }
-        }
+/// Prints messages until none arrives for `wait`.
+async fn drain(conn: &mut Connection, wait: Duration) -> Result<()> {
+    // Receiving is cancel-safe, so a timeout loses no message.
+    while let Ok(received) = tokio::time::timeout(wait, conn.recv()).await {
+        let (header, payload) = received?;
+        let reply = if header.is_reply() { " reply" } else { "" };
+        println!(
+            "<< txid {:08x} type {}{reply} len {}",
+            header.txid, header.kind, header.len
+        );
+        print!("{}", hexdump(&payload));
     }
+    Ok(())
 }
 
 /// A login (type 100) user record with no icon and the given nickname.

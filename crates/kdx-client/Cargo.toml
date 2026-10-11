@@ -8,12 +8,20 @@ description = "A library for writing KDX clients"
 
 [dependencies]
 kdx-proto.workspace = true
+kdx-codec.workspace = true
 anyhow = "1.0.104"
 getrandom = "0.3"
 thiserror = "2.0.21"
 ureq = "3.4.2"
 flate2 = "1.1.10"
 sha2 = "0.11.0"
+bytes = "1.12.1"
+futures-util = { version = "0.3.34", features = ["sink"] }
+tokio = { version = "1.53.2", features = ["io-util", "net"] }
+tokio-util = { version = "0.7.20", features = ["codec"] }
+
+[dev-dependencies]
+tokio = { version = "1.53.2", features = ["io-util", "macros", "net", "rt"] }
 
 [lints]
 workspace = true
