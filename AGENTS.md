@@ -81,6 +81,10 @@ re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly \
   -scriptPath /work/scripts -postScript decompile.py 0x0804fdac
 ```
 
+Without Docker, use `re/ghidra-native` with the same arguments. Get Ghidra
+for it from Alpine's package as `re/README.md` describes; that source is
+approved.
+
 ## Git
 
 - Make small commits that each build and pass the tests.
@@ -88,6 +92,8 @@ re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly \
   Put the reasons in the body.
 - Stage files by name. Keep the changes the user already staged.
 - Put the doc update in the same commit as the work it describes.
+- Make the person directing the work the commit author and committer, not
+  the agent. If git's configured identity is the agent's, ask for theirs.
 - End each commit message with a `Co-Authored-By:` line naming the AI model
   that wrote it, such as
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.

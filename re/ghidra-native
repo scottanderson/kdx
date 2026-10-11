@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run Ghidra headless (PyGhidra) without Docker and with no network access.
+# Takes the same arguments and /work paths as re/ghidra; see "Without Docker" in re/README.md.
+# Links /work/bin (vendor/haxial), /work/scripts (re/scripts), /work/projects and /work/out
+# (re/projects and re/out, both git-ignored).
+#
+#   re/ghidra-native <analyzeHeadless args...>
+#   e.g. re/ghidra-native /work/projects kdx -process KDXServer.lexe -noanalysis -postScript overview.py
+set -euo pipefail
+RE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(dirname "$RE")"
+GHIDRA="${GHIDRA_HOME:-/opt/ghidra}"
+PYTHON="${PYGHIDRA_PYTHON:-/opt/pyghidra-venv/bin/python3}"
+[[ -d "$GHIDRA/Ghidra" ]] || { echo "ghidra-native: no Ghidra at $GHIDRA (set GHIDRA_HOME)" >&2; exit 1; }
+[[ -x "$PYTHON" ]] || { echo "ghidra-native: no PyGhidra Python at $PYTHON (set PYGHIDRA_PYTHON)" >&2; exit 1; }
+mkdir -p "$RE/projects" "$RE/out" /work
+for pair in "bin:$ROOT/vendor/haxial" "scripts:$RE/scripts" "projects:$RE/projects" "out:$RE/out"; do
+  ln -sfn "${pair#*:}" "/work/${pair%%:*}"
+done
+export PYTHONDONTWRITEBYTECODE=1  # keep __pycache__ out of re/scripts
+exec unshare -n "$PYTHON" "$GHIDRA/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py" "$GHIDRA" -H "$@"

@@ -65,20 +65,15 @@ cp /tmp/decomp/ghidra_opt /opt/ghidra/Ghidra/Features/Decompiler/os/linux_x86_64
 # PyGhidra from the bundled wheels
 python3 -m venv /opt/pyghidra-venv
 /opt/pyghidra-venv/bin/pip install --no-index -f /opt/ghidra/Ghidra/Features/PyGhidra/pypkg/dist pyghidra
-# the same /work paths the scripts expect
-mkdir -p /work re/projects re/out
-ln -s "$PWD/vendor/haxial" /work/bin;   ln -s "$PWD/re/scripts" /work/scripts
-ln -s "$PWD/re/projects" /work/projects; ln -s "$PWD/re/out" /work/out
 ```
 
-Then run it where the examples above say `re/ghidra`. `unshare -n` keeps it
-off the network, and `PYTHONDONTWRITEBYTECODE` keeps `__pycache__` out of
-`re/scripts`:
+Then use `re/ghidra-native` wherever the examples above say `re/ghidra`. It
+takes the same arguments, links the same `/work` paths, and runs Ghidra
+under `unshare -n` so it has no network. `GHIDRA_HOME` and
+`PYGHIDRA_PYTHON` override the `/opt` paths above.
 
 ```sh
-PYTHONDONTWRITEBYTECODE=1 unshare -n /opt/pyghidra-venv/bin/python3 \
-  /opt/ghidra/Ghidra/Features/PyGhidra/support/pyghidra_launcher.py /opt/ghidra -H \
-  /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
+re/ghidra-native /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
 ```
 
 Projects made by 12.1.4 may not open in 12.1.2, so import the binaries again.
