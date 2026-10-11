@@ -93,6 +93,22 @@ install_bin() {
   install -m 0755 "$src" "$state/$(basename "$src")"
 }
 
+# Unpack a .deb's files with ar and tar, for systems without dpkg-deb.
+unpack_deb() {
+  local deb="$1" dest="$2" member flag=()
+  member="$(ar t "$deb" | grep -m1 '^data\.tar')" || die "no data.tar member in $deb"
+  case "$member" in
+    data.tar) ;;
+    data.tar.gz) flag=(-z) ;;
+    data.tar.xz) flag=(-J) ;;
+    data.tar.zst) flag=(--zstd) ;;
+    data.tar.bz2) flag=(-j) ;;
+    *) die "unsupported $member in $deb" ;;
+  esac
+  mkdir -p "$dest"
+  ar p "$deb" "$member" | tar -x "${flag[@]}" -C "$dest"
+}
+
 cmd_setup() {
   local dir="$CACHE/deps" deb
   deb="$dir/$(basename "$LIBSTDCXX5_URL")"
@@ -100,7 +116,12 @@ cmd_setup() {
   [[ -f "$deb" ]] || curl -fsSL -o "$deb" "$LIBSTDCXX5_URL"
   echo "$LIBSTDCXX5_SHA256  $deb" | sha256sum -c --quiet || die "checksum mismatch for $deb"
   rm -rf "$CACHE/i386"
-  dpkg-deb -x "$deb" "$CACHE/i386"
+  if command -v dpkg-deb >/dev/null; then
+    dpkg-deb -x "$deb" "$CACHE/i386"
+  else
+    command -v ar >/dev/null || die "needs dpkg-deb or ar (binutils)"
+    unpack_deb "$deb" "$CACHE/i386"
+  fi
   echo "libstdc++.so.5 ready in $CACHE/i386"
 }
 

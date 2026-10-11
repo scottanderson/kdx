@@ -17,16 +17,38 @@ isolation between its clients, so don't type anything sensitive into other
 windows while a client is running.
 
 Requires: `bwrap`, `unshare`/`nsenter`, `dumpcap`/`tshark`, 32-bit Wine (for
-the Windows client), and unprivileged user namespaces. On Ubuntu 24.04:
+the Windows client), and unprivileged user namespaces. `setup` unpacks a
+`.deb` with `dpkg-deb`, or with `ar` and `tar` where `dpkg-deb` is missing.
+On Ubuntu 24.04:
 
 ```sh
 sudo dpkg --add-architecture i386 && sudo apt update
 sudo apt install bubblewrap tshark unar curl wine wine32:i386
 ```
 
+On Fedora and Arch (untested):
+
+| Need                 | Debian/Ubuntu      | Fedora (`dnf`)  | Arch (`pacman`)          |
+|----------------------|--------------------|-----------------|--------------------------|
+| `bwrap`              | `bubblewrap`       | `bubblewrap`    | `bubblewrap`             |
+| `unshare`/`nsenter`  | `util-linux`       | `util-linux`    | `util-linux`             |
+| `dumpcap`/`tshark`   | `tshark`           | `wireshark-cli` | `wireshark-cli`          |
+| `unar`               | `unar`             | `unar`          | `unarchiver`             |
+| `curl`               | `curl`             | `curl`          | `curl`                   |
+| `ar` (no `dpkg-deb`) | `binutils`         | `binutils`      | `binutils`               |
+| 32-bit Wine          | `wine wine32:i386` | `wine`          | `wine`                   |
+| 32-bit glibc         | `libc6:i386`       | `glibc.i686`    | `lib32-glibc` (multilib) |
+| `xdotool`            | `xdotool`          | `xdotool`       | `xdotool`                |
+
+On Debian/Ubuntu `wine32:i386` pulls in `libc6:i386`, which the Linux server
+and tracker need. On Arch, `lib32-glibc` needs the `[multilib]` repository.
+`dumpcap` may need the user to be in the `wireshark` group on Fedora and
+Arch. `xdotool` is needed only to drive the GUI clients from a script.
+
 The lab has been tested only on Ubuntu 24.04 under WSL2 with WSLg. `client`
-needs the WSLg X socket, and native Ubuntu may block unprivileged user
-namespaces through AppArmor.
+needs the WSLg X socket. Native Ubuntu 23.10 and later may block
+`unshare --user` and `bwrap` through AppArmor
+(`kernel.apparmor_restrict_unprivileged_userns`); this is untested.
 
 The server and tracker run natively. Haxial released Client 1.600, the
 reference client so far, only for Windows and Mac, so it needs Wine. The
