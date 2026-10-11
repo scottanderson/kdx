@@ -195,9 +195,26 @@ This record is used in 217 Create Chat, 219 Chat Info, and 220.
 | 0x28 | 2 | flags | bit 0 private, bit 1 voice |
 | 0x2a | 1 | name length | ≤ 0x3f |
 | 0x2b | 1 | description length | ≤ 0x7f |
-| 0x2c | 1 | third string length | ≤ 0x7f; probably the topic [I] |
-| 0x2d | 1 | fourth string length | ≤ 0x3f |
+| 0x2c | 1 | IRC server length | ≤ 0x7f; `host:port`, the client adds `:6667` if there is no port [S client `FUN_080823a0`] |
+| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix [S client] |
 | 0x30 | | strings | |
+
+The two IRC strings make the chat an IRC gateway (the client's chat editor
+calls them Make IRC Gateway: IRC Server, Channel). The server only stores
+them. Each client that joins the chat opens its own connection to the IRC
+server, joins the channel, and uses a nick made from the user's nick (at most
+9 characters). The client's IRC sender treats a line starting with `/` as an
+IRC command and one starting with `\` as raw IRC; how a chat window splits
+text between KDX and IRC is not traced [I]. The client
+answers CTCP VERSION with "Unholy Haxial KDX/IRC Client" **[S client
+`FUN_08082b90`, `FUN_0809767c`, `FUN_08097c30`, `FUN_08097f78`]**. So the
+"IRC bridge" is client-side; Server 1.620 has no IRC code.
+
+A new server starts with three chats **[S `FUN_08058140`]**: 1 Public Chat
+("For all users"), 2 Voice Chat (voice flag), and 3 Admin Lounge ("For the
+administrators only!", class 0 only). At each start, with a chance of 10 in
+300, Public Chat's topic is set to one of ten joke lines, with a made-up
+setter such as `Kevin`, `A. Beaver`, or `Diskartes`.
 
 Chat 1 (Public Chat) always exists and can't be deleted. Privilege bit 0
 bypasses the class bitmaps.
@@ -426,11 +443,11 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 0x20 | | 32 bytes from the user object (+0x74), probably a session ID for transfer connections [I] |
-| 0x20 | 4 | | server value (+0x260) |
+| 0x20 | 4 | file transfer port | the server's optional File Transfer port (settings +0x260); 0 if none. The client opens transfer connections there when it is nonzero [S client `FUN_08052cc0`] |
 | 0x24 | 4 | your user ID | [O] 7 and 8 in successive probes |
 | 0x28 | 2 | server version | 0x0654 = 1620 |
 | 0x2a | 2 | can modify settings | 1 with Modify Server Settings |
-| 0x46 | 2 | | 2 |
+| 0x46 | 2 | | 2. Unless it is 2, the client compares the version and warns about an older or newer server [S client]; Server 1.620 always sends 2, so the warning never shows |
 | 0x48 | 1 | name length | ≤ 0x3f |
 | 0x49 | 1 | description length | ≤ 0xff |
 | 0x4a | 1 | third string length | ≤ 0x7f |
@@ -530,12 +547,14 @@ client's stored purchase certificate (its length; 0 without one) **[S
 client `FUN_08107e04`]**. So it reports whether the client is registered
 **[I]**.
 
-The server acts on it **[S `FUN_0804b7c8`]**: every 900000 ms plus a
-random 0..0x8ffff ms, it sends 155 Rcv Broadcast Message "Please help fund
-the further development of KDX by purchasing a license." to each user whose
-stored value is 2 and who has been connected less than 2 hours (7200000
-ms). The text is obfuscated in the binary at 0x080adc00 (each byte is
-~b + 0xbe). The 155 payload is 16 zero bytes then the text.
+The server acts on it **[S `FUN_0804b7c8`]**: every 900000 ms plus a random
+0..0x8ffff ms, it sends 155 Rcv Broadcast Message "Please help fund the further
+development of KDX by purchasing a license." to each user whose stored value is
+2 and who has been connected less than 2 hours (7200000 ms). The first round
+runs 217500000 ms (about 60 hours) after the server starts **[S
+`FUN_080531f0`]**, so a short lab run never shows it. The text is obfuscated in
+the binary at 0x080adc00 (each byte is ~b + 0xbe). The 155 payload is 16 zero
+bytes then the text.
 
 ### Monitoring and administration
 
@@ -754,9 +773,13 @@ Reply (51 bytes in the lab):
 | 0x0c | 4 | key |
 | 0x14 | 2 | flags |
 | 0x16 | 2 | member count |
-| 0x1e–0x22 | 1 each | five string lengths; the third is the name [O] |
-| 0x24 | 4 × count | member user IDs |
-| … | | the five strings |
+| 0x1e | 1 | IRC server length | [S client `FUN_08082b90`] |
+| 0x1f | 1 | IRC channel length | |
+| 0x20 | 1 | name length | [O] |
+| 0x21 | 1 | topic length | |
+| 0x22 | 1 | topic setter length | the nick that set the topic |
+| 0x24 | 4 × count | member user IDs | |
+| | | name, topic, topic setter, IRC server, IRC channel | |
 
 In frame 68 of `captures/probe.pcapng` only the name (`Public Chat`) is
 set; the payload is not padded.
@@ -2016,7 +2039,12 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 82 | Launch Programs | 175 Upgrade Server Software, 420 Launch File |
 
 Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can
-Login; bit 2 has no name in the client's table **[S]**.
+Login; bit 2 has no name in the client's table **[S]**. Answering no to
+guest access at the server's first-run setup clears Can Login on the
+`guest` account and sets it in that account's mask **[S `FUN_08054394`]**.
+The client never appends the 0x17-byte info trailer that sets user flag bit
+1 (see User record), so whatever sends it is not Client 1.620 beta 5 **[S
+client `FUN_0804d654`]**.
 
 The client's account editor lists 50 privileges in this order **[S
 KDXClient.exe resources]**:
@@ -2064,7 +2092,22 @@ After 30 connections from 127.0.0.1 in about a minute, the server logged
 "Banned for flooding. (ID 4/119)" and then closed each new connection
 before sending its hello (`captures/kdx-accounts.pcapng`, the connections
 after frame 467) **[O]**. The ban lasted at least five minutes and ended
-when the server restarted. That connection flood check is not read yet.
+when the server restarted.
+
+That limit is in the network layer that Server, Tracker, and Client share
+(the client applies it to its DCC listener) **[S server `FUN_08071c90`,
+called from accept `FUN_08097e80`; tracker `FUN_0806bbac`; client
+`FUN_080ca7cc`]**. Per source address it counts accepted connections in a
+window of 300 seconds. The 31st within a window adds the address to a block
+list for 3600 seconds and logs 0x40077; while blocked, each new connection
+is closed at once. The limits (30 and 300) are defaults that nothing
+changes. Unlike the server's own ban list, this one also blocks 127.0.0.1.
+
+Two more limits apply at accept **[S `FUN_08052ad0`]**. An address with 6
+connections already open gets its new one closed without a word. And an
+address on the server's ban list (bans from 150 Disconnect User, and the
+flood bans below) is rejected and logged, except 127.0.0.1, which the ban
+list never matches **[S `FUN_08061398`]**.
 
 The server also counts each connection's requests **[S `FUN_0804fc40`,
 called per message from the session loop]**. The limit L is the account

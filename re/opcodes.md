@@ -96,3 +96,23 @@ connection handles 1000-1003. See `docs/protocol/dcc.md`.
 - The connection flood ban seen in `captures/kdx-accounts.pcapng` (30
   connections a minute); the per-request flood check is read.
 - GConsole 4200/4201 layouts (client `FUN_0809607c`, `FUN_08096188`).
+
+## Other behaviour found in the sweep
+
+Not protocol, but worth knowing when running the originals **[S]**:
+
+- Server console: besides `exit`, `quit`, `about`, `info`, and `setport`,
+  there is an unlisted `prod` command. It marks every socket readable and
+  writable so the event loop polls them all again (`FUN_08056b24`,
+  `FUN_080972e4`).
+- Server ports: the Alternate port and the File Transfer port are extra
+  listeners with the same accept function as the main port (`FUN_0805f34c`,
+  `FUN_080531f0`). 105 Server Info offset 0x20 tells the client the File
+  Transfer port.
+- Tracker 1.110's about text says version 1.111. Its default groups are
+  General, Trackers, Macintosh, Windows, Education, Business, and Games
+  (`FUN_0804c7a8`).
+- Client: a bookmark `Official Haxial Server` at `kdxserver.haxial.com`
+  (`FUN_08058ce0`); a built-in IRC client for chat gateways (see the chat
+  record in the protocol reference); an evaluation period and a signed
+  Haxial Purchase Certificate, whose only protocol effect is the 118 value.
