@@ -18,7 +18,8 @@ agents. This file covers the ones a newcomer needs first.
 
 ## Checks
 
-Run these before each commit. Clippy must report no warnings.
+Run these before each commit. Clippy must report no warnings. CI runs the
+same checks, with `--check` for rustfmt and `-D warnings` for clippy.
 
 ```sh
 cargo fmt --all
