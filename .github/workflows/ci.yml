@@ -24,10 +24,11 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      # The table comes only from this secret; tests that need it skip without it.
+      # The table comes only from this secret, and the tests fail without it.
       - run: cargo test --workspace
         env:
           KDX_CHALLENGE_TABLE: ${{ secrets.KDX_CHALLENGE_TABLE }}
+          KDX_REQUIRE_TABLE: 1
       - run: >-
           cargo run -p kdx-dissect --
           captures/first-connect.pcapng --password 'lab-only-pw!1'

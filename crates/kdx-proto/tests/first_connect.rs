@@ -80,9 +80,10 @@ fn proofs() {
 fn challenge_responses() {
     // The table is not in the repository; skip unless the environment, lab binaries, or `kdx table fetch` provide it.
     let Some(table) = env_table().or_else(vendor_table).or_else(cached_table) else {
-        eprintln!(
-            "skipping: no challenge table in KDX_CHALLENGE_TABLE, vendor/haxial, or the kdx cache"
-        );
+        let missing = "no challenge table in KDX_CHALLENGE_TABLE, vendor/haxial, or the kdx cache";
+        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
+        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
+        eprintln!("skipping: {missing}");
         return;
     };
     let (client, server) = (side(C2S), side(S2C));
