@@ -8,6 +8,9 @@ description = "Framing for KDX sessions over async I/O"
 
 [dependencies]
 kdx-proto.workspace = true
+bytes = "1.12.1"
+thiserror = "2.0.21"
+tokio-util = { version = "0.7.20", features = ["codec"] }
 
 [lints]
 workspace = true
