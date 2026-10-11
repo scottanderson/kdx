@@ -1,5 +1,7 @@
 //! Checks against `captures/first-connect.pcapng`: Client 1.600 logs in as `admin` to Server 1.620.
 
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use kdx_proto::handshake::{
     compute_auth, Hello, Proof, Status, CLIENT_VERSION, SERVER_VERSION, SERVICE_KDX,
 };
@@ -76,9 +78,12 @@ fn proofs() {
 
 #[test]
 fn challenge_responses() {
-    // The table is not in the repository; skip unless the lab binaries or `kdx table fetch` provide it.
-    let Some(table) = vendor_table().or_else(cached_table) else {
-        eprintln!("skipping: no challenge table in vendor/haxial or the kdx cache");
+    // The table is not in the repository; skip unless the environment, lab binaries, or `kdx table fetch` provide it.
+    let Some(table) = env_table().or_else(vendor_table).or_else(cached_table) else {
+        let missing = "no challenge table in KDX_CHALLENGE_TABLE, vendor/haxial, or the kdx cache";
+        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
+        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
+        eprintln!("skipping: {missing}");
         return;
     };
     let (client, server) = (side(C2S), side(S2C));
@@ -174,6 +179,17 @@ fn payloads() {
     ] {
         assert!(seen.contains(&kind), "{kind} not in the capture");
     }
+}
+
+/// The table in `KDX_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
+fn env_table() -> Option<ChallengeTable> {
+    let b64 = std::env::var("KDX_CHALLENGE_TABLE")
+        .ok()
+        .filter(|v| !v.trim().is_empty())?;
+    let bytes = STANDARD
+        .decode(b64.trim())
+        .expect("KDX_CHALLENGE_TABLE is not base64");
+    Some(ChallengeTable::from_bytes(&bytes).unwrap())
 }
 
 /// The table extracted from the server binary that `vendor/fetch` downloads.

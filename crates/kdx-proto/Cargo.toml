@@ -12,5 +12,8 @@ sha2 = "0.11.0"
 thiserror = "2.0.21"
 twofish = "0.8.0"
 
+[dev-dependencies]
+base64 = "0.23.1"
+
 [lints]
 workspace = true
