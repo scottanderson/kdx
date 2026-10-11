@@ -193,11 +193,36 @@ run_console() {
 cmd_server() { run_console server "$SERVER_BIN" "$@"; }
 cmd_tracker() { run_console tracker "$TRACKER_BIN" "$@"; }
 
+# Print the display number of a local X display such as :0, :1.0, or unix:1.
+x11_display_num() {
+  [[ "$1" =~ ^(unix)?:([0-9]+)(\.[0-9]+)?$ ]] || return 1
+  echo "${BASH_REMATCH[2]}"
+}
+
+# Set X11_ARGS to the bwrap arguments that expose the host's X display.
+x11_setup() {
+  local display="${DISPLAY:-:0}" n sock auth cookies
+  n="$(x11_display_num "$display")" ||
+    die "DISPLAY=$display is not a local display (:N); the sandbox reaches X only through /tmp/.X11-unix"
+  sock="/tmp/.X11-unix/X$n"
+  [[ -S "$sock" ]] || die "no X server socket at $sock (is an X server or Xwayland running on $display?)"
+  X11_ARGS=(--ro-bind "$sock" "$sock" --setenv DISPLAY ":$n")
+  auth="${XAUTHORITY:-${HOME:-}/.Xauthority}"
+  [[ -f "$auth" ]] || return 0
+  # Make the cookie match any hostname, since the sandbox has its own.
+  if command -v xauth >/dev/null &&
+    cookies="$(xauth -f "$auth" nlist ":$n" 2>/dev/null)" && [[ -n "$cookies" ]]; then
+    (umask 077; : >"$RUN/xauthority"; sed 's/^..../ffff/' <<<"$cookies" | xauth -q -f "$RUN/xauthority" nmerge -)
+    auth="$RUN/xauthority"
+  fi
+  X11_ARGS+=(--ro-bind "$auth" /tmp/.Xauthority --setenv XAUTHORITY /tmp/.Xauthority)
+}
+
 cmd_client() {
   require_up
   local kind="${1:-win}" state
-  [[ -S /tmp/.X11-unix/X0 ]] || die "no X server socket at /tmp/.X11-unix/X0 (WSLg not running?)"
-  local x11=(--ro-bind /tmp/.X11-unix/X0 /tmp/.X11-unix/X0 --setenv DISPLAY :0)
+  x11_setup
+  local x11=("${X11_ARGS[@]}")
   case "$kind" in
     win)
       state="$RUN/client-win"
