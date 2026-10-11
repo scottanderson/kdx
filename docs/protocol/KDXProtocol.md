@@ -21,8 +21,9 @@ news, and server administration. Trackers list servers.
 | Port | Transport | Use |
 |---|---|---|
 | 10700 | TCP | client ↔ server: every message, and file transfers on extra connections [O] |
-| 10600 | UDP | voice chat; the client advertises its port in the user record [O] |
+| 10600 | TCP | client ↔ client (DCC): private chat and voice; the client advertises its port in the user record [O; S]; see [dcc.md](dcc.md) |
 | 10800 | UDP, TCP | tracker: server registration (UDP) and listing (TCP); see [tracker.md](tracker.md) [S] |
+| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it [S]; see [dcc.md](dcc.md) |
 
 A connection has two phases:
 
@@ -119,8 +120,9 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 
 ## Times
 
-Times are u64 milliseconds. The epoch looks like 1900-01-01: 0x3a36c4895ba
-fits a date in 2026. This is not yet verified **[I]**.
+Times are u64 milliseconds since 1900-01-01 00:00 UTC. The server builds
+them as (tv_sec + 2208988800) × 1000 + ms **[S `FUN_08090eb0`]**, so
+0x3a36c4895ba is 2026-10-08 **[O]**.
 
 ## File paths
 
@@ -151,9 +153,9 @@ This record is used in 100 Set Identity (client to server, user ID 0) and in
 | 0x00 | 4 | user ID | assigned by the server; 0 in 100 Set Identity |
 | 0x04 | 1 | status | the value set by 110 Set Mini User Icon |
 | 0x05 | 5 | 0 | |
-| 0x0a | 2 | voice UDP port | 10600 in the capture [O] |
+| 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture [O]; [S client `FUN_0804d654`]) |
 | 0x0c | 2 | icon length | < 0x709 |
-| 0x0e | 6 | | from the client; `00 00 00 ff cc 00` in the capture, probably two RGB colours [I] |
+| 0x0e | 6 | | from the client: two 3-byte RGB colours [S client `FUN_0804d654`]; `00 00 00 ff cc 00` in the capture |
 | 0x14 | 1 | | set by the server; 0 from the client, 0xff for admin [O] |
 | 0x15 | 2 | | set by the server |
 | 0x17 | 1 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
@@ -227,8 +229,8 @@ status.
 | 114 | Extra Server Info | Server | |
 | 115 | Get My Address | Client | inline |
 | 116 | Your Address | Server | |
-| 117 | SKPK | ? | |
-| 118 | (unnamed) | Client | inline |
+| 117 | SKPK | Client (to client) | client `FUN_0808ff64` (DCC only) |
+| 118 | (unnamed; licence report) | Client | inline |
 | 140 | Open Connection Monitor | Client | inline |
 | 141 | Close Connection Monitor | Client | inline |
 | 142 | Get Connection Monitor Info | Client | `FUN_0804b9b0` |
@@ -347,16 +349,16 @@ status.
 | 802 | Get Process List | Client | `FUN_0805b454` |
 | 803 | Process List | Server | |
 | 804 | Exit/Terminate Process | Client | `FUN_0805b8f4` |
-| 900 | Open View Display | Client | |
-| 901 | Close View Display | Client | |
-| 902 | View Display Params | | |
+| 900 | Open View Display | Client | `FUN_0805c0f0` (transfer connection) |
+| 901 | Close View Display | Client | none |
+| 902 | View Display Params | Server | |
 | 903 | View Display Update | Server | |
-| 904 | View Display Mouse | Client | |
-| 905 | View Display Keyboard | Client | |
-| 1000 | Start Voice | Client | |
-| 1001 | Start Voice (R) | Server | |
-| 1002 | Set Voice Format | | |
-| 1003 | Voice Data | | (UDP) |
+| 904 | View Display Mouse | Client | `FUN_0805c344` |
+| 905 | View Display Keyboard | Client | `FUN_0805c498` |
+| 1000 | Start Voice | Client (to client) | client `FUN_08094074` (DCC only) |
+| 1001 | Start Voice (R) | Client (to client) | client `FUN_08094218` |
+| 1002 | Set Voice Format | Client (to client) | client `FUN_080943a0` |
+| 1003 | Voice Data | Client (to client) | client `FUN_0809455c` (TCP) |
 | 1100 | Create Folder Access | Client | `FUN_080572f0` |
 | 1101 | Delete Folder Access | Client | `FUN_08057460` |
 | 1102 | Folder Access Deleted | Server | |
@@ -520,7 +522,20 @@ Initiator: Client. **[S `FUN_0804fdac`]**
 | 0x00 | 4 | value |
 
 No reply. The server stores 1 if the value is nonzero and 2 if it is zero
-(user +0x3b). The purpose is unknown.
+(user +0x3b).
+
+The client sends it on a timer, 9000000 ms plus a random 0..0x4fffff ms
+after login **[S client `FUN_0804c01c`]**. The value comes from the
+client's stored purchase certificate (its length; 0 without one) **[S
+client `FUN_08107e04`]**. So it reports whether the client is registered
+**[I]**.
+
+The server acts on it **[S `FUN_0804b7c8`]**: every 900000 ms plus a
+random 0..0x8ffff ms, it sends 155 Rcv Broadcast Message "Please help fund
+the further development of KDX by purchasing a license." to each user whose
+stored value is 2 and who has been connected less than 2 hours (7200000
+ms). The text is obfuscated in the binary at 0x080adc00 (each byte is
+~b + 0xbe). The 155 payload is 16 zero bytes then the text.
 
 ### Monitoring and administration
 
@@ -533,27 +548,37 @@ is no reply.
 **142 Get Connection Monitor Info** → **143 Connection Monitor Info**
 Initiator: Client. **[S `FUN_0804b9b0`; O]**
 
-The request is empty. Without a 140 Open Connection Monitor first, the
-server replies with 1 Status 0x10003 (protocol breach) **[O]**. The reply is
-one record per connection, with no count in front, each padded to 4:
+The request is empty. It needs Get User Info (bit 40); without a 140 Open
+Connection Monitor first, the server replies with 1 Status 0x10003
+(protocol breach) **[O]**. The reply is one record per connection, each
+followed by one record per file transfer of that user, with no count in
+front, each padded to 4 **[S `FUN_0804b9b0`]**:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | user ID | |
-| 0x04 | 4 | | |
-| 0x08 | 8 | login time | |
-| 0x10 | 8 | time | |
-| 0x18 | 8 | time | probably the last activity [I] |
-| 0x20 | 0x40 | | transfer progress [I]; all zero with no transfers |
+| 0x04 | 4 | transfer ID | 0 in a connection record; the transfer's ID in a transfer record [S] |
+| 0x08 | 8 | login time | the transfer's start time in a transfer record [S] |
+| 0x10 | 8 | time | 0 in a transfer record [S] |
+| 0x18 | 8 | current server time | [S] |
+| 0x20 | 8 | bytes done | transfer record only: bytes moved minus bytes still queued to send [S] |
+| 0x28 | 8 | total bytes | transfer record only [S] |
+| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S] |
+| 0x34 | 4 | seconds left | transfer record only: (total − done) / rate [S] |
+| 0x38 | 4 | | transfer record only; a per-transfer value [S] |
+| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S] |
+| 0x40 | 2 | 0 | |
+| 0x42 | 1 | account class index | [S] |
 | 0x60 | 1 | nick length | |
 | 0x61 | 1 | login length | |
-| 0x62 | 1 | account name length | |
-| 0x63 | 1 | address length | |
-| 0x68 | | nick, login, account name, address | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
+| 0x62 | 1 | account class name length | `?` if the class is gone [S] |
+| 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record [S] |
+| 0x66 | 2 | path length | transfer record only: the file path [S] |
+| 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
-The padding after the address is uninitialised **[O]**.
-
-The server also sends per-transfer records [S]; that layout is not read yet.
+The padding after the strings is uninitialised **[O]**. Fields marked
+transfer record only are 0 in a connection record. No capture has a
+transfer record yet; see `.scratch/capture-gaps/issues/03-files.md`.
 
 **150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
@@ -655,14 +680,18 @@ Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 | 0x00 | 1 | mode | low 3 bits nonzero |
 | 0x04 | | message | ≤ 0xff |
 
-The server broadcasts 151 Disconnect Message with flag 4, then exits after 5
-seconds.
+The server broadcasts 151 Disconnect Message with flag 4, writes history
+record 0xae, then exits after 5000 ms. The mode is stored but its values are
+not named yet.
 
 **175 Upgrade Server Software**
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
 (82). **[S `FUN_0806172c`]**
 
-The server broadcasts "Upgrading server software, be back in 5 seconds!".
+The server needs the `KDXUpgradeHelper` program next to it; without it the
+reply is 1 Status 0x1000c. Otherwise it broadcasts 151 Disconnect Message
+"Upgrading server software, be back in 5 seconds!", launches the helper,
+writes history record 0xaf, and exits after 0xd48 ms.
 
 **180 Server History Join** / **182 Server History Leave**
 Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
@@ -870,15 +899,27 @@ client sends 505 Get Account Class List before it opens the new-chat window
 **222 Get Chat DCC Addresses** → **223 Chat DCC Addresses**
 Initiator: Client. **[S `FUN_0805a110`; O]**
 
-The request is a u32 chat ID. The sender must be a member of a voice chat.
-Reply entries: {u32 user ID, …, 0x0e u8 length, `"ip:port"`}. Voice data
-then goes peer-to-peer over UDP.
+The request is a u32 chat ID. The chat must have the voice flag (bit 1)
+and the sender must be a member; otherwise 1 Status 0x10014. An unknown
+chat gets 0x1000c **[S]**. The reply has one entry for each other member
+whose user record has a nonzero DCC port (0x0a), each padded to 4 **[S]**:
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 4 | user ID |
+| 0x04 | 0xa | 0 |
+| 0x0e | 1 | address length |
+| 0x0f | 1 | 0 |
+| 0x10 | | `"ip:port"`: the member's address and DCC port |
+
+The client then opens a TCP connection to each address for voice; see
+[dcc.md](dcc.md).
 
 [O] `captures/linux-chat-rooms.pcapng`: the client sends 222 right after
 joining a voice chat. The reply was empty (len 0) when the client was alone
 (frames 72–73) and when a `kdx` CLI peer was also a member (frames
-119–120), probably because the CLI registers no address [I]. An entry has
-not been seen.
+119-120). The CLI sends DCC port 0, so the server leaves it out **[S]**.
+An entry has not been seen.
 
 ### Private messages
 
@@ -916,7 +957,7 @@ entry per item, each padded to 4:
 | 0x20 | 4 | attributes | 1 for a file, 0x01000002 for a folder [O]; the server clears bit 24 and tests 0x42 [S] |
 | 0x24 | 0xa | | |
 | 0x2e | 2 | | 0xffff for folders, 0 for a file |
-| 0x30 | 2 | folder access item | 0x2c, 0x2b for the folders, 0 for a file (see 1107 Folder Access List) |
+| 0x30 | 2 | folder icon | the folder access entry's icon: 0x2c Dropbox, 0x2b Uploads; 0 for a file (see 1100 Create Folder Access) [S] |
 | 0x32 | 2 | | |
 | 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, 0 for a file |
 | 0x35 | 1 | name length | |
@@ -951,14 +992,115 @@ The request is a file path. Reply (82 bytes for `Uploads [UL]`):
 | 0x3e | 1 | kind length | |
 | 0x40 | | name, kind | kind = `folder` |
 
-**402 Create Folder**, **403 Create Alias**, **405 Move To Trash**, **407
-Move**, **411 Set File/Folder Info**, **420 Launch File**, **421 Empty
-Trash**, **423 Set Volume Info**
-Initiator: Client. **[S]**
+If the path is a single name that is a volume (the user can see all
+volumes), the reply is **422 Volume Info** instead **[S `FUN_0804ef00`,
+client `FUN_080758dc`]**. Each record is padded to 4:
 
-Handlers are listed in the table above. Each one checks privileges (see
-Access Privileges) and takes one or two file paths. Their layouts are not
-read yet.
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | total size | all ones if unknown |
+| 0x08 | 8 | free space | the client shows used = total − free |
+| 0x10 | 8 | modified | time |
+| 0x18 | 8 | created | time |
+| 0x20 | 4 | item count | 0xffffffff if unknown |
+| 0x26 | 1 | disk type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy |
+| 0x30 | 4 | icon | |
+| 0x44 | 4 | flags | bit 0 name editable, bit 1 comments editable |
+| 0x48 | 4 | flags mask | the client ANDs it with 0x44 |
+| 0x4e | 1 | name length | |
+| 0x50 | 1 | format length | e.g. the file system name |
+| 0x51 | 1 | comments length | |
+| 0x54 | | name, format, comments | |
+
+The client labels are Free Size, Used Size, Total Size, Item Count, Disk
+Type, Format, Created, Modified, and Comments.
+
+A *name list* below has the same layout as a file path: a u16 count, then
+for each name a u16 0, a u8 length, and the name. When a request carries
+paths back to back, each one is self-delimiting, and the root is written as
+a count of 0 (`00 00`) rather than left empty **[O]**. Each request also passes
+the folder access check (`FUN_08057e5c`) with an access kind; a failure gets
+1 Status 0x10014.
+
+**402 Create Folder**
+Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
+`captures/linux-files.pcapng` frames 26-29]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x13 | 0 | |
+| 0x13 | 1 | folder access length | the tag, such as `DB`; needs Modify Folder Access (28) |
+| 0x14 | 2 | path length | the parent folder |
+| 0x16 | 1 | name length | empty: the path's last name is the new folder |
+| 0x17 | 1 | owner login length | |
+| 0x18 | | name, folder access, owner login, path | |
+
+With a tag the folder is named `name [tag]`, or `name [tag,owner]` with an
+owner login. A name ending in a reserved suffix such as `lnk` gets 0x30076.
+Success is 1 Status 0x192 (frame 29). The client's New Folder dialog has
+Name, a Folder Access popup, and Owner Login.
+
+**403 Create Alias**
+Initiator: Client. Privilege: Create Aliases (15). **[S `FUN_0804e4ec`; O
+frames 95-98]**
+
+The request is the destination folder path, the source folder path, then a
+name list of items in the source folder (frame 95: `Uploads [UL]`,
+`Uploads [UL]`, `upload2.txt`). Success is 1 Status 0x193 (frame 98).
+
+**405 Move To Trash**
+Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O frames
+241-244]**
+
+The request is a folder path, then a name list (frame 241: the root, then
+`lab-folder`). Each item gets a history record. Success is 1 Status 0x195
+(frame 244).
+
+**407 Move File/Folder**
+Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O frames 76,
+80, 127, 206]**
+
+The request is the destination folder path, the source folder path, then a
+name list. Frame 76 moves `upload.txt` from `Uploads [UL]/lab-folder` to
+`Uploads [UL]`. Success is 1 Status 0x197 (frame 80).
+
+**411 Set File/Folder Info**
+Initiator: Client. **[S `FUN_0804f684`; O frame 89]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x28 | 0 | |
+| 0x28 | 4 | flags | bit 0 rename: needs Rename (17); bits 0x86 set attributes: need Set File/Folder Attributes (20) |
+| 0x2c | 2 | | 0 |
+| 0x2e | 2 | path length | 0x1e in frame 89 |
+| 0x30 | 1 | | 0 |
+| 0x31 | 1 | new name length | |
+| 0x32 | 2 | other lengths | 0 from the client |
+| 0x34 | | path, new name | frame 89 renames `Uploads [UL]/upload.txt` to `upload2.txt` |
+
+Without Modify Folder Access (28), a new name must keep the folder's
+` [tag]` suffix. There is no reply, success or not (frame 89: no Status for
+its txid).
+
+**420 Launch File**
+Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
+client `FUN_0807455c`]**
+
+The request is 8 zero bytes, then the file path (at least 9 bytes in all).
+Success is 1 Status 0x1a4.
+
+**421 Empty Trash**
+Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
+1 Status 0x1a5 **[S]**.
+
+**423 Set Volume Info**
+Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
+client `FUN_08074420`]**
+
+The request is a 422 Volume Info record. Flags at 0x44: bit 0 renames the
+volume to the name (length at 0x4e), bit 1 sets the comments (length at
+0x51). The format string is ignored. There is no reply; the server writes
+history record 0x1a7.
 
 #### Transfer connections
 
@@ -1111,8 +1253,46 @@ Server 1.620 has no handler for these. 405 Move To Trash, 407 Move
 File/Folder, and 411 Set File/Folder Info cover the same ground **[S
 `FUN_0804fdac`]**.
 
-**450 Generate Catalog**, **452 File Search**
-These are not read yet.
+**450 Generate Catalog** → **451 Generate Catalog (S)**
+Initiator: Client. Privilege: Modify Server Settings (61). **[S
+`FUN_0805a728`, `FUN_0805a878`]**
+
+The request is empty or a u32 of flags; bit 0 cancels a running catalog
+(only its starter may). A second start while one runs gets 1 Status
+0x30075. The server writes history record 0x1c2 and builds an index of all
+files. It sends 451 progress to the starter at most every 2000 ms, and a
+final one when done:
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 4 | flags: 0x01000000 = done |
+| 0x04 | 4 | items indexed so far |
+
+**452 File Search** → **453 File Search (R)**
+Initiator: Client. **[S `FUN_0805abc0`]**
+
+The request is at least 0x58 bytes. Byte 0x54 is the query length (at
+least 3; the client checks this too), and the query starts at 0x58. The
+client sends the rest as zeros and the server ignores it. Without a
+catalog the reply is 1 Status 0x640001, as in `captures/linux-files.pcapng`
+**[O]**. Otherwise the server writes history
+record 0x1c4 and replies with a u32 count and at most 100 entries, each
+padded to 4:
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 8 | size |
+| 0x08 | 8 | time |
+| 0x10 | 8 | time |
+| 0x18 | 4 | path length |
+| 0x20 | 4 | attributes, as in 401 |
+| 0x2e | 2 | as in 401 |
+| 0x34 | 1 | as in 401 |
+| 0x36 | 1 | name length |
+| 0x38 | | name, then the item's full file path (root first) |
+
+Items the user can't see through folder access are left out. No hit gives
+an empty 453.
 
 ### Accounts
 
@@ -1152,12 +1332,15 @@ padded to 4:
 | 0x00 | 0x10 | privileges | 11 bytes used |
 | 0x10 | 8 | time | |
 | 0x18 | 0xd | | |
-| 0x25 | 1 | | 0x50 for Administrator, 0x28 for Guest |
-| 0x26 | 0xa | | |
+| 0x25 | 1 | flood protection | commands per 2 minutes; 0x50 (Relaxed) for Administrator, 0x28 (Strict) for Guest; see Flood ban [S] |
+| 0x26 | 2 | | stored as given [S] |
+| 0x28 | 8 | | |
 | 0x30 | 1 | class index | 0, 2 |
 | 0x31 | 1 | | 0xff for Administrator, 0 for Guest; probably the colour [I] |
 | 0x34 | 1 | name length | |
-| 0x38 | | name | |
+| 0x35 | 1 | second string length | [S] |
+| 0x36 | 1 | editor login length | set by the server on 504 [S] |
+| 0x38 | | name, second string, editor login | |
 
 The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**.
 
@@ -1237,7 +1420,7 @@ login and privileges.
 Errors:
 
 - 0x1000c for an unknown account;
-- 0x10014 if the account has privilege 54 (not yet named) set in both the mask
+- 0x10014 if the account has Protected Account (54) set in both the mask
   and the values and the requester lacks privilege 0;
 - the same checks as 507 Create Account otherwise.
 
@@ -1255,7 +1438,7 @@ Errors:
 - 0x10014 without the privilege (frame 391);
 - 0x10014 if the target has privilege 0 set in both its mask and its
   values;
-- 0x10014 if the target has privilege 54 (not yet named) set in both and the
+- 0x10014 if the target has Protected Account (54) set in both and the
   requester lacks privilege 0.
 
 **550 Change Own Password** → **551 Change Own Password Done**
@@ -1285,7 +1468,20 @@ padded to 4:
 | 0x25 | 1 | name length | |
 | 0x28 | | login, name | |
 
-504 Set Account Class and 514 Account Changed are not read yet.
+**504 Set Account Class**
+Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`]**
+
+The request is a 503 Account Class Info record (at least 0x38 bytes) with
+the class index at 0x30. The server filters the name (`FUN_08081ffc`),
+writes the requester's login as the editor, sets the time at 0x10, and
+saves the class. Privileges the requester lacks can't be granted
+(`FUN_080551b0`; failure 1 Status 0x640005). Success is 1 Status 0x1f8; the
+history record 0x1f8 carries the old class name. Logged-in users of that
+class get the new privileges at once (`FUN_08054900`).
+
+**514 Account Changed**
+Server 1.620 never sends it and Client 1.620 beta 5 doesn't handle it
+**[S]**.
 
 ### News
 
@@ -1319,10 +1515,10 @@ reply is padded to 4:
 | 0x10 | 8 | time of the last post | 611 Post News Message sets it |
 | 0x18 | 4 | read classes | a class bitmap, class 0 in the top bit; `ffffffff` |
 | 0x1c | 4 | post classes | the same; `ffffffff` |
-| 0x20 | 4 | | `01 00 00 00` |
+| 0x20 | 4 | | a third class bitmap; `01 00 00 00`; the client sends 0 [S] |
 | 0x24 | 0xc | | 0 |
 | 0x30 | 2 | message count | 1 |
-| 0x32 | 2 | | a stored value shifted right by 10, so probably a size limit in KiB [I]; 0x32 |
+| 0x32 | 2 | archive size | KiB, clamped to 4..1024; 0x32 (50 KiB) by default [S `FUN_0805c8f8`] |
 | 0x34 | 8 | | 0 |
 | 0x3c | 1 | name length | at most 0x3f |
 | 0x3d | 1 | description length | at most 0x7f; 0 in the lab |
@@ -1380,10 +1576,10 @@ the group's post classes unless the user has privilege 0. **[S
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | group ID | |
-| 0x04 | 8 | | not read |
+| 0x04 | 8 | | ignored by the server [S] |
 | 0x0c | 2 | body length | the server keeps at most 0x4000 bytes |
 | 0x0e | 1 | subject length | the server keeps at most 0x80 bytes |
-| 0x0f | 1 | | not read |
+| 0x0f | 1 | | ignored by the server [S] |
 | 0x10 | | subject, body | lines end in CR |
 
 There is no reply on success (frames 356–361). The server stores a 610 News
@@ -1414,8 +1610,33 @@ Initiator: Server. **[S; O]**
 | 0x04 | 4 | message ID |
 | 0x08 | 4 | messages in the group afterwards |
 
-The newsgroup management messages (600 Create Newsgroup, 601 Delete
-Newsgroup, 604 Set Newsgroup) are not read yet.
+**600 Create Newsgroup**
+Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
+`FUN_0805c8f8`, client `FUN_08089034`]**
+
+The request is a 603 Newsgroup Info record. The server ignores the ID at
+0x00 and picks one. The name must be 1..0x3f bytes and the description at
+most 0x7f. Success is 1 Status 0x258, and a history record. The client's
+editor has Name, Description, Archive Size, and the class access list; it
+sends 600 or 604, then 605 Get Newsgroup List.
+
+When a group's stored messages reach 1.5 times the archive size, the server
+moves the oldest ones into a file under `News Archives` named after the
+group **[S `FUN_0805ed88`]**.
+
+**601 Delete Newsgroup**
+Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
+`FUN_0805caf4`]**
+
+The request is a u32 group ID. An unknown group gets 0x1000c. Success is
+1 Status 0x259. 602 Get Newsgroup also writes history record 0x25a.
+
+**604 Set Newsgroup**
+Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
+`FUN_0805ce60`]**
+
+The request is a 603 Newsgroup Info record with the group ID at 0x00.
+Success is 1 Status 0x25c.
 
 ### Processes
 
@@ -1451,15 +1672,26 @@ Each process entry is padded to 4:
 
 **804 Exit/Terminate Process**
 Initiator: Client. Privilege: Terminate Processes (81). **[S
-`FUN_0805b8f4`]**
+`FUN_0805b8f4`, `FUN_08090c6c`]**
 
-Not probed.
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 1 | flags | bit 0 kill, bit 1 exit, bit 2 extra flag; one of bits 0 and 1 is required, else 0x10002 |
+| 0x01 | 3 | 0 | |
+| 0x04 | 4 | PID | |
+| 0x08 | 4 | | must be 0, or nothing happens |
+
+On Linux, kill sends SIGKILL and exit sends SIGTERM to the PID. Bit 2 gets
+0x10005 (unsupported) on Linux. A failed `kill()` returns the OS error.
+There is no reply on success; the server writes history record 0x324. Not
+probed.
 
 ### Folder access
 
-A folder access item is a named set of rules. A folder refers to one by ID
-(the u16 at offset 0x30 of a 401 File List entry). Item `[Default]` applies
-when a folder and its parents name no item.
+A folder access item is a named set of rules. A folder names its item with
+a ` [tag]` suffix, such as `Uploads [UL]`. Item `[Default]` applies when a
+folder and its parents name no item. The u16 at offset 0x30 of a 401 File
+List entry is the item's icon, not an ID **[S]**.
 
 **1106 Get Folder Access List** → **1107 Folder Access List**
 Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`;
@@ -1472,8 +1704,8 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 4 | | 1, 2, 0 in the lab |
-| 0x04 | 4 | item ID | 0 for `[Default]`, 0x2c `DB`, 0x2b `UL` |
+| 0x00 | 4 | flags | 1 built-in (`[Default]`), 2 Owner Login In Folder Name; 1, 2, 0 in the lab [S] |
+| 0x04 | 4 | icon | 0 for `[Default]`, 0x2c Dropbox (`DB`), 0x2b Uploads (`UL`) [S] |
 | 0x08 | 8 | | not written by the server |
 | 0x10 | 1 | | |
 | 0x11 | 1 | name length | |
@@ -1481,16 +1713,167 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 | 0x13 | 1 | description length | |
 | 0x14 | | name, second string, description | `[Default]`, empty, `If a folder and its parents…` |
 
-1100 Create Folder Access, 1101 Delete Folder Access, 1103 Get Folder
-Access, and 1105 Set Folder Access are not read yet.
+**Folder access record**
+**[S `FUN_080572f0`, `FUN_08057634`, client folder access editor; O
+`captures/linux-files.pcapng` 1100, 1104]**
+
+1100, 1104, and 1105 share this record. Its total length, padded to 4, must
+equal the payload length.
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | | |
+| 0x04 | 4 | flags | byte 7: bit 0 built-in, bit 1 Owner Login In Folder Name |
+| 0x08 | 4 | icon | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
+| 0x0c | 4 | rule | 0xfffe0000 (every permission) in both lab items; probably the owner's rule [I] |
+| 0x10 | 0x80 | class rules | 32 entries, one per account class: u16 permission bits, MSB = bit 0, then u16 0 |
+| 0x90 | 0x1d | 0 | |
+| 0xad | 1 | name length | the tag, such as `DB` |
+| 0xae | 1 | owner login length | |
+| 0xaf | 1 | description length | |
+| 0xb0 | 1 | | |
+| 0xb1 | 1 | current name length | 1105 only: the item to change |
+| 0xb2 | 6 | | |
+| 0xb8 | | strings in the order of their lengths | |
+
+Permission bits (client menu at file offset 0xf6448): 0 Can See Folder, 1 See
+Folder Content, 2 Read/Download Files, 3 Create/Upload Files, 4 Create/Upload
+Folders, 5 Move In, 6 Move Out, 7 Alias In, 8 Alias Out, 9 Duplicate In, 10
+Duplicate Out, 11 Delete Items, 12 Rename, 13 Set Item Attributes, 14 Modify
+File Contents. In the lab, `DB` grants 0x9d40 (bits 0, 3, 4, 5, 7, 9: a drop
+box) and `[Default]` grants 0xe0a0 (bits 0, 1, 2, 8, 10) **[O]**, in entries
+0..30; entry 31 is 0xfffe0000 in `DB` and 0 in `[Default]` (frames 226, 229).
+The client editor shows Name, Description, Owner Login, Owner Login In Folder
+Name, the Access Privileges table, and Icon.
+
+**1100 Create Folder Access**
+Initiator: Client. Privilege: Modify Folder Access (28). **[S
+`FUN_080572f0`; O]**
+
+The request is a folder access record. An invalid name gets 0x1001e, an
+existing one 0x1000d. Success is 1 Status 0x44c. Frame 231 creates `test`
+with every other field 0, and frame 234 is the success.
+
+**1101 Delete Folder Access** → **1102 Folder Access Deleted**
+Initiator: Client. Privilege: Modify Folder Access (28). **[S
+`FUN_08057460`]**
+
+The request is the item name, with no length byte. An unknown name gets
+0x1000c. There is no Status reply: the server sends 1102 (txid 0, payload
+the name) to the requester and writes history record 0x44d.
+
+**1103 Get Folder Access** → **1104 Folder Access Info**
+Initiator: Client. Privilege: View Folder Access (27). **[S
+`FUN_08057534`; O]**
+
+The request is the item name, with no length byte. The reply is the stored
+folder access record.
+
+**1105 Set Folder Access**
+Initiator: Client. Privilege: Modify Folder Access (28). **[S
+`FUN_08057634`]**
+
+The request is a folder access record whose current name (0xb1) picks the
+item; it is renamed if the name differs. Success is 1 Status 0x451.
+
+### View display
+
+View display shares the server's screen. It runs on a transfer connection
+(see Transfer connections), not on the session **[S `FUN_08052194`]**.
+Server 1.620 for Linux can't capture its screen (`FUN_080996d8` raises
+0x10004), so 900 there only gets an error, and its input injectors are
+empty. The layouts below are read from the server's code and the client's
+decoder **[S]**; no capture has them yet.
+
+**900 Open View Display** → **902 View Display Params**, **903 View
+Display Update**
+Initiator: Client, on a transfer connection. Privilege: View Display (66).
+**[S `FUN_0805c0f0`, client `FUN_0806f9d8`]**
+
+The request is empty. A connection already busy gets 0x10003. The reply is
+902, then a full 903 frame. After that the server sends a 903 to every
+viewer every 1500 ms when the screen has changed. 901 Close View Display has
+no handler: the client closes the connection.
+
+902 View Display Params is 0x10 bytes: u32 flags, bit 0 = the viewer may
+control the display (Control Display, 67). The rest is 0.
+
+903 View Display Update:
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 2 | screen width |
+| 0x02 | 2 | screen height |
+| 0x04 | 2 | left of the changed rectangle |
+| 0x06 | 2 | top |
+| 0x08 | 2 | right (exclusive) |
+| 0x0a | 2 | bottom (exclusive) |
+| 0x0c | | pixel stream for the whole screen, row by row |
+
+A pixel is a u16 RGB555 (0RRRRRGGGGGBBBBB) **[S `FUN_0805bb54`]**. The
+value 0x6c59 means unchanged; a real 0x6c59 is sent as 0x6c5a. A frame
+after the first marks every unchanged pixel this way. A new screen size
+starts a fresh full frame.
+
+The stream is a sequence of codes, read as u16 words **[S server
+`FUN_0805ba44`, `FUN_0805c5bc`; client `FUN_0806f36c`]**:
+
+- A word with bit 15 clear is one pixel.
+- A word with bit 15 set gives colour A = word & 0x7fff, and the next word
+  C decides the rest:
+  - C bit 15 clear: a run of C pixels of A.
+  - C bit 15 set: a third word D gives colour B = D & 0x7fff, and
+    n = ((C >> 12) & 7) | ((D >> 15) << 3).
+    - n > 0: n pixels (4..12) from the mask C & 0xfff, highest used bit
+      first; 1 = B, 0 = A.
+    - n = 0: count = C & 0xfff, then a bitmap of ((count + 15) / 16) × 2
+      bytes, MSB first; 1 = B, 0 = A.
+
+The server uses runs for 10 or more equal pixels, the two-colour codes for
+spans of 4 or more pixels with only two colours, and single pixels
+otherwise.
+
+A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
+
+**904 View Display Mouse**
+Initiator: Client, on the view display connection. Privilege: Control
+Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | modifiers | from the client's event [I] |
+| 0x04 | 2 | x | |
+| 0x06 | 2 | y | |
+| 0x08 | 2 | | from the client's event; wheel or click count [I] |
+| 0x0a | 1 | button | |
+| 0x0b | 1 | kind | 1 down, 2 up, 3 move, 4 wheel [I from the client's event codes 9, 10, 11/13, 14] |
+
+Other kinds are ignored. After kind 2, the server sends the next 903 within
+100 ms. The client sends nothing when 902 denied control, and shows "You do
+not have access to control" on a click.
+
+**905 View Display Keyboard**
+Initiator: Client, on the view display connection. Privilege: Control
+Display (67). **[S `FUN_0805c498`, client `FUN_0806f1f4`]**
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 4 | modifiers | [I] |
+| 0x04 | 2 | key code | [I] |
+| 0x06 | 2 | character | [I] |
+| 0x08 | 3 | 0 | |
+| 0x0b | 1 | kind | 1 key down, 2 key up, 3 key repeat [I from the client's event codes 5, 6, 7] |
+
+After kind 1, the server sends the next 903 within 100 ms.
 
 ### Not yet documented
 
-- View display: 900–905.
-- Voice: 1000–1003.
 - The tracker: 700–721 and UDP registration are read statically but not
   captured. See [tracker.md](tracker.md).
-- 117 SKPK.
+- Client-to-client (DCC) messages 117, 300 on DCC, and 1000-1003 are read
+  statically but not captured. See [dcc.md](dcc.md).
+- View display 900-905 is read statically; it needs a Windows or Mac
+  server to capture.
 
 # Error Codes
 
@@ -1581,17 +1964,21 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | Bit | Privilege | Tested in |
 |---:|---|---|
 | 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | 202 Join Chat, 207 Send Chat Text, 209 Set Chat Topic, 400 Get File List, 508 Delete Account, 511 Set Account, 607 Get News Messages, 609 Get News Message, 611 Post News Message, 612 Delete News Message |
-| 3 | (login) | `FUN_08054900` account lookup |
+| 3 | Color Overrides Class | `FUN_08054900` account lookup |
+| 4 | Can Login | set in every lab class |
 | 10 | Download | 412 Download File |
 | 11 | Upload | 402 Create Folder, 415 Upload File |
 | 13 | Empty Trash | 421 Empty Trash |
 | 15 | Create Aliases | 403 Create Alias |
 | 16 | Move | 407 Move File/Folder |
-| 17 | Rename [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
+| 17 | Rename | 409 Get File/Folder Info, 411 Set File/Folder Info |
 | 18 | Delete | 405 Move To Trash |
-| 20 | Set Attributes [I] | 409 Get File/Folder Info, 411 Set File/Folder Info |
-| 22 | See All Volumes [I] | 400 Get File List, 423 Set Volume Info |
-| 25 | Allow Simultaneous Downloads [I] | 412 Download File (large files) |
+| 20 | Set File/Folder Attributes | 409 Get File/Folder Info, 411 Set File/Folder Info |
+| 22 | See All Volumes | 400 Get File List, 423 Set Volume Info |
+| 23 | Has Custom Base Folder | |
+| 24 | See All Bases | |
+| 25 | Allow Simultaneous Downloads | 412 Download File (large files) |
+| 26 | Ignore Speed Limits | |
 | 27 | View Folder Access | 505 Get Account Class List, 1103 Get Folder Access, 1106 Get Folder Access List |
 | 28 | Modify Folder Access | 402 Create Folder, 403 Create Alias, 411 Set File/Folder Info, 1100 Create Folder Access, 1101 Delete Folder Access, 1105 Set Folder Access |
 | 30 | Join Chat | 202 Join Chat, 214 Get Chat List, login |
@@ -1610,12 +1997,15 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 51 | Create Accounts | 507 Create Account |
 | 52 | Modify Accounts | 504 Set Account Class, 508 Delete Account, 511 Set Account |
 | 53 | Change Own Password | 550 Change Own Password |
+| 54 | Protected Account | 508 Delete Account, 511 Set Account (target) |
 | 60 | Use Any Name | 100 Set Identity, login |
 | 61 | Modify Server Settings | 113 Get Extra Server Info, 170 Get Server Settings, 172 Set Server Settings, 450 Generate Catalog, login (105 Server Info) |
 | 62 | Don't Show Greeting | login |
 | 63 | View Server History | 180 Server History Join |
 | 64 | Shutdown Server | 174 Shutdown Server, 175 Upgrade Server Software |
-| 65 | Disable Encryption [I] | 412 Download File, 415 Upload File (plain mode) |
+| 65 | Disable Encryption |
+| 66 | View Display | 900 Open View Display |
+| 67 | Control Display | 902 View Display Params, 904, 905 | 412 Download File, 415 Upload File (plain mode) |
 | 70 | View News | 605 Get Newsgroup List, 607 Get News Messages, 609 Get News Message |
 | 71 | Post News | 607 Get News Messages, 611 Post News Message |
 | 72 | Delete News Messages | 607 Get News Messages, 612 Delete News Message |
@@ -1625,8 +2015,8 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 81 | Terminate Processes | 804 Exit/Terminate Process |
 | 82 | Launch Programs | 175 Upgrade Server Software, 420 Launch File |
 
-Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. One of them is
-probably Can Login **[I]**.
+Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can
+Login; bit 2 has no name in the client's table **[S]**.
 
 The client's account editor lists 50 privileges in this order **[S
 KDXClient.exe resources]**:
@@ -1649,8 +2039,9 @@ KDXClient.exe resources]**:
    Don't Show Greeting, View Server History, Shutdown Server, Disable
    Encryption
 
-The file bits (8–23), Can Login, Color Overrides Class, the display bits,
-and Disable Encryption are not yet mapped to bit numbers.
+The client's editor table at 0x0812c760 (file offset 0xe4760) pairs each
+label with its bit number **[S]**, which gives the names in the table
+above. The other bits have no label.
 
 # Transaction Sequences
 
@@ -1673,8 +2064,30 @@ After 30 connections from 127.0.0.1 in about a minute, the server logged
 "Banned for flooding. (ID 4/119)" and then closed each new connection
 before sending its hello (`captures/kdx-accounts.pcapng`, the connections
 after frame 467) **[O]**. The ban lasted at least five minutes and ended
-when the server restarted. The checks are in `FUN_0804a8c0` and
-`FUN_0804fc40`, which are not read yet.
+when the server restarted. That connection flood check is not read yet.
+
+The server also counts each connection's requests **[S `FUN_0804fc40`,
+called per message from the session loop]**. The limit L is the account
+class's flood protection byte (503 offset 0x25); a connection with no class
+yet gets 40. The client's menu names the values **[S client resources at
+file offset 0xf6cd8]**: Very Strict 20, Strict 40, Average 60, Relaxed 80,
+Very Relaxed 120, Total Slacker 200, Off 0. With 0 there is no check.
+
+Each request adds 1 to the count. When the count reaches L, the server
+looks at the time since the window started. At 121 seconds or more, it
+resets the count and starts a new window. Otherwise:
+
+- at count L, it sends 155 Rcv Broadcast Message "WARNING: The server has
+  detected that you are flooding it. If you continue to flood the server,
+  you will be banned.";
+- at L + 4, "Final warning: If you continue to flood the server, you will
+  be banned.";
+- above L + 8, it adds a 2-hour ban (7200000 ms) on the address, with the
+  reason "Auto-banned this bastard for flooding.", and closes the
+  connection with 0x640004 (`FUN_0804a8c0`).
+
+The server's 1.52 upgrade notes say that flood protection became a
+per-class setting then, and is off for classes that predate it.
 
 ## Posting news
 

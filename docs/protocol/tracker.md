@@ -20,15 +20,19 @@ The tracker opens TCP and UDP on the same port, 10800 (0x2a30) by default
 
 When a tracker address has no `:port`, the server appends `:10800` before
 sending a registration **[S server `FUN_08060e4c`]**. The client picks the
-default port by connection type: 1 → 10700, 2 → 10600, 3 → 10800 (Tracker),
-4 → 10900 **[S client `FUN_0804bac0`]**.
+default port by connection type: 1 → 10700 (Server), 2 → 10600 (Client,
+DCC), 3 → 10800 (Tracker), 4 → 10900 (GConsole, a Haxial remote console;
+see [dcc.md](dcc.md#gconsole)) **[S client `FUN_0804bac0`]**.
 
 ## Registration (UDP)
 
 A server sends one datagram to each tracker in its settings
-**[S server `FUN_08060e4c`]**. A tracker sends the same datagram to its own
-upstream trackers, with flags bit 0 set **[S tracker `FUN_0804df70`]**.
-Neither waits for a reply, and the tracker sends none.
+**[S server `FUN_08060e4c`]**. It registers when its settings are saved or it
+starts, then every 400000 ms while its Register with Trackers flag (settings
++0x27c) is on **[S server `FUN_0805f638`, `FUN_08061230`]**. A tracker sends
+the same datagram to its own upstream trackers, with flags bit 0 set **[S
+tracker `FUN_0804df70`]**. Neither waits for a reply, and the tracker sends
+none.
 
 ### Encryption
 
@@ -61,7 +65,7 @@ their own, then zero padding to a multiple of 4.
 | 0x24 | 2 | users | number of users logged in. The server keeps it XOR'd with 0x2ba9 in memory and sends it plain **[S server `FUN_080528c8`, `FUN_0804a930`]** |
 | 0x26 | 13 | 0 | |
 | 0x33 | 1 | len0 | 0 |
-| 0x34 | 1 | len1 | length of a string from the tracker entry in the server's settings (entry +0x18; meaning not known). The tracker skips it |
+| 0x34 | 1 | len1 | the Login of the tracker entry in the server's settings. The tracker skips it |
 | 0x35 | 1 | name_len | server name |
 | 0x36 | 1 | desc_len | server description |
 | 0x37 | 1 | len4 | 0 |
@@ -77,6 +81,13 @@ to 0xcc1ed3ca, takes the CRC over the padded datagram, then stores the result
 there **[S server `FUN_08060e4c` / `FUN_0806fa28`, tracker `FUN_08067ee4`]**.
 
 ### What the tracker checks
+
+The server's tracker entry is edited in the client's Edit Tracker dialog:
+Name, Comments, Address, Login, Password, and up to six Groups **[S client
+`FUN_0808b290`, `FUN_0808b4d4`]**. The entry holds Name, Comments, Address,
+Login, a 32-byte password key, an unused string, and the groups **[S server
+settings]**. The registration sends only the Login and the groups; no
+password or key goes on the wire.
 
 The tracker decrypts the datagram and keeps it only if all of these hold
 **[S tracker `FUN_0804c048`]**:
@@ -207,28 +218,59 @@ secrets **[S `FUN_0804cb90`, `FUN_0804cd88`]**:
 | 0x0c | 8 | section 0 | offset (0x78) and size: general settings |
 | 0x14 | 8 | section 1 | offset and size: upstream trackers |
 | 0x1c | 8 | section 2 | offset and size: groups |
-| 0x2c | 8 | section 4 | offset and size: an opaque blob (tracker +0x224) |
+| 0x2c | 8 | section 4 | offset and size: the greeting (tracker +0x224) |
 | 0x34 | 8 | section 3 | offset and size: admin |
+| 0x6c | 1 | present | general section |
+| 0x6d | 1 | present | upstream trackers |
+| 0x6e | 1 | present | groups |
+| 0x70 | 1 | present | greeting |
+| 0x71 | 1 | present | admin |
+
+A nonzero present byte tells the parser to read that section. 711 sets them
+all.
 
 General settings at 0x78: four u16 limits at 0x78..0x7f (file only), flags
-at 0x98 (bit 0: register with upstream trackers; bit 1 not known), the port
-at 0x9c, the server ID at 0xa4 (file only), and the name and description
-lengths at 0xbe and 0xbf with the strings from 0xc4.
+at 0x98, the port at 0x9c, the server ID at 0xa4 (file only), and the name
+and description lengths at 0xbe and 0xbf with the strings from 0xc4. Flags
+bit 0 is Register with Trackers (tracker +0x1a4) and bit 1 Enable Greeting
+(tracker +0x22c) **[S `FUN_0804d63c`]**. The tracker clears bit 0 when the
+name is empty or no upstream tracker has an address.
+
+The greeting section is a u32 0 and then the text. The tracker sends it as
+107 Server Greeting after login when Enable Greeting is on and the section
+is longer than 4 bytes **[S `FUN_0804bbf8`]**.
 
 An upstream tracker entry has 12 raw bytes at +0x08, 12 string lengths at
-+0x14, and the strings from +0x20. A group has two u16 values at +0x10 and
-+0x12, the name and description lengths at +0x18 and +0x19, and the strings
-from +0x1c. The admin section has the admin login length at +0x90 and the
-login from +0x94; the file adds the 32-byte admin key at +0x08.
++0x14, and the strings from +0x20 (name, comments, address, login, key,
+unused, groups 0-5, as in the server's tracker entry). A group has two u16
+values at +0x10 and +0x12, which nothing sets, so they are always 0; the
+name and description lengths at +0x18 and +0x19; and the strings from +0x1c.
+A group's flag (+0x0c) is set when its name contains `tracker`
+(`FUN_0808274c`, a substring search; case handling not checked). After
+parsing, the tracker adds the groups `General` and `Trackers` back if they
+are missing. The admin section has a flags byte at +0x07 (bit 0: a key
+follows), the 32-byte admin key at +0x08, the admin login length at +0x90,
+and the login from +0x94; 711 leaves the key out.
+
+The client's settings window shows Tracker Name, Description, Port Number,
+Admin Login, Change Admin Password (Password, Confirm), a Groups panel
+(Group Name, Description), a Trackers panel with Register with Trackers,
+and a Greeting panel with Enable Greeting **[S client `FUN_0806b1b0`]**.
 
 ### 712 Set TrackerServ Settings
 
-The payload is parsed by `FUN_0804d63c`, probably the same format as 711
-**[I]**. The tracker saves `KDXTrackerServ.stg`, replies 713 with no payload,
-restarts its upstream registration, and logs `TrackerServ settings changed
-remotely` **[S `FUN_0804cc10`]**. The file is XOR'd with a second LCG (seed
-0xacb8fa74, multiplier 0x41a609fd, increment 0x1379); that is storage, not
-protocol.
+The payload is the 711 format, parsed by `FUN_0804d63c` **[S]**. The limits
+and server ID are taken from the file only. A port of 0 or above 0xfffe
+means 10800; a new port is applied at once (`FUN_0804ca60`).
+
+Client 1.620 beta 5 builds 712 in `FUN_0806b68c` and sets the present bytes for
+general, trackers, groups, and greeting, but not admin (0x71). So the tracker
+ignores the admin section from that client, and the admin login and password
+can't be changed remotely with it **[S]**. The tracker saves
+`KDXTrackerServ.stg`, replies 713 with no payload, restarts its upstream
+registration, and logs `TrackerServ settings changed remotely` **[S
+`FUN_0804cc10`]**. The file is XOR'd with a second LCG (seed 0xacb8fa74,
+multiplier 0x41a609fd, increment 0x1379); that is storage, not protocol.
 
 ### 720 Get TrackerServ Statistics
 
@@ -237,17 +279,19 @@ No payload. Reply 721, 0x38 bytes **[S `FUN_0804b180`]**:
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 8 | start time | u64 time |
-| 0x08 | 8 | connections | TCP connections accepted (`DAT_08104b00`) |
-| 0x10 | 8 | registrations | UDP datagrams received (`DAT_08104b04`) |
+| 0x08 | 8 | connection counter | TCP connections accepted (`DAT_08104b00`) |
+| 0x10 | 8 | UDP packet counter | UDP datagrams received (`DAT_08104b04`) |
 | 0x18 | 8 | 0 | |
-| 0x20 | 4 | uptime | hours |
-| 0x24 | 4 | | tracker +0x1c; meaning not known |
+| 0x20 | 4 | hours since start | |
+| 0x24 | 4 | connections | TCP connections open now (tracker +0x1c) |
 | 0x28 | 4 | servers | records listed |
 | 0x2c | 12 | 0 | |
 
 ## Open questions
 
 - Capture all of the above (issue 05).
-- The string at registration offset 0x34 (server tracker entry +0x18).
-- The 711 fields marked "not known", and whether 712 uses the 711 format.
-- Connection type 4 (port 10900) in the client.
+- Resolved: registration offset 0x34 is the tracker entry's Login.
+- Resolved: 711 flags bit 1 is Enable Greeting, section 4 is the greeting,
+  and 712 uses the 711 format.
+- Resolved: connection type 4 is GConsole ([dcc.md](dcc.md#gconsole)).
+- The units of the 850 and 600 sweep values and the 1200 idle limit.
