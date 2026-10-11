@@ -52,3 +52,12 @@ so check frames by hand or with a quick script until it does.
 2026-10-10: Read statically first; see `docs/protocol/tracker.md`. The steps
 above now name the admin login, the guest refusal, and the distinct field
 values that the static read calls for.
+
+2026-10-11: The static unknowns are settled in `tracker.md`: offset 0x34 is
+the tracker entry's Login, the server registers every 400000 ms, flags bit 1
+is Enable Greeting, section 4 is the greeting, 712 uses the 711 format,
+721 offset 0x24 is the open TCP connections, and connection type 4 is
+GConsole. The group u16s are always 0. Two things the capture should check:
+the client's 712 omits the admin section (present byte 0x71 is 0), so step
+3 should also try changing the admin password and see that it does not
+take; and step 5's greeting should arrive as 107 right after login.

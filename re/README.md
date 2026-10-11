@@ -41,6 +41,9 @@ Scripts (PyGhidra / Python 3):
   its target loads, such as the message name tables.
 - `import_callers.py <name>...` lists the call sites of imported functions,
   such as `send` or `connect`.
+- `decompile_all.py` decompiles every function into one file,
+  `re/out/<binary>/all.c`, with a `//// <address> <name>` line before each,
+  for grepping.
 
 `re/out/` holds decompiled Haxial code, so it stays local and is never
 committed. Write findings into `docs/protocol/` instead, citing function
@@ -48,11 +51,21 @@ addresses.
 
 ## Without Docker
 
-Cloud sessions may have no Docker daemon and no access to GitHub release
-downloads. Alpine's package works instead: Ghidra 12.1.2 in edge/testing,
-a near match for 12.1.4. Its native decompiler links against musl, so
-rebuild it from the source the package ships. This needs a JDK 21, Python 3,
-`make`, and `g++`.
+Cloud sessions may have no Docker daemon. If GitHub release downloads work,
+the official release is simplest: it ships a glibc decompiler, so only
+PyGhidra needs installing.
+
+```sh
+curl -fsSLO https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/ghidra_12.1.4_PUBLIC_20260921.zip
+unzip -q ghidra_12.1.4_PUBLIC_20260921.zip && mv ghidra_12.1.4_PUBLIC /opt/ghidra
+python3 -m venv /opt/pyghidra-venv
+/opt/pyghidra-venv/bin/pip install --no-index -f /opt/ghidra/Ghidra/Features/PyGhidra/pypkg/dist pyghidra
+```
+
+If GitHub downloads are blocked, Alpine's package works instead: Ghidra 12.1.2
+in edge/testing, a near match for 12.1.4. Its native decompiler links against
+musl, so rebuild it from the source the package ships. This needs a JDK 21,
+Python 3, `make`, and `g++`.
 
 ```sh
 # unpack the package (an .apk is a gzipped tar)
@@ -124,6 +137,14 @@ The addresses are the same.
 | `0x080551b0` | account privilege check for 507/511: effective bits vs the requester's (0x640005) |
 | `0x08066a90` | is the key the empty password's key |
 | `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies 902, 903) / 904 mouse / 905 keyboard |
+| `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send 903 / run encoder / two-colour encoder |
+| `0x0804fc40` | per-request flood counter: warnings, then a 2-hour ban |
+| `0x0804b7c8` | timer: licence reminder (155) to users whose 118 value was 0 |
+| `0x0804b9b0` | 142 Get Connection Monitor Info: connection and transfer records |
+| `0x08061598` / `0x0806172c` | 174 Shutdown Server / 175 Upgrade Server Software |
+| `0x08090eb0` | current time: u64 ms since 1900 |
+| `0x0805ed88` | move old news into `News Archives` past 1.5 × the archive size |
+| `0x0805a110` | 222 Get Chat DCC Addresses |
 | `0x0804a310` | "Unknown!" stub of the name table at `0x080abc6c` |
 
 Other binaries, by Ghidra project:
@@ -134,6 +155,17 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804d7b4` | message dispatcher (type → handler) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send 202 Join Chat |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0812c760` | account editor privilege table: {label, bit} pairs |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804c01c` | send 118 (licence report) on a timer |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0804d654` | build the 100 Set Identity user record |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send 117 SKPK / handle 117 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle 1000 / handle 1001 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send 1002 / send 1003 / receive 1003 (IMA ADPCM) |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806b1b0` / `0x0806b68c` | tracker settings: read 711 / build 712 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x08095c84` | GConsole connection (4000, 4001) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08069578` | tracker connection: sends 700, dispatches 1, 107, 116, 701, 703, 711, 713, 721 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send 702 |
 | Client 1.600 Win (`kdxclient`) | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
@@ -150,5 +182,6 @@ Other binaries, by Ghidra project:
 | Tracker 1.110 (`kdxtracker`) | `0x0804abf4` / `0x0804adcc` | 700 handler (also expires servers) / 702 handler |
 | Tracker 1.110 (`kdxtracker`) | `0x0804cb90` / `0x0804cc10` / `0x0804cd88` | 710 handler / 712 handler / serialize settings (`%KDXTSTG`) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b180` | 720 handler |
+| Tracker 1.110 (`kdxtracker`) | `0x0804d63c` | parse a `%KDXTSTG` settings blob (712 and the settings file) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804df70` | register with upstream trackers (flags bit 0) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |

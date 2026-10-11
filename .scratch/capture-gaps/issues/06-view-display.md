@@ -19,3 +19,12 @@ Steps, either way:
    error).
 3. Click inside the view (904), then type `abc` (905).
 4. Close the View/Control Display window (901 [I]).
+
+## Comments
+
+2026-10-11: The 902, 903, 904, and 905 layouts and the 903 pixel encoding
+are read from the server's code and the client's decoder; see View display
+in `docs/protocol/KDXProtocol.md`. A capture from a Windows server under
+Wine would confirm them; the Linux server can only show 900 failing with
+0x10004. Whichever is chosen, `kdx-dissect` must decode the transfer
+connection that carries 900.

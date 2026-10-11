@@ -36,7 +36,9 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
 - Verified: the server listens on TCP 10700 only (no UDP listener) and waits
   for the client to send first. On a bad first packet it logs
   `The network protocol is unknown. (ID 4/113 @ TRN941)`.
-- Still open: whether an unregistered server or client limits any features.
+- An unregistered client reports itself with 118, and the server then sends
+  it a licence reminder every 15 minutes or so during its first two hours
+  (`KDXProtocol.md`, 118). No other limit has been found.
 
 ### Phase 1: Transport and crypto (done; see `handshake.md`, `session.md`)
 1. Confirm the framing and XOR stream against real captures.
@@ -90,7 +92,7 @@ which build introduced it:
    bridge is server-side only and uses standard IRC, so it needs little
    protocol work.
 
-Status (2026-10-10). "Client works" means the `kdx` CLI did it against Server
+Status (2026-10-11). "Client works" means the `kdx` CLI did it against Server
 1.620 in the lab (`captures/kdx-cli.md`):
 
 | Area | Documented | Codec tested on a capture | Client works |
@@ -98,11 +100,11 @@ Status (2026-10-10). "Client works" means the `kdx` CLI did it against Server
 | 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
 | 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
 | 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
-| 4. News | reading, posting, deleting; newsgroup management not read | yes | read, post, delete |
-| 5. Files | list, info, download, upload, resume; search and the 402–423 edits not read | yes | ls, get, put |
-| 6. Accounts, admin | the read replies, 507, 508, 511, 550; 504 not read | yes | account list, show, add, set, rm; passwd |
-| 7. Tracker | registration, 700–703, 711, 721 read statically (`tracker.md`); not captured | no | no |
-| 8. Voice, view display | not started | no | no |
+| 4. News | yes; 600, 601, 604 read but not probed | yes | read, post, delete |
+| 5. Files | yes; 420, 422, 423, 450, 453 read but not probed | yes | ls, get, put |
+| 6. Accounts, admin | yes, with every privilege bit named; 504, 804, 1101, 1105 read but not probed | yes | account list, show, add, set, rm; passwd |
+| 7. Tracker | yes, statically (`tracker.md`); not captured | no | no |
+| 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
 
 ### Phase 4: Spec format
 - `KDXProtocol.md` is the single reference: the message catalog, a

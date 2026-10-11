@@ -15,3 +15,12 @@ session last.
 4. Commands → 127.0.0.1 → Shutdown Server..., message `lab shutdown`,
    choose to exit the program only, confirm (174; expect 151 or a
    disconnect).
+
+## Comments
+
+2026-10-11: Read statically; see `docs/protocol/KDXProtocol.md`. Expected:
+175 gets 1 Status 0x1000c in the lab (no KDXUpgradeHelper). 804 has no
+reply; flags bit 0 sends SIGKILL and bit 1 SIGTERM, so note which the GUI's
+Exit Process sends. 174 broadcasts 151 to everyone and the server exits
+5000 ms later; the capture should show which mode byte the "exit the
+program only" choice sends.

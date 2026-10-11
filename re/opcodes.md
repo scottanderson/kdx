@@ -14,7 +14,7 @@ the Handler column of the catalog exactly. Inline cases:
 |---:|---|
 | 108 Ping | replies 109 Pong |
 | 115 Get My Address | replies 116 with the peer address string at conn +0x58 |
-| 118 (unnamed) | needs 4 bytes; sets conn byte +0x3b to 2 if the u32 is 0, else 1 |
+| 118 (unnamed) | needs 4 bytes; sets conn byte +0x3b to 2 if the u32 is 0, else 1 (licence report; see the protocol reference) |
 | 140 / 141 | set / clear conn byte +0x3c, then log a history record |
 | 421 Empty Trash | needs privilege bit at conn +0x45 & 4; replies 1 Status success 0x1a5 |
 
@@ -76,11 +76,43 @@ The tracker's name table has the same names (entry for 100 at 0x080c5b1c)
 Servers register with the tracker over UDP, not through this dispatcher
 **[S `FUN_0804c048`]**. See `docs/protocol/tracker.md`.
 
+## Client 1.620 beta 5 (Linux): dispatcher
+
+`FUN_0804d7b4` handles these from a server **[S]**:
+
+- notifications: 101-108, 111, 151, 155, 183, 205, 206, 208, 210, 212, 213,
+  221, 301, 419, 451, 515, 613, 614, 803, 1102;
+- replies: 1, 109, 114, 116, 143, 153, 171, 173, 181, 203, 215, 216, 219,
+  223, 401, 410, 422, 453, 503, 506, 510, 513, 551, 603, 606, 608, 610, 803,
+  1104, 1107.
+
+The DCC connection (`FUN_0808f3e0`) handles 1, 100, 117, and 300; the voice
+connection handles 1000-1003. See `docs/protocol/dcc.md`.
+
 ## Still to read
 
-- The client-to-client service the clients run on TCP 10600 (DCC): which
-  types it handles. 222/223 Chat DCC Addresses and 1000–1003 voice point
-  there [I].
-- 117 SKPK and 404/406/408: no handler in the server or tracker; look for
-  senders in the clients.
-- 901 Close View Display: no case in either server dispatcher.
+- 404/406/408: no handler in the server or tracker, and no sender found in
+  Client 1.620 beta 5.
+- The connection flood ban seen in `captures/kdx-accounts.pcapng` (30
+  connections a minute); the per-request flood check is read.
+- GConsole 4200/4201 layouts (client `FUN_0809607c`, `FUN_08096188`).
+
+## Other behaviour found in the sweep
+
+Not protocol, but worth knowing when running the originals **[S]**:
+
+- Server console: besides `exit`, `quit`, `about`, `info`, and `setport`,
+  there is an unlisted `prod` command. It marks every socket readable and
+  writable so the event loop polls them all again (`FUN_08056b24`,
+  `FUN_080972e4`).
+- Server ports: the Alternate port and the File Transfer port are extra
+  listeners with the same accept function as the main port (`FUN_0805f34c`,
+  `FUN_080531f0`). 105 Server Info offset 0x20 tells the client the File
+  Transfer port.
+- Tracker 1.110's about text says version 1.111. Its default groups are
+  General, Trackers, Macintosh, Windows, Education, Business, and Games
+  (`FUN_0804c7a8`).
+- Client: a bookmark `Official Haxial Server` at `kdxserver.haxial.com`
+  (`FUN_08058ce0`); a built-in IRC client for chat gateways (see the chat
+  record in the protocol reference); an evaluation period and a signed
+  Haxial Purchase Certificate, whose only protocol effect is the 118 value.
