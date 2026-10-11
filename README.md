@@ -53,7 +53,8 @@ copyrighted material. They are not in this repository; see
 `vendor/MANIFEST.md` for where they come from. The handshake needs the
 table, so `kdx` keeps a copy in `~/.cache/kdx/`. `kdx table fetch` downloads
 the smallest Haxial archive (248 KB) from the Internet Archive, checks its
-SHA-256, and extracts the table. `kdx table import FILE` takes it from any
+SHA-256, and extracts the table; it does nothing if the cache already holds
+a valid table, unless given `--force`. `kdx table import FILE` takes it from any
 KDX program, zip archive of one, or saved table instead.
 
 ## Getting started

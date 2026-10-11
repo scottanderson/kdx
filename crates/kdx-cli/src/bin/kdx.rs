@@ -172,7 +172,11 @@ enum AccountAction {
 #[derive(Subcommand)]
 enum TableAction {
     /// Download the smallest KDX archive from the Internet Archive and extract the table.
-    Fetch,
+    Fetch {
+        /// Download even if the cache already holds a valid table.
+        #[arg(long, short)]
+        force: bool,
+    },
     /// Extract the table from a KDX program file, zip archive, or saved table.
     Import { file: PathBuf },
     /// Show where the cached table is.
@@ -336,7 +340,15 @@ fn table_command(action: &TableAction) -> Result<()> {
             println!("{} ({state})", path.display());
             return Ok(());
         }
-        TableAction::Fetch => {
+        TableAction::Fetch { force: false } if table::cached().is_some() => {
+            let path = table::cache_path().context("no cache directory")?;
+            println!(
+                "already saved {}; use --force to download again",
+                path.display()
+            );
+            return Ok(());
+        }
+        TableAction::Fetch { .. } => {
             eprintln!("downloading {}", table::FETCH_URL);
             table::fetch()?
         }
