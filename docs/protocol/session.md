@@ -16,6 +16,11 @@ handshakes included) **[O]**.
 - **Padding:** the unused tail of the last payload block is filled with
   `p = txid * 0x41c64e6d + 0x3039` (the 32-bit value repeated as memory words)
   before the payload bytes are copied over it **[S, O]**. Receivers ignore it.
+- **Transfer data padding:** Client 1.620 for Linux pads the data after a
+  417 Upload File (D) header the same way, with that header's txid
+  (`captures/linux-files.pcapng` frame 47) **[O]**. Server 1.620 pads the
+  data after a 414 Download File (D) header with a repeated 32-bit value
+  that is not this fill (frames 69 and 113) **[O]**.
 
 ## Header scramble
 

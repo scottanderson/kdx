@@ -22,8 +22,8 @@ pub enum Handshake {
 
 /// Frames the peer's [`Hello`], then its [`Proof`].
 ///
-/// After the proof the decoder yields nothing more, and leaves the session's
-/// bytes in the buffer.
+/// After the proof the decoder yields nothing more; switch to
+/// [`SessionCodec`](crate::SessionCodec) to read the session.
 #[derive(Debug, Clone, Default)]
 pub struct HandshakeCodec {
     next: Step,

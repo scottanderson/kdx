@@ -64,3 +64,15 @@ password `rs-test-pw`; the rest are admin.
 | 58284 | 507 Create Account for `rs-test` |
 | 58290 | 510 Account Info for `rs-test` |
 | 58336 | 550 Change Own Password and 551 |
+
+`linux-files-<port>.c2s.bin` and `linux-files-<port>.s2c.bin` come from
+`captures/linux-files.pcapng`, where Client 1.620 for Linux logged in as
+admin. The transfer connections use the session key from 59246's 105 Server
+Info.
+
+| Port | Messages |
+|---|---|
+| 59246 | the login connection: 400, 405, 407, 409, 452, 1100, 1103, 1106 |
+| 50904 | 415 Upload File of the 6-byte `upload.txt`, then its 417 data |
+| 51076 | 412 Download File of the 6-byte `upload2.txt` |
+| 54196 | 412 Download File of the 6-byte `lab-folder/upload.txt` |

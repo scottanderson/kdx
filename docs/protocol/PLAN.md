@@ -136,7 +136,7 @@ it does async I/O.
 | Crate | Kind | Role |
 |---|---|---|
 | `kdx-proto` | library | framing, crypto, message types; no I/O |
-| `kdx-codec` | library | framing over async I/O (placeholder) |
+| `kdx-codec` | library | tokio codecs for the handshake and session |
 | `kdx-client` | library | for writing KDX clients (`Connection`, `Client`) |
 | `kdx-cli` | programs | `kdx`, the command-line client, and `kdx-probe` |
 | `kdx-server` | library | for writing KDX servers (placeholder) |
