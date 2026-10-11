@@ -1,0 +1,3 @@
+# Captures and fixture streams are raw bytes; keep them out of text diffs.
+*.bin binary
+*.pcapng binary
