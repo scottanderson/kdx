@@ -1,6 +1,5 @@
 //! A command-line KDX client.
 
-use std::fs::File;
 use std::io::{BufRead, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
@@ -13,6 +12,8 @@ use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
 use kdx_proto::{AccountKey, ChallengeTable};
+use tokio::fs::File;
+use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
 #[derive(Parser)]
 #[command(about = "A KDX client")]
@@ -173,7 +174,8 @@ enum TableAction {
     Path,
 }
 
-fn main() -> Result<()> {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
     let args = Args::parse();
     if let Command::Table { action } = &args.command {
         return table_command(action);
@@ -188,7 +190,7 @@ fn main() -> Result<()> {
         nick: args.nick.clone().into_bytes(),
         ..UserRecord::default()
     };
-    let mut client = Client::login(&args.server, &login, &me, table)?;
+    let mut client = Client::login(&args.server, &login, &me, table).await?;
 
     match args.command {
         Command::Table { .. } => unreachable!("handled above"),
@@ -198,7 +200,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Chats => {
-            for chat in client.chat_list()? {
+            for chat in client.chat_list().await? {
                 let voice = if chat.flags & 2 != 0 { " (voice)" } else { "" };
                 println!(
                     "{:>5}  {}{voice}, {} members: {}",
@@ -210,7 +212,7 @@ fn main() -> Result<()> {
             }
         }
         Command::Ls { path } => {
-            for entry in client.file_list(&parse_path(&path))? {
+            for entry in client.file_list(&parse_path(&path)).await? {
                 if entry.is_folder() {
                     println!("{:>12}  {}/", "", text(&entry.name));
                 } else {
@@ -226,7 +228,7 @@ fn main() -> Result<()> {
             let path = parse_path(&path);
             let name = path.0.last().context("give a file path")?;
             let output = output.unwrap_or_else(|| PathBuf::from(text(name)));
-            download(&mut client, &path, &output, resume)?;
+            download(&mut client, &path, &output, resume).await?;
         }
         Command::Put { file, folder } => {
             let name = file
@@ -234,13 +236,15 @@ fn main() -> Result<()> {
                 .context("give a file to upload")?
                 .to_string_lossy()
                 .into_owned();
-            let mut source = File::open(&file)?;
-            let len = source.metadata()?.len();
-            let start = client.upload(&parse_path(&folder), name.as_bytes(), len, &mut source)?;
+            let mut source = File::open(&file).await?;
+            let len = source.metadata().await?.len();
+            let start = client
+                .upload(&parse_path(&folder), name.as_bytes(), len, &mut source)
+                .await?;
             println!("uploaded {} bytes as {name}", len - start);
         }
         Command::News { group: None, .. } => {
-            for group in client.newsgroups()? {
+            for group in client.newsgroups().await? {
                 println!(
                     "{:>5}  {} ({} messages)",
                     group.group_id,
@@ -253,14 +257,14 @@ fn main() -> Result<()> {
             group: Some(group),
             message: None,
         } => {
-            for message in client.news(group)?.messages {
+            for message in client.news(group).await?.messages {
                 print_news(&message);
             }
         }
         Command::News {
             group: Some(group),
             message: Some(message),
-        } => print_news(&client.news_message(group, message)?),
+        } => print_news(&client.news_message(group, message).await?),
         Command::Post {
             group,
             subject,
@@ -273,31 +277,33 @@ fn main() -> Result<()> {
             // KDX separates lines with CR.
             let body = body.trim_end_matches(['\r', '\n']);
             let body = body.replace("\r\n", "\r").replace('\n', "\r");
-            client.post_news(group, subject.as_bytes(), body.as_bytes())?;
+            client
+                .post_news(group, subject.as_bytes(), body.as_bytes())
+                .await?;
         }
-        Command::DeleteNews { group, message } => client.delete_news(group, message)?,
-        Command::Account { action } => account_command(&mut client, action)?,
-        Command::Passwd { new_password } => client.change_password(new_password.as_bytes())?,
+        Command::DeleteNews { group, message } => client.delete_news(group, message).await?,
+        Command::Account { action } => account_command(&mut client, action).await?,
+        Command::Passwd { new_password } => client.change_password(new_password.as_bytes()).await?,
         Command::Say { chat, text: line } => {
-            client.join_chat(chat, 0)?;
-            client.send_chat(chat, line.as_bytes())?;
+            client.join_chat(chat, 0).await?;
+            client.send_chat(chat, line.as_bytes()).await?;
             // The server echoes the text to every member, the sender included.
             loop {
-                let (header, payload) = client.next_event()?;
+                let (header, payload) = client.next_event().await?;
                 if header.kind == MessageType::RECEIVE_CHAT_TEXT
                     && ChatText::decode(&payload)?.user_id == client.info.user_id
                 {
                     break;
                 }
             }
-            client.leave_chat(chat)?;
+            client.leave_chat(chat).await?;
         }
-        Command::Msg { user, text } => client.send_private_message(user, text.as_bytes())?,
+        Command::Msg { user, text } => client.send_private_message(user, text.as_bytes()).await?,
         Command::Listen { chat } => {
-            let window = client.join_chat(chat, 0)?;
+            let window = client.join_chat(chat, 0).await?;
             println!("joined {}", text(window.name()));
             loop {
-                let (header, payload) = client.next_event()?;
+                let (header, payload) = client.next_event().await?;
                 print_event(header.kind, &payload)?;
             }
         }
@@ -365,21 +371,24 @@ fn prompt() -> Result<String> {
     Ok(line.trim().to_owned())
 }
 
-fn download(client: &mut Client, path: &FilePath, output: &Path, resume: bool) -> Result<()> {
+async fn download(client: &mut Client, path: &FilePath, output: &Path, resume: bool) -> Result<()> {
     let offset = if resume {
         std::fs::metadata(output).map_or(0, |m| m.len())
     } else {
         0
     };
-    let mut file = std::fs::OpenOptions::new()
+    let mut file = tokio::fs::OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(!resume)
         .open(output)
+        .await
         .with_context(|| format!("opening {}", output.display()))?;
     // The server resumes at a multiple of 0x1000, so the returned start may be earlier.
-    let (info, start) = client.download(path, offset, &mut SeekWriter::new(&mut file, offset))?;
-    file.set_len(info.data_size)?;
+    file.seek(std::io::SeekFrom::Start(offset & !0xfff)).await?;
+    let (info, start) = client.download(path, offset, &mut file).await?;
+    file.flush().await?;
+    file.set_len(info.data_size).await?;
     println!(
         "{}: {} bytes, received {} from offset {start}",
         output.display(),
@@ -387,35 +396,6 @@ fn download(client: &mut Client, path: &FilePath, output: &Path, resume: bool) -
         info.data_size - start
     );
     Ok(())
-}
-
-/// Writes at `start`, after seeking there on the first write.
-struct SeekWriter<'a> {
-    file: &'a mut File,
-    start: Option<u64>,
-}
-
-impl<'a> SeekWriter<'a> {
-    const fn new(file: &'a mut File, offset: u64) -> Self {
-        // The server rounds the offset down to 0x1000.
-        Self {
-            file,
-            start: Some(offset & !0xfff),
-        }
-    }
-}
-
-impl Write for SeekWriter<'_> {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        if let Some(start) = self.start.take() {
-            std::io::Seek::seek(self.file, std::io::SeekFrom::Start(start))?;
-        }
-        self.file.write(buf)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.file.flush()
-    }
 }
 
 fn print_event(kind: MessageType, payload: &[u8]) -> Result<()> {
@@ -463,10 +443,10 @@ fn print_event(kind: MessageType, payload: &[u8]) -> Result<()> {
     Ok(())
 }
 
-fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
+async fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
     match action {
         AccountAction::List => {
-            for account in client.accounts()? {
+            for account in client.accounts().await? {
                 println!(
                     "{:<16} class {:>2}  {}",
                     text(&account.login),
@@ -476,12 +456,12 @@ fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
             }
         }
         AccountAction::Classes => {
-            for class in client.account_classes()? {
+            for class in client.account_classes().await? {
                 println!("{:>2}  {}", class.index, text(&class.name));
             }
         }
         AccountAction::Show { account: login } => {
-            let account = client.account(login.as_bytes())?;
+            let account = client.account(login.as_bytes()).await?;
             println!("login:      {}", text(&account.login));
             println!("name:       {}", text(&account.name));
             println!("class:      {}", account.class_index);
@@ -513,7 +493,7 @@ fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
                 login: login.into_bytes(),
                 ..Account::default()
             };
-            client.create_account(&account)?;
+            client.create_account(&account).await?;
         }
         AccountAction::Set {
             account: login,
@@ -522,7 +502,7 @@ fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
             class,
             new_password,
         } => {
-            let mut account = client.account(login.as_bytes())?;
+            let mut account = client.account(login.as_bytes()).await?;
             // 510 holds a password flag where 511 takes a key; zero keeps the key.
             account.key =
                 new_password.map_or([0; 32], |p| AccountKey::from_password(p.as_bytes()).0);
@@ -536,9 +516,9 @@ fn account_command(client: &mut Client, action: AccountAction) -> Result<()> {
             if let Some(class) = class {
                 account.class_index = class;
             }
-            client.set_account(&account)?;
+            client.set_account(&account).await?;
         }
-        AccountAction::Rm { account: login } => client.delete_account(login.as_bytes())?,
+        AccountAction::Rm { account: login } => client.delete_account(login.as_bytes()).await?,
     }
     Ok(())
 }

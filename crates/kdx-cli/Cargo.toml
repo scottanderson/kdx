@@ -11,6 +11,7 @@ kdx-client.workspace = true
 kdx-proto.workspace = true
 anyhow = "1.0.104"
 clap = { version = "4.6.7", features = ["derive", "env"] }
+tokio = { version = "1.53.2", features = ["fs", "io-util", "macros", "rt", "time"] }
 
 [lints]
 workspace = true
