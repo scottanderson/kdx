@@ -131,6 +131,8 @@ The addresses are the same.
 | `0x0804b114` | post-login: sends 105, 107, 106, 213 |
 | `0x08061d80` | write a server history record and push 183 |
 | `0x080969f8` / `0x08069880` / `0x08096b4c` | file path: decode / validate / join to a host path |
+| `0x0804ef00` / `0x0804f8d0` | 422 Volume Info builder (editable bits `caps & 2 \| 1`) / 423 Set Volume Info handler |
+| `0x08096780` / `0x08096530` / `0x08094e6c` | Linux volume stubs: capabilities (0x39) / rename (throws 0x10005) / set comments (empty) |
 | `0x08052194` / `0x0805234c` | transfer connection: dispatcher (400, 402, 412, 415, 900, 904, 905) / read loop that switches to streaming |
 | `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
 | `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
@@ -163,6 +165,8 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle 1000 / handle 1001 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send 1002 / send 1003 / receive 1003 (IMA ADPCM) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x080758dc` / `0x08074420` | 422 Volume Info handler / send 423 Set Volume Info with a bit per edited field |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x080a0410` | make a text field read-only when its bit is clear |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806b1b0` / `0x0806b68c` | tracker settings: read 711 / build 712 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08095c84` | GConsole connection (4000, 4001) |

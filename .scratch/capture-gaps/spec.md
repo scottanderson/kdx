@@ -5,11 +5,11 @@ at least one capture, made with Client 1.620 beta 5 (Linux). No Wine.
 
 ## What the captures hold now
 
-The eleven captures in `captures/` decode fully (`kdx-dissect` with the lab
+The twelve captures in `captures/` decode fully (`kdx-dissect` with the lab
 passwords). These types appear in at least one of them:
 
 1, 100–116, 118, 140–143, 150–155, 170–173, 180–183, 200–223, 300, 301,
-400–403, 405, 407, 409–419, 421, 452, 502–513, 515, 550, 551, 600–614,
+400–403, 405, 407, 409–423, 450–453, 502–513, 515, 550, 551, 600–614,
 800–803, 1100, 1103, 1104, 1106, 1107.
 
 108 and 118 appear only in `probe` (the kdx-probe tool), so no GUI client has
@@ -23,16 +23,13 @@ other GUI capture uses Client 1.620 beta 5.
 |---|---|---|
 | 102, 106, 107 (GUI), 110, 111, 112 (GUI), 113/114 (GUI), 172, 173, 183, 419 | session, server settings, history | 01 (done) |
 | 201, 213, 217, 220, 221, 222, 223 | chat rooms | 02 (done) |
-| 404, 406, 420, 422, 423, 450, 451, 453 | files | 03 |
+| 423 | files | 03 (done) |
 | 514, 1101, 1102, 1105 | accounts and folder access | 04 |
 | 700–703, 710–713, 720, 721, tracker UDP registration | tracker | 05 |
 | 900–905 | View Display | 06 |
 | 1000–1003, client-to-client (DCC) on TCP 10600 | voice and DCC | 07 |
 | 174, 175, 804 | shutdown, upgrade, processes | 08 |
 | 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
-
-452 File Search appears, but only failing with 0x640001 because no catalog
-existed, so 453 is missing too.
 
 ## How each session runs
 

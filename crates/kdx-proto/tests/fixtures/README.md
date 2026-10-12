@@ -76,3 +76,10 @@ Info.
 | 50904 | 415 Upload File of the 6-byte `upload.txt`, then its 417 data |
 | 51076 | 412 Download File of the 6-byte `upload2.txt` |
 | 54196 | 412 Download File of the 6-byte `lab-folder/upload.txt` |
+
+`linux-catalog-volumes-58160.c2s.bin` and `linux-catalog-volumes-58160.s2c.bin`
+come from `captures/linux-catalog-volumes.pcapng`, where Client 1.620 for
+Linux logged in as admin. The connection holds the file catalog, search,
+launch, volume, account class, and Server Settings messages, and 24 replies
+of 143 Connection Monitor Info, 20 of them with a transfer record for a `kdx
+get` of `speed.bin`.

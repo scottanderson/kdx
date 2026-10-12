@@ -587,22 +587,27 @@ front, each padded to 4 **[S `FUN_0804b9b0`]**:
 | 0x18 | 8 | current server time | [S] |
 | 0x20 | 8 | bytes done | transfer record only: bytes moved minus bytes still queued to send [S] |
 | 0x28 | 8 | total bytes | transfer record only [S] |
-| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S] |
+| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S]; 0x51a1 under a 0x5000 limit [O] |
 | 0x34 | 4 | seconds left | transfer record only: (total − done) / rate [S] |
-| 0x38 | 4 | | transfer record only; a per-transfer value [S] |
-| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S] |
+| 0x38 | 4 | | transfer record only; a per-transfer value [S]; 0x5000, the server's speed limit, in every record [O] |
+| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S]; 0x19c (412) for a download [O] |
 | 0x40 | 2 | 0 | |
 | 0x42 | 1 | account class index | [S] |
 | 0x60 | 1 | nick length | |
 | 0x61 | 1 | login length | |
 | 0x62 | 1 | account class name length | `?` if the class is gone [S] |
 | 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record [S] |
-| 0x66 | 2 | path length | transfer record only: the file path [S] |
+| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages [S, O] |
 | 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
 The padding after the strings is uninitialised **[O]**. Fields marked
-transfer record only are 0 in a connection record. No capture has a
-transfer record yet; see `.scratch/capture-gaps/issues/03-files.md`.
+transfer record only are 0 in a connection record.
+
+In `captures/linux-catalog-volumes.pcapng`, the replies from frame 104 to 161
+hold three records: the operator's connection, the `kdx-get` connection
+(user 2), and its download of `speed.bin` (transfer 3) **[O]**. In frame
+104 the transfer has done 0x14000 of 0x200000 bytes at 0x6aaa per second,
+with 0x49 seconds left; in frame 161, 0x1f4000 at 0x51a1, with 2 left.
 
 **150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
@@ -1041,7 +1046,14 @@ client `FUN_080758dc`]**. Each record is padded to 4:
 | 0x54 | | name, format, comments | |
 
 The client labels are Free Size, Used Size, Total Size, Item Count, Disk
-Type, Format, Created, Modified, and Comments.
+Type, Format, Created, Modified, and Comments. It makes the name or comments
+field read-only when its bit is clear (`FUN_080a0410`).
+
+Server 1.620 for Linux writes `caps & 2 | 1` to both 0x44 and 0x48, where
+`caps` is the constant 0x39 from `FUN_08096780`. So the name is always
+editable and the comments never are **[S `FUN_0804ef00`]**. Both words are
+`00000001` in frame 51 of `captures/linux-catalog-volumes.pcapng`, which
+also ends with the format, `tmpfs` **[O]**.
 
 A *name list* below has the same layout as a file path: a u16 count, then
 for each name a u16 0, a u8 length, and the name. When a request carries
@@ -1115,7 +1127,9 @@ Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
 client `FUN_0807455c`]**
 
 The request is 8 zero bytes, then the file path (at least 9 bytes in all).
-Success is 1 Status 0x1a4.
+Success is 1 Status 0x1a4, and the server runs the file. Frames 31 and 32 of
+`captures/linux-catalog-volumes.pcapng` launch `lab-files/hello.sh` this way
+**[O]**.
 
 **421 Empty Trash**
 Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
@@ -1125,10 +1139,21 @@ Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
 client `FUN_08074420`]**
 
-The request is a 422 Volume Info record. Flags at 0x44: bit 0 renames the
-volume to the name (length at 0x4e), bit 1 sets the comments (length at
-0x51). The format string is ignored. There is no reply; the server writes
-history record 0x1a7.
+The request has the 422 Volume Info layout, but its strings differ. At 0x54
+come the volume's current name (length at 0x4e), the new name (length at
+0x4f), the format (length at 0x50, ignored), and the comments (length at
+0x51). Flags at 0x44: bit 0 renames the volume, bit 1 sets the comments. The
+client sets a bit only for a field the user edited, and sends nothing if
+neither was **[S client `FUN_08074420`]**. On success there is no reply;
+the server writes history record 0x1a7 **[S]**.
+
+In Server 1.620 for Linux both setters are stubs **[S]**. Renaming
+(`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the history
+record is written, and the client gets a 1 Status error with it. In frame 53
+of `captures/linux-catalog-volumes.pcapng`, 423 has flags `00000001`, the
+name `/tmp`, and the new name `/tmp-renamed`; frame 54 is the error, at
+module 0x46, line 2175 **[O]**. Setting the comments (`FUN_08094e6c`) does
+nothing.
 
 #### Transfer connections
 
@@ -1288,13 +1313,16 @@ Initiator: Client. Privilege: Modify Server Settings (61). **[S
 The request is empty or a u32 of flags; bit 0 cancels a running catalog
 (only its starter may). A second start while one runs gets 1 Status
 0x30075. The server writes history record 0x1c2 and builds an index of all
-files. It sends 451 progress to the starter at most every 2000 ms, and a
-final one when done:
+files. 450 itself gets no reply. The server sends 451 progress to the
+starter at most every 2000 ms, and a final one when done:
 
 | Off | Size | Field |
 |---|---|---|
-| 0x00 | 4 | flags: 0x01000000 = done |
+| 0x00 | 4 | flags: 0x00000001 = done |
 | 0x04 | 4 | items indexed so far |
+
+In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
+`00000000 00000002` (24), then `00000001 0000000b` (26) **[O]**.
 
 **452 File Search** → **453 File Search (R)**
 Initiator: Client. **[S `FUN_0805abc0`]**
@@ -1321,6 +1349,11 @@ padded to 4:
 
 Items the user can't see through folder access are left out. No hit gives
 an empty 453.
+
+Frame 29 of `captures/linux-catalog-volumes.pcapng` has one hit for `a.txt`:
+size 6, attributes 1, name length 0, and a path length of 0x16 for the
+path `lab-files`, `a.txt` **[O]**. So the name can be empty, with the item's
+name only in its path.
 
 ### Accounts
 
