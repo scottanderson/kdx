@@ -228,7 +228,7 @@ impl MonitoredConnection {
     }
 }
 
-/// An account class, as in 503 Account Class Info and 506 Account Class List.
+/// An account class, as in 503 Account Class Info, 504 Set Account Class and 506 Account Class List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AccountClass {
     /// Privilege bits, most significant bit of byte 0 = bit 0.
@@ -256,6 +256,11 @@ impl AccountClass {
         Ok(Self::decode_at(buf, Self::INFO_INDEX_AT)?.0)
     }
 
+    /// Decodes 504 Set Account Class, which has the layout of 503.
+    pub fn decode_set(buf: &[u8]) -> Result<Self, DecodeError> {
+        Self::decode_info(buf)
+    }
+
     /// Decodes 506 Account Class List.
     pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
         decode_counted(buf, 0, |entry| Self::decode_at(entry, Self::LIST_INDEX_AT))
@@ -266,6 +271,11 @@ impl AccountClass {
         let mut out = self.encode_at(Self::INFO_INDEX_AT)?;
         out.resize(pad4(out.len()), 0);
         Ok(out)
+    }
+
+    /// Encodes 504 Set Account Class: the 503 layout, without padding.
+    pub fn encode_set(&self) -> Result<Vec<u8>, EncodeError> {
+        self.encode_at(Self::INFO_INDEX_AT)
     }
 
     /// Encodes 506 Account Class List.

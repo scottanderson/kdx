@@ -1530,15 +1530,18 @@ padded to 4:
 | 0x28 | | login, name | |
 
 **504 Set Account Class**
-Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`]**
+Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`; O]**
 
 The request is a 503 Account Class Info record (at least 0x38 bytes) with
-the class index at 0x30. The server filters the name (`FUN_08081ffc`),
-writes the requester's login as the editor, sets the time at 0x10, and
-saves the class. Privileges the requester lacks can't be granted
-(`FUN_080551b0`; failure 1 Status 0x640005). Success is 1 Status 0x1f8; the
-history record 0x1f8 carries the old class name. Logged-in users of that
-class get the new privileges at once (`FUN_08054900`).
+the class index at 0x30. Client 1.620 for Linux sends it unpadded, with the
+time 0 and the second string and editor login empty (69 bytes for
+Administrator, `captures/linux-catalog-volumes.pcapng` frames 40 and 59).
+The server filters the name (`FUN_08081ffc`), writes the requester's login
+as the editor, sets the time at 0x10, and saves the class. Privileges the
+requester lacks can't be granted (`FUN_080551b0`; failure 1 Status
+0x640005). Success is 1 Status 0x1f8 (frames 43 and 62); the history record
+0x1f8 carries the old class name. Logged-in users of that class get the new
+privileges at once (`FUN_08054900`).
 
 **514 Account Changed**
 Server 1.620 never sends it and Client 1.620 beta 5 doesn't handle it
