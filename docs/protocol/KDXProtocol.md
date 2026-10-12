@@ -502,13 +502,17 @@ Initiator: Server. **[S; O]**
 One user record.
 
 **104 User Departed**
-Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429]**
+Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
+`captures/linux-chat-admin.pcapng` frames 59, 116]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | user ID | |
-| 0x04 | 1 | | 7 in both samples |
+| 0x04 | 1 | | 7 in every capture |
 | 0x05 | 3 | 0 | |
+
+`kdx_proto::msg::user::UserDeparted` re-encodes it byte for byte (test
+`linux_chat_admin`).
 
 **105 Server Info**
 Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
@@ -529,12 +533,14 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 The whole message is at most 0x400 bytes.
 
 **106 Server Icon**
-Initiator: Server.
+Initiator: Server. **[O]**
 
 The server's icon bitmap, the same bytes as the icon section of the settings
 blob (see 171 Server Settings Info). [O]: 524 bytes for a 32×32 icon pasted
 from the user icon, starting `01 20 20 04 00 01 00 00 00 ff cc 00`
-(`captures/linux-server-settings.pcapng` frame 83).
+(`captures/linux-server-settings.pcapng` frame 83), equal to the icon
+section of the 171 at frame 221. `kdx_proto::msg::server_info::ServerIcon`
+holds the bytes.
 
 **107 Server Greeting**
 Initiator: Server. **[S `FUN_0804b738`; O]**
@@ -544,10 +550,13 @@ Initiator: Server. **[S `FUN_0804b738`; O]**
 | 0x00 | 4 | 0 |
 | 0x04 | | greeting text, to the end of the payload |
 
-When no greeting is set, the server sends `(No greeting.)` **[O]**. When a
-greeting is set but not enabled, it sends `(Greeting disabled.)`
+When no greeting is set, the server sends `(No greeting.)`
+(`captures/probe.pcapng` frame 163) **[O]**. When a greeting is set but not
+enabled, it sends `(Greeting disabled.)`
 (`captures/linux-server-settings.pcapng` frame 46) **[O]**. The enable
 option is bit 1 of byte 0x93 of the settings blob.
+`kdx_proto::msg::server_info::ServerGreeting` re-encodes frames 46, 62, and
+82 byte for byte (test `linux_server_settings`).
 
 **108 Ping** → **109 Pong**
 Initiator: Client. **[S]**
@@ -573,7 +582,8 @@ User Icon Changed** to everyone, the sender included:
 
 [O]: `/away` sent `01 00 00 00`, and the peer received `00 00 00 03 01 00 00
 00` for user 3 (`captures/linux-server-settings.pcapng` frames 210, 211,
-213).
+213). `kdx_proto::msg::user::MiniUserIcon` and `MiniUserIconChanged`
+re-encode frames 210 to 218 byte for byte.
 
 **112 (unnamed)**
 Initiator: Client. **[S `FUN_0804b738`; O]**
@@ -605,14 +615,16 @@ The request is empty. The reply is a u8 length followed by `"a.b.c.d:port"`:
 the client's address as the server sees it.
 
 **118 (unnamed)**
-Initiator: Client. **[S `FUN_0804fdac`]**
+Initiator: Client. **[S `FUN_0804fdac`; O `captures/probe.pcapng` frame
+165]**
 
 | Off | Size | Field |
 |---|---|---|
 | 0x00 | 4 | value |
 
 No reply. The server stores 1 if the value is nonzero and 2 if it is zero
-(user +0x3b).
+(user +0x3b). The probe sent `00 00 00 01` and got no reply **[O]**.
+`kdx_proto::msg::user::RegistrationNotice` re-encodes it.
 
 The client sends it on a timer, 9000000 ms plus a random 0..0x4fffff ms
 after login **[S client `FUN_0804c01c`]**. The value comes from the
@@ -679,7 +691,8 @@ with 0x49 seconds left; in frame 161, 0x1f4000 at 0x51a1, with 2 left.
 
 **150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
-ban. **[S `FUN_0804c42c`]**
+ban. **[S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159,
+161]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -703,6 +716,13 @@ check passes. The target receives **151 Disconnect Message**:
 | 0x13 | 1 | name length | |
 | 0x14 | | message, sender name | |
 
+In `captures/linux-chat-admin.pcapng` the GUI (user 2) disconnected itself
+with the message `test` and no ban: the 150 at frame 159 is 28 bytes, and
+the 151 at frame 161 has user ID 2, flags 0, and the name `kdx-lab-linux`
+**[O]**. Since the sender was also the target, the capture doesn't tell the
+two apart at 0x00. `kdx_proto::msg::admin::DisconnectUser` and
+`DisconnectMessage` re-encode both byte for byte.
+
 **152 Get User Info** → **153 User Info**
 Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 
@@ -711,6 +731,7 @@ Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 | 0x00 | 4 | user ID |
 
 If the user doesn't exist, the server replies with 1 Status 0x1000c **[O]**.
+`kdx_proto::msg::user_info::GetUserInfo` encodes the request.
 
 Reply (120 bytes for the prober itself), padded to 4:
 
@@ -730,7 +751,8 @@ Reply (120 bytes for the prober itself), padded to 4:
 | 0x44 | | address, nick, name, login, name | |
 
 **154 Send Broadcast Message**
-Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
+Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`; O
+`captures/linux-chat-admin.pcapng` frames 129, 130, 132]**
 
 | Off | Size | Field |
 |---|---|---|
@@ -739,7 +761,10 @@ Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
 | 0x04 | | text, ≤ 0x800 |
 
 Everyone receives **155 Rcv Broadcast Message**: {u32 sender ID, 8 zero
-bytes, u16 0, u16 (copied from the request), text}.
+bytes, u16 0, u16 (copied from the request), text}. The GUI (user 2) sent
+`00 00 00 00` and `test broadcast` (frame 129), and both the peer (130) and
+the sender (132) got user ID 2, 12 zero bytes, and the text **[O]**.
+`kdx_proto::msg::admin::SendBroadcast` and `RcvBroadcast` re-encode them.
 
 **170 Get Server Settings** → **171 Server Settings Info**
 Initiator: Client. Privilege: Modify Server Settings (61). **[S
@@ -757,17 +782,28 @@ What the captures show (`captures/linux-server-settings.pcapng` frames 36,
 |---|---|---|---|
 | 0x00 | 8 | magic | `%KDXSSTG` |
 | 0x08 | 2 | version | 1 |
-| 0x0c | 8 | main section | u32 offset, u32 length: 0x70, 0x68 |
-| 0x24 | 8 | greeting section | 0xd8, 0x17; length 0 when no greeting is set |
-| 0x34 | 8 | icon section | 0xf0, 0x20c |
+| 0x0c | 0x58 | section table | 11 entries of u32 offset, u32 length [I] |
+| 0x0c | 8 | main section | entry 0: 0x70, 0x68 |
+| 0x24 | 8 | greeting section | entry 3: 0xd8, 0x17; length 0 when no greeting is set |
+| 0x34 | 8 | icon section | entry 5: 0xf0, 0x20c; 0xd8, 0 when none is set; 0xf0, 0 in a 172 without it |
+| 0x44 | 8 | | entry 7: offset the end of the blob and length 0 in a 171; 0, 0 in a 172 |
+| 0x64 | 12 | | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171; 0x6b is 0 in a 172, and 0x69 too in a 172 without the icon |
 | 0x93 | 1 | flags | bit 1: greeting enabled |
 | 0xa8 | 4 | total outgoing speed limit | bytes per second; 0x5000, or 0 when off |
+| 0xc2 | 1 | | 0x0a, the length of both names seen [I] |
 | 0xcc | | server name | NUL-terminated, at the end of the main section |
 
-The greeting section has the layout of 107 Server Greeting, and the icon
-section holds the bytes of 106 Server Icon. A 172 may give the icon section
-length 0, and the server keeps its icon: frames 56 and 225 sent none, and
-the 171 at frame 221 still holds it.
+Entries 1 and 2 are (0xd8, 0) and entries 4, 6, and 8 to 10 are all zero in
+every capture. Each section starts on a multiple of 4. The greeting section
+has the layout of 107 Server Greeting, and the icon section holds the bytes
+of 106 Server Icon. A 172 may give the icon section length 0, and the server
+keeps its icon: frames 56 and 225 sent none, and the 171 at frame 221 still
+holds it.
+
+`kdx_proto::msg::server_info::ServerSettings` decodes the table and reads the
+named fields from the main section, keeping the rest of the bytes as sent.
+It re-encodes all six blobs of `captures/linux-server-settings.pcapng` and
+the 171 at frame 116 of `captures/probe.pcapng` byte for byte.
 
 **174 Shutdown Server**
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
@@ -795,10 +831,33 @@ Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
 `FUN_080627f8`, `FUN_08061d80`]**
 
 The reply (181 Server History Join (R)) is {u32 0, u32 count, buffered
-records}. While joined, the client receives **183 Server History Added** for
-each new record. A record's kind is one of 184–191 (Login, Disconnected,
-Abort File Download, …), or the type of the logged request (e.g. 400 Get
-File List for a failed file list).
+records}, each padded to 4. While joined, the client receives **183 Server
+History Added** for each new record, one record padded to 4. A record's
+kind is one of 184 to 191 (Login, Disconnected, Abort File Download, …), or
+the type of the logged request (e.g. 400 Get File List for a failed file list).
+
+A record **[O `captures/linux-server-settings.pcapng` frames 33, 89, and the
+183s from 38 to 228; `captures/linux-chat-admin.pcapng` frame 135]**:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | time | ms |
+| 0x08 | 4 | kind | 0xbe (190 Server Started) first in each join reply |
+| 0x0c | 4 | user ID | 0 for Server Started |
+| 0x10 | 0x32 | | 0 in every capture |
+| 0x42 | 2 | path length | |
+| 0x46 | 1 | address length | |
+| 0x47 | 1 | nick length | the nick before the event |
+| 0x48 | 1 | login length | |
+| 0x49 | 1 | detail length | the new nick for 100 Set Identity (frame 197), the chat name for 202 Join Chat (frame 208) |
+| 0x4c | | address, nick, login, detail, then the path | |
+
+The path is a file path, as in the file messages: `speed.bin` for 412
+Download File and 188 Finished File Download (frames 108, 190). Saving the
+settings logs 170 Get Server Settings and 172 Set Server Settings (frames
+38, 43). The bytes at 0x44, 0x45, 0x4a, and 0x4b are 0 in every capture.
+`kdx_proto::msg::admin::HistoryRecord` re-encodes every record byte for
+byte.
 
 ### Chat
 
@@ -1379,6 +1438,7 @@ It came on the session, not on the transfer connection, when a download
 started under the total outgoing speed limit. [O]: `00 00 50 00`, the
 20480 bytes per second set in the server settings, came right after the 413
 (`captures/linux-server-settings.pcapng` frames 106, 110).
+`kdx_proto::msg::transfer::NotifySpeedLimit` re-encodes it.
 
 **415 Upload File**
 Initiator: Client, on a transfer connection. Privilege: Upload (11).

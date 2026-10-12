@@ -1,6 +1,31 @@
-//! 153 User Info, the reply to 152 Get User Info.
+//! 152 Get User Info and its reply, 153 User Info.
 
 use super::{len_u8, need, pad4, strings, u32_at, u64_at, DecodeError, EncodeError};
+
+/// 152 Get User Info.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct GetUserInfo {
+    /// The user to describe.
+    pub user_id: u32,
+}
+
+impl GetUserInfo {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+        })
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.user_id.to_be_bytes()
+    }
+}
 
 /// What the server tells an administrator about one user.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

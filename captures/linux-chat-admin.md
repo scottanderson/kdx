@@ -18,13 +18,14 @@ The operator followed a script; the steps below are what the capture shows.
 3. The GUI joined Public Chat, said "hello chat", and set the topic to
    "lab topic".
 4. The GUI created a private chat and invited `cli-peer`.
-5. The GUI got `cli-peer`'s info, sent a broadcast, opened Server History and
-   the connection and process monitors, and disconnected `cli-peer`.
+5. The GUI got its own info (user 2), sent a broadcast, opened Server
+   History and the connection and process monitors, and disconnected itself
+   (150 for user 2 at frame 159).
 
 ## Observations
 
 - Every message decoded with the existing codecs; first captures of 140–142,
   150/151, 154/155, 180–182, 200/216, 211/212, and 800/801/803.
 - Server Settings (170) was not opened.
-- `cli-peer` received the topic change, the chat invitation, and the
-  broadcast before the server disconnected it.
+- `cli-peer` received the topic change, the chat invitation, the broadcast,
+  and 104 User Departed for the GUI (frame 164).

@@ -1,4 +1,7 @@
-//! Server, account, process, and folder access administration.
+//! Administration: the connection monitor, disconnects, broadcasts, server
+//! history, accounts, processes, and folder access.
+
+use crate::MessageType;
 
 use super::{
     len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath,
@@ -224,6 +227,269 @@ impl MonitoredConnection {
             out.extend(path);
             out.resize(pad4(out.len()), 0);
         }
+        Ok(out)
+    }
+}
+
+/// 150 Disconnect User.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct DisconnectUser {
+    /// The user to disconnect.
+    pub user_id: u32,
+    /// How long to ban the user's address, in seconds; 0 for no ban.
+    pub ban_seconds: u32,
+    /// [`Self::SILENT`] or 0.
+    pub options: u8,
+    /// Message for the user.
+    pub message: Vec<u8>,
+}
+
+impl DisconnectUser {
+    /// Size of the fixed part before the message.
+    pub const HEADER_LEN: usize = 0x18;
+    /// Longest ban the server accepts.
+    pub const MAX_BAN_SECONDS: u32 = 0x80000;
+    /// Disconnects without sending 151 Disconnect Message.
+    pub const SILENT: u8 = 1;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let ([message], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x14])])?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+            ban_seconds: u32_at(buf, 8),
+            options: buf[0x11],
+            message,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
+        out[8..0x0c].copy_from_slice(&self.ban_seconds.to_be_bytes());
+        out[0x11] = self.options;
+        out[0x14] = len_u8(&self.message, "message")?;
+        out.extend_from_slice(&self.message);
+        Ok(out)
+    }
+}
+
+/// 151 Disconnect Message, the notice a user gets before the server disconnects it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct DisconnectMessage {
+    /// The user who sent it.
+    pub user_id: u32,
+    /// [`Self::BANNED`], [`Self::SHUTDOWN`], or 0.
+    pub flags: u16,
+    /// Meaning unknown; 0 in the lab.
+    pub value_0e: u16,
+    /// Meaning unknown; 0 in the lab.
+    pub value_10: u16,
+    /// Message text.
+    pub message: Vec<u8>,
+    /// The sender's name.
+    pub name: Vec<u8>,
+}
+
+impl DisconnectMessage {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0x14;
+    /// The user's address is banned.
+    pub const BANNED: u16 = 2;
+    /// The server is shutting down or upgrading.
+    pub const SHUTDOWN: u16 = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [usize::from(buf[0x12]), usize::from(buf[0x13])];
+        let ([message, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+            flags: u16_at(buf, 0x0c),
+            value_0e: u16_at(buf, 0x0e),
+            value_10: u16_at(buf, 0x10),
+            message,
+            name,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
+        out[0x0c..0x0e].copy_from_slice(&self.flags.to_be_bytes());
+        out[0x0e..0x10].copy_from_slice(&self.value_0e.to_be_bytes());
+        out[0x10..0x12].copy_from_slice(&self.value_10.to_be_bytes());
+        out[0x12] = len_u8(&self.message, "message")?;
+        out[0x13] = len_u8(&self.name, "name")?;
+        out.extend_from_slice(&self.message);
+        out.extend_from_slice(&self.name);
+        Ok(out)
+    }
+}
+
+/// 154 Send Broadcast Message.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SendBroadcast {
+    /// Meaning unknown; 0 in the lab.
+    pub value_0: u16,
+    /// Copied to 0x0e of 155 Rcv Broadcast Message; 0 in the lab.
+    pub value_2: u16,
+    /// Message text, to the end of the payload.
+    pub text: Vec<u8>,
+}
+
+impl SendBroadcast {
+    /// Size of the fixed part before the text.
+    pub const HEADER_LEN: usize = 4;
+    /// Longest text the server accepts.
+    pub const MAX_TEXT_LEN: usize = 0x800;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        Ok(Self {
+            value_0: u16_at(buf, 0),
+            value_2: u16_at(buf, 2),
+            text: buf[Self::HEADER_LEN..].to_vec(),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        if self.text.len() > Self::MAX_TEXT_LEN {
+            return Err(EncodeError::TooLong("broadcast text"));
+        }
+        let mut out = Vec::with_capacity(Self::HEADER_LEN + self.text.len());
+        out.extend_from_slice(&self.value_0.to_be_bytes());
+        out.extend_from_slice(&self.value_2.to_be_bytes());
+        out.extend_from_slice(&self.text);
+        Ok(out)
+    }
+}
+
+/// 155 Rcv Broadcast Message.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RcvBroadcast {
+    /// The sender; 0 for the server's own notices.
+    pub user_id: u32,
+    /// Copied from 0x02 of 154 Send Broadcast Message.
+    pub value_0e: u16,
+    /// Message text, to the end of the payload.
+    pub text: Vec<u8>,
+}
+
+impl RcvBroadcast {
+    /// Size of the fixed part before the text.
+    pub const HEADER_LEN: usize = 0x10;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+            value_0e: u16_at(buf, 0x0e),
+            text: buf[Self::HEADER_LEN..].to_vec(),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Vec<u8> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
+        out[0x0e..0x10].copy_from_slice(&self.value_0e.to_be_bytes());
+        out.extend_from_slice(&self.text);
+        out
+    }
+}
+
+/// A server history record, as in 181 Server History Join (R) and 183 Server History Added.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HistoryRecord {
+    /// When it happened, in milliseconds.
+    pub time: u64,
+    /// One of 184 to 191, or the type of the logged request.
+    pub kind: MessageType,
+    /// The user it is about; 0 for the server itself.
+    pub user_id: u32,
+    /// The user's address as `ip:port`.
+    pub address: Vec<u8>,
+    /// The user's nick.
+    pub nick: Vec<u8>,
+    /// The user's login.
+    pub login: Vec<u8>,
+    /// A detail of the event, such as the new nick of 100 or the chat name of 202.
+    pub detail: Vec<u8>,
+    /// The file of a file event; the root otherwise.
+    pub path: FilePath,
+}
+
+impl HistoryRecord {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0x4c;
+
+    /// Decodes the records of 181 Server History Join (R).
+    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        decode_counted(buf, 4, Self::decode)
+    }
+
+    /// Decodes 183 Server History Added, one record.
+    pub fn decode_added(buf: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self::decode(buf)?.0)
+    }
+
+    fn decode(buf: &[u8]) -> Result<(Self, usize), DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [0x46, 0x47, 0x48, 0x49].map(|at| usize::from(buf[at]));
+        let ([address, nick, login, detail], at) = strings(buf, Self::HEADER_LEN, lens)?;
+        let end = at + usize::from(u16_at(buf, 0x42));
+        need(buf, end)?;
+        let record = Self {
+            time: u64_at(buf, 0),
+            kind: MessageType(u32_at(buf, 8)),
+            user_id: u32_at(buf, 0x0c),
+            address,
+            nick,
+            login,
+            detail,
+            path: FilePath::decode(&buf[at..end])?,
+        };
+        Ok((record, end))
+    }
+
+    /// Encodes 181 Server History Join (R), padding each record with zeros to 4.
+    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; 4];
+        encode_counted(&mut out, list, Self::encode)?;
+        Ok(out)
+    }
+
+    /// Encodes 183 Server History Added, padded with zeros to 4.
+    pub fn encode_added(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = self.encode()?;
+        out.resize(pad4(out.len()), 0);
+        Ok(out)
+    }
+
+    fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let path = self.path.encode()?;
+        let path_len = u16::try_from(path.len()).map_err(|_| EncodeError::TooLong("path"))?;
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..8].copy_from_slice(&self.time.to_be_bytes());
+        out[8..0x0c].copy_from_slice(&self.kind.0.to_be_bytes());
+        out[0x0c..0x10].copy_from_slice(&self.user_id.to_be_bytes());
+        out[0x42..0x44].copy_from_slice(&path_len.to_be_bytes());
+        let parts = [&self.address, &self.nick, &self.login, &self.detail];
+        for (i, s) in parts.iter().enumerate() {
+            out[0x46 + i] = len_u8(s, "history string")?;
+        }
+        for s in parts {
+            out.extend_from_slice(s);
+        }
+        out.extend(path);
         Ok(out)
     }
 }

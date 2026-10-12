@@ -14,8 +14,9 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccess, FolderAccessItem,
-    MonitoredConnection, ProcessList, YourAddress,
+    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser, ExtraServerInfo,
+    FolderAccess, FolderAccessItem, HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast,
+    SendBroadcast, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -28,7 +29,12 @@ use kdx_proto::msg::file::{
 use kdx_proto::msg::news::{
     NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
 };
-use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
+use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
+use kdx_proto::msg::transfer::{
+    DownloadFile, DownloadInfo, NotifySpeedLimit, UploadFile, UploadReply,
+};
+use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged, RegistrationNotice, UserDeparted};
+use kdx_proto::msg::user_info::GetUserInfo;
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
@@ -349,6 +355,24 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             hex(&c.privileges)
         )
     };
+    let history = |r: &HistoryRecord| {
+        let mut text = format!(
+            "time {} kind {} user {} {} login {} from {}",
+            r.time,
+            r.kind,
+            r.user_id,
+            quoted(&r.nick),
+            quoted(&r.login),
+            quoted(&r.address)
+        );
+        if !r.detail.is_empty() {
+            text += &format!(" detail {}", quoted(&r.detail));
+        }
+        if !r.path.0.is_empty() {
+            text += &format!(" path {}", path(&r.path));
+        }
+        text
+    };
     let text = match kind {
         MessageType::STATUS => match Status::decode(payload)? {
             Status::Success { value } => format!("success {value:#x}"),
@@ -370,6 +394,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .map(user)
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::USER_DEPARTED => {
+            let departed = UserDeparted::decode(payload)?;
+            format!("user {} value {}", departed.user_id, departed.value_4)
+        }
         MessageType::SERVER_INFO => {
             let info = ServerInfo::decode(payload)?;
             format!(
@@ -381,6 +409,27 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&info.description)
             )
         }
+        MessageType::SERVER_ICON => format!("{} bytes", ServerIcon::decode(payload)?.0.len()),
+        MessageType::SERVER_GREETING => quoted(&ServerGreeting::decode(payload)?.text),
+        MessageType::SET_MINI_USER_ICON => {
+            format!("status {}", MiniUserIcon::decode(payload)?.status)
+        }
+        MessageType::MINI_USER_ICON_CHANGED => {
+            let changed = MiniUserIconChanged::decode(payload)?;
+            format!("user {} status {}", changed.user_id, changed.icon.status)
+        }
+        MessageType::UNNAMED_118 => {
+            let notice = RegistrationNotice::decode(payload)?;
+            format!(
+                "value {} ({})",
+                notice.value,
+                if notice.is_registered() {
+                    "registered"
+                } else {
+                    "unregistered"
+                }
+            )
+        }
         MessageType::SEND_PRIVATE_MESSAGE | MessageType::INCOMING_PRIVATE_MESSAGE => {
             let message = PrivateMessage::decode(payload)?;
             format!("user {} text {}", message.user_id, quoted(&message.text))
@@ -388,6 +437,27 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         MessageType::GET_FILE_LIST | MessageType::GET_FILE_FOLDER_INFO => {
             path(&FilePath::decode(payload)?)
         }
+        MessageType::DISCONNECT_USER => {
+            let request = DisconnectUser::decode(payload)?;
+            format!(
+                "user {} ban {} s options {:#x} message {}",
+                request.user_id,
+                request.ban_seconds,
+                request.options,
+                quoted(&request.message)
+            )
+        }
+        MessageType::DISCONNECT_MESSAGE => {
+            let notice = DisconnectMessage::decode(payload)?;
+            format!(
+                "from user {} {} flags {:#x} message {}",
+                notice.user_id,
+                quoted(&notice.name),
+                notice.flags,
+                quoted(&notice.message)
+            )
+        }
+        MessageType::GET_USER_INFO => format!("user {}", GetUserInfo::decode(payload)?.user_id),
         MessageType::USER_INFO => {
             let info = UserInfo::decode(payload)?;
             format!(
@@ -402,6 +472,23 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         | MessageType::LEAVE_CHAT
         | MessageType::GET_CHAT
         | MessageType::GET_CHAT_DCC_ADDRESSES => format!("chat {}", ChatId::decode(payload)?.0),
+        MessageType::SEND_BROADCAST_MESSAGE => {
+            let broadcast = SendBroadcast::decode(payload)?;
+            format!(
+                "value {:#x} text {}",
+                broadcast.value_2,
+                quoted(&broadcast.text)
+            )
+        }
+        MessageType::RCV_BROADCAST_MESSAGE => {
+            let broadcast = RcvBroadcast::decode(payload)?;
+            format!(
+                "from user {} value {:#x} text {}",
+                broadcast.user_id,
+                broadcast.value_0e,
+                quoted(&broadcast.text)
+            )
+        }
         MessageType::JOIN_CHAT => {
             let join = JoinChat::decode(payload)?;
             format!("chat {} key {:#x}", join.chat_id, join.key)
@@ -617,6 +704,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .map(|e| format!("{} {} bytes", path(&e.path), e.size))
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::NOTIFY_SPEED_LIMIT => format!(
+            "{} B/s",
+            NotifySpeedLimit::decode(payload)?.bytes_per_second
+        ),
         MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
             .iter()
             .map(|g| {
@@ -710,6 +801,24 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             let info = ExtraServerInfo::decode(payload)?;
             format!("uptime {} s, os {}", info.uptime, quoted(&info.os))
         }
+        MessageType::SERVER_SETTINGS_INFO | MessageType::SET_SERVER_SETTINGS => {
+            let settings = ServerSettings::decode(payload)?;
+            format!(
+                "version {} name {} greeting {} ({}) speed limit {} B/s icon {} bytes",
+                settings.version,
+                quoted(settings.name()),
+                settings
+                    .greeting()
+                    .map_or_else(|| "none".to_owned(), |g| quoted(&g.text)),
+                if settings.greeting_enabled() {
+                    "enabled"
+                } else {
+                    "disabled"
+                },
+                settings.speed_limit(),
+                settings.icon().len()
+            )
+        }
         MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.0),
         MessageType::CONNECTION_MONITOR_INFO => MonitoredConnection::decode_list(payload)?
             .iter()
@@ -738,6 +847,12 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             need(payload, 1)?;
             format!("class {}", payload[0])
         }
+        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryRecord::decode_list(payload)?
+            .iter()
+            .map(history)
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::SERVER_HISTORY_ADDED => history(&HistoryRecord::decode_added(payload)?),
         MessageType::ACCOUNT_CLASS_INFO => class(&AccountClass::decode_info(payload)?),
         MessageType::SET_ACCOUNT_CLASS => class(&AccountClass::decode_set(payload)?),
         MessageType::ACCOUNT_CLASS_LIST => AccountClass::decode_list(payload)?
