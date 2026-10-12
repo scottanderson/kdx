@@ -118,10 +118,76 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 (the `86 ab` at the end of the first entry in the 401 File List example)
 **[O]**.
 
-Text is Mac OS Roman bytes, as the Mac client wrote them. A file name with a
-right single quote holds byte 0xd5, which is not valid UTF-8, and the server
-rejects a path that spells it in UTF-8 **[I]** (user report; no capture yet).
-`kdx_proto::mac_roman` maps each byte to one character and back.
+Text is UTF-8 in the 1.6 builds, but the Linux server passes file names
+through as raw bytes:
+
+- Server 1.600 for Windows lists files with `FindFirstFileW` and encodes
+  each UTF-16 name as UTF-8 (`FUN_00428640`, `FUN_00428380`). It decodes an
+  incoming path as UTF-8 before `CreateFileW` (`FUN_0042a740`,
+  `FUN_004286e0`), so an invalid byte becomes U+FFFD and the file is not
+  found **[S]**.
+- Client 1.600 for Windows keeps text as UTF-8 (decoder at 0x00457190)
+  **[S]**.
+- All three Windows builds (client, server, tracker) use only the wide
+  Win32 calls and `CF_UNICODETEXT` (0xd) for the clipboard. Their only
+  `MultiByteToWideChar` calls convert font and device names (client
+  `FUN_0045ecd0`, server `FUN_0041b460`), so no Windows code page touches
+  protocol text **[S]**.
+- Server 1.600 for Mac OS X converts `readdir` names to NFC UTF-8 with
+  `ConvertFromUnicodeToText` (`FUN_000348cc`, encoding 0x08000100), and the
+  Carbon client 1.600 converts HFS+ names the same way **[S]**.
+- The Carbon server 1.600 (PEF) reads names with `FSGetCatalogInfoBulk` and
+  creates files with `FSCreateFileUnicode`, so it gets UTF-16 names from the
+  File Manager even on Mac OS 9. `FUN_10032a80` normalizes a name to NFC
+  (`CreateTextEncoding(0x100,3,0)`) and encodes it as UTF-8, or encodes it
+  without normalizing when the Text Encoding Converter is older than 0x1020
+  **[S]**. The Mac builds use the system script encoding
+  (`UpgradeScriptInfoToTextEncoding`, `FUN_10060990`) only for local
+  keyboard and clipboard text **[S]**.
+- Client 1.620 beta 5 for Linux reads keys with `Xutf8LookupString` and the
+  clipboard as `UTF8_STRING`, and has no other codec **[S]**. It keeps local
+  file names as raw bytes (`readdir64` in `FUN_0810e6c0`) **[S]**.
+- Server 1.620 for Linux copies `readdir64` names unchanged
+  (`FUN_08091b6c`), so a name is whatever bytes are on disk **[S]**. Names
+  copied from a classic Mac or uploaded by an older client may be Mac OS
+  Roman, such as `Erik’s` with byte 0xd5 (user report). The Mach-O and Linux
+  trackers read their folders with raw `readdir` too **[S]**.
+
+Chat, nicks, and news follow from this: every client builds text from UTF-16
+or UTF-8 input and has no other codec, so it sends UTF-8 **[I]**. Servers
+relay chat bytes without decoding them; 207 Send Chat Text copies the text
+into 208 after capping the message at 0x1000 bytes, which can split a
+multi-byte character (`FUN_08058d74`) **[S]**.
+
+The decoders never fail. Each invalid sequence becomes one U+FFFD: a stray
+continuation byte (0x80 to 0xbf) or a 0xf8+ lead uses up 1 byte, but a lead
+byte with bad continuations or an overlong form uses up the whole length it
+claims, and a sequence cut off at the end uses up the rest. So `Erik\xd5s`
+shows as `Erik�`, losing the `s` (Windows client 0x00457190, Windows server
+`FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. Encoding the other way,
+a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`) **[S]**.
+
+KDX switched to Unicode in 1.2. Each client and server archive in
+`vendor/MANIFEST.md` ships Haxial's release notes as `UPGRADE WARNINGS.html`
+(clients) or `NEW UPGRADE WARNINGS.html` (servers), and their "KDX 1.2 --
+UNICODE" entry says earlier versions supported only Latin text, that 1.2
+can still connect to the previous version but the text may be "somewhat
+mutilated", and that text created by earlier versions has the same problem
+**[S]**. The Windows client's `WINDOWS XP REQUIRED.html` gives Unicode as the
+reason it needs Windows NT **[S]**. The tracker archives' notes predate the
+entry. Pre-1.2 builds are not vendored, so their charset is unknown;
+probably Mac OS Roman from a Mac and a Windows code page from a PC **[I]**.
+
+Nothing negotiates the charset. The handshake's version byte is 0x10 for
+every 1.6 client, and Server 1.620 accepts only 0x10 (see
+[handshake.md](handshake.md)); since 1.2 could still reach 1.1, the switch
+probably kept that byte **[I]**. No build branches on the peer's version
+for text, so a 1.2+ client decodes pre-1.2 bytes as UTF-8 (showing U+FFFD as
+above), and a pre-1.2 client shows UTF-8 as two or three Latin characters
+per letter **[I]**. Old text stored on a server, such as file names or
+news, can still hold pre-1.2 bytes.
+
+No 1.6 build has a Mac OS Roman table. No capture has non-ASCII text yet.
 
 ## Times
 

@@ -14,7 +14,6 @@
 pub mod account;
 pub mod challenge;
 pub mod handshake;
-pub mod mac_roman;
 pub mod message_type;
 pub mod msg;
 pub mod session;
