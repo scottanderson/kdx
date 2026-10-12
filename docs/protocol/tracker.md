@@ -52,13 +52,18 @@ for each 32-bit big-endian word w[i]:
 
 Only whole words are XOR'd. The sender pads the datagram to a multiple of 4.
 
+Verified: `kdx-proto` decodes registrations 23, 78, and 255 and re-encodes
+them byte for byte (`crates/kdx-proto/tests/linux_tracker.rs`) **[O]**.
+
 ### Layout
 
 A 64-byte header, then the strings back to back with no length bytes of
-their own, then zero padding to a multiple of 4. Frame 23 is 92 bytes: port
+their own, then padding to a multiple of 4. Frame 23 is 92 bytes: port
 0x29cc, users 1, the Login `trk-login`, the name `Lab Server`, and one group
 `Lab, Lab2` **[O]**. The client's Groups field is one text field, sent as
 group 0 as typed; Comments, Address, and the password are not sent **[O]**.
+Server 1.620 doesn't clear the padding: frame 255 is 86 bytes of header and
+strings, then `12 22` **[O]**.
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -86,8 +91,9 @@ CRC-32 with polynomial 0x04c11db7, MSB first (table `0x04c11db7` at entry 1),
 initial value 0xdeadbeef, and no final XOR. The sender sets the checksum field
 to the bytes `ca d3 1e cc` (0xcc1ed3ca stored little-endian), takes the CRC
 over the padded datagram, then stores the result there big-endian **[S server
-`FUN_08060e4c` / `FUN_0806fa28`, tracker `FUN_08067ee4`; O frames 23 and
-255]**.
+`FUN_08060e4c` / `FUN_0806fa28`, tracker `FUN_08067ee4`; O frames 23, 78, and
+255, verified by `kdx-proto`]**. With the placeholder stored big-endian, the
+checksum of frame 23 doesn't match.
 
 ### What the tracker checks
 
@@ -116,7 +122,8 @@ The tracker keys each server by its source IP and the port field
   **[S `FUN_0804b494`, `FUN_0804b604`]**.
 - A known key whose name, description, and group names are unchanged gets its
   users, flags, and last-seen time updated.
-- Otherwise the record is replaced. It keeps its first-seen time.
+- Otherwise the record is replaced, with a new first-seen time: after 255
+  changed the group, 257 lists the arrival time of 255, not of 23 **[O]**.
 
 The name is cut to 64 bytes. The record is listed in each of its groups that
 the tracker has configured; a group whose flag (+0x0c) is set only takes
@@ -230,6 +237,9 @@ Server record, padded to a multiple of 4 **[S tracker `FUN_0804adcc`, client
 | 0x1c | | address | IPv4 address (4 bytes) and TCP port (2 bytes) |
 | | | name, description, extra | |
 
+Verified: `kdx-proto` re-encodes 701, 702, and 703 from frames 34, 36, 37,
+57, 58, 247, and 257 byte for byte **[O]**.
+
 ### 710 Get TrackerServ Settings
 
 No payload. Reply 711, the tracker's settings in its file format without the
@@ -242,13 +252,24 @@ secrets **[S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80]**:
 | 0x0c | 8 | section 0 | offset (0x78) and size: general settings |
 | 0x14 | 8 | section 1 | offset and size: upstream trackers |
 | 0x1c | 8 | section 2 | offset and size: groups |
+| 0x24 | 8 | section 3 | 0 |
 | 0x2c | 8 | section 4 | offset and size: the greeting (tracker +0x224) |
-| 0x34 | 8 | section 3 | offset and size: admin |
+| 0x34 | 8 | section 5 | offset and size: admin |
+| 0x3c | 0x30 | sections 6–11 | 0 |
 | 0x6c | 1 | present | general section |
 | 0x6d | 1 | present | upstream trackers |
 | 0x6e | 1 | present | groups |
+| 0x6f | 1 | present | section 3; 0 |
 | 0x70 | 1 | present | greeting |
 | 0x71 | 1 | present | admin |
+| 0x72 | 6 | present | sections 6–11; 0 |
+
+An absent section has offset and size 0. The others follow the header back to
+back in the order general, upstream trackers, groups, admin, greeting; a
+present but empty section has size 0 and the offset where it would start
+**[O frames 80, 82, 237, 240]**. Verified: `kdx-proto` re-encodes all four
+byte for byte, and each general, groups, and admin section from its fields
+**[O]**.
 
 The parser reads a section only when its present byte is exactly 1 and its
 size is not 0; for the groups it then replaces the whole list, and for the
@@ -256,8 +277,9 @@ admin section the size must be at least 0x94 **[S `FUN_0804d63c`]**. 711 sets
 them all **[O frame 80]**.
 
 General settings at 0x78: four u16 limits at 0x78..0x7f (file only), flags
-at 0x98, the port at 0x9c, the server ID at 0xa4 (file only), and the name
-and description lengths at 0xbe and 0xbf with the strings from 0xc4. Flags
+at 0x98, the port at 0x9c (a u32), the server ID at 0xa4 (file only; 12
+bytes as in the registration **[I]**), and the name and description lengths
+at 0xbe and 0xbf with the strings from 0xc4, padded to 4. Flags
 bit 0 is Register with Trackers (tracker +0x1a4) and bit 1 Enable Greeting
 (tracker +0x22c) **[S `FUN_0804d63c`]**. The flags are a u32: Enable Greeting
 alone is `00 00 00 02` **[O frame 82]**. The tracker clears bit 0 when the
@@ -280,7 +302,9 @@ frame 80]**. A group's flag (+0x0c) is set when its name contains `tracker`
 parsing, the tracker adds the groups `General` and `Trackers` back if they
 are missing. The admin section has a flags byte at +0x07 (bit 0: a key
 follows), the 32-byte admin key at +0x08, the admin login length at +0x90,
-and the login from +0x94; 711 leaves the key out.
+and the login from +0x94, padded to 4; 711 leaves the key out. The key is the
+`AccountKey` of the password, as for a server account: frame 82 carries the
+key of `lab-tracker-pw!2` **[O, verified]**.
 
 The client's settings window shows Tracker Name, Description, Port Number,
 Admin Login, Change Admin Password (Password, Confirm), a Groups panel
@@ -323,6 +347,8 @@ the client's Tracker Stats window]**:
 | 0x24 | 4 | connections | TCP connections open now (tracker +0x1c) |
 | 0x28 | 4 | servers | records listed |
 | 0x2c | 12 | 0 | |
+
+Verified: `kdx-proto` re-encodes frame 86 byte for byte **[O]**.
 
 ## Open questions
 

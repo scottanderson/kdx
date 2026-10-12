@@ -12,6 +12,7 @@ pub mod path;
 pub mod private_message;
 pub mod server_info;
 pub mod status;
+pub mod tracker;
 pub mod transfer;
 pub mod user;
 pub mod user_info;
@@ -95,4 +96,37 @@ pub(crate) fn len_u8(s: &[u8], what: &'static str) -> Result<u8, EncodeError> {
 /// Rounds `len` up to a multiple of 4, the padding most list entries use.
 pub(crate) const fn pad4(len: usize) -> usize {
     (len + 3) & !3
+}
+
+/// Reads a u32 count followed by that many records, each padded to 4.
+pub(crate) fn decode_counted<T>(
+    buf: &[u8],
+    count_at: usize,
+    mut decode: impl FnMut(&[u8]) -> Result<(T, usize), DecodeError>,
+) -> Result<Vec<T>, DecodeError> {
+    need(buf, count_at + 4)?;
+    let count = u32_at(buf, count_at) as usize;
+    let mut at = count_at + 4;
+    let mut list = Vec::with_capacity(count.min(buf.len()));
+    for _ in 0..count {
+        let (item, len) = decode(&buf[at..])?;
+        list.push(item);
+        at = (at + pad4(len)).min(buf.len());
+    }
+    Ok(list)
+}
+
+/// Appends a u32 count, then each record padded with zeros to 4.
+pub(crate) fn encode_counted<T>(
+    out: &mut Vec<u8>,
+    list: &[T],
+    mut encode: impl FnMut(&T) -> Result<Vec<u8>, EncodeError>,
+) -> Result<(), EncodeError> {
+    let count = u32::try_from(list.len()).map_err(|_| EncodeError::TooLong("list"))?;
+    out.extend_from_slice(&count.to_be_bytes());
+    for item in list {
+        out.extend(encode(item)?);
+        out.resize(pad4(out.len()), 0);
+    }
+    Ok(())
 }

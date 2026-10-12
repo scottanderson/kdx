@@ -1,6 +1,6 @@
 # Tracker message codecs
 
-Status: ready-for-agent
+Status: done
 Blocked by: capture-gaps 05
 
 Add payload codecs to `kdx-proto::msg` for 701, 702, 703, 711, and 721, and

@@ -1,6 +1,6 @@
 # Registration datagram codec
 
-Status: ready-for-agent
+Status: done
 Blocked by: capture-gaps 05
 
 Add the UDP registration datagram to `kdx-proto` (`docs/protocol/tracker.md`,
