@@ -1401,7 +1401,7 @@ padded to 4:
 | 0x00 | 0x10 | privileges | 11 bytes used |
 | 0x10 | 8 | time | |
 | 0x18 | 0xd | | |
-| 0x25 | 1 | flood protection | commands per 2 minutes; 0x50 (Relaxed) for Administrator, 0x28 (Strict) for Guest; see Flood ban [S] |
+| 0x25 | 1 | flood protection | commands per 2 minutes; 0x50 (Relaxed) for Administrator, 0x28 (Strict) for Guest; see Flood ban [S]; 0x3c (Average) for User, which 504 sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43 [O] |
 | 0x26 | 2 | | stored as given [S] |
 | 0x28 | 8 | | |
 | 0x30 | 1 | class index | 0, 2 |
@@ -1787,7 +1787,8 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 
 **Folder access record**
 **[S `FUN_080572f0`, `FUN_08057634`, client folder access editor; O
-`captures/linux-files.pcapng` 1100, 1104]**
+`captures/linux-files.pcapng` 1100, 1104;
+`captures/linux-accounts-folder-access.pcapng` 1105]**
 
 1100, 1104, and 1105 share this record. Its total length, padded to 4, must
 equal the payload length.
@@ -1828,11 +1829,13 @@ with every other field 0, and frame 234 is the success.
 
 **1101 Delete Folder Access** → **1102 Folder Access Deleted**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
-`FUN_08057460`]**
+`FUN_08057460`; O `captures/linux-accounts-folder-access.pcapng` frames
+70–71]**
 
 The request is the item name, with no length byte. An unknown name gets
-0x1000c. There is no Status reply: the server sends 1102 (txid 0, payload
-the name) to the requester and writes history record 0x44d.
+0x1000c. There is no Status reply: the server sends 1102, payload the name,
+to the requester and writes history record 0x44d. 1102 carries the server's
+own next txid, not the request's (`f2cfecc3` at frame 71) **[O]**.
 
 **1103 Get Folder Access** → **1104 Folder Access Info**
 Initiator: Client. Privilege: View Folder Access (27). **[S
@@ -1843,10 +1846,15 @@ folder access record.
 
 **1105 Set Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
-`FUN_08057634`]**
+`FUN_08057634`; O `captures/linux-accounts-folder-access.pcapng` frames
+63, 66]**
 
 The request is a folder access record whose current name (0xb1) picks the
-item; it is renamed if the name differs. Success is 1 Status 0x451.
+item; it is renamed if the name differs. Success is 1 Status 0x451. The
+client sends the name and the current name even when they are equal: frame
+63 is 200 bytes, with `lab-item` twice and length 8 at 0xad and 0xb1. It
+sets byte 0x14 to 0x80, bit 0 (Can See Folder) of the class 1 rule
+**[O]**.
 
 ### View display
 
@@ -2165,7 +2173,9 @@ yet gets 40. The client's menu names the values **[S client resources at
 file offset 0xf6cd8]**: Very Strict 20, Strict 40, Average 60, Relaxed 80,
 Very Relaxed 120, Total Slacker 200, Off 0. With 0 there is no check.
 
-Each request adds 1 to the count. When the count reaches L, the server
+Each request adds 1 to the count, starting with the login's 100 Set
+Identity **[O `captures/linux-accounts-folder-access.pcapng`]**. When the
+count reaches L, the server
 looks at the time since the window started. At 121 seconds or more, it
 resets the count and starts a new window. Otherwise:
 
@@ -2177,6 +2187,14 @@ resets the count and starts a new window. Otherwise:
 - above L + 8, it adds a 2-hour ban (7200000 ms) on the address, with the
   reason "Auto-banned this bastard for flooding.", and closes the
   connection with 0x640004 (`FUN_0804a8c0`).
+
+With Very Strict (0x14), a client that logged in and then sent 115 Get My
+Address every 300 ms got the WARNING before the reply to its 19th request,
+the Final warning before the reply to its 23rd, and no reply to its 28th:
+the server closed the connection (frames 147, 161, 178) **[O]**. Each 155 is
+16 zero bytes and the text. The server logged "Auto-banned for flooding!"
+and "Banned for flooding!". The ban did not block 127.0.0.1: the same
+account logged in again 12 seconds later (frame 188) **[O]**.
 
 The server's 1.52 upgrade notes say that flood protection became a
 per-class setting then, and is off for classes that predate it.
