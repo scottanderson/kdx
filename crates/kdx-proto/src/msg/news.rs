@@ -1,5 +1,6 @@
-//! News: 603 Newsgroup Info, 606 Newsgroup List, 608 News Messages, 610 News Message,
-//! 611 Post News Message, and 613 and 614 News Message Posted and Deleted.
+//! News: 600 Create Newsgroup, 603 Newsgroup Info, 604 Set Newsgroup, 606 Newsgroup List,
+//! 608 News Messages, 610 News Message, 611 Post News Message, and 613 and 614 News Message
+//! Posted and Deleted.
 
 use super::{len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError};
 
@@ -63,7 +64,7 @@ impl NewsgroupEntry {
     }
 }
 
-/// 603 Newsgroup Info.
+/// 603 Newsgroup Info, and the request of 600 Create Newsgroup and 604 Set Newsgroup.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NewsgroupInfo {
     /// Newsgroup ID.
@@ -108,7 +109,7 @@ impl NewsgroupInfo {
         })
     }
 
-    /// Encodes the payload, padded with zeros to 4.
+    /// Encodes the payload, without padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
@@ -122,7 +123,6 @@ impl NewsgroupInfo {
         out[0x3d] = len_u8(&self.description, "newsgroup description")?;
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.description);
-        out.resize(pad4(out.len()), 0);
         Ok(out)
     }
 }

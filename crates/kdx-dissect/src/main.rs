@@ -14,18 +14,27 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccessItem,
-    MonitoredConnection, ProcessList, YourAddress,
+    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser, ExtraServerInfo,
+    FolderAccess, FolderAccessItem, HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast,
+    SendBroadcast, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
     ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
 };
-use kdx_proto::msg::file::{FileInfo, FileListEntry};
+use kdx_proto::msg::file::{
+    CatalogStatus, CreateFolder, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
+    GenerateCatalog, LaunchFile, MoveItems, MoveToTrash, SetFileInfo, SetVolumeInfo, VolumeInfo,
+};
 use kdx_proto::msg::news::{
     NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
 };
-use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
+use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
+use kdx_proto::msg::transfer::{
+    DownloadFile, DownloadInfo, NotifySpeedLimit, UploadFile, UploadReply,
+};
+use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged, RegistrationNotice, UserDeparted};
+use kdx_proto::msg::user_info::GetUserInfo;
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
@@ -346,6 +355,24 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             hex(&c.privileges)
         )
     };
+    let history = |r: &HistoryRecord| {
+        let mut text = format!(
+            "time {} kind {} user {} {} login {} from {}",
+            r.time,
+            r.kind,
+            r.user_id,
+            quoted(&r.nick),
+            quoted(&r.login),
+            quoted(&r.address)
+        );
+        if !r.detail.is_empty() {
+            text += &format!(" detail {}", quoted(&r.detail));
+        }
+        if !r.path.0.is_empty() {
+            text += &format!(" path {}", path(&r.path));
+        }
+        text
+    };
     let text = match kind {
         MessageType::STATUS => match Status::decode(payload)? {
             Status::Success { value } => format!("success {value:#x}"),
@@ -367,6 +394,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .map(user)
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::USER_DEPARTED => {
+            let departed = UserDeparted::decode(payload)?;
+            format!("user {} value {}", departed.user_id, departed.value_4)
+        }
         MessageType::SERVER_INFO => {
             let info = ServerInfo::decode(payload)?;
             format!(
@@ -378,6 +409,27 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&info.description)
             )
         }
+        MessageType::SERVER_ICON => format!("{} bytes", ServerIcon::decode(payload)?.0.len()),
+        MessageType::SERVER_GREETING => quoted(&ServerGreeting::decode(payload)?.text),
+        MessageType::SET_MINI_USER_ICON => {
+            format!("status {}", MiniUserIcon::decode(payload)?.status)
+        }
+        MessageType::MINI_USER_ICON_CHANGED => {
+            let changed = MiniUserIconChanged::decode(payload)?;
+            format!("user {} status {}", changed.user_id, changed.icon.status)
+        }
+        MessageType::UNNAMED_118 => {
+            let notice = RegistrationNotice::decode(payload)?;
+            format!(
+                "value {} ({})",
+                notice.value,
+                if notice.is_registered() {
+                    "registered"
+                } else {
+                    "unregistered"
+                }
+            )
+        }
         MessageType::SEND_PRIVATE_MESSAGE | MessageType::INCOMING_PRIVATE_MESSAGE => {
             let message = PrivateMessage::decode(payload)?;
             format!("user {} text {}", message.user_id, quoted(&message.text))
@@ -385,6 +437,27 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         MessageType::GET_FILE_LIST | MessageType::GET_FILE_FOLDER_INFO => {
             path(&FilePath::decode(payload)?)
         }
+        MessageType::DISCONNECT_USER => {
+            let request = DisconnectUser::decode(payload)?;
+            format!(
+                "user {} ban {} s options {:#x} message {}",
+                request.user_id,
+                request.ban_seconds,
+                request.options,
+                quoted(&request.message)
+            )
+        }
+        MessageType::DISCONNECT_MESSAGE => {
+            let notice = DisconnectMessage::decode(payload)?;
+            format!(
+                "from user {} {} flags {:#x} message {}",
+                notice.user_id,
+                quoted(&notice.name),
+                notice.flags,
+                quoted(&notice.message)
+            )
+        }
+        MessageType::GET_USER_INFO => format!("user {}", GetUserInfo::decode(payload)?.user_id),
         MessageType::USER_INFO => {
             let info = UserInfo::decode(payload)?;
             format!(
@@ -399,6 +472,23 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         | MessageType::LEAVE_CHAT
         | MessageType::GET_CHAT
         | MessageType::GET_CHAT_DCC_ADDRESSES => format!("chat {}", ChatId::decode(payload)?.0),
+        MessageType::SEND_BROADCAST_MESSAGE => {
+            let broadcast = SendBroadcast::decode(payload)?;
+            format!(
+                "value {:#x} text {}",
+                broadcast.value_2,
+                quoted(&broadcast.text)
+            )
+        }
+        MessageType::RCV_BROADCAST_MESSAGE => {
+            let broadcast = RcvBroadcast::decode(payload)?;
+            format!(
+                "from user {} value {:#x} text {}",
+                broadcast.user_id,
+                broadcast.value_0e,
+                quoted(&broadcast.text)
+            )
+        }
         MessageType::JOIN_CHAT => {
             let join = JoinChat::decode(payload)?;
             format!("chat {} key {:#x}", join.chat_id, join.key)
@@ -505,6 +595,61 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 info.size
             )
         }
+        MessageType::CREATE_FOLDER => {
+            let create = CreateFolder::decode(payload)?;
+            format!(
+                "{} in {} access {} owner {}",
+                quoted(&create.name),
+                path(&create.path),
+                quoted(&create.access),
+                quoted(&create.owner)
+            )
+        }
+        MessageType::CREATE_ALIAS | MessageType::MOVE_FILE_FOLDER => {
+            let request = MoveItems::decode(payload)?;
+            format!(
+                "{} from {} to {}",
+                names(&request.names),
+                path(&request.source),
+                path(&request.destination)
+            )
+        }
+        MessageType::MOVE_TO_TRASH => {
+            let request = MoveToTrash::decode(payload)?;
+            format!("{} in {}", names(&request.names), path(&request.folder))
+        }
+        MessageType::SET_FILE_FOLDER_INFO => {
+            let set = SetFileInfo::decode(payload)?;
+            format!(
+                "{} flags {:#x} name {}",
+                path(&set.path),
+                set.flags,
+                quoted(&set.name)
+            )
+        }
+        MessageType::VOLUME_INFO => {
+            let volume = VolumeInfo::decode(payload)?;
+            format!(
+                "{} format {} comments {} disk type {} icon {:#x} flags {:#x} of {:#x}",
+                quoted(&volume.name),
+                quoted(&volume.format),
+                quoted(&volume.comments),
+                volume.disk_type,
+                volume.icon,
+                volume.flags,
+                volume.flags_mask
+            )
+        }
+        MessageType::SET_VOLUME_INFO => {
+            let set = SetVolumeInfo::decode(payload)?;
+            format!(
+                "{} flags {:#x} new name {} comments {}",
+                quoted(&set.name),
+                set.flags,
+                quoted(&set.new_name),
+                quoted(&set.comments)
+            )
+        }
         MessageType::DOWNLOAD_FILE => {
             let request = DownloadFile::decode(payload)?;
             format!(
@@ -537,6 +682,32 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             let reply = UploadReply::decode(payload)?;
             format!("send data from {}", reply.data_offset)
         }
+        MessageType::LAUNCH_FILE => path(&LaunchFile::decode(payload)?.path),
+        MessageType::GENERATE_CATALOG => {
+            let catalog = GenerateCatalog::decode(payload)?;
+            if catalog.flags & GenerateCatalog::CANCEL != 0 {
+                "cancel".to_owned()
+            } else {
+                format!("start, flags {:#x}", catalog.flags)
+            }
+        }
+        MessageType::GENERATE_CATALOG_STATUS => {
+            let status = CatalogStatus::decode(payload)?;
+            let done = if status.is_done() { ", done" } else { "" };
+            format!("{} items{done}", status.items)
+        }
+        MessageType::FILE_SEARCH => {
+            format!("query {}", quoted(&FileSearch::decode(payload)?.query))
+        }
+        MessageType::FILE_SEARCH_REPLY => FileSearchEntry::decode_list(payload)?
+            .iter()
+            .map(|e| format!("{} {} bytes", path(&e.path), e.size))
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::NOTIFY_SPEED_LIMIT => format!(
+            "{} B/s",
+            NotifySpeedLimit::decode(payload)?.bytes_per_second
+        ),
         MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
             .iter()
             .map(|g| {
@@ -549,6 +720,12 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::DELETE_NEWSGROUP
+        | MessageType::GET_NEWSGROUP
+        | MessageType::GET_NEWS_MESSAGES => {
+            need(payload, 4)?;
+            format!("group {}", u32::from_be_bytes(payload[..4].try_into()?))
+        }
         MessageType::GET_NEWS_MESSAGE | MessageType::DELETE_NEWS_MESSAGE => {
             need(payload, 8)?;
             format!(
@@ -606,7 +783,9 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 subjects.join("; ")
             )
         }
-        MessageType::NEWSGROUP_INFO => {
+        MessageType::CREATE_NEWSGROUP
+        | MessageType::NEWSGROUP_INFO
+        | MessageType::SET_NEWSGROUP => {
             let group = NewsgroupInfo::decode(payload)?;
             format!(
                 "group {} {} ({} messages, limit {} KiB) read {:#010x} post {:#010x}",
@@ -621,6 +800,24 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         MessageType::EXTRA_SERVER_INFO => {
             let info = ExtraServerInfo::decode(payload)?;
             format!("uptime {} s, os {}", info.uptime, quoted(&info.os))
+        }
+        MessageType::SERVER_SETTINGS_INFO | MessageType::SET_SERVER_SETTINGS => {
+            let settings = ServerSettings::decode(payload)?;
+            format!(
+                "version {} name {} greeting {} ({}) speed limit {} B/s icon {} bytes",
+                settings.version,
+                quoted(settings.name()),
+                settings
+                    .greeting()
+                    .map_or_else(|| "none".to_owned(), |g| quoted(&g.text)),
+                if settings.greeting_enabled() {
+                    "enabled"
+                } else {
+                    "disabled"
+                },
+                settings.speed_limit(),
+                settings.icon().len()
+            )
         }
         MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.0),
         MessageType::CONNECTION_MONITOR_INFO => MonitoredConnection::decode_list(payload)?
@@ -646,7 +843,18 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::GET_ACCOUNT_CLASS => {
+            need(payload, 1)?;
+            format!("class {}", payload[0])
+        }
+        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryRecord::decode_list(payload)?
+            .iter()
+            .map(history)
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::SERVER_HISTORY_ADDED => history(&HistoryRecord::decode_added(payload)?),
         MessageType::ACCOUNT_CLASS_INFO => class(&AccountClass::decode_info(payload)?),
+        MessageType::SET_ACCOUNT_CLASS => class(&AccountClass::decode_set(payload)?),
         MessageType::ACCOUNT_CLASS_LIST => AccountClass::decode_list(payload)?
             .iter()
             .map(class)
@@ -713,6 +921,34 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::GET_FOLDER_ACCESS_LIST if payload.is_empty() => String::new(),
+        MessageType::GET_FOLDER_ACCESS_LIST => {
+            need(payload, 4)?;
+            format!(
+                "flags {:#010x}",
+                u32::from_be_bytes(payload[..4].try_into()?)
+            )
+        }
+        MessageType::DELETE_FOLDER_ACCESS
+        | MessageType::FOLDER_ACCESS_DELETED
+        | MessageType::GET_FOLDER_ACCESS => format!("item {}", quoted(payload)),
+        MessageType::CREATE_FOLDER_ACCESS
+        | MessageType::FOLDER_ACCESS_INFO
+        | MessageType::SET_FOLDER_ACCESS => {
+            let item = FolderAccess::decode(payload)?;
+            let mut text = format!(
+                "item {} owner {} icon {:#x} flags {:#x} {}",
+                quoted(&item.name),
+                quoted(&item.owner),
+                item.icon,
+                item.flags,
+                quoted(&item.description)
+            );
+            if !item.current_name.is_empty() {
+                write!(text, " was {}", quoted(&item.current_name))?;
+            }
+            text
+        }
         _ => return Ok(None),
     };
     if text.is_empty() {
@@ -842,6 +1078,14 @@ fn need(payload: &[u8], len: usize) -> Result<()> {
 fn path(path: &FilePath) -> String {
     let names: Vec<String> = path.0.iter().map(|n| quoted(n)).collect();
     format!("/{}", names.join("/"))
+}
+
+fn names(names: &[Vec<u8>]) -> String {
+    names
+        .iter()
+        .map(|n| quoted(n))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn hex(bytes: &[u8]) -> String {

@@ -1,5 +1,5 @@
 //! The user record of 100 Set Identity, 101 User List, 102 User Changed and
-//! 103 User Joined.
+//! 103 User Joined, and the small user messages 104, 110, 111 and 118.
 
 use super::{len_u8, need, pad4, strings, u16_at, u32_at, DecodeError, EncodeError};
 
@@ -108,5 +108,120 @@ impl UserRecord {
             out.resize(pad4(out.len()), 0);
         }
         Ok(out)
+    }
+}
+
+/// 104 User Departed.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct UserDeparted {
+    /// The user who left.
+    pub user_id: u32,
+    /// Meaning unknown; 7 in every capture.
+    pub value_4: u8,
+}
+
+impl UserDeparted {
+    /// Payload length.
+    pub const LEN: usize = 8;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+            value_4: buf[4],
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[..4].copy_from_slice(&self.user_id.to_be_bytes());
+        out[4] = self.value_4;
+        out
+    }
+}
+
+/// 110 Set Mini User Icon.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MiniUserIcon {
+    /// Status: 1 after `/away`, 0 after `/back`.
+    pub status: u8,
+}
+
+impl MiniUserIcon {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self { status: buf[0] })
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        [self.status, 0, 0, 0]
+    }
+}
+
+/// 111 Mini User Icon Changed: a user ID, then that user's 110 payload.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MiniUserIconChanged {
+    /// The user whose status changed.
+    pub user_id: u32,
+    /// The 110 payload.
+    pub icon: MiniUserIcon,
+}
+
+impl MiniUserIconChanged {
+    /// Payload length.
+    pub const LEN: usize = 8;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            user_id: u32_at(buf, 0),
+            icon: MiniUserIcon::decode(&buf[4..])?,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[..4].copy_from_slice(&self.user_id.to_be_bytes());
+        out[4..].copy_from_slice(&self.icon.encode());
+        out
+    }
+}
+
+/// 118, which reports whether the client is registered. Provisional name.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RegistrationNotice {
+    /// The length of the client's purchase certificate; 0 without one.
+    pub value: u32,
+}
+
+impl RegistrationNotice {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Whether the server counts the client as registered.
+    pub const fn is_registered(&self) -> bool {
+        self.value != 0
+    }
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            value: u32_at(buf, 0),
+        })
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.value.to_be_bytes()
     }
 }

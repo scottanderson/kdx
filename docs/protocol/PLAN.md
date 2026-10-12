@@ -98,11 +98,11 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | Area | Documented | Codec tested on a capture | Client works |
 |---|---|---|---|
 | 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
-| 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
+| 2. Users | user record, 101 to 107, 110, 111, 118, 152, 153; the icon bitmap format not yet | yes | user list |
 | 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 only empty | yes | join, say, listen, msg |
-| 4. News | yes; 600, 601, 604 read but not probed | yes | read, post, delete |
+| 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |
 | 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
-| 6. Accounts, admin | yes, with every privilege bit named; 804, 1101, 1105 read but not probed | yes | account list, show, add, set, rm; passwd |
+| 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 804 read but not probed | yes | account list, show, add, set, rm; passwd |
 | 7. Tracker | yes, statically (`tracker.md`); not captured | no | no |
 | 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
 
@@ -144,9 +144,10 @@ it does async I/O.
 | `kdx-tracker` | program | the tracker (placeholder) |
 | `kdx-dissect` | program | pcap to text |
 
-`kdx-proto::msg` has codecs for the payloads in areas 1–5, and in area 6 for the
-account messages and the 114, 116, 143, 803,
-and 1107 replies.
+`kdx-proto::msg` has codecs for the payloads in areas 1 to 5, and in area 6
+for the account messages, 114, 116, 143, 150 to 152, 154, 155, 171 and 172
+(the named fields, with the rest kept as raw bytes), 181, 183, 803, 1107, and
+the folder access record of 1100, 1104, and 1105.
 
 ## Open decisions
 - None currently.

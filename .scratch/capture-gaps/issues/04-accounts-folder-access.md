@@ -1,6 +1,6 @@
 # Account changes and folder access edits
 
-Status: ready-for-human
+Status: done
 Scenario: `linux-accounts-folder-access`
 Targets: 504, 1101, 1102, 1105, and the flood warnings (155)
 
@@ -28,3 +28,16 @@ and not handled by the client, so it is dropped. 1101 gets no Status: the
 server sends 1102 with the name. 1105 picks the item by the current name at
 0xb1. Flood Protection is the class byte 0x25 (Very Strict 20, Strict 40,
 Average 60, Relaxed 80, Very Relaxed 120, Total Slacker 200, Off 0).
+
+2026-10-12: Captured as `captures/linux-accounts-folder-access.pcapng`; see
+`captures/linux-accounts-folder-access.md`. The static reading held: 504
+Status 0x1f8, 1100 Status 0x44c, 1105 Status 0x451, and 1102 instead of a
+Status for 1101. 1102 carries the server's own txid, not 0. The flood count
+includes the login's 100, so the warnings came on the 19th and 23rd
+request and the disconnect on the 28th (messages 20, 24, and 29). The ban
+did not block 127.0.0.1, so the server needed no restart. Step 4 set bit 0
+of the Guest rule at 0x14.
+
+2026-10-12: `captures/linux-folder-access-guest.pcapng` confirms the column:
+a Guest tick alone sets 0x14 and a User tick alone 0x10, so the class rules
+start at 0x0c + 4 × class index.

@@ -1,6 +1,7 @@
-//! File transfers: 412 Download File through 418 Upload File (C).
+//! File transfers: 412 Download File through 419 Notify Speed Limit.
 //!
-//! These run on a transfer connection; see `Connection::attach` in kdx-client.
+//! These run on a transfer connection, except 419, which comes on the
+//! session; see `Connection::attach` in kdx-client.
 
 use super::{len_u8, need, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath};
 
@@ -217,5 +218,30 @@ impl UploadReply {
         out[0..8].copy_from_slice(&self.data_offset.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.rsrc_offset.to_be_bytes());
         out
+    }
+}
+
+/// 419 Notify Speed Limit, sent on the session when a download starts under a limit.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct NotifySpeedLimit {
+    /// The total outgoing speed limit in bytes per second.
+    pub bytes_per_second: u32,
+}
+
+impl NotifySpeedLimit {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            bytes_per_second: u32_at(buf, 0),
+        })
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.bytes_per_second.to_be_bytes()
     }
 }
