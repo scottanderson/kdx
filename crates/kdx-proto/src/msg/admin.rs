@@ -1,4 +1,4 @@
-//! Server, account and process administration replies.
+//! Server, account, process, and folder access administration.
 
 use super::{
     len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath,
@@ -603,6 +603,86 @@ impl FolderAccessItem {
             }
             Ok(entry)
         })?;
+        Ok(out)
+    }
+}
+
+/// A folder access record: 1100 Create Folder Access, 1104 Folder Access Info and 1105 Set Folder Access.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FolderAccess {
+    /// Meaning unknown; 0 in the lab.
+    pub unknown_00: u32,
+    /// [`Self::BUILT_IN`] and [`Self::OWNER_IN_NAME`].
+    pub flags: u32,
+    /// Icon, such as 0x2c for Dropbox.
+    pub icon: u32,
+    /// Probably the owner's rule; permission bits in the top u16.
+    pub rule: u32,
+    /// One rule per account class: permission bits in the top u16, bit 0 first.
+    pub class_rules: [u32; 32],
+    /// Meaning unknown; 0 in the lab.
+    pub unknown_b0: u8,
+    /// Item name, the tag in a folder name, such as `DB`.
+    pub name: Vec<u8>,
+    /// Owner login.
+    pub owner: Vec<u8>,
+    /// Description.
+    pub description: Vec<u8>,
+    /// In 1105, the name of the item to change.
+    pub current_name: Vec<u8>,
+}
+
+impl FolderAccess {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0xb8;
+    /// In [`Self::flags`], the item is built in, as `[Default]` is.
+    pub const BUILT_IN: u32 = 1;
+    /// In [`Self::flags`], folder names carry the owner login.
+    pub const OWNER_IN_NAME: u32 = 2;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [0xad, 0xae, 0xaf, 0xb1].map(|at| usize::from(buf[at]));
+        let ([name, owner, description, current_name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            unknown_00: u32_at(buf, 0),
+            flags: u32_at(buf, 4),
+            icon: u32_at(buf, 8),
+            rule: u32_at(buf, 0x0c),
+            class_rules: std::array::from_fn(|i| u32_at(buf, 0x10 + 4 * i)),
+            unknown_b0: buf[0xb0],
+            name,
+            owner,
+            description,
+            current_name,
+        })
+    }
+
+    /// Encodes the payload, padded with zeros to 4.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.unknown_00.to_be_bytes());
+        out[4..8].copy_from_slice(&self.flags.to_be_bytes());
+        out[8..0x0c].copy_from_slice(&self.icon.to_be_bytes());
+        out[0x0c..0x10].copy_from_slice(&self.rule.to_be_bytes());
+        for (i, rule) in self.class_rules.iter().enumerate() {
+            out[0x10 + 4 * i..0x14 + 4 * i].copy_from_slice(&rule.to_be_bytes());
+        }
+        out[0xad] = len_u8(&self.name, "item name")?;
+        out[0xae] = len_u8(&self.owner, "owner login")?;
+        out[0xaf] = len_u8(&self.description, "description")?;
+        out[0xb0] = self.unknown_b0;
+        out[0xb1] = len_u8(&self.current_name, "current name")?;
+        for s in [
+            &self.name,
+            &self.owner,
+            &self.description,
+            &self.current_name,
+        ] {
+            out.extend_from_slice(s);
+        }
+        out.resize(pad4(out.len()), 0);
         Ok(out)
     }
 }

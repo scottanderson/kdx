@@ -14,14 +14,17 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccessItem,
+    Account, AccountClass, AccountListEntry, ExtraServerInfo, FolderAccess, FolderAccessItem,
     MonitoredConnection, ProcessList, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
     ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
 };
-use kdx_proto::msg::file::{FileInfo, FileListEntry};
+use kdx_proto::msg::file::{
+    CatalogStatus, CreateFolder, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
+    GenerateCatalog, LaunchFile, MoveItems, MoveToTrash, SetFileInfo, SetVolumeInfo, VolumeInfo,
+};
 use kdx_proto::msg::news::{
     NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
 };
@@ -505,6 +508,61 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 info.size
             )
         }
+        MessageType::CREATE_FOLDER => {
+            let create = CreateFolder::decode(payload)?;
+            format!(
+                "{} in {} access {} owner {}",
+                quoted(&create.name),
+                path(&create.path),
+                quoted(&create.access),
+                quoted(&create.owner)
+            )
+        }
+        MessageType::CREATE_ALIAS | MessageType::MOVE_FILE_FOLDER => {
+            let request = MoveItems::decode(payload)?;
+            format!(
+                "{} from {} to {}",
+                names(&request.names),
+                path(&request.source),
+                path(&request.destination)
+            )
+        }
+        MessageType::MOVE_TO_TRASH => {
+            let request = MoveToTrash::decode(payload)?;
+            format!("{} in {}", names(&request.names), path(&request.folder))
+        }
+        MessageType::SET_FILE_FOLDER_INFO => {
+            let set = SetFileInfo::decode(payload)?;
+            format!(
+                "{} flags {:#x} name {}",
+                path(&set.path),
+                set.flags,
+                quoted(&set.name)
+            )
+        }
+        MessageType::VOLUME_INFO => {
+            let volume = VolumeInfo::decode(payload)?;
+            format!(
+                "{} format {} comments {} disk type {} icon {:#x} flags {:#x} of {:#x}",
+                quoted(&volume.name),
+                quoted(&volume.format),
+                quoted(&volume.comments),
+                volume.disk_type,
+                volume.icon,
+                volume.flags,
+                volume.flags_mask
+            )
+        }
+        MessageType::SET_VOLUME_INFO => {
+            let set = SetVolumeInfo::decode(payload)?;
+            format!(
+                "{} flags {:#x} new name {} comments {}",
+                quoted(&set.name),
+                set.flags,
+                quoted(&set.new_name),
+                quoted(&set.comments)
+            )
+        }
         MessageType::DOWNLOAD_FILE => {
             let request = DownloadFile::decode(payload)?;
             format!(
@@ -537,6 +595,28 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             let reply = UploadReply::decode(payload)?;
             format!("send data from {}", reply.data_offset)
         }
+        MessageType::LAUNCH_FILE => path(&LaunchFile::decode(payload)?.path),
+        MessageType::GENERATE_CATALOG => {
+            let catalog = GenerateCatalog::decode(payload)?;
+            if catalog.flags & GenerateCatalog::CANCEL != 0 {
+                "cancel".to_owned()
+            } else {
+                format!("start, flags {:#x}", catalog.flags)
+            }
+        }
+        MessageType::GENERATE_CATALOG_STATUS => {
+            let status = CatalogStatus::decode(payload)?;
+            let done = if status.is_done() { ", done" } else { "" };
+            format!("{} items{done}", status.items)
+        }
+        MessageType::FILE_SEARCH => {
+            format!("query {}", quoted(&FileSearch::decode(payload)?.query))
+        }
+        MessageType::FILE_SEARCH_REPLY => FileSearchEntry::decode_list(payload)?
+            .iter()
+            .map(|e| format!("{} {} bytes", path(&e.path), e.size))
+            .collect::<Vec<_>>()
+            .join("; "),
         MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
             .iter()
             .map(|g| {
@@ -549,6 +629,12 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::DELETE_NEWSGROUP
+        | MessageType::GET_NEWSGROUP
+        | MessageType::GET_NEWS_MESSAGES => {
+            need(payload, 4)?;
+            format!("group {}", u32::from_be_bytes(payload[..4].try_into()?))
+        }
         MessageType::GET_NEWS_MESSAGE | MessageType::DELETE_NEWS_MESSAGE => {
             need(payload, 8)?;
             format!(
@@ -606,7 +692,9 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 subjects.join("; ")
             )
         }
-        MessageType::NEWSGROUP_INFO => {
+        MessageType::CREATE_NEWSGROUP
+        | MessageType::NEWSGROUP_INFO
+        | MessageType::SET_NEWSGROUP => {
             let group = NewsgroupInfo::decode(payload)?;
             format!(
                 "group {} {} ({} messages, limit {} KiB) read {:#010x} post {:#010x}",
@@ -646,7 +734,12 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::GET_ACCOUNT_CLASS => {
+            need(payload, 1)?;
+            format!("class {}", payload[0])
+        }
         MessageType::ACCOUNT_CLASS_INFO => class(&AccountClass::decode_info(payload)?),
+        MessageType::SET_ACCOUNT_CLASS => class(&AccountClass::decode_set(payload)?),
         MessageType::ACCOUNT_CLASS_LIST => AccountClass::decode_list(payload)?
             .iter()
             .map(class)
@@ -713,6 +806,34 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::GET_FOLDER_ACCESS_LIST if payload.is_empty() => String::new(),
+        MessageType::GET_FOLDER_ACCESS_LIST => {
+            need(payload, 4)?;
+            format!(
+                "flags {:#010x}",
+                u32::from_be_bytes(payload[..4].try_into()?)
+            )
+        }
+        MessageType::DELETE_FOLDER_ACCESS
+        | MessageType::FOLDER_ACCESS_DELETED
+        | MessageType::GET_FOLDER_ACCESS => format!("item {}", quoted(payload)),
+        MessageType::CREATE_FOLDER_ACCESS
+        | MessageType::FOLDER_ACCESS_INFO
+        | MessageType::SET_FOLDER_ACCESS => {
+            let item = FolderAccess::decode(payload)?;
+            let mut text = format!(
+                "item {} owner {} icon {:#x} flags {:#x} {}",
+                quoted(&item.name),
+                quoted(&item.owner),
+                item.icon,
+                item.flags,
+                quoted(&item.description)
+            );
+            if !item.current_name.is_empty() {
+                write!(text, " was {}", quoted(&item.current_name))?;
+            }
+            text
+        }
         _ => return Ok(None),
     };
     if text.is_empty() {
@@ -842,6 +963,14 @@ fn need(payload: &[u8], len: usize) -> Result<()> {
 fn path(path: &FilePath) -> String {
     let names: Vec<String> = path.0.iter().map(|n| quoted(n)).collect();
     format!("/{}", names.join("/"))
+}
+
+fn names(names: &[Vec<u8>]) -> String {
+    names
+        .iter()
+        .map(|n| quoted(n))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn hex(bytes: &[u8]) -> String {

@@ -2,7 +2,8 @@
 
 use kdx_proto::msg::admin::{AccountClass, MonitoredConnection};
 use kdx_proto::msg::file::{
-    CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, VolumeInfo, ATTR_FILE,
+    CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, SetVolumeInfo,
+    VolumeInfo, ATTR_FILE,
 };
 use kdx_proto::msg::{FilePath, Status};
 use kdx_proto::session::{Header, MessageType};
@@ -242,4 +243,41 @@ fn volume_info() {
     assert_eq!(volume.flags, 1);
     assert_eq!(volume.flags_mask, 1);
     assert_eq!(volume.encode().unwrap(), wire);
+}
+
+#[test]
+fn set_volume_info() {
+    let session = session();
+    // Frame 53.
+    let (request, wire) = one(&session, MessageType::SET_VOLUME_INFO);
+    let set = SetVolumeInfo::decode(wire).unwrap();
+    assert_eq!(set.flags, SetVolumeInfo::RENAME);
+    assert_eq!(set.name, b"/tmp");
+    assert_eq!(set.new_name, b"/tmp-renamed");
+    assert!(set.format.is_empty() && set.comments.is_empty());
+    assert_eq!(set.encode().unwrap(), wire);
+
+    // Frame 54: renaming is a stub in Server 1.620 for Linux.
+    let reply = all(&session, MessageType::STATUS)
+        .into_iter()
+        .find(|(h, _)| h.txid == request.txid)
+        .unwrap();
+    assert!(matches!(
+        Status::decode(reply.1).unwrap(),
+        Status::Error {
+            code: 0x10005,
+            module: 0x46,
+            line: 2175,
+            ..
+        }
+    ));
+}
+
+#[test]
+fn get_account_class() {
+    let session = session();
+    // Frames 37 and 56.
+    let requests = all(&session, MessageType::GET_ACCOUNT_CLASS);
+    assert_eq!(requests.len(), 2);
+    assert!(requests.iter().all(|(_, wire)| *wire == [0]));
 }
