@@ -28,12 +28,13 @@ server and a tracker, all compatible with the original KDX programs (Server
 
   ```sh
   cargo run -p kdx-cli --bin kdx -- table fetch    # once; see below
-  cargo run -p kdx-cli --bin kdx -- -s host:10700 -l user ls 'Uploads [UL]'
+  cargo run -p kdx-cli --bin kdx -- ls -s host:10700 -l user 'Uploads [UL]'
   ```
 
   Its subcommands are `who`, `chats`, `ls`, `get`, `put`, `news`, `post`,
-  `delete-news`, `account`, `passwd`, `say`, `msg`, and `listen`, and the
-  password comes from `--password` or `KDX_PASSWORD`. `kdx help` lists them.
+  `delete-news`, `account`, `passwd`, `say`, `msg`, and `listen`. Options
+  such as `-s` and `-l` follow the subcommand, and the password comes from
+  `--password` or `KDX_PASSWORD`. `kdx help` lists them.
   `kdx-probe` sends raw requests and dumps the replies.
 - `crates/kdx-codec` frames connections for `tokio_util::codec`.
   `HandshakeCodec` reads and writes the hello and proof, and `SessionCodec`
@@ -52,7 +53,8 @@ copyrighted material. They are not in this repository; see
 `vendor/MANIFEST.md` for where they come from. The handshake needs the
 table, so `kdx` keeps a copy in `~/.cache/kdx/`. `kdx table fetch` downloads
 the smallest Haxial archive (248 KB) from the Internet Archive, checks its
-SHA-256, and extracts the table. `kdx table import FILE` takes it from any
+SHA-256, and extracts the table; it does nothing if the cache already holds
+a valid table, unless given `--force`. `kdx table import FILE` takes it from any
 KDX program, zip archive of one, or saved table instead.
 
 ## Getting started

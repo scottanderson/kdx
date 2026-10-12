@@ -4,7 +4,7 @@ use std::io::{BufRead, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
 use kdx_client::{table, Client, Login};
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
@@ -18,23 +18,28 @@ use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 #[derive(Parser)]
 #[command(about = "A KDX client")]
 struct Args {
-    /// Server address.
-    #[arg(long, short, default_value = "127.0.0.1:10700", global = true)]
-    server: String,
-    /// Account login; omit for guest.
-    #[arg(long, short, default_value = "", global = true)]
-    login: String,
-    /// Account password; also read from KDX_PASSWORD.
-    #[arg(long, env = "KDX_PASSWORD", hide_env_values = true, global = true)]
-    password: Option<String>,
-    /// Nick to show to other users.
-    #[arg(long, default_value = "kdx-rs", global = true)]
-    nick: String,
-    /// Challenge table, or a KDX program file or zip archive that holds it; defaults to the cache.
-    #[arg(long, global = true)]
-    table: Option<PathBuf>,
     #[command(subcommand)]
     command: Command,
+}
+
+// Options for the subcommands that talk to a server; `main` adds them to each but `table`.
+#[derive(clap::Args)]
+struct Connection {
+    /// Server address.
+    #[arg(long, short, default_value = "127.0.0.1:10700")]
+    server: String,
+    /// Account login; omit for guest.
+    #[arg(long, short, default_value = "")]
+    login: String,
+    /// Account password; also read from KDX_PASSWORD.
+    #[arg(long, env = "KDX_PASSWORD", hide_env_values = true)]
+    password: Option<String>,
+    /// Nick to show to other users.
+    #[arg(long, default_value = "kdx-rs")]
+    nick: String,
+    /// Challenge table, or a KDX program file or zip archive that holds it; defaults to the cache.
+    #[arg(long)]
+    table: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -167,7 +172,11 @@ enum AccountAction {
 #[derive(Subcommand)]
 enum TableAction {
     /// Download the smallest KDX archive from the Internet Archive and extract the table.
-    Fetch,
+    Fetch {
+        /// Download even if the cache already holds a valid table.
+        #[arg(long, short)]
+        force: bool,
+    },
     /// Extract the table from a KDX program file, zip archive, or saved table.
     Import { file: PathBuf },
     /// Show where the cached table is.
@@ -176,21 +185,29 @@ enum TableAction {
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    let args = Args::parse();
+    let matches = Args::command()
+        .mut_subcommands(|command| match command.get_name() {
+            "table" => command,
+            _ => Connection::augment_args(command),
+        })
+        .get_matches();
+    let args = Args::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
     if let Command::Table { action } = &args.command {
         return table_command(action);
     }
+    let (_, matches) = matches.subcommand().expect("a subcommand is required");
+    let conn = Connection::from_arg_matches(matches).unwrap_or_else(|e| e.exit());
 
-    let table = challenge_table(args.table.as_deref())?;
+    let table = challenge_table(conn.table.as_deref())?;
     let login = Login {
-        name: args.login.clone().into_bytes(),
-        password: args.password.clone().unwrap_or_default().into_bytes(),
+        name: conn.login.into_bytes(),
+        password: conn.password.unwrap_or_default().into_bytes(),
     };
     let me = UserRecord {
-        nick: args.nick.clone().into_bytes(),
+        nick: conn.nick.into_bytes(),
         ..UserRecord::default()
     };
-    let mut client = Client::login(&args.server, &login, &me, table).await?;
+    let mut client = Client::login(&conn.server, &login, &me, table).await?;
 
     match args.command {
         Command::Table { .. } => unreachable!("handled above"),
@@ -323,7 +340,15 @@ fn table_command(action: &TableAction) -> Result<()> {
             println!("{} ({state})", path.display());
             return Ok(());
         }
-        TableAction::Fetch => {
+        TableAction::Fetch { force: false } if table::cached().is_some() => {
+            let path = table::cache_path().context("no cache directory")?;
+            println!(
+                "already saved {}; use --force to download again",
+                path.display()
+            );
+            return Ok(());
+        }
+        TableAction::Fetch { .. } => {
             eprintln!("downloading {}", table::FETCH_URL);
             table::fetch()?
         }

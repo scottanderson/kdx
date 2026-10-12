@@ -388,6 +388,7 @@ name = "kdx-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64",
  "clap",
  "kdx-client",
  "kdx-proto",
