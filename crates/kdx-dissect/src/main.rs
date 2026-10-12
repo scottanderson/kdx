@@ -1,8 +1,8 @@
 //! Decodes KDX connections in a pcap or pcapng capture.
 //!
-//! For each TCP connection to the server port, prints both handshakes, finds the
-//! account key from the candidate passwords, then decrypts and dumps every session
-//! message in capture order.
+//! Prints each UDP registration sent to the tracker port. Then, for each TCP connection
+//! to the server or tracker port, prints both handshakes, finds the account key from the
+//! candidate passwords, then decrypts and dumps every session message in capture order.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -30,12 +30,16 @@ use kdx_proto::msg::news::{
     NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
 };
 use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
+use kdx_proto::msg::tracker::{
+    GetServerList, GroupListEntry, ServerListEntry, TrackerSettings, TrackerStats,
+};
 use kdx_proto::msg::transfer::{
     DownloadFile, DownloadInfo, NotifySpeedLimit, UploadFile, UploadReply,
 };
 use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged, RegistrationNotice, UserDeparted};
 use kdx_proto::msg::user_info::GetUserInfo;
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
+use kdx_proto::registration::Registration;
 use kdx_proto::session::{Header, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
 use pcap_file::pcap::PcapReader;
@@ -53,6 +57,9 @@ struct Args {
     /// Server TCP port.
     #[arg(long, default_value_t = 10700)]
     port: u16,
+    /// Tracker port, for TCP sessions and UDP registrations.
+    #[arg(long, default_value_t = 10800)]
+    tracker_port: u16,
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
@@ -115,14 +122,22 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let frames = read_frames(&args.capture)?;
 
+    let ports = [args.port, args.tracker_port];
     let mut connections: BTreeMap<(SocketAddr, SocketAddr), [Flow; 2]> = BTreeMap::new();
+    let mut registrations = 0;
     for frame in &frames {
-        let Some((src, dst, tcp)) = parse_tcp(frame) else {
-            continue;
+        let (src, dst, tcp) = match parse_transport(frame) {
+            Some((src, dst, Transport::Udp(payload))) if dst.port() == args.tracker_port => {
+                registrations += 1;
+                print!("{}", registration(frame.number, src, dst, &payload));
+                continue;
+            }
+            Some((src, dst, Transport::Tcp(tcp))) => (src, dst, tcp),
+            _ => continue,
         };
-        let (key, dir) = if dst.port() == args.port {
+        let (key, dir) = if ports.contains(&dst.port()) {
             ((src, dst), Dir::ClientToServer)
-        } else if src.port() == args.port {
+        } else if ports.contains(&src.port()) {
             ((dst, src), Dir::ServerToClient)
         } else {
             continue;
@@ -148,8 +163,14 @@ fn main() -> Result<()> {
         ));
     }
 
+    if registrations > 0 {
+        println!();
+    }
     if connections.is_empty() {
-        println!("no TCP connections on port {}", args.port);
+        println!(
+            "no TCP connections on port {} or {}",
+            args.port, args.tracker_port
+        );
     }
     let mut pending = Vec::new();
     for ((client, server), [c2s, s2c]) in &connections {
@@ -161,7 +182,12 @@ fn main() -> Result<()> {
                     .with_context(|| format!("writing {}", path.display()))?;
             }
         }
-        pending.push((format!("connection {client} -> {server}\n"), streams, None));
+        let kind = if server.port() == args.tracker_port && server.port() != args.port {
+            "tracker connection"
+        } else {
+            "connection"
+        };
+        pending.push((format!("{kind} {client} -> {server}\n"), streams, None));
     }
 
     // Transfer connections use a session key from another connection's 105
@@ -334,6 +360,51 @@ fn dissect(
     Ok(Some(new_keys))
 }
 
+/// Describes a registration datagram, or why the tracker would drop it.
+fn registration(frame: usize, src: SocketAddr, dst: SocketAddr, datagram: &[u8]) -> String {
+    let mut out = format!(
+        "[{frame}] registration {src} -> {dst} len {}\n",
+        datagram.len()
+    );
+    let r = match Registration::decode(datagram) {
+        Ok(r) => r,
+        Err(err) => {
+            writeln!(out, "    ! {err}").unwrap();
+            out.push_str(&hexdump(datagram, "    "));
+            return out;
+        }
+    };
+    write!(
+        out,
+        "    = checksum ok, flags {:#x} server id {} port {} users {} login {} name {} description {}",
+        r.flags,
+        hex(&r.server_id),
+        r.port,
+        r.users,
+        quoted(&r.login),
+        quoted(&r.name),
+        quoted(&r.description)
+    )
+    .unwrap();
+    for (label, s) in [("string 0", &r.string0), ("string 4", &r.string4)] {
+        if !s.is_empty() {
+            write!(out, " {label} {}", quoted(s)).unwrap();
+        }
+    }
+    let groups: Vec<String> = r
+        .groups
+        .iter()
+        .filter(|g| !g.is_empty())
+        .map(|g| quoted(g))
+        .collect();
+    write!(out, " groups [{}]", groups.join(", ")).unwrap();
+    if r.padding.iter().any(|&b| b != 0) {
+        write!(out, " padding {}", hex(&r.padding)).unwrap();
+    }
+    out.push('\n');
+    out
+}
+
 /// Describes a payload whose layout `kdx_proto::msg` knows.
 fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
     let user = |u: &UserRecord| {
@@ -385,6 +456,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             } => format!(
                 "error {code:#x} for {request} at module {module:#x} line {line} extra {extra:#x}"
             ),
+            Status::TrackerError { code, request } => format!("error {code:#x} for {request}"),
         },
         MessageType::SET_IDENTITY | MessageType::USER_CHANGED | MessageType::USER_JOINED => {
             user(&UserRecord::decode(payload)?.0)
@@ -961,12 +1033,102 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             }
             text
         }
+        MessageType::TRACKER_GROUP_LIST => GroupListEntry::decode_list(payload)?
+            .iter()
+            .map(|g| {
+                let mut text = format!("{} ({} servers)", quoted(&g.name), g.servers);
+                if !g.description.is_empty() {
+                    write!(text, " {}", quoted(&g.description)).unwrap();
+                }
+                text
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::GET_TRACKER_SERVER_LIST => {
+            format!("group {}", quoted(&GetServerList::decode(payload)?.group))
+        }
+        MessageType::TRACKER_SERVER_LIST if payload.is_empty() => String::new(),
+        MessageType::TRACKER_SERVER_LIST => ServerListEntry::decode_list(payload)?
+            .iter()
+            .map(|s| {
+                let mut text = format!(
+                    "{} {} at {} users {} flags {:#x} first seen {}",
+                    quoted(&s.name),
+                    quoted(&s.description),
+                    s.address,
+                    s.users,
+                    s.flags,
+                    time_1900(s.first_seen)
+                );
+                if !s.extra.is_empty() {
+                    write!(text, " extra {}", hex(&s.extra)).unwrap();
+                }
+                text
+            })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::TRACKERSERV_SETTINGS_INFO | MessageType::SET_TRACKERSERV_SETTINGS => {
+            tracker_settings(&TrackerSettings::decode(payload)?)?
+        }
+        MessageType::TRACKERSERV_STATISTICS => {
+            let stats = TrackerStats::decode(payload)?;
+            format!(
+                "started {}, {} hours; {} connections accepted, {} open; {} datagrams; {} servers",
+                time_1900(stats.start_time),
+                stats.hours,
+                stats.connections_accepted,
+                stats.connections,
+                stats.datagrams_received,
+                stats.servers
+            )
+        }
         _ => return Ok(None),
     };
     if text.is_empty() {
         return Ok(Some("(empty)".to_owned()));
     }
     Ok(Some(text))
+}
+
+/// Describes the sections of 711 or 712 that the tracker reads.
+fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
+    let mut parts = vec![format!(
+        "format {} present {}",
+        settings.format,
+        hex(&settings.present)
+    )];
+    if let Some(general) = settings.general()? {
+        parts.push(format!(
+            "name {} description {} port {} flags {:#x}",
+            quoted(&general.name),
+            quoted(&general.description),
+            general.port,
+            general.flags
+        ));
+    }
+    if let Some(groups) = settings.groups()? {
+        let groups: Vec<String> = groups
+            .iter()
+            .map(|g| {
+                format!(
+                    "{} {} flags {:#x}",
+                    quoted(&g.name),
+                    quoted(&g.description),
+                    g.flags
+                )
+            })
+            .collect();
+        parts.push(format!("groups [{}]", groups.join(", ")));
+    }
+    if let Some(greeting) = settings.greeting()? {
+        parts.push(format!("greeting {}", quoted(&greeting.text)));
+    }
+    if let Some(admin) = settings.admin()? {
+        // The key is the admin's secret; show only whether one is set.
+        let key = if admin.key.is_some() { "given" } else { "none" };
+        parts.push(format!("admin {} key {key}", quoted(&admin.login)));
+    }
+    Ok(parts.join("; "))
 }
 
 fn read_frames(path: &PathBuf) -> Result<Vec<Frame>> {
@@ -1015,7 +1177,12 @@ struct Tcp {
     payload: Vec<u8>,
 }
 
-fn parse_tcp(frame: &Frame) -> Option<(SocketAddr, SocketAddr, Tcp)> {
+enum Transport {
+    Tcp(Tcp),
+    Udp(Vec<u8>),
+}
+
+fn parse_transport(frame: &Frame) -> Option<(SocketAddr, SocketAddr, Transport)> {
     let data = &frame.data;
     let packet = match frame.link {
         DataLink::ETHERNET => SlicedPacket::from_ethernet(data),
@@ -1036,18 +1203,23 @@ fn parse_tcp(frame: &Frame) -> Option<(SocketAddr, SocketAddr, Tcp)> {
         ),
         _ => return None,
     };
-    let TransportSlice::Tcp(tcp) = packet.transport? else {
-        return None;
-    };
-    Some((
-        SocketAddr::new(src, tcp.source_port()),
-        SocketAddr::new(dst, tcp.destination_port()),
-        Tcp {
-            seq: tcp.sequence_number(),
-            syn: tcp.syn(),
-            payload: tcp.payload().to_vec(),
-        },
-    ))
+    match packet.transport? {
+        TransportSlice::Tcp(tcp) => Some((
+            SocketAddr::new(src, tcp.source_port()),
+            SocketAddr::new(dst, tcp.destination_port()),
+            Transport::Tcp(Tcp {
+                seq: tcp.sequence_number(),
+                syn: tcp.syn(),
+                payload: tcp.payload().to_vec(),
+            }),
+        )),
+        TransportSlice::Udp(udp) => Some((
+            SocketAddr::new(src, udp.source_port()),
+            SocketAddr::new(dst, udp.destination_port()),
+            Transport::Udp(udp.payload().to_vec()),
+        )),
+        _ => None,
+    }
 }
 
 /// Orders segments by sequence number, drops retransmitted bytes, and stops at the first gap.
@@ -1102,6 +1274,27 @@ fn names(names: &[Vec<u8>]) -> String {
 
 fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Formats milliseconds since 1900-01-01 as a UTC time.
+fn time_1900(ms: u64) -> String {
+    let (days, ms) = (ms / 86_400_000, ms % 86_400_000);
+    // Civil date from days since 0000-03-01 (Howard Hinnant's algorithm).
+    let days = days + 693_901;
+    let (era, doe) = (days / 146_097, days % 146_097);
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = era * 400 + yoe + u64::from(month <= 2);
+    format!(
+        "{year}-{month:02}-{day:02} {:02}:{:02}:{:02}.{:03} UTC",
+        ms / 3_600_000,
+        ms / 60_000 % 60,
+        ms / 1000 % 60,
+        ms % 1000
+    )
 }
 
 fn fourcc(value: u32) -> String {

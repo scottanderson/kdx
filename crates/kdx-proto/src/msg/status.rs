@@ -24,6 +24,13 @@ pub enum Status {
         /// A value the raise site passes along.
         extra: u32,
     },
+    /// The request failed; Tracker 1.110's short form.
+    TrackerError {
+        /// Error code, such as 0x10014 Access Denied.
+        code: u32,
+        /// Type of the failed request.
+        request: MessageType,
+    },
 }
 
 impl Status {
@@ -32,11 +39,18 @@ impl Status {
     /// Length of the error form.
     pub const ERROR_LEN: usize = 24;
 
-    /// Decodes either form, chosen by length.
+    /// Length of the tracker's error form.
+    pub const TRACKER_ERROR_LEN: usize = 8;
+
+    /// Decodes any form, chosen by length and, at 8 bytes, by whether the first word is 0.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         match buf.len() {
             Self::SUCCESS_LEN if u32_at(buf, 0) == 0 => Ok(Self::Success {
                 value: u32_at(buf, 4),
+            }),
+            Self::TRACKER_ERROR_LEN => Ok(Self::TrackerError {
+                code: u32_at(buf, 0),
+                request: MessageType(u32_at(buf, 4)),
             }),
             Self::ERROR_LEN => Ok(Self::Error {
                 code: u32_at(buf, 0),
@@ -60,6 +74,7 @@ impl Status {
                 line,
                 extra,
             } => &[code, request.0, module, line, extra, 0],
+            Self::TrackerError { code, request } => &[code, request.0],
         };
         words.iter().flat_map(|w| w.to_be_bytes()).collect()
     }
@@ -68,7 +83,7 @@ impl Status {
     pub const fn code(&self) -> Option<u32> {
         match self {
             Self::Success { .. } => None,
-            Self::Error { code, .. } => Some(*code),
+            Self::Error { code, .. } | Self::TrackerError { code, .. } => Some(*code),
         }
     }
 }

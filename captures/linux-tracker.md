@@ -8,10 +8,9 @@
 - Server state: the server from linux-text-encoding (admin /
   lab-only-pw!1, name `Lab Server`, greeting `Welcome to the lab.`).
 
-Decode the server side with `kdx-dissect captures/linux-tracker.pcapng
---password 'lab-only-pw!1'`, and the tracker side with `--port 10800
---password 'lab-tracker-pw!1'`. kdx-dissect does not decode the UDP
-registrations; see `docs/protocol/tracker.md` for the LCG and layout.
+Decode everything, the registrations included, with `kdx-dissect
+captures/linux-tracker.pcapng --password 'lab-only-pw!1' --password
+'lab-tracker-pw!1'`.
 
 ## Steps
 

@@ -396,10 +396,12 @@ async fn wait_reply(
         } else if header.kind == MessageType::STATUS {
             match Status::decode(&payload)? {
                 Status::Success { .. } => return Ok(Vec::new()),
-                Status::Error { code, .. } => bail!(ServerError {
-                    request: kind,
-                    code
-                }),
+                Status::Error { code, .. } | Status::TrackerError { code, .. } => {
+                    bail!(ServerError {
+                        request: kind,
+                        code
+                    })
+                }
             }
         } else {
             return Ok(payload);
@@ -409,7 +411,9 @@ async fn wait_reply(
 
 fn status_error(request: MessageType, payload: &[u8]) -> anyhow::Error {
     match Status::decode(payload) {
-        Ok(Status::Error { code, .. }) => ServerError { request, code }.into(),
+        Ok(Status::Error { code, .. } | Status::TrackerError { code, .. }) => {
+            ServerError { request, code }.into()
+        }
         Ok(Status::Success { .. }) => anyhow::anyhow!("unexpected 1 Status success"),
         Err(err) => err.into(),
     }

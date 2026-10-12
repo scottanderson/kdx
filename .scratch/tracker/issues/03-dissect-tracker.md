@@ -1,6 +1,6 @@
 # Dissect tracker traffic
 
-Status: ready-for-agent
+Status: done
 Blocked by: 01, 02
 
 Teach `kdx-dissect` to:

@@ -175,6 +175,9 @@ as a u32, like the first 8 bytes of the server's 24-byte Status
 00 01 00 14  00 00 02 c6    0x10014 for 710
 ```
 
+Verified: `kdx-proto` decodes frame 61 as `Status::TrackerError` and
+re-encodes it byte for byte **[O]**.
+
 ### 115 Get My Address
 
 As on a server: the reply 116 holds the peer's address as a Pascal string
