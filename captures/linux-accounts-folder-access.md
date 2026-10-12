@@ -39,7 +39,8 @@ in one pass.
   bytes.
 - 1105 at 63 is 200 bytes: the record with byte 0x14 set to `80`, the
   current name length 8 at 0xb1, and the name twice. 0x14 is the rule for
-  class 1 (User), and `80` is bit 0, Can See Folder. The Status is success
+  Guest (class 2; see `linux-folder-access-guest`), and `80` is bit 0, Can
+  See Folder. The Status is success
   0x451 (66).
 - 1101 at 70 is the name `lab-item`. The server replies with 1102 (71),
   payload the name, under its own txid (`f2cfecc3`, next after the login's

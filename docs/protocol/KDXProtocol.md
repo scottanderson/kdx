@@ -1788,7 +1788,8 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 **Folder access record**
 **[S `FUN_080572f0`, `FUN_08057634`, client folder access editor; O
 `captures/linux-files.pcapng` 1100, 1104;
-`captures/linux-accounts-folder-access.pcapng` 1105]**
+`captures/linux-accounts-folder-access.pcapng` 1105;
+`captures/linux-folder-access-guest.pcapng` 1105]**
 
 1100, 1104, and 1105 share this record. Its total length, padded to 4, must
 equal the payload length.
@@ -1798,8 +1799,8 @@ equal the payload length.
 | 0x00 | 4 | | |
 | 0x04 | 4 | flags | byte 7: bit 0 built-in, bit 1 Owner Login In Folder Name |
 | 0x08 | 4 | icon | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
-| 0x0c | 4 | rule | 0xfffe0000 (every permission) in both lab items; probably the owner's rule [I] |
-| 0x10 | 0x80 | class rules | 32 entries, one per account class: u16 permission bits, MSB = bit 0, then u16 0 |
+| 0x0c | 0x80 | class rules | 32 entries at 0x0c + 4 × class index: u16 permission bits, MSB = bit 0, then u16 0. User (class 1) is at 0x10 and Guest (class 2) at 0x14 [O]. The first, 0xfffe0000 (every permission) in both lab items, is probably Administrator's [I] |
+| 0x8c | 4 | | 0xfffe0000 in `DB`, 0 in `[Default]`; probably the owner's rule [I] |
 | 0x90 | 0x1d | 0 | |
 | 0xad | 1 | name length | the tag, such as `DB` |
 | 0xae | 1 | owner login length | |
@@ -1814,8 +1815,8 @@ Folder Content, 2 Read/Download Files, 3 Create/Upload Files, 4 Create/Upload
 Folders, 5 Move In, 6 Move Out, 7 Alias In, 8 Alias Out, 9 Duplicate In, 10
 Duplicate Out, 11 Delete Items, 12 Rename, 13 Set Item Attributes, 14 Modify
 File Contents. In the lab, `DB` grants 0x9d40 (bits 0, 3, 4, 5, 7, 9: a drop
-box) and `[Default]` grants 0xe0a0 (bits 0, 1, 2, 8, 10) **[O]**, in entries
-0..30; entry 31 is 0xfffe0000 in `DB` and 0 in `[Default]` (frames 226, 229).
+box) and `[Default]` grants 0xe0a0 (bits 0, 1, 2, 8, 10) **[O]**, for classes
+1..31 (frames 226, 229).
 The client editor shows Name, Description, Owner Login, Owner Login In Folder
 Name, the Access Privileges table, and Icon.
 
@@ -1842,7 +1843,9 @@ Initiator: Client. Privilege: View Folder Access (27). **[S
 `FUN_08057534`; O]**
 
 The request is the item name, with no length byte. The reply is the stored
-folder access record.
+folder access record. After a 1105, that is the 1105's record as sent, with
+its current name (`captures/linux-folder-access-guest.pcapng` frames 30,
+38) **[O]**.
 
 **1105 Set Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
@@ -1853,7 +1856,9 @@ The request is a folder access record whose current name (0xb1) picks the
 item; it is renamed if the name differs. Success is 1 Status 0x451. The
 client sends the name and the current name even when they are equal: frame
 63 is 200 bytes, with `lab-item` twice and length 8 at 0xad and 0xb1. It
-sets byte 0x14 to 0x80, bit 0 (Can See Folder) of the class 1 rule
+sets byte 0x14 to 0x80, bit 0 (Can See Folder) of the Guest rule **[O]**.
+Ticking Can See Folder for Guest alone and then for User alone sets 0x14
+and then 0x10 (`captures/linux-folder-access-guest.pcapng` frames 30, 40)
 **[O]**.
 
 ### View display

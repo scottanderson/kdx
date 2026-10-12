@@ -36,4 +36,8 @@ Status for 1101. 1102 carries the server's own txid, not 0. The flood count
 includes the login's 100, so the warnings came on the 19th and 23rd
 request and the disconnect on the 28th (messages 20, 24, and 29). The ban
 did not block 127.0.0.1, so the server needed no restart. Step 4 set bit 0
-of the class 1 (User) rule at 0x14.
+of the Guest rule at 0x14.
+
+2026-10-12: `captures/linux-folder-access-guest.pcapng` confirms the column:
+a Guest tick alone sets 0x14 and a User tick alone 0x10, so the class rules
+start at 0x0c + 4 × class index.
