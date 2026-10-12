@@ -83,3 +83,16 @@ Linux logged in as admin. The connection holds the file catalog, search,
 launch, volume, account class, and Server Settings messages, and 24 replies
 of 143 Connection Monitor Info, 20 of them with a transfer record for a `kdx
 get` of `speed.bin`.
+
+`linux-chat-rooms-<port>`, `linux-chat-admin-<port>`, and `kdx-cli-<port>`
+come from the captures of the same names, all logged in as admin. In the
+first two, Client 1.620 for Linux is the GUI client and the other ports are
+`kdx` CLI peers.
+
+| Fixture | Messages |
+|---|---|
+| `linux-chat-rooms-43718` | the GUI: 201, 204, 217, 218, 219, 220, 221, 222, and empty 223s |
+| `linux-chat-rooms-55916` | `cli-member` in `lab-chat`: 205 and 221 |
+| `linux-chat-admin-37478` | `cli-peer` in Public Chat: 205 and two 212 Chat Invitations |
+| `linux-chat-admin-37484` | the GUI: 200/216 Create Private Chat and two 211 Chat Invites |
+| `kdx-cli-51784` | `listener` in Public Chat: 205 and 206 for user 0x14 |
