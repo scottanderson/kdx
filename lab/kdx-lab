@@ -15,6 +15,7 @@ LIBSTDCXX5_URL="https://archive.debian.org/debian/pool/main/g/gcc-3.3/libstdc++5
 LIBSTDCXX5_SHA256="c88f93cd5b7b32ca88b40f671fc09f3387c7fb514902b4737b471bd812786ee6"
 
 SERVER_BIN="$VENDOR/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
+UPGRADE_HELPER_BIN="$VENDOR/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXUpgradeHelper.lexe"
 TRACKER_BIN="$VENDOR/KDXTrackerServ1110-Lnx/extracted/KDXTrackerServ1110-Lnx/KDXTrackerServ.lexe"
 CLIENT_WIN_DIR="$VENDOR/KDXClient1600-Win/extracted/KDXClient1600-Win"
 CLIENT_LNX_BIN="$VENDOR/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClient.lexe"
@@ -177,20 +178,33 @@ cmd_status() {
 }
 
 # Foreground by default (the console takes commands); -d detaches with an idle stdin and logs to run/<name>.log.
+# Run "$@", then keep the sandbox up while anything it started still runs (KDXUpgradeHelper relaunches the server).
+LINGER='"$@"; status=$?
+while :; do
+  others=0
+  for d in /proc/[0-9]*; do case ${d#/proc/} in 1|$$) ;; *) others=1 ;; esac; done
+  [ "$others" = 1 ] || exit "$status"
+  sleep 1
+done'
+
 run_console() {
   local name="$1" bin="$2"; shift 2
   require_up
   install_bin "$bin" "$RUN/$name"
+  local cmd=(sh -c "$LINGER" sh "./$(basename "$bin")")
   if [[ "${1:-}" == "-d" ]]; then
-    tail -f /dev/null | sandbox "$RUN/$name" -- "./$(basename "$bin")" >"$RUN/$name.log" 2>&1 &
+    tail -f /dev/null | sandbox "$RUN/$name" -- "${cmd[@]}" >"$RUN/$name.log" 2>&1 &
     disown
     echo "$name detached; log: $RUN/$name.log (stopped by kdx-lab down)"
   else
-    sandbox "$RUN/$name" -- "./$(basename "$bin")"
+    sandbox "$RUN/$name" -- "${cmd[@]}"
   fi
 }
 
-cmd_server() { run_console server "$SERVER_BIN" "$@"; }
+cmd_server() {
+  install_bin "$UPGRADE_HELPER_BIN" "$RUN/server"
+  run_console server "$SERVER_BIN" "$@"
+}
 cmd_tracker() { run_console tracker "$TRACKER_BIN" "$@"; }
 
 cmd_client() {
