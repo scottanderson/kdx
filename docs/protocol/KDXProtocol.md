@@ -118,10 +118,26 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 (the `86 ab` at the end of the first entry in the 401 File List example)
 **[O]**.
 
-Text is Mac OS Roman bytes, as the Mac client wrote them. A file name with a
-right single quote holds byte 0xd5, which is not valid UTF-8, and the server
-rejects a path that spells it in UTF-8 **[I]** (user report; no capture yet).
-`kdx_proto::mac_roman` maps each byte to one character and back.
+Text is UTF-8 in the 1.6 builds, but the Linux server passes file names
+through as raw bytes:
+
+- Server 1.600 for Windows lists files with `FindFirstFileW` and encodes
+  each UTF-16 name as UTF-8 (`FUN_00428640`, `FUN_00428380`). It decodes an
+  incoming path as strict UTF-8 before `CreateFileW` (`FUN_0042a740`,
+  `FUN_004286e0`), so an invalid byte becomes U+FFFD and the file is not
+  found **[S]**.
+- Client 1.600 for Windows keeps text as UTF-8; its decoder (0x00457190) is
+  strict too **[S]**.
+- Server 1.600 for Mac OS X converts `readdir` names to NFC UTF-8 with
+  `ConvertFromUnicodeToText` (`FUN_000348cc`, encoding 0x08000100), and the
+  Carbon client 1.600 converts HFS+ names the same way **[S]**.
+- Server 1.620 for Linux copies `readdir64` names unchanged
+  (`FUN_08091b6c`), so a name is whatever bytes are on disk **[S]**. Names
+  copied from a classic Mac or uploaded by an older client may be Mac OS
+  Roman, such as `Erik’s` with byte 0xd5 (user report).
+
+No x86 build has a Mac OS Roman table. No capture has non-ASCII text yet.
+Builds before 1.6 are not vendored, so their charset is unknown.
 
 ## Times
 
