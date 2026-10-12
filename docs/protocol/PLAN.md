@@ -92,7 +92,7 @@ which build introduced it:
    bridge is server-side only and uses standard IRC, so it needs little
    protocol work.
 
-Status (2026-10-11). "Client works" means the `kdx` CLI did it against Server
+Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 1.620 in the lab (`captures/kdx-cli.md`):
 
 | Area | Documented | Codec tested on a capture | Client works |
@@ -101,7 +101,7 @@ Status (2026-10-11). "Client works" means the `kdx` CLI did it against Server
 | 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
 | 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
 | 4. News | yes; 600, 601, 604 read but not probed | yes | read, post, delete |
-| 5. Files | yes; 420, 422, 423, 450, 453 read but not probed | yes | ls, get, put |
+| 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
 | 6. Accounts, admin | yes, with every privilege bit named; 504, 804, 1101, 1105 read but not probed | yes | account list, show, add, set, rm; passwd |
 | 7. Tracker | yes, statically (`tracker.md`); not captured | no | no |
 | 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
