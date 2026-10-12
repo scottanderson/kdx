@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
 use kdx_client::{table, Client, Login};
+use kdx_proto::mac_roman;
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
 use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
@@ -53,14 +54,14 @@ enum Command {
     Who,
     /// List the chats.
     Chats,
-    /// List a folder; `/` separates names.
+    /// List a folder; `/` separates names, and `\xNN` gives a raw byte.
     Ls {
         #[arg(default_value = "")]
         path: String,
     },
     /// Download a file.
     Get {
-        /// Path on the server.
+        /// Path on the server, written as `ls` shows it.
         path: String,
         /// Local file; defaults to the file's name in the current folder.
         #[arg(long, short)]
@@ -229,11 +230,11 @@ async fn main() -> Result<()> {
             }
         }
         Command::Ls { path } => {
-            for entry in client.file_list(&parse_path(&path)).await? {
+            for entry in client.file_list(&parse_path(&path)?).await? {
                 if entry.is_folder() {
-                    println!("{:>12}  {}/", "", text(&entry.name));
+                    println!("{:>12}  {}/", "", name_text(&entry.name));
                 } else {
-                    println!("{:>12}  {}", entry.size, text(&entry.name));
+                    println!("{:>12}  {}", entry.size, name_text(&entry.name));
                 }
             }
         }
@@ -242,9 +243,9 @@ async fn main() -> Result<()> {
             output,
             resume,
         } => {
-            let path = parse_path(&path);
+            let path = parse_path(&path)?;
             let name = path.0.last().context("give a file path")?;
-            let output = output.unwrap_or_else(|| PathBuf::from(text(name)));
+            let output = output.unwrap_or_else(|| PathBuf::from(name_text(name)));
             download(&mut client, &path, &output, resume).await?;
         }
         Command::Put { file, folder } => {
@@ -256,7 +257,7 @@ async fn main() -> Result<()> {
             let mut source = File::open(&file).await?;
             let len = source.metadata().await?.len();
             let start = client
-                .upload(&parse_path(&folder), name.as_bytes(), len, &mut source)
+                .upload(&parse_path(&folder)?, &name_bytes(&name)?, len, &mut source)
                 .await?;
             println!("uploaded {} bytes as {name}", len - start);
         }
@@ -562,12 +563,84 @@ fn print_news(message: &NewsMessage) {
     );
 }
 
-/// Splits `a/b/c` into a file path; empty for the root.
-fn parse_path(path: &str) -> FilePath {
-    FilePath::new(path.split('/').filter(|name| !name.is_empty()))
+/// Splits `a/b/c` into a file path of names written as [`name_text`] shows them; empty for the root.
+fn parse_path(path: &str) -> Result<FilePath> {
+    path.split('/')
+        .filter(|name| !name.is_empty())
+        .map(name_bytes)
+        .collect::<Result<_>>()
+        .map(FilePath)
+}
+
+/// Shows a file name as Mac OS Roman, escaping `\\`, `/`, and control bytes so it round-trips.
+fn name_text(bytes: &[u8]) -> String {
+    let mut out = String::new();
+    for &b in bytes {
+        match b {
+            b'\\' => out.push_str("\\\\"),
+            b'/' | ..=0x1f | 0x7f => out.push_str(&format!("\\x{b:02x}")),
+            _ => out.push(mac_roman::char_from_byte(b)),
+        }
+    }
+    out
+}
+
+/// Reads a name written as [`name_text`] shows it.
+fn name_bytes(name: &str) -> Result<Vec<u8>> {
+    let mut out = Vec::new();
+    let mut chars = name.chars();
+    while let Some(c) = chars.next() {
+        if c != '\\' {
+            let b = mac_roman::byte_from_char(c).with_context(|| {
+                format!("{c:?} in {name:?} is not Mac OS Roman; write it as \\xNN")
+            })?;
+            out.push(b);
+            continue;
+        }
+        match chars.next() {
+            Some('\\') => out.push(b'\\'),
+            Some('x') => {
+                let hex: String = chars.by_ref().take(2).collect();
+                let b = (hex.len() == 2 && hex.chars().all(|c| c.is_ascii_hexdigit()))
+                    .then(|| u8::from_str_radix(&hex, 16).ok())
+                    .flatten()
+                    .with_context(|| format!("bad \\x escape in {name:?}"))?;
+                out.push(b);
+            }
+            _ => bail!("in {name:?}, write a backslash as \\\\ or start \\xNN"),
+        }
+    }
+    Ok(out)
 }
 
 /// Shows protocol text as UTF-8, replacing invalid bytes.
 fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn names_round_trip() {
+        let all: Vec<u8> = (0..=0xff).collect();
+        assert_eq!(name_bytes(&name_text(&all)).unwrap(), all);
+        assert_eq!(name_text(b"Erik\xd5s"), "Erik\u{2019}s");
+        assert_eq!(name_text(b"a/b\\c\r"), "a\\x2fb\\\\c\\x0d");
+    }
+
+    #[test]
+    fn typed_paths() {
+        let path = parse_path("/Uploads [UL]/Erik\u{2019}s/Erik\\xd5s 2").unwrap();
+        assert_eq!(
+            path,
+            FilePath::new([&b"Uploads [UL]"[..], b"Erik\xd5s", b"Erik\xd5s 2"])
+        );
+        assert!(parse_path("smile \u{263a}").is_err());
+        assert!(parse_path("a\\b").is_err());
+        assert!(parse_path("a\\x4").is_err());
+        assert!(parse_path("a\\xzz").is_err());
+        assert!(parse_path("a\\x+f").is_err());
+    }
 }
