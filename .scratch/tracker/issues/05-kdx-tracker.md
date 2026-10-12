@@ -1,6 +1,6 @@
 # A Rust tracker
 
-Status: needs-triage
+Status: ready-for-agent
 Blocked by: 01, 02
 
 Implement `kdx-tracker` (now a placeholder): accept registrations on UDP
