@@ -1,6 +1,8 @@
 //! Server, account and process administration replies.
 
-use super::{len_u8, need, pad4, strings, u32_at, u64_at, DecodeError, EncodeError};
+use super::{
+    len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath,
+};
 
 /// Reads a u32 count followed by that many records, each padded to 4.
 fn decode_counted<T>(
@@ -104,25 +106,43 @@ impl YourAddress {
     }
 }
 
-/// A connection record of 143 Connection Monitor Info.
+/// A record of 143 Connection Monitor Info: a connection, or one of its file transfers.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct MonitoredConnection {
     /// User ID.
     pub user_id: u32,
-    /// Login time in milliseconds.
+    /// Transfer ID; 0 in a connection record.
+    pub transfer_id: u32,
+    /// Login time in milliseconds; the start time in a transfer record.
     pub login_time: u64,
-    /// A time in milliseconds.
+    /// A time in milliseconds; 0 in a transfer record.
     pub time_10: u64,
-    /// A time in milliseconds, probably the last activity.
+    /// The server's current time in milliseconds.
     pub time_18: u64,
+    /// Bytes moved so far.
+    pub bytes_done: u64,
+    /// Bytes to move in all.
+    pub bytes_total: u64,
+    /// Bytes per second since the start.
+    pub rate: u32,
+    /// Seconds until the transfer ends.
+    pub seconds_left: u32,
+    /// A per-transfer value; the speed limit in `captures/linux-catalog-volumes.pcapng`.
+    pub value_38: u32,
+    /// Transfer state; 0x19c (412) for a download.
+    pub state: u32,
+    /// Account class index.
+    pub class_index: u8,
     /// Nick.
     pub nick: Vec<u8>,
     /// Login.
     pub login: Vec<u8>,
-    /// Account name.
+    /// Account class name.
     pub account: Vec<u8>,
-    /// Address as `ip:port`.
+    /// Address as `ip:port`; the transfer connection's in a transfer record.
     pub address: Vec<u8>,
+    /// The transferred file; the root in a connection record.
+    pub path: FilePath,
 }
 
 impl MonitoredConnection {
@@ -143,16 +163,27 @@ impl MonitoredConnection {
     fn decode(buf: &[u8]) -> Result<(Self, usize), DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x60, 0x61, 0x62, 0x63].map(|at| usize::from(buf[at]));
-        let ([nick, login, account, address], end) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([nick, login, account, address], at) = strings(buf, Self::HEADER_LEN, lens)?;
+        let end = at + usize::from(u16_at(buf, 0x66));
+        need(buf, end)?;
         let record = Self {
             user_id: u32_at(buf, 0),
+            transfer_id: u32_at(buf, 4),
             login_time: u64_at(buf, 8),
             time_10: u64_at(buf, 0x10),
             time_18: u64_at(buf, 0x18),
+            bytes_done: u64_at(buf, 0x20),
+            bytes_total: u64_at(buf, 0x28),
+            rate: u32_at(buf, 0x30),
+            seconds_left: u32_at(buf, 0x34),
+            value_38: u32_at(buf, 0x38),
+            state: u32_at(buf, 0x3c),
+            class_index: buf[0x42],
             nick,
             login,
             account,
             address,
+            path: FilePath::decode(&buf[at..end])?,
         };
         Ok((record, end))
     }
@@ -161,11 +192,21 @@ impl MonitoredConnection {
     pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
         for record in list {
+            let path = record.path.encode()?;
+            let path_len = u16::try_from(path.len()).map_err(|_| EncodeError::TooLong("path"))?;
             let mut fixed = vec![0; Self::HEADER_LEN];
             fixed[0..4].copy_from_slice(&record.user_id.to_be_bytes());
+            fixed[4..8].copy_from_slice(&record.transfer_id.to_be_bytes());
             fixed[8..0x10].copy_from_slice(&record.login_time.to_be_bytes());
             fixed[0x10..0x18].copy_from_slice(&record.time_10.to_be_bytes());
             fixed[0x18..0x20].copy_from_slice(&record.time_18.to_be_bytes());
+            fixed[0x20..0x28].copy_from_slice(&record.bytes_done.to_be_bytes());
+            fixed[0x28..0x30].copy_from_slice(&record.bytes_total.to_be_bytes());
+            fixed[0x30..0x34].copy_from_slice(&record.rate.to_be_bytes());
+            fixed[0x34..0x38].copy_from_slice(&record.seconds_left.to_be_bytes());
+            fixed[0x38..0x3c].copy_from_slice(&record.value_38.to_be_bytes());
+            fixed[0x3c..0x40].copy_from_slice(&record.state.to_be_bytes());
+            fixed[0x42] = record.class_index;
             let parts = [
                 &record.nick,
                 &record.login,
@@ -175,10 +216,12 @@ impl MonitoredConnection {
             for (i, s) in parts.iter().enumerate() {
                 fixed[0x60 + i] = len_u8(s, "connection string")?;
             }
+            fixed[0x66..0x68].copy_from_slice(&path_len.to_be_bytes());
             out.extend(fixed);
             for s in parts {
                 out.extend_from_slice(s);
             }
+            out.extend(path);
             out.resize(pad4(out.len()), 0);
         }
         Ok(out)

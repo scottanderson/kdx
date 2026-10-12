@@ -591,14 +591,24 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.0),
         MessageType::CONNECTION_MONITOR_INFO => MonitoredConnection::decode_list(payload)?
             .iter()
-            .map(|c| {
-                format!(
+            .map(|c| match c.transfer_id {
+                0 => format!(
                     "user {} {} login {} from {}",
                     c.user_id,
                     quoted(&c.nick),
                     quoted(&c.login),
                     quoted(&c.address)
-                )
+                ),
+                id => format!(
+                    "transfer {id} of user {} {}: {}/{} bytes at {} B/s, {} s left, state {:#x}",
+                    c.user_id,
+                    path(&c.path),
+                    c.bytes_done,
+                    c.bytes_total,
+                    c.rate,
+                    c.seconds_left,
+                    c.state
+                ),
             })
             .collect::<Vec<_>>()
             .join("; "),

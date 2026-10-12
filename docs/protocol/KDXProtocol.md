@@ -582,22 +582,27 @@ front, each padded to 4 **[S `FUN_0804b9b0`]**:
 | 0x18 | 8 | current server time | [S] |
 | 0x20 | 8 | bytes done | transfer record only: bytes moved minus bytes still queued to send [S] |
 | 0x28 | 8 | total bytes | transfer record only [S] |
-| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S] |
+| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S]; 0x51a1 under a 0x5000 limit [O] |
 | 0x34 | 4 | seconds left | transfer record only: (total − done) / rate [S] |
-| 0x38 | 4 | | transfer record only; a per-transfer value [S] |
-| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S] |
+| 0x38 | 4 | | transfer record only; a per-transfer value [S]; 0x5000, the server's speed limit, in every record [O] |
+| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S]; 0x19c (412) for a download [O] |
 | 0x40 | 2 | 0 | |
 | 0x42 | 1 | account class index | [S] |
 | 0x60 | 1 | nick length | |
 | 0x61 | 1 | login length | |
 | 0x62 | 1 | account class name length | `?` if the class is gone [S] |
 | 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record [S] |
-| 0x66 | 2 | path length | transfer record only: the file path [S] |
+| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages [S, O] |
 | 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
 The padding after the strings is uninitialised **[O]**. Fields marked
-transfer record only are 0 in a connection record. No capture has a
-transfer record yet; see `.scratch/capture-gaps/issues/03-files.md`.
+transfer record only are 0 in a connection record.
+
+In `captures/linux-catalog-volumes.pcapng`, the replies from frame 104 to 161
+hold three records: the operator's connection, the `kdx-get` connection
+(user 2), and its download of `speed.bin` (transfer 3) **[O]**. In frame
+104 the transfer has done 0x14000 of 0x200000 bytes at 0x6aaa per second,
+with 0x49 seconds left; in frame 161, 0x1f4000 at 0x51a1, with 2 left.
 
 **150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
