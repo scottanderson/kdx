@@ -18,7 +18,8 @@ use kdx_proto::msg::admin::{
     MonitoredConnection, ProcessList, YourAddress,
 };
 use kdx_proto::msg::chat::{
-    ChatListEntry, ChatRecord, ChatText, ChatTopicChanged, ChatWindowInfo, JoinChat, SetChatTopic,
+    ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
+    ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
 };
 use kdx_proto::msg::file::{FileInfo, FileListEntry};
 use kdx_proto::msg::news::{
@@ -394,11 +395,15 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&info.address)
             )
         }
+        MessageType::DELETE_CHAT
+        | MessageType::LEAVE_CHAT
+        | MessageType::GET_CHAT
+        | MessageType::GET_CHAT_DCC_ADDRESSES => format!("chat {}", ChatId::decode(payload)?.0),
         MessageType::JOIN_CHAT => {
             let join = JoinChat::decode(payload)?;
             format!("chat {} key {:#x}", join.chat_id, join.key)
         }
-        MessageType::CHAT_WINDOW_INFO => {
+        MessageType::CHAT_WINDOW_INFO | MessageType::CREATE_PRIVATE_CHAT_REPLY => {
             let window = ChatWindowInfo::decode(payload)?;
             format!(
                 "chat {} {} members {:?}",
@@ -406,6 +411,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(window.name()),
                 window.members
             )
+        }
+        MessageType::CHAT_USER_JOINED | MessageType::CHAT_USER_DEPARTED => {
+            let change = ChatUserChange::decode(payload)?;
+            format!("chat {} user {}", change.chat_id, change.user_id)
         }
         MessageType::SEND_CHAT_TEXT | MessageType::RECEIVE_CHAT_TEXT => {
             let chat = ChatText::decode(payload)?;
@@ -430,6 +439,26 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&topic.nick)
             )
         }
+        MessageType::CHAT_INVITE => {
+            let invite = ChatInvite::decode(payload)?;
+            format!(
+                "chat {} users {:?} message {}",
+                invite.chat_id,
+                invite.user_ids,
+                quoted(&invite.message)
+            )
+        }
+        MessageType::CHAT_INVITATION => {
+            let invitation = ChatInvitation::decode(payload)?;
+            format!(
+                "chat {} {} key {:#x} from user {} message {}",
+                invitation.chat_id,
+                quoted(&invitation.name),
+                invitation.key,
+                invitation.user_id,
+                quoted(&invitation.message)
+            )
+        }
         MessageType::CHAT_LIST => ChatListEntry::decode_list(payload)?
             .iter()
             .map(|c| {
@@ -442,14 +471,19 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
-        MessageType::CHAT_INFO => {
+        MessageType::CREATE_CHAT | MessageType::CHAT_INFO | MessageType::SET_CHAT => {
             let chat = ChatRecord::decode(payload)?;
             format!(
-                "chat {} {} {}",
+                "chat {} {} {} flags {:#x}",
                 chat.chat_id,
                 quoted(&chat.name),
-                quoted(&chat.description)
+                quoted(&chat.description),
+                chat.flags
             )
+        }
+        MessageType::CHAT_DELETED => {
+            let deleted = ChatDeleted::decode(payload)?;
+            format!("chat {} by user {}", deleted.chat_id, deleted.user_id)
         }
         MessageType::FILE_LIST => FileListEntry::decode_list(payload)?
             .iter()

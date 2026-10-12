@@ -99,7 +99,7 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 |---|---|---|---|
 | 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
 | 2. Users | user record, 101–105, 153; icons and 110 partly | yes | user list |
-| 3. Chat, private messages | yes; 200, 211, 222 read but not probed | yes | join, say, listen, msg |
+| 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 only empty | yes | join, say, listen, msg |
 | 4. News | yes; 600, 601, 604 read but not probed | yes | read, post, delete |
 | 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
 | 6. Accounts, admin | yes, with every privilege bit named; 804, 1101, 1105 read but not probed | yes | account list, show, add, set, rm; passwd |
