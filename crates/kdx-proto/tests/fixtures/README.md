@@ -111,3 +111,12 @@ in as admin.
 |---|---|
 | 45150 | 171/172 Server Settings, 107 Server Greeting, 181 and 183 Server History |
 | 40560 | 106 Server Icon, 107, 110/111 Mini User Icon, 171/172, 181, 183, 419 Notify Speed Limit |
+
+`linux-shutdown-<port>.c2s.bin` and `.s2c.bin` come from
+`captures/linux-shutdown.pcapng`, where Client 1.620 for Linux logged in as
+admin.
+
+| Port | Messages |
+|---|---|
+| 49124 | 175 Upgrade Server Software and its 1 Status, 800, 803 Process List, 804 Exit/Terminate Process |
+| 38848 | 174 Shutdown Server and 151 Disconnect Message |

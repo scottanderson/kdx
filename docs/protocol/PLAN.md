@@ -146,8 +146,8 @@ it does async I/O.
 
 `kdx-proto::msg` has codecs for the payloads in areas 1 to 5, and in area 6
 for the account messages, 114, 116, 143, 150 to 152, 154, 155, 171 and 172
-(the named fields, with the rest kept as raw bytes), 181, 183, 803, 1107, and
-the folder access record of 1100, 1104, and 1105.
+(the named fields, with the rest kept as raw bytes), 174, 181, 183, 803, 804,
+1107, and the folder access record of 1100, 1104, and 1105.
 
 ## Open decisions
 - None currently.

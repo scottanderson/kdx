@@ -830,7 +830,8 @@ The server broadcasts 151 Disconnect Message with flag 4, writes history
 record 0xae, then exits after 5000 ms (`FUN_0806155c`). Mode 1 exits the
 program only **[O `captures/linux-shutdown.pcapng` frames 47, 48]**. Before
 exiting, mode bit 2 runs `/sbin/shutdown -h now` and bit 1 `/sbin/shutdown
--r now` (`FUN_080916e4`) **[S]**.
+-r now` (`FUN_080916e4`) **[S]**. `kdx_proto::msg::admin::ShutdownServer`
+re-encodes frame 47.
 
 **175 Upgrade Server Software**
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
@@ -1973,6 +1974,7 @@ On Linux, kill sends SIGKILL and exit sends SIGTERM to the PID. Bit 2 gets
 There is no reply on success; the server logs `Terminate Process` and
 writes history record 0x324 **[S]**. The client's Exit Process sends flags
 2 (exit) **[O `captures/linux-shutdown.pcapng` frame 25]**.
+`kdx_proto::msg::admin::ExitTerminateProcess` re-encodes it.
 
 ### Folder access
 

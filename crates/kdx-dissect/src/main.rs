@@ -14,9 +14,9 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof};
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser, ExtraServerInfo,
-    FolderAccess, FolderAccessItem, HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast,
-    SendBroadcast, YourAddress,
+    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
+    MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -489,6 +489,14 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&broadcast.text)
             )
         }
+        MessageType::SHUTDOWN_SERVER => {
+            let request = ShutdownServer::decode(payload)?;
+            format!(
+                "mode {:#x} message {}",
+                request.mode,
+                quoted(&request.message)
+            )
+        }
         MessageType::JOIN_CHAT => {
             let join = JoinChat::decode(payload)?;
             format!("chat {} key {:#x}", join.chat_id, join.key)
@@ -909,6 +917,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             })
             .collect::<Vec<_>>()
             .join("; "),
+        MessageType::EXIT_TERMINATE_PROCESS => {
+            let request = ExitTerminateProcess::decode(payload)?;
+            format!("pid {} flags {:#x}", request.pid, request.flags)
+        }
         MessageType::FOLDER_ACCESS_LIST => FolderAccessItem::decode_list(payload)?
             .iter()
             .map(|i| {
