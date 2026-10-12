@@ -141,7 +141,7 @@ it does async I/O.
 | `kdx-cli` | programs | `kdx`, the command-line client, and `kdx-probe` |
 | `kdx-server` | library | for writing KDX servers (placeholder) |
 | `kdx-daemon` | program | the server built on `kdx-server` (placeholder) |
-| `kdx-tracker` | program | the tracker (placeholder) |
+| `kdx-tracker` | program | the tracker |
 | `kdx-dissect` | program | pcap to text |
 
 `kdx-proto::msg` has codecs for the payloads in areas 1 to 5, and in area 6
