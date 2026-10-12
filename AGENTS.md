@@ -74,6 +74,8 @@ cargo fmt --all
 cargo clippy --workspace --all-targets   # no warnings
 cargo test --workspace
 cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
+cargo run -p kdx-dissect -- captures/linux-tracker.pcapng \
+  --password 'lab-only-pw!1' --password 'lab-tracker-pw!1'
 ```
 
 Static analysis runs headless; one call takes about 30 seconds:
