@@ -119,11 +119,7 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 **[O]**.
 
 Text is UTF-8 in the 1.6 builds, but the Linux server passes file names
-through as raw bytes. KDX switched to Unicode in 1.2; earlier versions sent
-Latin text, which 1.2 and later show "somewhat mutilated" (Haxial's
-`UPGRADE WARNINGS.html`, shipped with each 1.600 build). Older text, such as
-file names or news written by a pre-1.2 client, can still hold those bytes,
-probably Mac OS Roman from a Mac or a Windows code page from a PC **[I]**.
+through as raw bytes:
 
 - Server 1.600 for Windows lists files with `FindFirstFileW` and encodes
   each UTF-16 name as UTF-8 (`FUN_00428640`, `FUN_00428380`). It decodes an
@@ -171,9 +167,27 @@ shows as `Erik�`, losing the `s` (Windows client 0x00457190, Windows server
 `FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. Encoding the other way,
 a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`) **[S]**.
 
-No build has a Mac OS Roman table. No capture has non-ASCII text yet. Builds
-before 1.6 are not vendored, so their charset is known only from Haxial's
-note.
+KDX switched to Unicode in 1.2. Each client and server archive in
+`vendor/MANIFEST.md` ships Haxial's release notes as `UPGRADE WARNINGS.html`
+(clients) or `NEW UPGRADE WARNINGS.html` (servers), and their "KDX 1.2 --
+UNICODE" entry says earlier versions supported only Latin text, that 1.2
+can still connect to the previous version but the text may be "somewhat
+mutilated", and that text created by earlier versions has the same problem
+**[S]**. The Windows client's `WINDOWS XP REQUIRED.html` gives Unicode as the
+reason it needs Windows NT **[S]**. The tracker archives' notes predate the
+entry. Pre-1.2 builds are not vendored, so their charset is unknown;
+probably Mac OS Roman from a Mac and a Windows code page from a PC **[I]**.
+
+Nothing negotiates the charset. The handshake's version byte is 0x10 for
+every 1.6 client, and Server 1.620 accepts only 0x10 (see
+[handshake.md](handshake.md)); since 1.2 could still reach 1.1, the switch
+probably kept that byte **[I]**. No build branches on the peer's version
+for text, so a 1.2+ client decodes pre-1.2 bytes as UTF-8 (showing U+FFFD as
+above), and a pre-1.2 client shows UTF-8 as two or three Latin characters
+per letter **[I]**. Old text stored on a server, such as file names or
+news, can still hold pre-1.2 bytes.
+
+No 1.6 build has a Mac OS Roman table. No capture has non-ASCII text yet.
 
 ## Times
 
