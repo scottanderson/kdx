@@ -64,6 +64,14 @@ access answer (`yes`/`no`). The lab convention is login `admin`, password
 (`Accounts.dat`, `KDXServer.stg`, `News.dat`, `Bases/Default/`). Use
 `kdx-lab reset server` to start over.
 
+## Server upgrade
+
+`kdx-lab server` copies `KDXUpgradeHelper.lexe` next to the server, and the
+sandbox stays up after the server exits until the helper has exited too, so
+175 Upgrade Server Software can relaunch the server. The new server goes in
+`lab/run/server/Bases/KDXServer.lexe` (Haxial's `Documentation.pdf`,
+"Upgrade Server Software"). The next `kdx-lab server` puts back 1.620.
+
 ## Tracker first run
 
 The first `kdx-lab tracker` (foreground) runs a similar console setup: press

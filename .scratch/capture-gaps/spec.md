@@ -5,14 +5,14 @@ at least one capture, made with Client 1.620 beta 5 (Linux). No Wine.
 
 ## What the captures hold now
 
-The sixteen captures in `captures/` decode fully (`kdx-dissect` with the lab
+The seventeen captures in `captures/` decode fully (`kdx-dissect` with the lab
 passwords), except the tracker messages and UDP registrations in
 `linux-tracker`, which wait for `.scratch/tracker/` issue 03. These types
 appear in at least one of them:
 
-1, 100–116, 118, 140–143, 150–155, 170–173, 180–183, 200–223, 300, 301,
+1, 100–116, 118, 140–143, 150–155, 170–175, 180–183, 200–223, 300, 301,
 400–403, 405, 407, 409–423, 450–453, 502–513, 515, 550, 551, 600–614,
-700–703, 710–713, 720, 721, 800–803, 1100–1107.
+700–703, 710–713, 720, 721, 800–804, 1100–1107.
 
 108 and 118 appear only in `probe` (the kdx-probe tool), so no GUI client has
 been seen sending them. 223 Chat DCC Addresses has only been seen empty
@@ -30,7 +30,8 @@ other GUI capture uses Client 1.620 beta 5.
 | 700–703, 710–713, 720, 721, tracker UDP registration | tracker | 05 (done) |
 | 900–905 | View Display | 06 |
 | 1000–1003, client-to-client (DCC) on TCP 10600 | voice and DCC | 07 |
-| 174, 175, 804 | shutdown, upgrade, processes | 08 |
+| 174, 175, 804 | shutdown, upgrade, processes | 08 (done; 175 only fails) |
+| 175 succeeding, its 151, the relaunched server | server upgrade to 1.600 | 10 (waits on the Internet Archive) |
 | none new | multi-byte text in names, chat, messages, news, nicks | 09 (done) |
 | 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
 
