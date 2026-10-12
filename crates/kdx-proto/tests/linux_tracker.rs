@@ -7,6 +7,7 @@ use kdx_proto::msg::tracker::{
     AdminSettings, GeneralSettings, GetServerList, GroupListEntry, ServerListEntry, SettingsGroup,
     TrackerSettings, TrackerStats,
 };
+use kdx_proto::msg::Status;
 use kdx_proto::registration::{self, Registration};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -332,6 +333,22 @@ fn statistics() {
             hours: 0,
             connections: 1,
             servers: 1,
+        }
+    );
+}
+
+#[test]
+fn guest_denied() {
+    // Frame 61: 710 from a guest.
+    let guest = guest();
+    let wire = one(&guest, MessageType::STATUS);
+    let status = Status::decode(wire).unwrap();
+    assert_eq!(status.encode(), wire);
+    assert_eq!(
+        status,
+        Status::TrackerError {
+            code: 0x10014,
+            request: MessageType::GET_TRACKERSERV_SETTINGS,
         }
     );
 }

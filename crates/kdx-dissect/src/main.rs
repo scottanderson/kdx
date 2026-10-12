@@ -385,6 +385,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             } => format!(
                 "error {code:#x} for {request} at module {module:#x} line {line} extra {extra:#x}"
             ),
+            Status::TrackerError { code, request } => format!("error {code:#x} for {request}"),
         },
         MessageType::SET_IDENTITY | MessageType::USER_CHANGED | MessageType::USER_JOINED => {
             user(&UserRecord::decode(payload)?.0)
