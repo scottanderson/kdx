@@ -5,7 +5,7 @@ at least one capture, made with Client 1.620 beta 5 (Linux). No Wine.
 
 ## What the captures hold now
 
-The fourteen captures in `captures/` decode fully (`kdx-dissect` with the lab
+The fifteen captures in `captures/` decode fully (`kdx-dissect` with the lab
 passwords). These types appear in at least one of them:
 
 1, 100–116, 118, 140–143, 150–155, 170–173, 180–183, 200–223, 300, 301,
@@ -29,6 +29,7 @@ other GUI capture uses Client 1.620 beta 5.
 | 900–905 | View Display | 06 |
 | 1000–1003, client-to-client (DCC) on TCP 10600 | voice and DCC | 07 |
 | 174, 175, 804 | shutdown, upgrade, processes | 08 |
+| none new | multi-byte text in names, chat, messages, news, nicks | 09 (done) |
 | 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
 
 ## How each session runs
