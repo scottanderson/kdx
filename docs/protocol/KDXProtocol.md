@@ -159,13 +159,24 @@ relay chat bytes without decoding them; 207 Send Chat Text copies the text
 into 208 after capping the message at 0x1000 bytes, which can split a
 multi-byte character (`FUN_08058d74`) **[S]**.
 
+The Linux pair bears this out. Client 1.620 beta 5 sends UTF-8 in 207, 300,
+611, 100, 402, and 415, and Server 1.620 stores and relays the bytes
+unchanged in 208, 301, 610, and 102 and on disk **[O `linux-text-encoding`
+90, 103, 118–121, 249–250, 319–325, 327–330]**. String lengths count bytes.
+A name matches only its own bytes: with `caf\xc3\xa9.txt` and `caf\x8e.txt`
+in one folder, 401 lists both and 412 fetches each by its own spelling
+**[O 41, 52, 71]**.
+
 The decoders never fail. Each invalid sequence becomes one U+FFFD: a stray
 continuation byte (0x80 to 0xbf) or a 0xf8+ lead uses up 1 byte, but a lead
 byte with bad continuations or an overlong form uses up the whole length it
 claims, and a sequence cut off at the end uses up the rest. So `Erik\xd5s`
 shows as `Erik�`, losing the `s` (Windows client 0x00457190, Windows server
-`FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. Encoding the other way,
-a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`) **[S]**.
+`FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. The Linux client shows
+`caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses up the space after
+it, so the client draws three boxes **[O `linux-text-encoding` 195, 302]**.
+Encoding the other way, a lone UTF-16 surrogate becomes U+FFFD
+(`FUN_00428640`) **[S]**.
 
 KDX switched to Unicode in 1.2. Each client and server archive in
 `vendor/MANIFEST.md` ships Haxial's release notes as `UPGRADE WARNINGS.html`

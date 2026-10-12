@@ -29,6 +29,7 @@ other GUI capture uses Client 1.620 beta 5.
 | 900–905 | View Display | 06 |
 | 1000–1003, client-to-client (DCC) on TCP 10600 | voice and DCC | 07 |
 | 174, 175, 804 | shutdown, upgrade, processes | 08 |
+| none new | multi-byte text in names, chat, messages, news, nicks | 09 (done) |
 | 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
 
 ## How each session runs
