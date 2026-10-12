@@ -102,8 +102,10 @@ fnv1(h, b) = (h * 0x01000193) ^ b   for each byte, starting at h = 1
 
 The empty-password constant isn't what the formula gives for an empty input.
 Words 0, 2, 4, 6 and 7 are the five words of SHA-1(""), and words 1, 3 and 5
-are other values. Use the bytes exactly as written above. They haven't been
-checked against traffic yet.
+are other values. Use the bytes exactly as written above. Guest logins use
+it on both sides **[O `captures/kdx-news.pcapng` port 40434, the `kdx` CLI;
+`captures/linux-accounts-news.pcapng` frames 94 to 100, Client 1.620 beta
+5]**.
 
 The server stores this 32-byte key per account, so the password can't be
 recovered from `Accounts.dat` alone **[I]**.
@@ -167,4 +169,5 @@ These are the codes the handshake raises:
 - Everything after the handshake is covered in `session.md`.
 - Resolved: the version-acceptance callback (`+0x88`) is `0x080526e0` in the
   server. See the version field above.
-- Guest login (empty password constant) against traffic.
+- Resolved: guest logins use the empty-password constant (see
+  account_key above).

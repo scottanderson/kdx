@@ -101,7 +101,8 @@ first two, Client 1.620 for Linux is the GUI client and the other ports are
 come from `captures/linux-accounts-news.pcapng`, where Client 1.620 for Linux
 logged in as admin. The connection holds 502 and 504 for the Guest class,
 the `gui-test` account messages, and 600, 602, 604, 607, and 601 for a new
-newsgroup.
+newsgroup. Port 36078 is the same client logged in as guest, so its key is
+the empty password's.
 
 `linux-server-settings-<port>.c2s.bin` and `.s2c.bin` come from
 `captures/linux-server-settings.pcapng`, where Client 1.620 for Linux logged

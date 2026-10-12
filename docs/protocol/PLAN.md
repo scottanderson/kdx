@@ -97,7 +97,7 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 
 | Area | Documented | Codec tested on a capture | Client works |
 |---|---|---|---|
-| 1. Login | yes; guest login not tried against traffic | yes | yes (admin) |
+| 1. Login | yes, including guest | yes | yes (admin and guest) |
 | 2. Users | user record, 101 to 107, 110, 111, 118, 152, 153; the icon bitmap format not yet | yes | user list |
 | 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 only empty | yes | join, say, listen, msg |
 | 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |

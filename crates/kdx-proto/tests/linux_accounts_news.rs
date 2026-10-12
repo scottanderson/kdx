@@ -1,9 +1,11 @@
-//! Checks against `captures/linux-accounts-news.pcapng`: Client 1.620 for Linux as `admin`.
+//! Checks against `captures/linux-accounts-news.pcapng`: Client 1.620 for Linux as `admin` and as guest.
 
+use kdx_proto::handshake::{compute_auth, Hello, Proof, Status as ProofStatus};
 use kdx_proto::msg::admin::AccountClass;
 use kdx_proto::msg::news::NewsgroupInfo;
 use kdx_proto::msg::Status;
 use kdx_proto::session::{Header, MessageType};
+use kdx_proto::AccountKey;
 
 mod common;
 
@@ -111,4 +113,25 @@ fn create_set_and_delete_newsgroup() {
     let (request, wire) = one(&session, MessageType::DELETE_NEWSGROUP);
     assert_eq!(wire, [0, 0, 0, 2]);
     assert_eq!(status(&session, &request), Status::Success { value: 0x259 });
+}
+
+#[test]
+fn guest_login() {
+    let c2s = include_bytes!("fixtures/linux-accounts-news-36078.c2s.bin");
+    let s2c = include_bytes!("fixtures/linux-accounts-news-36078.s2c.bin");
+    let (client, client_len) = Hello::decode(c2s).unwrap();
+    let (server, server_len) = Hello::decode(s2c).unwrap();
+    // Frame 94: no login name.
+    assert!(client.name.is_empty());
+    // Frames 98 and 99: both proofs use the empty password's key.
+    let key = AccountKey::EMPTY_PASSWORD;
+    for (wire, receiver) in [(&c2s[client_len..], &server), (&s2c[server_len..], &client)] {
+        let proof = Proof::decode(wire).unwrap();
+        assert_eq!(proof.status, ProofStatus::Ok);
+        assert_eq!(proof.auth, compute_auth(&key, &receiver.nonce));
+    }
+    // Frame 100 and on decrypt with the same key.
+    let session = common::session_with_key(c2s, s2c, &key);
+    one(&session, MessageType::SET_IDENTITY);
+    one(&session, MessageType::SERVER_INFO);
 }
