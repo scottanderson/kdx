@@ -1041,7 +1041,14 @@ client `FUN_080758dc`]**. Each record is padded to 4:
 | 0x54 | | name, format, comments | |
 
 The client labels are Free Size, Used Size, Total Size, Item Count, Disk
-Type, Format, Created, Modified, and Comments.
+Type, Format, Created, Modified, and Comments. It makes the name or comments
+field read-only when its bit is clear (`FUN_080a0410`).
+
+Server 1.620 for Linux writes `caps & 2 | 1` to both 0x44 and 0x48, where
+`caps` is the constant 0x39 from `FUN_08096780`. So the name is always
+editable and the comments never are **[S `FUN_0804ef00`]**. Both words are
+`00000001` in frame 51 of `captures/linux-catalog-volumes.pcapng`, which
+also ends with the format, `tmpfs` **[O]**.
 
 A *name list* below has the same layout as a file path: a u16 count, then
 for each name a u16 0, a u8 length, and the name. When a request carries
@@ -1125,10 +1132,21 @@ Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
 client `FUN_08074420`]**
 
-The request is a 422 Volume Info record. Flags at 0x44: bit 0 renames the
-volume to the name (length at 0x4e), bit 1 sets the comments (length at
-0x51). The format string is ignored. There is no reply; the server writes
-history record 0x1a7.
+The request has the 422 Volume Info layout, but its strings differ. At 0x54
+come the volume's current name (length at 0x4e), the new name (length at
+0x4f), the format (length at 0x50, ignored), and the comments (length at
+0x51). Flags at 0x44: bit 0 renames the volume, bit 1 sets the comments. The
+client sets a bit only for a field the user edited, and sends nothing if
+neither was **[S client `FUN_08074420`]**. On success there is no reply;
+the server writes history record 0x1a7 **[S]**.
+
+In Server 1.620 for Linux both setters are stubs **[S]**. Renaming
+(`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the history
+record is written, and the client gets a 1 Status error with it. In frame 53
+of `captures/linux-catalog-volumes.pcapng`, 423 has flags `00000001`, the
+name `/tmp`, and the new name `/tmp-renamed`; frame 54 is the error, at
+module 0x46, line 2175 **[O]**. Setting the comments (`FUN_08094e6c`) does
+nothing.
 
 #### Transfer connections
 
