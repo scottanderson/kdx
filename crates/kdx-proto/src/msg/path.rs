@@ -53,6 +53,23 @@ impl FilePath {
         Ok((Self(names), at))
     }
 
+    /// Decodes a path that is followed by more fields, where the root is a count of 0.
+    pub fn decode_delimited(buf: &[u8]) -> Result<(Self, usize), DecodeError> {
+        need(buf, 2)?;
+        if u16_at(buf, 0) == 0 {
+            return Ok((Self::default(), 2));
+        }
+        Self::decode_prefix(buf)
+    }
+
+    /// Encodes a path that is followed by more fields: the root encodes as a count of 0.
+    pub fn encode_delimited(&self) -> Result<Vec<u8>, EncodeError> {
+        if self.0.is_empty() {
+            return Ok(vec![0; 2]);
+        }
+        self.encode()
+    }
+
     /// Encodes the path; the root encodes as nothing.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         if self.0.is_empty() {
@@ -94,5 +111,17 @@ mod tests {
         assert!(FilePath::decode(&[0, 1, 0, 0, 5, b'a']).is_err());
         let two = FilePath::new(["a", "bc"]);
         assert_eq!(FilePath::decode(&two.encode().unwrap()).unwrap(), two);
+    }
+
+    #[test]
+    fn delimited() {
+        let root = FilePath::decode_delimited(&[0, 0, 0, 1]).unwrap();
+        assert_eq!(root, (FilePath::default(), 2));
+        assert_eq!(FilePath::default().encode_delimited().unwrap(), [0, 0]);
+        let wire = b"\x00\x01\x00\x00\x01ab";
+        let (path, len) = FilePath::decode_delimited(wire).unwrap();
+        assert_eq!((path.clone(), len), (FilePath::new(["a"]), 6));
+        assert_eq!(path.encode_delimited().unwrap(), wire[..6]);
+        assert!(FilePath::decode_delimited(&[]).is_err());
     }
 }

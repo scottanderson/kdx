@@ -208,7 +208,9 @@ base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
 | n | name, per name |
 
 The root is an empty payload, not a count of 0. A path with names must be at
-least 6 bytes. Otherwise the server raises 0x1000a. The server joins the
+least 6 bytes. Otherwise the server raises 0x1000a: a 400 Get File List of
+`00 00` gets it in frames 106-107 of `captures/probe.pcapng` **[O]**, so
+`kdx-dissect` flags that request as invalid. The server joins the
 names with `/` and checks each one with `FUN_08094084` **[S]**. For example,
 `00 01 00 00 0c "Uploads [UL]"` is the root folder `Uploads [UL]` **[O]**.
 
@@ -1168,9 +1170,12 @@ also ends with the format, `tmpfs` **[O]**.
 A *name list* below has the same layout as a file path: a u16 count, then
 for each name a u16 0, a u8 length, and the name. When a request carries
 paths back to back, each one is self-delimiting, and the root is written as
-a count of 0 (`00 00`) rather than left empty **[O]**. Each request also passes
-the folder access check (`FUN_08057e5c`) with an access kind; a failure gets
-1 Status 0x10014.
+a count of 0 (`00 00`) rather than left empty (`captures/linux-files.pcapng`
+frames 206 and 241) **[O]**. `kdx_proto::msg::FilePath::decode_delimited`
+reads such a path. Each request also passes the folder access check
+(`FUN_08057e5c`) with an access kind; a failure gets 1 Status 0x10014.
+`kdx_proto::msg::file` re-encodes each request below byte for byte (test
+`linux_files`).
 
 **402 Create Folder**
 Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
@@ -1188,34 +1193,40 @@ Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
 With a tag the folder is named `name [tag]`, or `name [tag,owner]` with an
 owner login. A name ending in a reserved suffix such as `lnk` gets 0x30076.
 Success is 1 Status 0x192 (frame 29). The client's New Folder dialog has
-Name, a Folder Access popup, and Owner Login.
+Name, a Folder Access popup, and Owner Login. Frame 26 is 51 bytes: the
+name `lab-folder` and the path `Uploads [UL]`, with no tag or owner and no
+padding **[O]** (`CreateFolder`).
 
 **403 Create Alias**
 Initiator: Client. Privilege: Create Aliases (15). **[S `FUN_0804e4ec`; O
-frames 95-98]**
+`captures/linux-files.pcapng` frames 95-98]**
 
 The request is the destination folder path, the source folder path, then a
 name list of items in the source folder (frame 95: `Uploads [UL]`,
-`Uploads [UL]`, `upload2.txt`). Success is 1 Status 0x193 (frame 98).
+`Uploads [UL]`, `upload2.txt`). Success is 1 Status 0x193 (frame 98). It
+has the 407 layout (`MoveItems`).
 
 **405 Move To Trash**
-Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O frames
-241-244]**
+Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O
+`captures/linux-files.pcapng` frames 241-244]**
 
 The request is a folder path, then a name list (frame 241: the root, then
 `lab-folder`). Each item gets a history record. Success is 1 Status 0x195
-(frame 244).
+(frame 244). `MoveToTrash` holds the request.
 
 **407 Move File/Folder**
-Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O frames 76,
-80, 127, 206]**
+Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O
+`captures/linux-files.pcapng` frames 76, 80, 127, 131, 206, 210]**
 
 The request is the destination folder path, the source folder path, then a
 name list. Frame 76 moves `upload.txt` from `Uploads [UL]/lab-folder` to
-`Uploads [UL]`. Success is 1 Status 0x197 (frame 80).
+`Uploads [UL]`, 127 moves `upload2.txt` back into `lab-folder`, and 206
+moves `lab-folder` to the root. Success is 1 Status 0x197 (frames 80, 131,
+210). `MoveItems` holds the request.
 
 **411 Set File/Folder Info**
-Initiator: Client. **[S `FUN_0804f684`; O frame 89]**
+Initiator: Client. **[S `FUN_0804f684`; O `captures/linux-files.pcapng`
+frame 89]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1230,7 +1241,7 @@ Initiator: Client. **[S `FUN_0804f684`; O frame 89]**
 
 Without Modify Folder Access (28), a new name must keep the folder's
 ` [tag]` suffix. There is no reply, success or not (frame 89: no Status for
-its txid).
+its txid). Frame 89 is 93 bytes, unpadded **[O]** (`SetFileInfo`).
 
 **420 Launch File**
 Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
@@ -1248,7 +1259,8 @@ Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 
 **423 Set Volume Info**
 Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
-client `FUN_08074420`]**
+client `FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames
+53-54]**
 
 The request has the 422 Volume Info layout, but its strings differ. At 0x54
 come the volume's current name (length at 0x4e), the new name (length at
@@ -1264,7 +1276,9 @@ record is written, and the client gets a 1 Status error with it. In frame 53
 of `captures/linux-catalog-volumes.pcapng`, 423 has flags `00000001`, the
 name `/tmp`, and the new name `/tmp-renamed`; frame 54 is the error, at
 module 0x46, line 2175 **[O]**. Setting the comments (`FUN_08094e6c`) does
-nothing.
+nothing. Frame 53 is 100 bytes, unpadded, with every field but the flags
+and string lengths 0 **[O]**. `kdx_proto::msg::file::SetVolumeInfo`
+re-encodes it byte for byte (test `linux_catalog_volumes`).
 
 #### Transfer connections
 
@@ -1649,7 +1663,8 @@ Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`; O]**
 The request is a 503 Account Class Info record (at least 0x38 bytes) with
 the class index at 0x30. Client 1.620 for Linux sends it unpadded, with the
 time 0 and the second string and editor login empty (69 bytes for
-Administrator, `captures/linux-catalog-volumes.pcapng` frames 40 and 59).
+Administrator, `captures/linux-catalog-volumes.pcapng` frames 40 and 59;
+61 bytes for Guest, `captures/linux-accounts-news.pcapng` frames 20 and 30).
 The server filters the name (`FUN_08081ffc`), writes the requester's login
 as the editor, sets the time at 0x10, and saves the class. Privileges the
 requester lacks can't be granted (`FUN_080551b0`; failure 1 Status
@@ -1681,10 +1696,13 @@ Reply: a u32 count, then one entry per group:
 
 **602 Get Newsgroup** → **603 Newsgroup Info**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805cc24`; O 76 bytes]**
+`FUN_0805cc24`; O 76 bytes; O `captures/linux-accounts-news.pcapng` frames
+68-69]**
 
 The request is a u32 group ID. An unknown group gets 1 Status 0x1000c. The
-reply is padded to 4:
+reply is not padded: frame 69 of `captures/linux-accounts-news.pcapng` is 82
+bytes, for the 14-byte name `test newsgroup` and the description `desc`
+**[O]**. The record is:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1790,7 +1808,8 @@ Initiator: Server. **[S; O]**
 
 **600 Create Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805c8f8`, client `FUN_08089034`]**
+`FUN_0805c8f8`, client `FUN_08089034`; O
+`captures/linux-accounts-news.pcapng` frames 58-63]**
 
 The request is a 603 Newsgroup Info record. The server ignores the ID at
 0x00 and picks one. The name must be 1..0x3f bytes and the description at
@@ -1798,23 +1817,31 @@ most 0x7f. Success is 1 Status 0x258, and a history record. The client's
 editor has Name, Description, Archive Size, and the class access list; it
 sends 600 or 604, then 605 Get Newsgroup List.
 
+Frame 58 creates `test newsgroup` (description `desc`, archive size 0x1a4,
+read and post classes `80000000`, so Administrator only). It is 82 bytes,
+unpadded, with the ID, time, message count, and the bitmap at 0x20 all 0.
+The server gives it ID 2 (frame 63) **[O]**. `NewsgroupInfo` re-encodes 600,
+603, and 604 byte for byte (test `linux_accounts_news`).
+
 When a group's stored messages reach 1.5 times the archive size, the server
 moves the oldest ones into a file under `News Archives` named after the
 group **[S `FUN_0805ed88`]**.
 
 **601 Delete Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805caf4`]**
+`FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81-84]**
 
 The request is a u32 group ID. An unknown group gets 0x1000c. Success is
-1 Status 0x259. 602 Get Newsgroup also writes history record 0x25a.
+1 Status 0x259 (frame 84). 602 Get Newsgroup also writes history record 0x25a.
 
 **604 Set Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805ce60`]**
+`FUN_0805ce60`; O `captures/linux-accounts-news.pcapng` frames 71-74]**
 
 The request is a 603 Newsgroup Info record with the group ID at 0x00.
-Success is 1 Status 0x25c.
+Success is 1 Status 0x25c (frame 74). Frame 71 renames group 2 to `Lab
+Group`, with the description `edited description` and archive size 0x32. It
+is 91 bytes, unpadded **[O]**.
 
 ### Processes
 
@@ -1876,7 +1903,9 @@ Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`;
 O]**
 
 The request is empty or a u32. If the u32's top byte has bit 0 set, a user
-without the privilege gets no reply instead of 1 Status 0x10014.
+without the privilege gets no reply instead of 1 Status 0x10014. Client
+1.620 for Linux sends `00000001` when it opens the file window and an empty
+request after 1100 (`captures/linux-files.pcapng` frames 23 and 232) **[O]**.
 
 Reply: a u32 count, then one entry per item, each padded to 4:
 
@@ -1893,10 +1922,12 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 
 **Folder access record**
 **[S `FUN_080572f0`, `FUN_08057634`, client folder access editor; O
-`captures/linux-files.pcapng` 1100, 1104]**
+`captures/linux-files.pcapng` frames 226, 229, 231]**
 
 1100, 1104, and 1105 share this record. Its total length, padded to 4, must
-equal the payload length.
+equal the payload length. `kdx_proto::msg::admin::FolderAccess` re-encodes
+the three captured records byte for byte, padding included (test
+`linux_files`).
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1926,7 +1957,7 @@ Name, the Access Privileges table, and Icon.
 
 **1100 Create Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
-`FUN_080572f0`; O]**
+`FUN_080572f0`; O `captures/linux-files.pcapng` frames 231-234]**
 
 The request is a folder access record. An invalid name gets 0x1001e, an
 existing one 0x1000d. Success is 1 Status 0x44c. Frame 231 creates `test`
@@ -1942,10 +1973,10 @@ the name) to the requester and writes history record 0x44d.
 
 **1103 Get Folder Access** → **1104 Folder Access Info**
 Initiator: Client. Privilege: View Folder Access (27). **[S
-`FUN_08057534`; O]**
+`FUN_08057534`; O `captures/linux-files.pcapng` frames 225-229]**
 
-The request is the item name, with no length byte. The reply is the stored
-folder access record.
+The request is the item name, with no length byte (`DB` at 225, `[Default]`
+at 228). The reply is the stored folder access record.
 
 **1105 Set Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
