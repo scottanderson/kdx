@@ -1,6 +1,9 @@
 //! Checks against `captures/linux-catalog-volumes.pcapng`: Client 1.620 for Linux as `admin`.
 
 use kdx_proto::msg::admin::{AccountClass, MonitoredConnection};
+use kdx_proto::msg::file::{
+    CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, VolumeInfo, ATTR_FILE,
+};
 use kdx_proto::msg::{FilePath, Status};
 use kdx_proto::session::{Header, MessageType};
 
@@ -129,4 +132,114 @@ fn set_account_class() {
         assert_eq!(saved.privileges, class.privileges);
         assert_eq!(saved.name, class.name);
     }
+}
+
+fn all(messages: &[(Header, Vec<u8>)], kind: MessageType) -> Vec<(Header, &[u8])> {
+    messages
+        .iter()
+        .filter(|(h, _)| h.kind == kind)
+        .map(|(h, p)| (*h, p.as_slice()))
+        .collect()
+}
+
+fn one(messages: &[(Header, Vec<u8>)], kind: MessageType) -> (Header, &[u8]) {
+    let found = all(messages, kind);
+    assert_eq!(found.len(), 1, "{kind}");
+    found[0]
+}
+
+#[test]
+fn generate_catalog() {
+    let session = session();
+    // Frame 23.
+    let (request, wire) = one(&session, MessageType::GENERATE_CATALOG);
+    let catalog = GenerateCatalog::decode(wire).unwrap();
+    assert_eq!(catalog, GenerateCatalog::default());
+    assert_eq!(catalog.encode(), wire);
+
+    // Frames 24 and 26, neither with the request's txid.
+    let statuses = all(&session, MessageType::GENERATE_CATALOG_STATUS);
+    let decoded: Vec<_> = statuses
+        .iter()
+        .map(|(header, wire)| {
+            assert_ne!(header.txid, request.txid);
+            let status = CatalogStatus::decode(wire).unwrap();
+            assert_eq!(status.encode(), *wire);
+            status
+        })
+        .collect();
+    assert_eq!(
+        decoded,
+        [
+            CatalogStatus { flags: 0, items: 2 },
+            CatalogStatus {
+                flags: CatalogStatus::DONE,
+                items: 11
+            },
+        ]
+    );
+    assert!(!decoded[0].is_done());
+    assert!(decoded[1].is_done());
+}
+
+#[test]
+fn file_search() {
+    let session = session();
+    // Frame 28.
+    let (_, wire) = one(&session, MessageType::FILE_SEARCH);
+    let search = FileSearch::decode(wire).unwrap();
+    assert_eq!(search.query, b"a.txt");
+    assert_eq!(search.encode().unwrap(), wire);
+
+    // Frame 29.
+    let (_, wire) = one(&session, MessageType::FILE_SEARCH_REPLY);
+    let hits = FileSearchEntry::decode_list(wire).unwrap();
+    assert_eq!(hits.len(), 1);
+    let hit = &hits[0];
+    assert_eq!(hit.size, 6);
+    assert_eq!(hit.attributes, ATTR_FILE);
+    assert_eq!(hit.created, hit.modified);
+    assert_eq!(hit.unknown_34, 0x10);
+    assert!(hit.name.is_empty());
+    assert_eq!(hit.path, FilePath::new(["lab-files", "a.txt"]));
+    assert_eq!(FileSearchEntry::encode_list(&hits).unwrap(), wire);
+}
+
+#[test]
+fn launch_file() {
+    let session = session();
+    // Frame 31.
+    let (request, wire) = one(&session, MessageType::LAUNCH_FILE);
+    let launch = LaunchFile::decode(wire).unwrap();
+    assert_eq!(launch.path, FilePath::new(["lab-files", "hello.sh"]));
+    assert_eq!(launch.encode().unwrap(), wire);
+
+    // Frame 32: the success value is the request's type.
+    let reply = all(&session, MessageType::STATUS)
+        .into_iter()
+        .find(|(h, _)| h.txid == request.txid)
+        .unwrap();
+    assert_eq!(
+        Status::decode(reply.1).unwrap(),
+        Status::Success { value: 420 }
+    );
+}
+
+#[test]
+fn volume_info() {
+    let session = session();
+    // Frame 51.
+    let (_, wire) = one(&session, MessageType::VOLUME_INFO);
+    let volume = VolumeInfo::decode(wire).unwrap();
+    assert_eq!(volume.name, b"/tmp");
+    assert_eq!(volume.format, b"tmpfs");
+    assert!(volume.comments.is_empty());
+    assert_eq!(volume.total, u64::MAX);
+    assert_eq!(volume.free, u64::MAX);
+    assert_eq!(volume.item_count, u32::MAX);
+    assert_eq!(volume.disk_type, 0);
+    assert_eq!(volume.icon, 0x3d);
+    assert_eq!(volume.flags, 1);
+    assert_eq!(volume.flags_mask, 1);
+    assert_eq!(volume.encode().unwrap(), wire);
 }

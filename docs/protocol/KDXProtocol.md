@@ -1027,7 +1027,8 @@ The request is a file path. Reply (82 bytes for `Uploads [UL]`):
 
 If the path is a single name that is a volume (the user can see all
 volumes), the reply is **422 Volume Info** instead **[S `FUN_0804ef00`,
-client `FUN_080758dc`]**. Each record is padded to 4:
+client `FUN_080758dc`; O `captures/linux-catalog-volumes.pcapng` frames
+50-51]**. A reply is not padded (93 bytes at 51):
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1036,18 +1037,21 @@ client `FUN_080758dc`]**. Each record is padded to 4:
 | 0x10 | 8 | modified | time |
 | 0x18 | 8 | created | time |
 | 0x20 | 4 | item count | 0xffffffff if unknown |
-| 0x26 | 1 | disk type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy |
-| 0x30 | 4 | icon | |
+| 0x26 | 1 | disk type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy; 0 on Linux [O] |
+| 0x2c | 4 | | 0x88 [O] |
+| 0x30 | 4 | icon | 0x3d [O] |
 | 0x44 | 4 | flags | bit 0 name editable, bit 1 comments editable |
 | 0x48 | 4 | flags mask | the client ANDs it with 0x44 |
 | 0x4e | 1 | name length | |
 | 0x50 | 1 | format length | e.g. the file system name |
 | 0x51 | 1 | comments length | |
-| 0x54 | | name, format, comments | |
+| 0x54 | | name, format, comments | `/tmp` and `tmpfs` at 51 [O] |
 
-The client labels are Free Size, Used Size, Total Size, Item Count, Disk
-Type, Format, Created, Modified, and Comments. It makes the name or comments
-field read-only when its bit is clear (`FUN_080a0410`).
+On Linux the sizes and item count are all ones and the times are 0 [O].
+`kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for byte. The
+client labels are Free Size, Used Size, Total Size, Item Count, Disk Type,
+Format, Created, Modified, and Comments. It makes the name or comments field
+read-only when its bit is clear (`FUN_080a0410`).
 
 Server 1.620 for Linux writes `caps & 2 | 1` to both 0x44 and 0x48, where
 `caps` is the constant 0x39 from `FUN_08096780`. So the name is always
@@ -1124,7 +1128,8 @@ its txid).
 
 **420 Launch File**
 Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
-client `FUN_0807455c`]**
+client `FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames
+31-32]**
 
 The request is 8 zero bytes, then the file path (at least 9 bytes in all).
 Success is 1 Status 0x1a4, and the server runs the file. Frames 31 and 32 of
@@ -1308,7 +1313,8 @@ File/Folder, and 411 Set File/Folder Info cover the same ground **[S
 
 **450 Generate Catalog** → **451 Generate Catalog (S)**
 Initiator: Client. Privilege: Modify Server Settings (61). **[S
-`FUN_0805a728`, `FUN_0805a878`]**
+`FUN_0805a728`, `FUN_0805a878`; O `captures/linux-catalog-volumes.pcapng`
+frames 23-26]**
 
 The request is empty or a u32 of flags; bit 0 cancels a running catalog
 (only its starter may). A second start while one runs gets 1 Status
@@ -1325,7 +1331,8 @@ In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
 `00000000 00000002` (24), then `00000001 0000000b` (26) **[O]**.
 
 **452 File Search** → **453 File Search (R)**
-Initiator: Client. **[S `FUN_0805abc0`]**
+Initiator: Client. **[S `FUN_0805abc0`; O
+`captures/linux-catalog-volumes.pcapng` frames 28-29]**
 
 The request is at least 0x58 bytes. Byte 0x54 is the query length (at
 least 3; the client checks this too), and the query starts at 0x58. The
@@ -1343,7 +1350,7 @@ padded to 4:
 | 0x18 | 4 | path length |
 | 0x20 | 4 | attributes, as in 401 |
 | 0x2e | 2 | as in 401 |
-| 0x34 | 1 | as in 401 |
+| 0x34 | 1 | 0x10 for a file [O] |
 | 0x36 | 1 | name length |
 | 0x38 | | name, then the item's full file path (root first) |
 
@@ -1353,7 +1360,8 @@ an empty 453.
 Frame 29 of `captures/linux-catalog-volumes.pcapng` has one hit for `a.txt`:
 size 6, attributes 1, name length 0, and a path length of 0x16 for the
 path `lab-files`, `a.txt` **[O]**. So the name can be empty, with the item's
-name only in its path.
+name only in its path. `kdx_proto::msg::file` re-encodes 420 and 450 to 453
+byte for byte (test `linux_catalog_volumes`).
 
 ### Accounts
 
