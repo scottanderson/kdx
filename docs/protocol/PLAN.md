@@ -102,7 +102,7 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 only empty | yes | join, say, listen, msg |
 | 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |
 | 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
-| 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 804 read but not probed | yes | account list, show, add, set, rm; passwd |
+| 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 174, 175, and 804 captured (`linux-shutdown`); a successful 175 not yet | yes | account list, show, add, set, rm; passwd |
 | 7. Tracker | yes; registration, 700–703, 710–713, 720/721 captured (`linux-tracker`) | no | no |
 | 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
 

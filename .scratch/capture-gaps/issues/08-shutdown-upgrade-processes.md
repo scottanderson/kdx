@@ -1,6 +1,6 @@
 # Upgrade, process exit, shutdown
 
-Status: ready-for-human
+Status: done
 Scenario: `linux-shutdown`
 Targets: 175, 804, 174
 
@@ -24,3 +24,10 @@ reply; flags bit 0 sends SIGKILL and bit 1 SIGTERM, so note which the GUI's
 Exit Process sends. 174 broadcasts 151 to everyone and the server exits
 5000 ms later; the capture should show which mode byte the "exit the
 program only" choice sends.
+
+2026-10-12: Captured as `captures/linux-shutdown.pcapng`. 175 has no body
+and gets 0x30067, not 0x1000c: the server opens `KDXServer.lexe` under
+`Bases` before the helper. Exit Process sends 804 flags 2 (SIGTERM) in a
+u32, not a byte. "Exit the program only" sends 174 mode 1 in byte 1; bits
+1 and 2 reboot or halt the host. The doc's 174 and 804 layouts were off by
+the byte order of the decompiled reads.

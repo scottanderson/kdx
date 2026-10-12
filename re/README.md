@@ -144,6 +144,10 @@ The addresses are the same.
 | `0x0804b7c8` | timer: licence reminder (155) to users whose 118 value was 0 |
 | `0x0804b9b0` | 142 Get Connection Monitor Info: connection and transfer records |
 | `0x08061598` / `0x0806172c` | 174 Shutdown Server / 175 Upgrade Server Software |
+| `0x0806155c` | timer: shut down after 174/175; mode bit 2 halts, bit 1 reboots the host |
+| `0x080916e4` | run `/sbin/shutdown -h` or `-r now` |
+| `0x08092db8` | open a file by folder and name; 0x30067 when missing |
+| `0x0805b8f4` | 804 Exit/Terminate Process |
 | `0x08090eb0` | current time: u64 ms since 1900 |
 | `0x0805ed88` | move old news into `News Archives` past 1.5 × the archive size |
 | `0x0805a110` | 222 Get Chat DCC Addresses |

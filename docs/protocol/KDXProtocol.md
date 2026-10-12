@@ -821,21 +821,33 @@ Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 1 | mode | low 3 bits nonzero |
-| 0x04 | | message | ≤ 0xff |
+| 0x00 | 1 | 0 | |
+| 0x01 | 1 | mode | low 3 bits nonzero, else 0x10002 |
+| 0x02 | 2 | 0 | |
+| 0x04 | | message | the rest of the body, no length prefix; ≤ 0xff |
 
 The server broadcasts 151 Disconnect Message with flag 4, writes history
-record 0xae, then exits after 5000 ms. The mode is stored but its values are
-not named yet.
+record 0xae, then exits after 5000 ms (`FUN_0806155c`). Mode 1 exits the
+program only **[O `captures/linux-shutdown.pcapng` frames 47, 48]**. Before
+exiting, mode bit 2 runs `/sbin/shutdown -h now` and bit 1 `/sbin/shutdown
+-r now` (`FUN_080916e4`) **[S]**.
 
 **175 Upgrade Server Software**
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
 (82). **[S `FUN_0806172c`]**
 
-The server needs the `KDXUpgradeHelper` program next to it; without it the
-reply is 1 Status 0x1000c. Otherwise it broadcasts 151 Disconnect Message
-"Upgrading server software, be back in 5 seconds!", launches the helper,
-writes history record 0xaf, and exits after 0xd48 ms.
+The request has no fields; the handler reads no body **[S]**. With the
+dialog's restart options unticked the body is empty **[O
+`captures/linux-shutdown.pcapng` frame 19]**.
+
+Without `KDXServer.lexe` in the server's folder the reply is 1 Status
+0x1000c. The server then opens `KDXServer.lexe` in the folder it resolves
+for `Bases` (`FUN_08092db8`) and `KDXUpgradeHelper.lexe`; a missing file
+gets 0x30067 **[S]**. In the lab the first open fails its `stat`: 0x30067,
+module 0x46, line 0x198 **[O frame 20]**. On success the
+server broadcasts 151 Disconnect Message "Upgrading server software, be
+back in 5 seconds!", launches the helper, writes history record 0xaf, and
+exits after 0xd48 ms with mode 1 of 174 **[S]**.
 
 **180 Server History Join** / **182 Server History Leave**
 Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
@@ -1952,15 +1964,15 @@ Initiator: Client. Privilege: Terminate Processes (81). **[S
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 1 | flags | bit 0 kill, bit 1 exit, bit 2 extra flag; one of bits 0 and 1 is required, else 0x10002 |
-| 0x01 | 3 | 0 | |
+| 0x00 | 4 | flags | bit 0 kill, bit 1 exit, bit 2 extra flag; one of bits 0 and 1 is required, else 0x10002 |
 | 0x04 | 4 | PID | |
 | 0x08 | 4 | | must be 0, or nothing happens |
 
 On Linux, kill sends SIGKILL and exit sends SIGTERM to the PID. Bit 2 gets
 0x10005 (unsupported) on Linux. A failed `kill()` returns the OS error.
-There is no reply on success; the server writes history record 0x324. Not
-probed.
+There is no reply on success; the server logs `Terminate Process` and
+writes history record 0x324 **[S]**. The client's Exit Process sends flags
+2 (exit) **[O `captures/linux-shutdown.pcapng` frame 25]**.
 
 ### Folder access
 
