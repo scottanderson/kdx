@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
 use kdx_client::{table, Client, Login};
-use kdx_proto::mac_roman;
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
 use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
@@ -572,14 +571,24 @@ fn parse_path(path: &str) -> Result<FilePath> {
         .map(FilePath)
 }
 
-/// Shows a file name as Mac OS Roman, escaping `\\`, `/`, and control bytes so it round-trips.
+/// Shows a file name as UTF-8, escaping `\\`, `/`, control characters, and invalid bytes so it round-trips.
 fn name_text(bytes: &[u8]) -> String {
     let mut out = String::new();
-    for &b in bytes {
-        match b {
-            b'\\' => out.push_str("\\\\"),
-            b'/' | ..=0x1f | 0x7f => out.push_str(&format!("\\x{b:02x}")),
-            _ => out.push(mac_roman::char_from_byte(b)),
+    for chunk in bytes.utf8_chunks() {
+        for c in chunk.valid().chars() {
+            match c {
+                '\\' => out.push_str("\\\\"),
+                '/' => out.push_str("\\x2f"),
+                _ if c.is_control() => {
+                    for b in c.encode_utf8(&mut [0; 4]).bytes() {
+                        out.push_str(&format!("\\x{b:02x}"));
+                    }
+                }
+                _ => out.push(c),
+            }
+        }
+        for b in chunk.invalid() {
+            out.push_str(&format!("\\x{b:02x}"));
         }
     }
     out
@@ -591,10 +600,7 @@ fn name_bytes(name: &str) -> Result<Vec<u8>> {
     let mut chars = name.chars();
     while let Some(c) = chars.next() {
         if c != '\\' {
-            let b = mac_roman::byte_from_char(c).with_context(|| {
-                format!("{c:?} in {name:?} is not Mac OS Roman; write it as \\xNN")
-            })?;
-            out.push(b);
+            out.extend_from_slice(c.encode_utf8(&mut [0; 4]).as_bytes());
             continue;
         }
         match chars.next() {
@@ -626,18 +632,25 @@ mod tests {
     fn names_round_trip() {
         let all: Vec<u8> = (0..=0xff).collect();
         assert_eq!(name_bytes(&name_text(&all)).unwrap(), all);
-        assert_eq!(name_text(b"Erik\xd5s"), "Erik\u{2019}s");
+        let mixed = ["caf\u{e9} \u{263a}\u{85}".as_bytes(), b"\xd5\xe2\x82"].concat();
+        assert_eq!(name_bytes(&name_text(&mixed)).unwrap(), mixed);
+        assert_eq!(name_text("caf\u{e9}".as_bytes()), "caf\u{e9}");
+        assert_eq!(name_text(b"Erik\xd5s"), "Erik\\xd5s");
         assert_eq!(name_text(b"a/b\\c\r"), "a\\x2fb\\\\c\\x0d");
+        assert_eq!(name_text("\u{85}".as_bytes()), "\\xc2\\x85");
     }
 
     #[test]
     fn typed_paths() {
-        let path = parse_path("/Uploads [UL]/Erik\u{2019}s/Erik\\xd5s 2").unwrap();
+        let path = parse_path("/Uploads [UL]/caf\u{e9}/Erik\\xd5s \u{263a}").unwrap();
         assert_eq!(
             path,
-            FilePath::new([&b"Uploads [UL]"[..], b"Erik\xd5s", b"Erik\xd5s 2"])
+            FilePath::new([
+                &b"Uploads [UL]"[..],
+                "caf\u{e9}".as_bytes(),
+                &[&b"Erik\xd5s "[..], "\u{263a}".as_bytes()].concat(),
+            ])
         );
-        assert!(parse_path("smile \u{263a}").is_err());
         assert!(parse_path("a\\b").is_err());
         assert!(parse_path("a\\x4").is_err());
         assert!(parse_path("a\\xzz").is_err());

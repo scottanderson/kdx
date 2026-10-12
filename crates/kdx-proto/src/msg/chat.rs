@@ -1,9 +1,30 @@
-//! Chat: 202 Join Chat through 219 Chat Info.
+//! Chat: 201 Delete Chat through 222 Get Chat DCC Addresses.
 
 use super::{len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError};
 
 /// The ID of Public Chat, which always exists.
 pub const PUBLIC_CHAT: u32 = 1;
+
+/// A bare chat ID: 201 Delete Chat, 204 Leave Chat, 218 Get Chat, and 222 Get
+/// Chat DCC Addresses.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ChatId(pub u32);
+
+impl ChatId {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self(u32_at(buf, 0)))
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.0.to_be_bytes()
+    }
+}
 
 /// 202 Join Chat.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -36,7 +57,8 @@ impl JoinChat {
     }
 }
 
-/// 203 Chat Window Info, the reply to 202 Join Chat.
+/// 203 Chat Window Info, the reply to 202 Join Chat, and 216 Create Private
+/// Chat (R), the reply to 200 Create Private Chat.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatWindowInfo {
     /// Time in milliseconds.
@@ -103,6 +125,41 @@ impl ChatWindowInfo {
             out.extend_from_slice(s);
         }
         Ok(out)
+    }
+}
+
+/// 205 Chat User Joined and 206 Chat User Departed.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ChatUserChange {
+    /// Chat ID.
+    pub chat_id: u32,
+    /// The user who joined or left.
+    pub user_id: u32,
+    /// Meaning unknown; 0 in 205 and 1 in 206 after 204 Leave Chat.
+    pub unknown_08: u8,
+}
+
+impl ChatUserChange {
+    /// Payload length.
+    pub const LEN: usize = 0x0c;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            chat_id: u32_at(buf, 0),
+            user_id: u32_at(buf, 4),
+            unknown_08: buf[8],
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
+        out[4..8].copy_from_slice(&self.user_id.to_be_bytes());
+        out[8] = self.unknown_08;
+        out
     }
 }
 
@@ -222,6 +279,112 @@ impl ChatTopicChanged {
         out[0x19] = len_u8(&self.nick, "nick")?;
         out.extend_from_slice(&self.topic);
         out.extend_from_slice(&self.nick);
+        Ok(out)
+    }
+}
+
+/// 211 Chat Invite.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ChatInvite {
+    /// Chat ID.
+    pub chat_id: u32,
+    /// User IDs of the invitees.
+    pub user_ids: Vec<u32>,
+    /// Message to the invitees.
+    pub message: Vec<u8>,
+}
+
+impl ChatInvite {
+    /// Size of the fixed part before the user IDs.
+    pub const HEADER_LEN: usize = 0x10;
+    /// Most invitees the server accepts.
+    pub const MAX_INVITEES: usize = 20;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let count = usize::from(u16_at(buf, 8));
+        let ids_end = Self::HEADER_LEN + 4 * count;
+        need(buf, ids_end)?;
+        let user_ids = (0..count)
+            .map(|i| u32_at(buf, Self::HEADER_LEN + 4 * i))
+            .collect();
+        let ([message], _) = strings(buf, ids_end, [usize::from(buf[0x0f])])?;
+        Ok(Self {
+            chat_id: u32_at(buf, 0),
+            user_ids,
+            message,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        if self.user_ids.len() > Self::MAX_INVITEES {
+            return Err(EncodeError::TooLong("invitees"));
+        }
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
+        out[8..0x0a].copy_from_slice(&(self.user_ids.len() as u16).to_be_bytes());
+        out[0x0f] = len_u8(&self.message, "invite message")?;
+        for id in &self.user_ids {
+            out.extend_from_slice(&id.to_be_bytes());
+        }
+        out.extend_from_slice(&self.message);
+        Ok(out)
+    }
+}
+
+/// 212 Chat Invitation, sent to each invitee of 211 Chat Invite.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ChatInvitation {
+    /// Chat ID.
+    pub chat_id: u32,
+    /// Key, for 202 Join Chat.
+    pub key: u32,
+    /// The inviter.
+    pub user_id: u32,
+    /// Meaning unknown; 1 then 2 in the lab.
+    pub unknown_0c: u32,
+    /// Meaning unknown; 1 in the lab.
+    pub unknown_10: u16,
+    /// Probably the invite message; empty in the lab.
+    pub message: Vec<u8>,
+    /// Chat name.
+    pub name: Vec<u8>,
+}
+
+impl ChatInvitation {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0x1c;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [usize::from(buf[0x18]), usize::from(buf[0x19])];
+        let ([message, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            chat_id: u32_at(buf, 0),
+            key: u32_at(buf, 4),
+            user_id: u32_at(buf, 8),
+            unknown_0c: u32_at(buf, 0x0c),
+            unknown_10: u16_at(buf, 0x10),
+            message,
+            name,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0..4].copy_from_slice(&self.chat_id.to_be_bytes());
+        out[4..8].copy_from_slice(&self.key.to_be_bytes());
+        out[8..0x0c].copy_from_slice(&self.user_id.to_be_bytes());
+        out[0x0c..0x10].copy_from_slice(&self.unknown_0c.to_be_bytes());
+        out[0x10..0x12].copy_from_slice(&self.unknown_10.to_be_bytes());
+        out[0x18] = len_u8(&self.message, "invite message")?;
+        out[0x19] = len_u8(&self.name, "chat name")?;
+        out.extend_from_slice(&self.message);
+        out.extend_from_slice(&self.name);
         Ok(out)
     }
 }
@@ -357,5 +520,36 @@ impl ChatRecord {
             out.extend_from_slice(s);
         }
         Ok(out)
+    }
+}
+
+/// 221 Chat Deleted, sent to each member of a chat that 201 Delete Chat removes.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ChatDeleted {
+    /// Chat ID.
+    pub chat_id: u32,
+    /// The user who deleted it.
+    pub user_id: u32,
+}
+
+impl ChatDeleted {
+    /// Payload length.
+    pub const LEN: usize = 8;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            chat_id: u32_at(buf, 0),
+            user_id: u32_at(buf, 4),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
+        out[4..].copy_from_slice(&self.user_id.to_be_bytes());
+        out
     }
 }

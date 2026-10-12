@@ -15,8 +15,8 @@ The operator followed a script; the steps below are what the capture shows.
    went off (`28300003…` to `28200003…`) and back on.
 3. Created the account `gui-test` ("GUI Test", class User), changed it, and
    deleted it.
-4. Created the newsgroup "Lab Group", changed it to "test newsgroup" with a
-   420 KiB limit, and deleted it.
+4. Created the newsgroup "test newsgroup" with a 420 KiB limit, changed it
+   to "Lab Group" with a 50 KiB limit, and deleted it.
 5. Connected as guest with no login (port 36078) and read General News.
 
 ## Observations

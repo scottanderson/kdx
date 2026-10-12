@@ -118,10 +118,76 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 (the `86 ab` at the end of the first entry in the 401 File List example)
 **[O]**.
 
-Text is Mac OS Roman bytes, as the Mac client wrote them. A file name with a
-right single quote holds byte 0xd5, which is not valid UTF-8, and the server
-rejects a path that spells it in UTF-8 **[I]** (user report; no capture yet).
-`kdx_proto::mac_roman` maps each byte to one character and back.
+Text is UTF-8 in the 1.6 builds, but the Linux server passes file names
+through as raw bytes:
+
+- Server 1.600 for Windows lists files with `FindFirstFileW` and encodes
+  each UTF-16 name as UTF-8 (`FUN_00428640`, `FUN_00428380`). It decodes an
+  incoming path as UTF-8 before `CreateFileW` (`FUN_0042a740`,
+  `FUN_004286e0`), so an invalid byte becomes U+FFFD and the file is not
+  found **[S]**.
+- Client 1.600 for Windows keeps text as UTF-8 (decoder at 0x00457190)
+  **[S]**.
+- All three Windows builds (client, server, tracker) use only the wide
+  Win32 calls and `CF_UNICODETEXT` (0xd) for the clipboard. Their only
+  `MultiByteToWideChar` calls convert font and device names (client
+  `FUN_0045ecd0`, server `FUN_0041b460`), so no Windows code page touches
+  protocol text **[S]**.
+- Server 1.600 for Mac OS X converts `readdir` names to NFC UTF-8 with
+  `ConvertFromUnicodeToText` (`FUN_000348cc`, encoding 0x08000100), and the
+  Carbon client 1.600 converts HFS+ names the same way **[S]**.
+- The Carbon server 1.600 (PEF) reads names with `FSGetCatalogInfoBulk` and
+  creates files with `FSCreateFileUnicode`, so it gets UTF-16 names from the
+  File Manager even on Mac OS 9. `FUN_10032a80` normalizes a name to NFC
+  (`CreateTextEncoding(0x100,3,0)`) and encodes it as UTF-8, or encodes it
+  without normalizing when the Text Encoding Converter is older than 0x1020
+  **[S]**. The Mac builds use the system script encoding
+  (`UpgradeScriptInfoToTextEncoding`, `FUN_10060990`) only for local
+  keyboard and clipboard text **[S]**.
+- Client 1.620 beta 5 for Linux reads keys with `Xutf8LookupString` and the
+  clipboard as `UTF8_STRING`, and has no other codec **[S]**. It keeps local
+  file names as raw bytes (`readdir64` in `FUN_0810e6c0`) **[S]**.
+- Server 1.620 for Linux copies `readdir64` names unchanged
+  (`FUN_08091b6c`), so a name is whatever bytes are on disk **[S]**. Names
+  copied from a classic Mac or uploaded by an older client may be Mac OS
+  Roman, such as `Erik’s` with byte 0xd5 (user report). The Mach-O and Linux
+  trackers read their folders with raw `readdir` too **[S]**.
+
+Chat, nicks, and news follow from this: every client builds text from UTF-16
+or UTF-8 input and has no other codec, so it sends UTF-8 **[I]**. Servers
+relay chat bytes without decoding them; 207 Send Chat Text copies the text
+into 208 after capping the message at 0x1000 bytes, which can split a
+multi-byte character (`FUN_08058d74`) **[S]**.
+
+The decoders never fail. Each invalid sequence becomes one U+FFFD: a stray
+continuation byte (0x80 to 0xbf) or a 0xf8+ lead uses up 1 byte, but a lead
+byte with bad continuations or an overlong form uses up the whole length it
+claims, and a sequence cut off at the end uses up the rest. So `Erik\xd5s`
+shows as `Erik�`, losing the `s` (Windows client 0x00457190, Windows server
+`FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. Encoding the other way,
+a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`) **[S]**.
+
+KDX switched to Unicode in 1.2. Each client and server archive in
+`vendor/MANIFEST.md` ships Haxial's release notes as `UPGRADE WARNINGS.html`
+(clients) or `NEW UPGRADE WARNINGS.html` (servers), and their "KDX 1.2 --
+UNICODE" entry says earlier versions supported only Latin text, that 1.2
+can still connect to the previous version but the text may be "somewhat
+mutilated", and that text created by earlier versions has the same problem
+**[S]**. The Windows client's `WINDOWS XP REQUIRED.html` gives Unicode as the
+reason it needs Windows NT **[S]**. The tracker archives' notes predate the
+entry. Pre-1.2 builds are not vendored, so their charset is unknown;
+probably Mac OS Roman from a Mac and a Windows code page from a PC **[I]**.
+
+Nothing negotiates the charset. The handshake's version byte is 0x10 for
+every 1.6 client, and Server 1.620 accepts only 0x10 (see
+[handshake.md](handshake.md)); since 1.2 could still reach 1.1, the switch
+probably kept that byte **[I]**. No build branches on the peer's version
+for text, so a 1.2+ client decodes pre-1.2 bytes as UTF-8 (showing U+FFFD as
+above), and a pre-1.2 client shows UTF-8 as two or three Latin characters
+per letter **[I]**. Old text stored on a server, such as file names or
+news, can still hold pre-1.2 bytes.
+
+No 1.6 build has a Mac OS Roman table. No capture has non-ASCII text yet.
 
 ## Times
 
@@ -142,7 +208,9 @@ base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
 | n | name, per name |
 
 The root is an empty payload, not a count of 0. A path with names must be at
-least 6 bytes. Otherwise the server raises 0x1000a. The server joins the
+least 6 bytes. Otherwise the server raises 0x1000a: a 400 Get File List of
+`00 00` gets it in frames 106-107 of `captures/probe.pcapng` **[O]**, so
+`kdx-dissect` flags that request as invalid. The server joins the
 names with `/` and checks each one with `FUN_08094084` **[S]**. For example,
 `00 01 00 00 0c "Uploads [UL]"` is the root folder `Uploads [UL]` **[O]**.
 
@@ -434,13 +502,17 @@ Initiator: Server. **[S; O]**
 One user record.
 
 **104 User Departed**
-Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429]**
+Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
+`captures/linux-chat-admin.pcapng` frames 59, 116]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | user ID | |
-| 0x04 | 1 | | 7 in both samples |
+| 0x04 | 1 | | 7 in every capture |
 | 0x05 | 3 | 0 | |
+
+`kdx_proto::msg::user::UserDeparted` re-encodes it byte for byte (test
+`linux_chat_admin`).
 
 **105 Server Info**
 Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
@@ -461,12 +533,14 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 The whole message is at most 0x400 bytes.
 
 **106 Server Icon**
-Initiator: Server.
+Initiator: Server. **[O]**
 
 The server's icon bitmap, the same bytes as the icon section of the settings
 blob (see 171 Server Settings Info). [O]: 524 bytes for a 32×32 icon pasted
 from the user icon, starting `01 20 20 04 00 01 00 00 00 ff cc 00`
-(`captures/linux-server-settings.pcapng` frame 83).
+(`captures/linux-server-settings.pcapng` frame 83), equal to the icon
+section of the 171 at frame 221. `kdx_proto::msg::server_info::ServerIcon`
+holds the bytes.
 
 **107 Server Greeting**
 Initiator: Server. **[S `FUN_0804b738`; O]**
@@ -476,10 +550,13 @@ Initiator: Server. **[S `FUN_0804b738`; O]**
 | 0x00 | 4 | 0 |
 | 0x04 | | greeting text, to the end of the payload |
 
-When no greeting is set, the server sends `(No greeting.)` **[O]**. When a
-greeting is set but not enabled, it sends `(Greeting disabled.)`
+When no greeting is set, the server sends `(No greeting.)`
+(`captures/probe.pcapng` frame 163) **[O]**. When a greeting is set but not
+enabled, it sends `(Greeting disabled.)`
 (`captures/linux-server-settings.pcapng` frame 46) **[O]**. The enable
 option is bit 1 of byte 0x93 of the settings blob.
+`kdx_proto::msg::server_info::ServerGreeting` re-encodes frames 46, 62, and
+82 byte for byte (test `linux_server_settings`).
 
 **108 Ping** → **109 Pong**
 Initiator: Client. **[S]**
@@ -505,7 +582,8 @@ User Icon Changed** to everyone, the sender included:
 
 [O]: `/away` sent `01 00 00 00`, and the peer received `00 00 00 03 01 00 00
 00` for user 3 (`captures/linux-server-settings.pcapng` frames 210, 211,
-213).
+213). `kdx_proto::msg::user::MiniUserIcon` and `MiniUserIconChanged`
+re-encode frames 210 to 218 byte for byte.
 
 **112 (unnamed)**
 Initiator: Client. **[S `FUN_0804b738`; O]**
@@ -537,14 +615,16 @@ The request is empty. The reply is a u8 length followed by `"a.b.c.d:port"`:
 the client's address as the server sees it.
 
 **118 (unnamed)**
-Initiator: Client. **[S `FUN_0804fdac`]**
+Initiator: Client. **[S `FUN_0804fdac`; O `captures/probe.pcapng` frame
+165]**
 
 | Off | Size | Field |
 |---|---|---|
 | 0x00 | 4 | value |
 
 No reply. The server stores 1 if the value is nonzero and 2 if it is zero
-(user +0x3b).
+(user +0x3b). The probe sent `00 00 00 01` and got no reply **[O]**.
+`kdx_proto::msg::user::RegistrationNotice` re-encodes it.
 
 The client sends it on a timer, 9000000 ms plus a random 0..0x4fffff ms
 after login **[S client `FUN_0804c01c`]**. The value comes from the
@@ -611,7 +691,8 @@ with 0x49 seconds left; in frame 161, 0x1f4000 at 0x51a1, with 2 left.
 
 **150 Disconnect User**
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to
-ban. **[S `FUN_0804c42c`]**
+ban. **[S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159,
+161]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -635,6 +716,13 @@ check passes. The target receives **151 Disconnect Message**:
 | 0x13 | 1 | name length | |
 | 0x14 | | message, sender name | |
 
+In `captures/linux-chat-admin.pcapng` the GUI (user 2) disconnected itself
+with the message `test` and no ban: the 150 at frame 159 is 28 bytes, and
+the 151 at frame 161 has user ID 2, flags 0, and the name `kdx-lab-linux`
+**[O]**. Since the sender was also the target, the capture doesn't tell the
+two apart at 0x00. `kdx_proto::msg::admin::DisconnectUser` and
+`DisconnectMessage` re-encode both byte for byte.
+
 **152 Get User Info** → **153 User Info**
 Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 
@@ -643,6 +731,7 @@ Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 | 0x00 | 4 | user ID |
 
 If the user doesn't exist, the server replies with 1 Status 0x1000c **[O]**.
+`kdx_proto::msg::user_info::GetUserInfo` encodes the request.
 
 Reply (120 bytes for the prober itself), padded to 4:
 
@@ -662,7 +751,8 @@ Reply (120 bytes for the prober itself), padded to 4:
 | 0x44 | | address, nick, name, login, name | |
 
 **154 Send Broadcast Message**
-Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
+Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`; O
+`captures/linux-chat-admin.pcapng` frames 129, 130, 132]**
 
 | Off | Size | Field |
 |---|---|---|
@@ -671,7 +761,10 @@ Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`]**
 | 0x04 | | text, ≤ 0x800 |
 
 Everyone receives **155 Rcv Broadcast Message**: {u32 sender ID, 8 zero
-bytes, u16 0, u16 (copied from the request), text}.
+bytes, u16 0, u16 (copied from the request), text}. The GUI (user 2) sent
+`00 00 00 00` and `test broadcast` (frame 129), and both the peer (130) and
+the sender (132) got user ID 2, 12 zero bytes, and the text **[O]**.
+`kdx_proto::msg::admin::SendBroadcast` and `RcvBroadcast` re-encode them.
 
 **170 Get Server Settings** → **171 Server Settings Info**
 Initiator: Client. Privilege: Modify Server Settings (61). **[S
@@ -689,17 +782,28 @@ What the captures show (`captures/linux-server-settings.pcapng` frames 36,
 |---|---|---|---|
 | 0x00 | 8 | magic | `%KDXSSTG` |
 | 0x08 | 2 | version | 1 |
-| 0x0c | 8 | main section | u32 offset, u32 length: 0x70, 0x68 |
-| 0x24 | 8 | greeting section | 0xd8, 0x17; length 0 when no greeting is set |
-| 0x34 | 8 | icon section | 0xf0, 0x20c |
+| 0x0c | 0x58 | section table | 11 entries of u32 offset, u32 length [I] |
+| 0x0c | 8 | main section | entry 0: 0x70, 0x68 |
+| 0x24 | 8 | greeting section | entry 3: 0xd8, 0x17; length 0 when no greeting is set |
+| 0x34 | 8 | icon section | entry 5: 0xf0, 0x20c; 0xd8, 0 when none is set; 0xf0, 0 in a 172 without it |
+| 0x44 | 8 | | entry 7: offset the end of the blob and length 0 in a 171; 0, 0 in a 172 |
+| 0x64 | 12 | | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171; 0x6b is 0 in a 172, and 0x69 too in a 172 without the icon |
 | 0x93 | 1 | flags | bit 1: greeting enabled |
 | 0xa8 | 4 | total outgoing speed limit | bytes per second; 0x5000, or 0 when off |
+| 0xc2 | 1 | | 0x0a, the length of both names seen [I] |
 | 0xcc | | server name | NUL-terminated, at the end of the main section |
 
-The greeting section has the layout of 107 Server Greeting, and the icon
-section holds the bytes of 106 Server Icon. A 172 may give the icon section
-length 0, and the server keeps its icon: frames 56 and 225 sent none, and
-the 171 at frame 221 still holds it.
+Entries 1 and 2 are (0xd8, 0) and entries 4, 6, and 8 to 10 are all zero in
+every capture. Each section starts on a multiple of 4. The greeting section
+has the layout of 107 Server Greeting, and the icon section holds the bytes
+of 106 Server Icon. A 172 may give the icon section length 0, and the server
+keeps its icon: frames 56 and 225 sent none, and the 171 at frame 221 still
+holds it.
+
+`kdx_proto::msg::server_info::ServerSettings` decodes the table and reads the
+named fields from the main section, keeping the rest of the bytes as sent.
+It re-encodes all six blobs of `captures/linux-server-settings.pcapng` and
+the 171 at frame 116 of `captures/probe.pcapng` byte for byte.
 
 **174 Shutdown Server**
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
@@ -727,31 +831,59 @@ Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
 `FUN_080627f8`, `FUN_08061d80`]**
 
 The reply (181 Server History Join (R)) is {u32 0, u32 count, buffered
-records}. While joined, the client receives **183 Server History Added** for
-each new record. A record's kind is one of 184–191 (Login, Disconnected,
-Abort File Download, …), or the type of the logged request (e.g. 400 Get
-File List for a failed file list).
+records}, each padded to 4. While joined, the client receives **183 Server
+History Added** for each new record, one record padded to 4. A record's
+kind is one of 184 to 191 (Login, Disconnected, Abort File Download, …), or
+the type of the logged request (e.g. 400 Get File List for a failed file list).
+
+A record **[O `captures/linux-server-settings.pcapng` frames 33, 89, and the
+183s from 38 to 228; `captures/linux-chat-admin.pcapng` frame 135]**:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 8 | time | ms |
+| 0x08 | 4 | kind | 0xbe (190 Server Started) first in each join reply |
+| 0x0c | 4 | user ID | 0 for Server Started |
+| 0x10 | 0x32 | | 0 in every capture |
+| 0x42 | 2 | path length | |
+| 0x46 | 1 | address length | |
+| 0x47 | 1 | nick length | the nick before the event |
+| 0x48 | 1 | login length | |
+| 0x49 | 1 | detail length | the new nick for 100 Set Identity (frame 197), the chat name for 202 Join Chat (frame 208) |
+| 0x4c | | address, nick, login, detail, then the path | |
+
+The path is a file path, as in the file messages: `speed.bin` for 412
+Download File and 188 Finished File Download (frames 108, 190). Saving the
+settings logs 170 Get Server Settings and 172 Set Server Settings (frames
+38, 43). The bytes at 0x44, 0x45, 0x4a, and 0x4b are 0 in every capture.
+`kdx_proto::msg::admin::HistoryRecord` re-encodes every record byte for
+byte.
 
 ### Chat
 
 **200 Create Private Chat** → **216 Create Private Chat (R)**
 Initiator: Client. Privilege: Create Private Chat (34). **[S
-`FUN_08058420`]**
+`FUN_08058420`; O `captures/linux-chat-admin.pcapng` frames 84-85]**
 
-A user can have at most 10 private chats. Reply:
+A user can have at most 10 private chats. The request is empty. The reply
+has the 203 Chat Window Info layout, with the creator as the only member
+**[O]**:
 
 | Off | Size | Field |
 |---|---|---|
 | 0x08 | 4 | chat ID |
 | 0x0c | 4 | key |
+| 0x14 | 2 | flags; 0 at 85 |
 | 0x16 | 2 | member count |
 | 0x20 | 1 | name length |
-| 0x24 | 4 | creator user ID |
+| 0x24 | 4 × count | member user IDs: the creator |
 | … | | name, e.g. `Private 1` |
 
-[O]: 200 Create Private Chat is empty, and the 49-byte reply holds chat ID
-0xb06d05e6, key 0x4ca93520, 1 member, creator 2, and `Private 1`
-(`captures/linux-chat-admin.pcapng` frames 84, 85).
+[O]: the 49-byte reply at 85 holds time 0, chat ID 0xb06d05e6, key
+0x4ca93520, 1 member, user 2, and `Private 1`. The u32 at 0x24 is the member
+list of 203, not a separate creator field.
+`kdx_proto::msg::chat::ChatWindowInfo` re-encodes it byte for byte (test
+`linux_chat_admin`).
 
 **201 Delete Chat**
 Initiator: Client. Privilege: Create/Modify Chats (37). **[S
@@ -766,7 +898,9 @@ nothing.
 with two members sent `e8 df 4d 29 00 00 00 02` to both (frames 125, 127),
 then Status at 129. Deleting the empty `lab-room` sent no 221 to a user in
 Public Chat (frames 77–83). The client deleted a chat whose window was open
-without sending 204 Leave Chat first (frame 122).
+without sending 204 Leave Chat first (frame 122). `ChatId` and `ChatDeleted`
+in `kdx_proto::msg::chat` re-encode 201 (frames 77, 122) and 221 (frames
+125, 127) byte for byte (test `linux_chat_rooms`).
 
 **202 Join Chat** → **203 Chat Window Info**
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
@@ -799,15 +933,20 @@ set; the payload is not padded.
 and 0 for chats made with 217 Create Chat.
 
 The other members receive **205 Chat User Joined** {u32 chat ID, u32 user
-ID, u32 0} (`captures/kdx-cli.pcapng` frame 417) **[O]**.
+ID, u32 0} (`captures/kdx-cli.pcapng` frame 417; `linux-chat-rooms.pcapng`
+frames 117, 177; `linux-chat-admin.pcapng` frame 68) **[O]**.
+`kdx_proto::msg::chat::ChatUserChange` re-encodes it byte for byte.
 
 **204 Leave Chat**
-Initiator: Client. **[S `FUN_08058c0c`]**
+Initiator: Client. **[S `FUN_08058c0c`; O `captures/linux-chat-rooms.pcapng`
+frame 75, `captures/kdx-cli.pcapng` frames 423-424]**
 
 The request is a u32 chat ID. The other members receive **206 Chat User
 Departed** {u32 chat ID, u32 user ID, u8 1, 3 zero bytes}
-(`captures/kdx-cli.pcapng` frame 424) **[O]**. A private chat that becomes empty
-is deleted.
+(`captures/kdx-cli.pcapng` frame 424) **[O]**. The meaning of the 1 is
+unknown; 205 has 0 there. A private chat that becomes empty is deleted.
+`ChatId` and `ChatUserChange` in `kdx_proto::msg::chat` re-encode 204 and
+206 byte for byte (tests `linux_chat_rooms`, `kdx_cli`).
 
 **207 Send Chat Text** → **208 Receive Chat Text**
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
@@ -851,7 +990,8 @@ Members receive 210 Chat Topic Changed:
 | 0x1c | | topic, setter name |
 
 **211 Chat Invite** → **212 Chat Invitation**
-Initiator: Client. **[S `FUN_080591ac`]**
+Initiator: Client. **[S `FUN_080591ac`; O `captures/linux-chat-admin.pcapng`
+frames 87-88, 118-120]**
 
 | Off | Size | Field |
 |---|---|---|
@@ -860,6 +1000,27 @@ Initiator: Client. **[S `FUN_080591ac`]**
 | 0x0f | 1 | message length |
 | 0x10 | 4 × count | invitee user IDs |
 | … | | message |
+
+Each invitee receives 212 Chat Invitation, not padded **[O]**:
+
+| Off | Size | Field |
+|---|---|---|
+| 0x00 | 4 | chat ID |
+| 0x04 | 4 | key |
+| 0x08 | 4 | inviter user ID |
+| 0x0c | 4 | 1 at 88, 2 at 120 |
+| 0x10 | 2 | 1 |
+| 0x18 | 1 | probably the message length [I]; 0 |
+| 0x19 | 1 | chat name length |
+| 0x1c | | message [I], chat name |
+
+[O]: the client invited user 1 to `Private 1` (frame 87, 20 bytes), then
+users 1 and 4 (frame 118, 24 bytes), with no message. User 4 had left, so
+only user 1 got a 212 each time (frames 88 and 120, 37 bytes each). The u32
+at 0x0c may be the request's invitee count or a running count [I]. The u16
+at 0x10 is 1 although 216 gave the chat flags 0. `ChatInvite` and
+`ChatInvitation` in `kdx_proto::msg::chat` re-encode both byte for byte
+(test `linux_chat_admin`).
 
 **213 Must Join Chat**
 Initiator: Server. **[S `FUN_0804b114`; O]**
@@ -898,7 +1059,8 @@ made with 217 Create Chat follow, with a random chat ID (0xc217598c and
 
 **217 Create Chat** / **218 Get Chat** → **219 Chat Info** / **220 Set Chat**
 Initiator: Client. Privilege: Create/Modify Chats (37) for 217 Create Chat
-and 220. **[S; O]**
+and 220. **[S; O `captures/linux-chat-rooms.pcapng` frames 42-62, 85,
+136-137]**
 
 217 Create Chat and 220 Set Chat carry a chat record. 218 Get Chat is a u32
 chat ID, and 219 Chat Info is a chat record. 220 Set Chat refuses private
@@ -927,7 +1089,10 @@ masks are `ff ff ff ff` for Public Chat and `80 00 00 00` for a chat whose
 Access was left at the default. Their bits are probably account classes,
 MSB first (Administrator is class 0), for join, send, and topic [I]. The
 client sends 505 Get Account Class List before it opens the new-chat window
-(frame 39).
+(frame 39). 218 is the chat ID alone (frames 49, 59, 136). 217 gets 1 Status
+success 0xd9 and 220 gets 0xdc (frames 45, 55). `ChatRecord` and `ChatId` in
+`kdx_proto::msg::chat` re-encode 217 to 220 byte for byte (test
+`linux_chat_rooms`).
 
 **222 Get Chat DCC Addresses** → **223 Chat DCC Addresses**
 Initiator: Client. **[S `FUN_0805a110`; O]**
@@ -952,7 +1117,9 @@ The client then opens a TCP connection to each address for voice; see
 joining a voice chat. The reply was empty (len 0) when the client was alone
 (frames 72–73) and when a `kdx` CLI peer was also a member (frames
 119-120). The CLI sends DCC port 0, so the server leaves it out **[S]**.
-An entry has not been seen.
+An entry has not been seen, so 223 has no codec yet.
+`kdx_proto::msg::chat::ChatId` re-encodes 222 byte for byte (test
+`linux_chat_rooms`).
 
 ### Private messages
 
@@ -1062,9 +1229,12 @@ also ends with the format, `tmpfs` **[O]**.
 A *name list* below has the same layout as a file path: a u16 count, then
 for each name a u16 0, a u8 length, and the name. When a request carries
 paths back to back, each one is self-delimiting, and the root is written as
-a count of 0 (`00 00`) rather than left empty **[O]**. Each request also passes
-the folder access check (`FUN_08057e5c`) with an access kind; a failure gets
-1 Status 0x10014.
+a count of 0 (`00 00`) rather than left empty (`captures/linux-files.pcapng`
+frames 206 and 241) **[O]**. `kdx_proto::msg::FilePath::decode_delimited`
+reads such a path. Each request also passes the folder access check
+(`FUN_08057e5c`) with an access kind; a failure gets 1 Status 0x10014.
+`kdx_proto::msg::file` re-encodes each request below byte for byte (test
+`linux_files`).
 
 **402 Create Folder**
 Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
@@ -1082,34 +1252,40 @@ Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
 With a tag the folder is named `name [tag]`, or `name [tag,owner]` with an
 owner login. A name ending in a reserved suffix such as `lnk` gets 0x30076.
 Success is 1 Status 0x192 (frame 29). The client's New Folder dialog has
-Name, a Folder Access popup, and Owner Login.
+Name, a Folder Access popup, and Owner Login. Frame 26 is 51 bytes: the
+name `lab-folder` and the path `Uploads [UL]`, with no tag or owner and no
+padding **[O]** (`CreateFolder`).
 
 **403 Create Alias**
 Initiator: Client. Privilege: Create Aliases (15). **[S `FUN_0804e4ec`; O
-frames 95-98]**
+`captures/linux-files.pcapng` frames 95-98]**
 
 The request is the destination folder path, the source folder path, then a
 name list of items in the source folder (frame 95: `Uploads [UL]`,
-`Uploads [UL]`, `upload2.txt`). Success is 1 Status 0x193 (frame 98).
+`Uploads [UL]`, `upload2.txt`). Success is 1 Status 0x193 (frame 98). It
+has the 407 layout (`MoveItems`).
 
 **405 Move To Trash**
-Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O frames
-241-244]**
+Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O
+`captures/linux-files.pcapng` frames 241-244]**
 
 The request is a folder path, then a name list (frame 241: the root, then
 `lab-folder`). Each item gets a history record. Success is 1 Status 0x195
-(frame 244).
+(frame 244). `MoveToTrash` holds the request.
 
 **407 Move File/Folder**
-Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O frames 76,
-80, 127, 206]**
+Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O
+`captures/linux-files.pcapng` frames 76, 80, 127, 131, 206, 210]**
 
 The request is the destination folder path, the source folder path, then a
 name list. Frame 76 moves `upload.txt` from `Uploads [UL]/lab-folder` to
-`Uploads [UL]`. Success is 1 Status 0x197 (frame 80).
+`Uploads [UL]`, 127 moves `upload2.txt` back into `lab-folder`, and 206
+moves `lab-folder` to the root. Success is 1 Status 0x197 (frames 80, 131,
+210). `MoveItems` holds the request.
 
 **411 Set File/Folder Info**
-Initiator: Client. **[S `FUN_0804f684`; O frame 89]**
+Initiator: Client. **[S `FUN_0804f684`; O `captures/linux-files.pcapng`
+frame 89]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1124,7 +1300,7 @@ Initiator: Client. **[S `FUN_0804f684`; O frame 89]**
 
 Without Modify Folder Access (28), a new name must keep the folder's
 ` [tag]` suffix. There is no reply, success or not (frame 89: no Status for
-its txid).
+its txid). Frame 89 is 93 bytes, unpadded **[O]** (`SetFileInfo`).
 
 **420 Launch File**
 Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
@@ -1142,7 +1318,8 @@ Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 
 **423 Set Volume Info**
 Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
-client `FUN_08074420`]**
+client `FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames
+53-54]**
 
 The request has the 422 Volume Info layout, but its strings differ. At 0x54
 come the volume's current name (length at 0x4e), the new name (length at
@@ -1158,7 +1335,9 @@ record is written, and the client gets a 1 Status error with it. In frame 53
 of `captures/linux-catalog-volumes.pcapng`, 423 has flags `00000001`, the
 name `/tmp`, and the new name `/tmp-renamed`; frame 54 is the error, at
 module 0x46, line 2175 **[O]**. Setting the comments (`FUN_08094e6c`) does
-nothing.
+nothing. Frame 53 is 100 bytes, unpadded, with every field but the flags
+and string lengths 0 **[O]**. `kdx_proto::msg::file::SetVolumeInfo`
+re-encodes it byte for byte (test `linux_catalog_volumes`).
 
 #### Transfer connections
 
@@ -1259,6 +1438,7 @@ It came on the session, not on the transfer connection, when a download
 started under the total outgoing speed limit. [O]: `00 00 50 00`, the
 20480 bytes per second set in the server settings, came right after the 413
 (`captures/linux-server-settings.pcapng` frames 106, 110).
+`kdx_proto::msg::transfer::NotifySpeedLimit` re-encodes it.
 
 **415 Upload File**
 Initiator: Client, on a transfer connection. Privilege: Upload (11).
@@ -1543,7 +1723,8 @@ Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`; O]**
 The request is a 503 Account Class Info record (at least 0x38 bytes) with
 the class index at 0x30. Client 1.620 for Linux sends it unpadded, with the
 time 0 and the second string and editor login empty (69 bytes for
-Administrator, `captures/linux-catalog-volumes.pcapng` frames 40 and 59).
+Administrator, `captures/linux-catalog-volumes.pcapng` frames 40 and 59;
+61 bytes for Guest, `captures/linux-accounts-news.pcapng` frames 20 and 30).
 The server filters the name (`FUN_08081ffc`), writes the requester's login
 as the editor, sets the time at 0x10, and saves the class. Privileges the
 requester lacks can't be granted (`FUN_080551b0`; failure 1 Status
@@ -1575,10 +1756,13 @@ Reply: a u32 count, then one entry per group:
 
 **602 Get Newsgroup** → **603 Newsgroup Info**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805cc24`; O 76 bytes]**
+`FUN_0805cc24`; O 76 bytes; O `captures/linux-accounts-news.pcapng` frames
+68-69]**
 
 The request is a u32 group ID. An unknown group gets 1 Status 0x1000c. The
-reply is padded to 4:
+reply is not padded: frame 69 of `captures/linux-accounts-news.pcapng` is 82
+bytes, for the 14-byte name `test newsgroup` and the description `desc`
+**[O]**. The record is:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1684,7 +1868,8 @@ Initiator: Server. **[S; O]**
 
 **600 Create Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805c8f8`, client `FUN_08089034`]**
+`FUN_0805c8f8`, client `FUN_08089034`; O
+`captures/linux-accounts-news.pcapng` frames 58-63]**
 
 The request is a 603 Newsgroup Info record. The server ignores the ID at
 0x00 and picks one. The name must be 1..0x3f bytes and the description at
@@ -1692,23 +1877,31 @@ most 0x7f. Success is 1 Status 0x258, and a history record. The client's
 editor has Name, Description, Archive Size, and the class access list; it
 sends 600 or 604, then 605 Get Newsgroup List.
 
+Frame 58 creates `test newsgroup` (description `desc`, archive size 0x1a4,
+read and post classes `80000000`, so Administrator only). It is 82 bytes,
+unpadded, with the ID, time, message count, and the bitmap at 0x20 all 0.
+The server gives it ID 2 (frame 63) **[O]**. `NewsgroupInfo` re-encodes 600,
+603, and 604 byte for byte (test `linux_accounts_news`).
+
 When a group's stored messages reach 1.5 times the archive size, the server
 moves the oldest ones into a file under `News Archives` named after the
 group **[S `FUN_0805ed88`]**.
 
 **601 Delete Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805caf4`]**
+`FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81-84]**
 
 The request is a u32 group ID. An unknown group gets 0x1000c. Success is
-1 Status 0x259. 602 Get Newsgroup also writes history record 0x25a.
+1 Status 0x259 (frame 84). 602 Get Newsgroup also writes history record 0x25a.
 
 **604 Set Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805ce60`]**
+`FUN_0805ce60`; O `captures/linux-accounts-news.pcapng` frames 71-74]**
 
 The request is a 603 Newsgroup Info record with the group ID at 0x00.
-Success is 1 Status 0x25c.
+Success is 1 Status 0x25c (frame 74). Frame 71 renames group 2 to `Lab
+Group`, with the description `edited description` and archive size 0x32. It
+is 91 bytes, unpadded **[O]**.
 
 ### Processes
 
@@ -1770,7 +1963,9 @@ Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`;
 O]**
 
 The request is empty or a u32. If the u32's top byte has bit 0 set, a user
-without the privilege gets no reply instead of 1 Status 0x10014.
+without the privilege gets no reply instead of 1 Status 0x10014. Client
+1.620 for Linux sends `00000001` when it opens the file window and an empty
+request after 1100 (`captures/linux-files.pcapng` frames 23 and 232) **[O]**.
 
 Reply: a u32 count, then one entry per item, each padded to 4:
 
@@ -1787,12 +1982,14 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 
 **Folder access record**
 **[S `FUN_080572f0`, `FUN_08057634`, client folder access editor; O
-`captures/linux-files.pcapng` 1100, 1104;
+`captures/linux-files.pcapng` frames 226, 229, 231;
 `captures/linux-accounts-folder-access.pcapng` 1105;
 `captures/linux-folder-access-guest.pcapng` 1105]**
 
 1100, 1104, and 1105 share this record. Its total length, padded to 4, must
-equal the payload length.
+equal the payload length. `kdx_proto::msg::admin::FolderAccess` re-encodes
+the three captured records byte for byte, padding included (test
+`linux_files`).
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1822,7 +2019,7 @@ Name, the Access Privileges table, and Icon.
 
 **1100 Create Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
-`FUN_080572f0`; O]**
+`FUN_080572f0`; O `captures/linux-files.pcapng` frames 231-234]**
 
 The request is a folder access record. An invalid name gets 0x1001e, an
 existing one 0x1000d. Success is 1 Status 0x44c. Frame 231 creates `test`
@@ -1840,12 +2037,12 @@ own next txid, not the request's (`f2cfecc3` at frame 71) **[O]**.
 
 **1103 Get Folder Access** → **1104 Folder Access Info**
 Initiator: Client. Privilege: View Folder Access (27). **[S
-`FUN_08057534`; O]**
+`FUN_08057534`; O `captures/linux-files.pcapng` frames 225-229]**
 
-The request is the item name, with no length byte. The reply is the stored
-folder access record. After a 1105, that is the 1105's record as sent, with
-its current name (`captures/linux-folder-access-guest.pcapng` frames 30,
-38) **[O]**.
+The request is the item name, with no length byte (`DB` at 225, `[Default]`
+at 228). The reply is the stored folder access record. After a 1105, that is
+the 1105's record as sent, with its current name
+(`captures/linux-folder-access-guest.pcapng` frames 30, 38) **[O]**.
 
 **1105 Set Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S

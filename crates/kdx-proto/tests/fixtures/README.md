@@ -72,7 +72,7 @@ Info.
 
 | Port | Messages |
 |---|---|
-| 59246 | the login connection: 400, 405, 407, 409, 452, 1100, 1103, 1106 |
+| 59246 | the login connection: 400, 402, 403, 405, 407, 409, 411, 452, 1100, 1103, 1106 |
 | 50904 | 415 Upload File of the 6-byte `upload.txt`, then its 417 data |
 | 51076 | 412 Download File of the 6-byte `upload2.txt` |
 | 54196 | 412 Download File of the 6-byte `lab-folder/upload.txt` |
@@ -83,3 +83,31 @@ Linux logged in as admin. The connection holds the file catalog, search,
 launch, volume, account class, and Server Settings messages, and 24 replies
 of 143 Connection Monitor Info, 20 of them with a transfer record for a `kdx
 get` of `speed.bin`.
+
+`linux-chat-rooms-<port>`, `linux-chat-admin-<port>`, and `kdx-cli-<port>`
+come from the captures of the same names, all logged in as admin. In the
+first two, Client 1.620 for Linux is the GUI client and the other ports are
+`kdx` CLI peers.
+
+| Fixture | Messages |
+|---|---|
+| `linux-chat-rooms-43718` | the GUI: 201, 204, 217, 218, 219, 220, 221, 222, and empty 223s |
+| `linux-chat-rooms-55916` | `cli-member` in `lab-chat`: 205 and 221 |
+| `linux-chat-admin-37478` | `cli-peer` in Public Chat: 205 and two 212 Chat Invitations |
+| `linux-chat-admin-37484` | the GUI: 200/216 Create Private Chat, two 211 Chat Invites, 104 User Departed, 150/151 Disconnect, 152/153 User Info, 154/155 Broadcast, and 181 |
+| `kdx-cli-51784` | `listener` in Public Chat: 205 and 206 for user 0x14 |
+
+`linux-accounts-news-51382.c2s.bin` and `linux-accounts-news-51382.s2c.bin`
+come from `captures/linux-accounts-news.pcapng`, where Client 1.620 for Linux
+logged in as admin. The connection holds 502 and 504 for the Guest class,
+the `gui-test` account messages, and 600, 602, 604, 607, and 601 for a new
+newsgroup.
+
+`linux-server-settings-<port>.c2s.bin` and `.s2c.bin` come from
+`captures/linux-server-settings.pcapng`, where Client 1.620 for Linux logged
+in as admin.
+
+| Port | Messages |
+|---|---|
+| 45150 | 171/172 Server Settings, 107 Server Greeting, 181 and 183 Server History |
+| 40560 | 106 Server Icon, 107, 110/111 Mini User Icon, 171/172, 181, 183, 419 Notify Speed Limit |

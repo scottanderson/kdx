@@ -1,4 +1,4 @@
-//! File listings, volumes, launching, the catalog, and search.
+//! File listings, folder changes, volumes, launching, the catalog, and search.
 
 use super::{
     len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath,
@@ -157,6 +157,168 @@ impl FileInfo {
     }
 }
 
+/// 402 Create Folder.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CreateFolder {
+    /// The parent folder, or the new folder itself if `name` is empty.
+    pub path: FilePath,
+    /// The new folder's name.
+    pub name: Vec<u8>,
+    /// A folder access tag, such as `DB`, that the server appends as ` [tag]`.
+    pub access: Vec<u8>,
+    /// An owner login that the server appends to the tag.
+    pub owner: Vec<u8>,
+}
+
+impl CreateFolder {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0x18;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [
+            usize::from(buf[0x16]),
+            usize::from(buf[0x13]),
+            usize::from(buf[0x17]),
+            usize::from(u16_at(buf, 0x14)),
+        ];
+        let ([name, access, owner, path], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            path: FilePath::decode(&path)?,
+            name,
+            access,
+            owner,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let path = self.path.encode()?;
+        let path_len = u16::try_from(path.len()).map_err(|_| EncodeError::TooLong("path"))?;
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0x13] = len_u8(&self.access, "folder access tag")?;
+        out[0x14..0x16].copy_from_slice(&path_len.to_be_bytes());
+        out[0x16] = len_u8(&self.name, "folder name")?;
+        out[0x17] = len_u8(&self.owner, "owner login")?;
+        for part in [&self.name, &self.access, &self.owner, &path] {
+            out.extend_from_slice(part);
+        }
+        Ok(out)
+    }
+}
+
+/// Decodes a name list that fills `buf`.
+fn decode_names(buf: &[u8]) -> Result<Vec<Vec<u8>>, DecodeError> {
+    let (names, len) = FilePath::decode_delimited(buf)?;
+    if len != buf.len() {
+        return Err(DecodeError::Invalid("bytes after name list"));
+    }
+    Ok(names.0)
+}
+
+/// 403 Create Alias and 407 Move File/Folder: items of one folder, and the folder they go to.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct MoveItems {
+    /// The folder the items, or their aliases, go to.
+    pub destination: FilePath,
+    /// The folder that holds the items.
+    pub source: FilePath,
+    /// The items' names.
+    pub names: Vec<Vec<u8>>,
+}
+
+impl MoveItems {
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        let (destination, at) = FilePath::decode_delimited(buf)?;
+        let (source, len) = FilePath::decode_delimited(&buf[at..])?;
+        Ok(Self {
+            destination,
+            source,
+            names: decode_names(&buf[at + len..])?,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = self.destination.encode_delimited()?;
+        out.extend(self.source.encode_delimited()?);
+        out.extend(FilePath(self.names.clone()).encode_delimited()?);
+        Ok(out)
+    }
+}
+
+/// 405 Move To Trash.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct MoveToTrash {
+    /// The folder that holds the items.
+    pub folder: FilePath,
+    /// The items' names.
+    pub names: Vec<Vec<u8>>,
+}
+
+impl MoveToTrash {
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        let (folder, at) = FilePath::decode_delimited(buf)?;
+        Ok(Self {
+            folder,
+            names: decode_names(&buf[at..])?,
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = self.folder.encode_delimited()?;
+        out.extend(FilePath(self.names.clone()).encode_delimited()?);
+        Ok(out)
+    }
+}
+
+/// 411 Set File/Folder Info.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SetFileInfo {
+    /// [`Self::RENAME`], and bits 0x86 to set attributes.
+    pub flags: u32,
+    /// The item to change.
+    pub path: FilePath,
+    /// The new name.
+    pub name: Vec<u8>,
+}
+
+impl SetFileInfo {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = 0x34;
+    /// Renames the item to `name`.
+    pub const RENAME: u32 = 1;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [usize::from(u16_at(buf, 0x2e)), usize::from(buf[0x31])];
+        let ([path, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            flags: u32_at(buf, 0x28),
+            path: FilePath::decode(&path)?,
+            name,
+        })
+    }
+
+    /// Encodes the payload, with zeros for the fields the client leaves empty.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let path = self.path.encode()?;
+        let path_len = u16::try_from(path.len()).map_err(|_| EncodeError::TooLong("path"))?;
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0x28..0x2c].copy_from_slice(&self.flags.to_be_bytes());
+        out[0x2e..0x30].copy_from_slice(&path_len.to_be_bytes());
+        out[0x31] = len_u8(&self.name, "new name")?;
+        out.extend_from_slice(&path);
+        out.extend_from_slice(&self.name);
+        Ok(out)
+    }
+}
+
 /// 422 Volume Info, the reply to 409 Get File/Folder Info for a volume.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct VolumeInfo {
@@ -233,6 +395,58 @@ impl VolumeInfo {
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.format);
         out.extend_from_slice(&self.comments);
+        Ok(out)
+    }
+}
+
+/// 423 Set Volume Info, in the 422 layout with a second name.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SetVolumeInfo {
+    /// [`Self::RENAME`] and [`Self::SET_COMMENTS`]: the fields to change.
+    pub flags: u32,
+    /// The volume's current name.
+    pub name: Vec<u8>,
+    /// The new name.
+    pub new_name: Vec<u8>,
+    /// The format; the server ignores it.
+    pub format: Vec<u8>,
+    /// The new comments.
+    pub comments: Vec<u8>,
+}
+
+impl SetVolumeInfo {
+    /// Size of the fixed part before the strings.
+    pub const HEADER_LEN: usize = VolumeInfo::HEADER_LEN;
+    /// Renames the volume to `new_name`.
+    pub const RENAME: u32 = 1;
+    /// Sets the comments.
+    pub const SET_COMMENTS: u32 = 2;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        let lens = [buf[0x4e], buf[0x4f], buf[0x50], buf[0x51]].map(usize::from);
+        let ([name, new_name, format, comments], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        Ok(Self {
+            flags: u32_at(buf, 0x44),
+            name,
+            new_name,
+            format,
+            comments,
+        })
+    }
+
+    /// Encodes the payload, with zeros for the fields the server ignores.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut out = vec![0; Self::HEADER_LEN];
+        out[0x44..0x48].copy_from_slice(&self.flags.to_be_bytes());
+        out[0x4e] = len_u8(&self.name, "volume name")?;
+        out[0x4f] = len_u8(&self.new_name, "new volume name")?;
+        out[0x50] = len_u8(&self.format, "volume format")?;
+        out[0x51] = len_u8(&self.comments, "volume comments")?;
+        for part in [&self.name, &self.new_name, &self.format, &self.comments] {
+            out.extend_from_slice(part);
+        }
         Ok(out)
     }
 }
