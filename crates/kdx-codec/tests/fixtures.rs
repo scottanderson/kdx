@@ -44,7 +44,12 @@ fn connections() -> Vec<String> {
 /// The key of a connection, as `kdx-proto/tests/fixtures/README.md` gives it.
 fn key(name: &str) -> AccountKey {
     let parent = match name {
-        "kdx-news-40434" | "linux-accounts-news-36078" => return AccountKey::EMPTY_PASSWORD,
+        "kdx-news-40434" | "linux-accounts-news-36078" | "linux-tracker-60698" => {
+            return AccountKey::EMPTY_PASSWORD
+        }
+        "linux-tracker-34704" | "linux-tracker-41900" => {
+            return AccountKey::from_password(b"lab-tracker-pw!1")
+        }
         "kdx-accounts-58336" => return AccountKey::from_password(b"rs-test-pw"),
         "probe-33082" => "probe-33068",
         "probe-48796" => "probe-48784",

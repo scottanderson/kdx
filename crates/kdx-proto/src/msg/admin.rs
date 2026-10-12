@@ -4,41 +4,9 @@
 use crate::MessageType;
 
 use super::{
-    len_u8, need, pad4, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError, FilePath,
+    decode_counted, encode_counted, len_u8, need, pad4, strings, u16_at, u32_at, u64_at,
+    DecodeError, EncodeError, FilePath,
 };
-
-/// Reads a u32 count followed by that many records, each padded to 4.
-fn decode_counted<T>(
-    buf: &[u8],
-    count_at: usize,
-    mut decode: impl FnMut(&[u8]) -> Result<(T, usize), DecodeError>,
-) -> Result<Vec<T>, DecodeError> {
-    need(buf, count_at + 4)?;
-    let count = u32_at(buf, count_at) as usize;
-    let mut at = count_at + 4;
-    let mut list = Vec::with_capacity(count.min(buf.len()));
-    for _ in 0..count {
-        let (item, len) = decode(&buf[at..])?;
-        list.push(item);
-        at = (at + pad4(len)).min(buf.len());
-    }
-    Ok(list)
-}
-
-/// Appends a u32 count, then each record padded with zeros to 4.
-fn encode_counted<T>(
-    out: &mut Vec<u8>,
-    list: &[T],
-    mut encode: impl FnMut(&T) -> Result<Vec<u8>, EncodeError>,
-) -> Result<(), EncodeError> {
-    let count = u32::try_from(list.len()).map_err(|_| EncodeError::TooLong("list"))?;
-    out.extend_from_slice(&count.to_be_bytes());
-    for item in list {
-        out.extend(encode(item)?);
-        out.resize(pad4(out.len()), 0);
-    }
-    Ok(())
-}
 
 /// 114 Extra Server Info.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

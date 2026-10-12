@@ -10,12 +10,15 @@
 //! 2. Each side sends a [`Proof`](handshake::Proof) computed from the
 //!    shared [`AccountKey`], the peer's nonce and the [`ChallengeTable`].
 //! 3. Both sides exchange messages sealed with a [`SessionCipher`](session::SessionCipher).
+//!
+//! Servers register with a tracker over UDP with a [`Registration`](registration::Registration).
 
 pub mod account;
 pub mod challenge;
 pub mod handshake;
 pub mod message_type;
 pub mod msg;
+pub mod registration;
 pub mod session;
 mod xor;
 

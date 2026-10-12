@@ -121,3 +121,18 @@ admin.
 |---|---|
 | 49124 | 175 Upgrade Server Software and its 1 Status, 800, 803 Process List, 804 Exit/Terminate Process |
 | 38848 | 174 Shutdown Server and 151 Disconnect Message |
+
+`linux-tracker-<port>.c2s.bin` and `.s2c.bin` are tracker connections from
+`captures/linux-tracker.pcapng`, exported with `--port 10800 --password
+'lab-tracker-pw!1'`. Port 60698 is a guest, so its key is the empty
+password's. `linux-tracker-reg-<frame>.bin` are the server's UDP registrations,
+as sent; 146 and 239 match 23 byte for byte.
+
+| Fixture | Messages |
+|---|---|
+| `linux-tracker-60698` | 700/701, 702/703 for General and Chat, 710 refused with an 8-byte 1 Status |
+| `linux-tracker-41900` | admin: 700/701, 710/711 of a fresh tracker, 712/713, 720/721 |
+| `linux-tracker-34704` | admin: 107, 711, 712 with the new group `Lab`, 701 with nine groups, 703 for `Lab` |
+| `linux-tracker-reg-23` | the first registration: users 1, group `Lab, Lab2` |
+| `linux-tracker-reg-78` | users 2 |
+| `linux-tracker-reg-255` | group `Lab`, with two uncleared padding bytes |
