@@ -118,6 +118,11 @@ a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 (the `86 ab` at the end of the first entry in the 401 File List example)
 **[O]**.
 
+Text is Mac OS Roman bytes, as the Mac client wrote them. A file name with a
+right single quote holds byte 0xd5, which is not valid UTF-8, and the server
+rejects a path that spells it in UTF-8 **[I]** (user report; no capture yet).
+`kdx_proto::mac_roman` maps each byte to one character and back.
+
 ## Times
 
 Times are u64 milliseconds since 1900-01-01 00:00 UTC. The server builds
