@@ -186,7 +186,7 @@ connection `FUN_08069578` sends 700 as soon as it logs in and handles 1, 107,
 
 The tracker's error Status is 8 bytes: the error code, then the request type
 as a u32, like the first 8 bytes of the server's 24-byte Status
-(`KDXProtocol.md`) **[O frames 61, 164]**:
+(`KDXProtocol.md`) **[O frames 61, 164; `kdx-cli-tracker` 39, 53]**:
 
 ```
 00 01 00 14  00 00 02 c6    0x10014 for 710
@@ -233,8 +233,8 @@ Group record, padded to a multiple of 4:
 | 0x04 | | group name | |
 
 A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown
-group 0x1000c; group names match byte for byte **[S]**. Reply 703, with an
-empty payload for an empty group:
+group 0x1000c **[O `kdx-cli-tracker` frame 39]**; group names match byte for
+byte **[S]**. Reply 703, with an empty payload for an empty group:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|

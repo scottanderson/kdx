@@ -23,7 +23,7 @@ server and a tracker, all compatible with the original KDX programs (Server
 - `crates/kdx-client` is an async library on tokio for writing KDX
   clients. `Connection` runs the handshake and sends raw session messages
   through `kdx-codec`, and `Client` logs in and offers typed requests on top
-  of it.
+  of it. `Tracker` does the same for a tracker.
 - `crates/kdx-cli` holds two programs built on `kdx-client`. `kdx` is a
   command-line client:
 
@@ -35,7 +35,9 @@ server and a tracker, all compatible with the original KDX programs (Server
   Its subcommands are `who`, `chats`, `ls`, `get`, `put`, `news`, `post`,
   `delete-news`, `account`, `passwd`, `say`, `msg`, and `listen`. Options
   such as `-s` and `-l` follow the subcommand, and the password comes from
-  `--password` or `KDX_PASSWORD`. `kdx help` lists them.
+  `--password` or `KDX_PASSWORD`. `kdx help` lists them. `kdx tracker
+  groups HOST`, `kdx tracker servers HOST GROUP`, and `kdx tracker stats -l
+  admin HOST` browse a tracker, on port 10800 unless HOST gives one.
   `kdx-probe` sends raw requests and dumps the replies.
 - `crates/kdx-codec` frames connections for `tokio_util::codec`.
   `HandshakeCodec` reads and writes the hello and proof, and `SessionCodec`
