@@ -1,6 +1,6 @@
 # Tracker
 
-Status: ready-for-human
+Status: done
 Scenario: `linux-tracker`
 Targets: 115/116, 700–703, 710–713, 720, 721, 107 from the tracker, and the
 server's UDP registration
@@ -61,3 +61,15 @@ GConsole. The group u16s are always 0. Two things the capture should check:
 the client's 712 omits the admin section (present byte 0x71 is 0), so step
 3 should also try changing the admin password and see that it does not
 take; and step 5's greeting should arrive as 107 right after login.
+
+2026-10-12: Captured in `captures/linux-tracker.pcapng`; the steps and
+frames are in `captures/linux-tracker.md`, and the results are in
+`tracker.md`. Every target appeared except a guest 712, which the client
+can't reach without a 711. The registration decrypts and passes the CRC
+once the placeholder is taken as the bytes `ca d3 1e cc`. The server
+registers every 400 s and right after each settings save. The tracker's
+Status is 8 bytes (code, request type). The client's 712 does carry the new
+password key, but with the admin present byte 0, so the change is dropped;
+it sends the groups section only after a group edit. An unknown group name
+lands in General. A step added at the end created the group `Lab` and
+registered into it.

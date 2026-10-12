@@ -64,6 +64,16 @@ access answer (`yes`/`no`). The lab convention is login `admin`, password
 (`Accounts.dat`, `KDXServer.stg`, `News.dat`, `Bases/Default/`). Use
 `kdx-lab reset server` to start over.
 
+## Tracker first run
+
+The first `kdx-lab tracker` (foreground) runs a similar console setup: press
+Enter, then give the admin login and the password twice. There is no guest
+question; guests can always browse. The lab convention is login `admin`,
+password `lab-tracker-pw!1`. The state persists in
+`lab/run/tracker/KDXTrackerServ.stg`. Client 1.620 beta 5 can't change the
+admin password remotely (`docs/protocol/tracker.md`, 712), so use `kdx-lab
+reset tracker` to change it.
+
 ## Things to know
 
 - The client speaks first. The server sends nothing until the client's first
