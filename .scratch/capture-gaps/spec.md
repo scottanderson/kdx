@@ -5,7 +5,7 @@ at least one capture, made with Client 1.620 beta 5 (Linux). No Wine.
 
 ## What the captures hold now
 
-The fourteen captures in `captures/` decode fully (`kdx-dissect` with the lab
+The fifteen captures in `captures/` decode fully (`kdx-dissect` with the lab
 passwords). These types appear in at least one of them:
 
 1, 100–116, 118, 140–143, 150–155, 170–173, 180–183, 200–223, 300, 301,
