@@ -406,6 +406,47 @@ impl RcvBroadcast {
     }
 }
 
+/// 174 Shutdown Server.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ShutdownServer {
+    /// [`Self::EXIT`], [`Self::RESTART_COMPUTER`], or [`Self::SHUT_DOWN_COMPUTER`].
+    pub mode: u8,
+    /// Message for the users, to the end of the payload.
+    pub message: Vec<u8>,
+}
+
+impl ShutdownServer {
+    /// Size of the fixed part before the message.
+    pub const HEADER_LEN: usize = 4;
+    /// Longest message the server accepts.
+    pub const MAX_MESSAGE_LEN: usize = 0xff;
+    /// Exits the server program.
+    pub const EXIT: u8 = 1;
+    /// Runs `/sbin/shutdown -r now` before exiting.
+    pub const RESTART_COMPUTER: u8 = 2;
+    /// Runs `/sbin/shutdown -h now` before exiting.
+    pub const SHUT_DOWN_COMPUTER: u8 = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::HEADER_LEN)?;
+        Ok(Self {
+            mode: buf[1],
+            message: buf[Self::HEADER_LEN..].to_vec(),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
+        if self.message.len() > Self::MAX_MESSAGE_LEN {
+            return Err(EncodeError::TooLong("shutdown message"));
+        }
+        let mut out = vec![0, self.mode, 0, 0];
+        out.extend_from_slice(&self.message);
+        Ok(out)
+    }
+}
+
 /// A server history record, as in 181 Server History Join (R) and 183 Server History Added.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HistoryRecord {
@@ -811,6 +852,47 @@ impl ProcessList {
             Ok(entry)
         })?;
         Ok(out)
+    }
+}
+
+/// 804 Exit/Terminate Process.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ExitTerminateProcess {
+    /// [`Self::KILL`] or [`Self::EXIT`], optionally with [`Self::EXTRA`].
+    pub flags: u32,
+    /// Process ID.
+    pub pid: u32,
+    /// Must be 0, or the server does nothing.
+    pub value_08: u32,
+}
+
+impl ExitTerminateProcess {
+    /// Payload length.
+    pub const LEN: usize = 0x0c;
+    /// Sends SIGKILL on Linux.
+    pub const KILL: u32 = 1;
+    /// Sends SIGTERM on Linux.
+    pub const EXIT: u32 = 2;
+    /// Meaning unknown; unsupported (0x10005) on Linux.
+    pub const EXTRA: u32 = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            flags: u32_at(buf, 0),
+            pid: u32_at(buf, 4),
+            value_08: u32_at(buf, 8),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[..4].copy_from_slice(&self.flags.to_be_bytes());
+        out[4..8].copy_from_slice(&self.pid.to_be_bytes());
+        out[8..].copy_from_slice(&self.value_08.to_be_bytes());
+        out
     }
 }
 
