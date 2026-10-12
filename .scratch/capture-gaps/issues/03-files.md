@@ -61,3 +61,6 @@ steps from one pass, without the download's transfer connection. 423
 renaming `/tmp` gets error 0x10005 (frames 53/54), and the monitor's 141
 follows the transfer (172).
 
+2026-10-12: The spec now cites the capture for 420, 451, and 453. The 451
+done flag is `00000001` on the wire; the spec had read `0x1000000` from the
+x86 code as big-endian (`FUN_0805a878`).

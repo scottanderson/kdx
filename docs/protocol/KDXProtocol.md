@@ -1122,7 +1122,9 @@ Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
 client `FUN_0807455c`]**
 
 The request is 8 zero bytes, then the file path (at least 9 bytes in all).
-Success is 1 Status 0x1a4.
+Success is 1 Status 0x1a4, and the server runs the file. Frames 31 and 32 of
+`captures/linux-catalog-volumes.pcapng` launch `lab-files/hello.sh` this way
+**[O]**.
 
 **421 Empty Trash**
 Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
@@ -1306,13 +1308,16 @@ Initiator: Client. Privilege: Modify Server Settings (61). **[S
 The request is empty or a u32 of flags; bit 0 cancels a running catalog
 (only its starter may). A second start while one runs gets 1 Status
 0x30075. The server writes history record 0x1c2 and builds an index of all
-files. It sends 451 progress to the starter at most every 2000 ms, and a
-final one when done:
+files. 450 itself gets no reply. The server sends 451 progress to the
+starter at most every 2000 ms, and a final one when done:
 
 | Off | Size | Field |
 |---|---|---|
-| 0x00 | 4 | flags: 0x01000000 = done |
+| 0x00 | 4 | flags: 0x00000001 = done |
 | 0x04 | 4 | items indexed so far |
+
+In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
+`00000000 00000002` (24), then `00000001 0000000b` (26) **[O]**.
 
 **452 File Search** → **453 File Search (R)**
 Initiator: Client. **[S `FUN_0805abc0`]**
@@ -1339,6 +1344,11 @@ padded to 4:
 
 Items the user can't see through folder access are left out. No hit gives
 an empty 453.
+
+Frame 29 of `captures/linux-catalog-volumes.pcapng` has one hit for `a.txt`:
+size 6, attributes 1, name length 0, and a path length of 0x16 for the
+path `lab-files`, `a.txt` **[O]**. So the name can be empty, with the item's
+name only in its path.
 
 ### Accounts
 
