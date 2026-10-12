@@ -10,7 +10,10 @@ use kdx_proto::msg::chat::{
 };
 use kdx_proto::msg::file::{FileInfo, FileListEntry, ATTR_FOLDER};
 use kdx_proto::msg::news::NewsgroupInfo;
+use kdx_proto::msg::server_info::{ServerGreeting, ServerSettings};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
+use kdx_proto::msg::user::RegistrationNotice;
+use kdx_proto::msg::user_info::GetUserInfo;
 use kdx_proto::msg::{FilePath, ServerInfo, UserInfo};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -375,4 +378,49 @@ fn newsgroup_info() {
     );
     assert_eq!((group.message_count, group.size_limit_kib), (1, 50));
     assert_eq!(group.encode().unwrap(), wire);
+}
+
+#[test]
+fn greeting_and_registration() {
+    let session = connection!("45802");
+    // Frame 163, the answer to 112.
+    let wire = one(&session, MessageType::SERVER_GREETING);
+    let greeting = ServerGreeting::decode(wire).unwrap();
+    assert_eq!(greeting.text, b"(No greeting.)");
+    assert_eq!(greeting.encode(), wire);
+
+    // Frame 165.
+    let wire = one(&session, MessageType::UNNAMED_118);
+    let notice = RegistrationNotice::decode(wire).unwrap();
+    assert_eq!(notice.value, 1);
+    assert!(notice.is_registered());
+    assert_eq!(notice.encode(), wire);
+}
+
+#[test]
+fn get_user_info() {
+    // Frames 229 and 232; user 9 doesn't exist.
+    let session = connection!("50984");
+    let ids: Vec<_> = payloads(&session, MessageType::GET_USER_INFO)
+        .into_iter()
+        .map(|wire| {
+            let request = GetUserInfo::decode(wire).unwrap();
+            assert_eq!(request.encode(), wire);
+            request.user_id
+        })
+        .collect();
+    assert_eq!(ids, [8, 9]);
+}
+
+#[test]
+fn default_server_settings() {
+    // Frame 116: the settings of a new server.
+    let session = connection!("32980");
+    let wire = one(&session, MessageType::SERVER_SETTINGS_INFO);
+    let settings = ServerSettings::decode(wire).unwrap();
+    assert_eq!(settings.name(), b"New Server");
+    assert_eq!(settings.greeting(), None);
+    assert!(settings.icon().is_empty());
+    assert_eq!(settings.speed_limit(), 0);
+    assert_eq!(settings.encode(), wire);
 }
