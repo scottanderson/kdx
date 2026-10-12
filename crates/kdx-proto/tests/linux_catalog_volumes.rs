@@ -1,10 +1,17 @@
 //! Checks against `captures/linux-catalog-volumes.pcapng`: Client 1.620 for Linux as `admin`.
 
-use kdx_proto::msg::admin::MonitoredConnection;
-use kdx_proto::msg::FilePath;
-use kdx_proto::session::MessageType;
+use kdx_proto::msg::admin::{AccountClass, MonitoredConnection};
+use kdx_proto::msg::{FilePath, Status};
+use kdx_proto::session::{Header, MessageType};
 
 mod common;
+
+fn session() -> Vec<(Header, Vec<u8>)> {
+    common::session(
+        include_bytes!("fixtures/linux-catalog-volumes-58160.c2s.bin"),
+        include_bytes!("fixtures/linux-catalog-volumes-58160.s2c.bin"),
+    )
+}
 
 /// The 143 payload with each record's padding zeroed; the server leaves it uninitialised.
 fn zero_padding(wire: &[u8]) -> Vec<u8> {
@@ -24,10 +31,7 @@ fn zero_padding(wire: &[u8]) -> Vec<u8> {
 
 #[test]
 fn connection_monitor_with_a_transfer() {
-    let session = common::session(
-        include_bytes!("fixtures/linux-catalog-volumes-58160.c2s.bin"),
-        include_bytes!("fixtures/linux-catalog-volumes-58160.s2c.bin"),
-    );
+    let session = session();
     let replies: Vec<_> = session
         .iter()
         .filter(|(h, _)| h.kind == MessageType::CONNECTION_MONITOR_INFO)
@@ -72,4 +76,57 @@ fn connection_monitor_with_a_transfer() {
     );
     assert_eq!(transfer.value_38, 0x5000);
     assert_eq!(transfer.state, 412);
+}
+
+#[test]
+fn set_account_class() {
+    let session = session();
+    let sets: Vec<_> = session
+        .iter()
+        .filter(|(h, _)| h.kind == MessageType::SET_ACCOUNT_CLASS)
+        .collect();
+    let lists: Vec<_> = session
+        .iter()
+        .filter(|(h, _)| h.kind == MessageType::ACCOUNT_CLASS_LIST)
+        .collect();
+    // The first 506 answers the Account Classes window; one follows each save.
+    assert_eq!((sets.len(), lists.len()), (2, 3));
+    // Frame 40 ticks See All Volumes (bit 22, e8 to ea in byte 2); frame 59 unticks it.
+    for ((header, wire), (_, list), byte_2) in
+        [(sets[0], lists[1], 0xea), (sets[1], lists[2], 0xe8)]
+    {
+        // 69 bytes, with no padding.
+        assert_eq!(wire.len(), 69);
+        let class = AccountClass::decode_set(wire).unwrap();
+        let mut privileges = *b"\x28\x31\xe8\x5b\xf4\xd0\x3c\x0d\xc3\xe0\x80\0\0\0\0\0";
+        privileges[2] = byte_2;
+        assert_eq!(
+            class,
+            AccountClass {
+                privileges,
+                time: 0,
+                unknown_25: 0x50,
+                index: 0,
+                unknown_after_index: [0xff, 0, 0],
+                name: b"Administrator".to_vec(),
+            }
+        );
+        assert_eq!(class.encode_set().unwrap(), *wire);
+
+        // The success value is 0x1f8, which is 504.
+        let (_, status) = session
+            .iter()
+            .find(|(h, _)| h.kind == MessageType::STATUS && h.txid == header.txid)
+            .unwrap();
+        assert_eq!(
+            Status::decode(status).unwrap(),
+            Status::Success { value: 504 }
+        );
+
+        // The 506 after it holds the saved class, with the time set by the server.
+        let saved = &AccountClass::decode_list(list).unwrap()[0];
+        assert_ne!(saved.time, 0);
+        assert_eq!(saved.privileges, class.privileges);
+        assert_eq!(saved.name, class.name);
+    }
 }
