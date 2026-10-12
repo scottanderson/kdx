@@ -12,3 +12,9 @@ Teach `kdx-dissect` to:
 
 Run it on the capture-gaps 05 capture and add that run to the checks in
 `AGENTS.md` if it is fast.
+
+## Comments
+
+2026-10-12: The capture is `captures/linux-tracker.pcapng` (tracker admin
+password `lab-tracker-pw!1`). Its 1 Status replies are 8 bytes (code,
+request type), which `kdx-dissect` now flags as an invalid length.

@@ -7,9 +7,8 @@ Rust server registers with Tracker 1.110, the `kdx` CLI browses Tracker
 ## Where it stands
 
 `docs/protocol/tracker.md` covers UDP registration and the TCP messages
-115, 700–703, 710–713, and 720/721 from the binaries. Nothing is captured,
-so every fact is [S] or [I]. The capture is
-`.scratch/capture-gaps/issues/05-tracker.md`.
+115, 700–703, 710–713, and 720/721 from the binaries, checked against
+`captures/linux-tracker.pcapng` (capture-gaps 05) for everything but 115.
 
 ## Order
 
