@@ -130,10 +130,23 @@ fn captures_dissect_cleanly_and_match_fixtures() {
     let mut matched = BTreeSet::new();
     let mut found = Vec::new();
 
-    for capture in stems(&root().join("captures"), "pcapng") {
-        let export = export_root.join(&capture);
-        std::fs::create_dir_all(&export).unwrap();
-        let output = dissect(&capture, &export);
+    // One process per capture, all at once.
+    let outputs: Vec<_> = std::thread::scope(|scope| {
+        let runs: Vec<_> = stems(&root().join("captures"), "pcapng")
+            .into_iter()
+            .map(|capture| {
+                let export = export_root.join(&capture);
+                scope.spawn(move || {
+                    std::fs::create_dir_all(&export).unwrap();
+                    let output = dissect(&capture, &export);
+                    (capture, export, output)
+                })
+            })
+            .collect();
+        runs.into_iter().map(|run| run.join().unwrap()).collect()
+    });
+
+    for (capture, export, output) in outputs {
         assert!(
             output.contains("  key: "),
             "{capture}: no connection authenticated"
