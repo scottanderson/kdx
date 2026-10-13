@@ -43,6 +43,8 @@ const EXPECTED: &[&str] = &[
     "linux-tracker 48232: key: --password #4 (server proof DOES NOT match)",
     // 400 with a bad path, sent on purpose.
     "probe 32980: ! invalid path name count",
+    // Step 2: `who --login admin` with a wrong password.
+    "win-view-display 34156: stopped: no candidate key matches the client's proof; try --password",
 ];
 
 fn root() -> PathBuf {

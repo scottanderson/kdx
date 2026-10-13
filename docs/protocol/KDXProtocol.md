@@ -2098,7 +2098,8 @@ View display shares the server's screen. It runs on a transfer connection
 Server 1.620 for Linux can't capture its screen (`FUN_080996d8` raises
 0x10004), so 900 there only gets an error, and its input injectors are
 empty. The layouts below are read from the server's code and the client's
-decoder **[S]**; no capture has them yet.
+decoder **[S]**. Server 1.600 for Windows under Wine serves it to Client
+1.620 beta 5 in `captures/win-view-display.pcapng` **[O]**.
 
 **900 Open View Display** → **902 View Display Params**, **903 View
 Display Update**
@@ -2108,10 +2109,12 @@ Initiator: Client, on a transfer connection. Privilege: View Display (66).
 The request is empty. A connection already busy gets 0x10003. The reply is
 902, then a full 903 frame. After that the server sends a 903 to every
 viewer every 1500 ms when the screen has changed. 901 Close View Display has
-no handler: the client closes the connection.
+no handler: the client closes the connection, and sends no 901 (frame 420)
+**[O]**.
 
 902 View Display Params is 0x10 bytes: u32 flags, bit 0 = the viewer may
-control the display (Control Display, 67). The rest is 0.
+control the display (Control Display, 67). The rest is 0. Admin gets 1
+(frame 107) **[O]**.
 
 903 View Display Update:
 
@@ -2148,6 +2151,11 @@ The server uses runs for 10 or more equal pixels, the two-colour codes for
 spans of 4 or more pixels with only two colours, and single pixels
 otherwise.
 
+Wine's black 3840×2160 screen comes as one full 903 (frame 108): width
+0x0f00, height 0x0870, the rectangle 0, 0, 0x0f00, 0x0870, then 253 runs
+`8000 7fff` and one `8000 10fd`, 3840 × 2160 pixels in all. The screen
+never changed, so no later 903 came **[O]**.
+
 A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
 
 **904 View Display Mouse**
@@ -2159,13 +2167,14 @@ Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
 | 0x00 | 4 | modifiers | from the client's event [I] |
 | 0x04 | 2 | x | |
 | 0x06 | 2 | y | |
-| 0x08 | 2 | | from the client's event; wheel or click count [I] |
+| 0x08 | 2 | | from the client's event; wheel or click count [I]; 0 for clicks and moves [O] |
 | 0x0a | 1 | button | |
 | 0x0b | 1 | kind | 1 down, 2 up, 3 move, 4 wheel [I from the client's event codes 9, 10, 11/13, 14] |
 
-Other kinds are ignored. After kind 2, the server sends the next 903 within
-100 ms. The client sends nothing when 902 denied control, and shows "You do
-not have access to control" on a click.
+A click is kind 1, then kind 2, both with button 1; moves have button 0
+(frames 307–310) **[O]**. Other kinds are ignored. After kind 2, the server
+sends the next 903 within 100 ms. The client sends nothing when 902 denied
+control, and shows "You do not have access to control" on a click.
 
 **905 View Display Keyboard**
 Initiator: Client, on the view display connection. Privilege: Control
@@ -2174,12 +2183,14 @@ Display (67). **[S `FUN_0805c498`, client `FUN_0806f1f4`]**
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | modifiers | [I] |
-| 0x04 | 2 | key code | [I] |
-| 0x06 | 2 | character | [I] |
+| 0x04 | 2 | character | [O] |
+| 0x06 | 2 | key code | [O]; `a` = 4, `b` = 5, `c` = 6 |
 | 0x08 | 3 | 0 | |
 | 0x0b | 1 | kind | 1 key down, 2 key up, 3 key repeat [I from the client's event codes 5, 6, 7] |
 
-After kind 1, the server sends the next 903 within 100 ms.
+Typing `abc` sends `0061 0004`, `0062 0005`, `0063 0006` with kind 1, each
+followed by a kind 2 that is zero apart from the kind (frames 312–322)
+**[O]**. After kind 1, the server sends the next 903 within 100 ms.
 
 ### Not yet documented
 
@@ -2187,8 +2198,6 @@ After kind 1, the server sends the next 903 within 100 ms.
   captured. See [tracker.md](tracker.md).
 - Client-to-client (DCC) messages 117, 300 on DCC, and 1000-1003 are read
   statically but not captured. See [dcc.md](dcc.md).
-- View display 900-905 is read statically; it needs a Windows or Mac
-  server to capture.
 
 # Error Codes
 
