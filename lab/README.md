@@ -44,6 +44,7 @@ lab/kdx-lab setup            # once: fetch + checksum the i386 libstdc++.so.5 fr
 lab/kdx-lab up login-guest   # start the network and capture to captures/login-guest.pcapng
 lab/kdx-lab server           # foreground; console accepts: exit, quit, about, info, setport
 lab/kdx-lab server -d        # or detached, logging to lab/run/server.log
+lab/kdx-lab server win -d    # KDX Server 1.600 for Windows under Wine, logging to lab/run/server-win.log
 lab/kdx-lab client           # KDX Client 1.600 under Wine (or: client linux, for 1.620 beta 5)
 lab/kdx-lab shell            # shell inside the lab network (nc, tshark, ss, python3 -I ...)
 lab/kdx-lab down             # stop capture, kill everything in the lab network
@@ -72,6 +73,16 @@ sandbox stays up after the server exits until the helper has exited too, so
 `lab/run/server/Bases/KDXServer.lexe` (Haxial's `Documentation.pdf`,
 "Upgrade Server Software"); the helper moves it over the server's program.
 The next `kdx-lab server` puts back 1.620.
+
+## Windows server
+
+`kdx-lab server win` runs Server 1.600 for Windows under Wine, with its state
+in `lab/run/server-win/`. It is a GUI program, so it needs the X socket like
+the clients. Use it for what the Linux server can't do, such as view display:
+Wine gives it a black screen as large as the host's display. The first run
+shows a dialog for the admin login, password, and guest access; it can stay
+on screen after Save, and saving it twice makes the server report that it
+can't listen on the port, although the first listener keeps running.
 
 ## Tracker first run
 
