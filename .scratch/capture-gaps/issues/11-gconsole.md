@@ -53,3 +53,8 @@ guess was backwards: 4200 is the keyboard and 4201 the mouse. Drags send no
 moves, and kind 3 of 4200 never appeared, so step 3's "drag" gave 4201
 press and release only. Layouts are in `dcc.md` and
 `kdx_proto::msg::gconsole`.
+
+2026-10-13: Client 1.600 for Windows gives the modifier bits: 0x21 is Ctrl
+[S `FUN_00463870`]. It sends Haxial key codes in 4200 where Client 1.620
+beta 5 sends USB HID usages, so a GConsole peer sees different codes from
+the two clients [S]. `dcc.md` compares GConsole with view display.

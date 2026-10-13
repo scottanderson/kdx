@@ -20,16 +20,24 @@ captures.
   changes. That needs a way to show a window on the Wine server's screen
   (a second Wine program in its prefix, through `kdx-lab`), then a `win-`
   capture.
-- [ ] 904 View Display Mouse: modifiers at 0x00 [I]; 0x08, "wheel or click
-  count" [I], 0 so far; kind 4 (wheel) [I]; buttons other than 1.
-- [ ] 905 View Display Keyboard: modifiers at 0x00 [I]; kind 3 (repeat)
-  [I]; the key code table (`a` = 4, `b` = 5, `c` = 6 look like USB HID
-  usages [I]) from the client's `FUN_0806f1f4`.
-- [ ] 904/905 inject events through the Windows server's handlers: read how
+- [ ] 904 View Display Mouse: Client 1.620 beta 5's modifier bits; a capture
+  of buttons 2 and 3 and of kind 4 (wheel). Buttons 1-3 and the kinds are
+  [S] from Server 1.600 for Windows, which ignores the wheel.
+- [ ] 905 View Display Keyboard: Client 1.620 beta 5's modifier bits; a
+  capture of kind 3 (repeat). The key codes are [S]: Client 1.620 beta 5
+  sends USB HID usages (`FUN_0811667c`), Client 1.600 Haxial's own codes.
+- [x] 904/905 inject events through the Windows server's handlers: read how
   it maps the modifiers, buttons, and key codes, to name them from both
-  ends.
+  ends (`mouse_event` in `FUN_00420270`, `keybd_event` in `FUN_00420380`).
 - [ ] The 0x40076 drop of a slow viewer: fine as [S]; no capture needed.
 
 One `win-` capture can cover 903, 904, and 905 together: shift-click,
 right-click, the wheel, holding a key, and a window moving on the server's
 screen.
+
+## Comments
+
+2026-10-13: Read statically in the Windows server; see `KDXProtocol.md`,
+904 and 905. The 903 encoder is read too, but its two-colour and bitmap
+codes still need a screen that changes
+(`.scratch/capture-gaps/issues/12-view-display-content.md`).

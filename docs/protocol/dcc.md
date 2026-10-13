@@ -290,6 +290,10 @@ character, and leaves moves out. The servers rebuild that event from 904
 and 905 **[S `FUN_0805c344`, `FUN_0805c498`]**. No GConsole record uses the
 903 decoder, which only the 903 handler calls **[S `FUN_0806f864`]**.
 
+The servers grab the screen into 32-bit pixels laid out as a zero byte,
+then red, green, and blue **[S `FUN_0041ffd0`]**, the layout of a 4001
+colour; both are likely Haxial's one image format **[I]**.
+
 ## Open questions
 
 - Capture 1003 Voice Data, which could not be started in the sandbox; see

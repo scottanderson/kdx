@@ -40,3 +40,11 @@ Deferred for token budget.
 connection. The capture confirms 902, 903, and 904, and swaps the 905
 character and key code fields; see View display in
 `docs/protocol/KDXProtocol.md`.
+
+2026-10-13: Server 1.600 for Windows read statically (Ghidra project
+`kdxwinserver`); its grab and codec match Server 1.620. It plays 904 back
+with `mouse_event` and 905 with `keybd_event`, through a key code table
+that Client 1.620 beta 5's HID usages don't match, so the keys typed in the
+capture most likely did nothing [I]. See View display in
+`docs/protocol/KDXProtocol.md`. Issue 12 covers what the black screen left
+untested.
