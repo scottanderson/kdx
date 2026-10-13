@@ -8,7 +8,7 @@ use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
 use kdx_proto::handshake::{
-    Hello, Proof, Status, CLIENT_VERSION, FORMAT, NONCE_LEN, SERVICE_KDX, TRACKER_VERSION,
+    Hello, Proof, Status, CLIENT_VERSION, FORMAT, NONCE_LEN, SUB_PROTOCOL_KDX, TRACKER_VERSION,
 };
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -32,7 +32,7 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
         unreachable!("the codec reads a hello first");
     };
     let ours = Hello {
-        service: SERVICE_KDX,
+        sub_protocol: SUB_PROTOCOL_KDX,
         format: FORMAT,
         version: TRACKER_VERSION,
         challenge: random_u32() as u16 % tracker.table.offsets(),
@@ -50,8 +50,8 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
             .send(Handshake::Proof(Proof::new_error(&client.nonce, status)))
             .await?;
         bail!(
-            "refused service {:#010x} version {:#04x}",
-            client.service,
+            "refused sub-protocol {:#010x} version {:#04x}",
+            client.sub_protocol,
             client.version
         );
     }
@@ -137,7 +137,7 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
 
 /// The proof status that refuses a client's hello, as `FUN_0804bb4c` decides.
 const fn refuse(client: &Hello) -> Option<Status> {
-    if client.service != SERVICE_KDX {
+    if client.sub_protocol != SUB_PROTOCOL_KDX {
         Some(Status::UnknownProtocol)
     } else if client.version < CLIENT_VERSION {
         Some(Status::TooOld)

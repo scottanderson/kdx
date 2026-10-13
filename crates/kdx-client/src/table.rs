@@ -44,14 +44,14 @@ const fn legacy_cache_file(story: Story) -> &'static str {
 const MAX_FILE_LEN: u64 = 32 << 20;
 
 /// Where the story is cached: `$XDG_CACHE_HOME/kdx/table` or `~/.cache/kdx/table`,
-/// named for its service with the `%` dropped, such as `kdx.bin`.
+/// named for its sub-protocol with the `%` dropped, such as `kdx.bin`.
 pub fn cache_path(story: Story) -> Option<PathBuf> {
     let dir = std::env::var_os("XDG_CACHE_HOME")
         .filter(|d| !d.is_empty())
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
-    let service = story.service().to_be_bytes();
-    let name = String::from_utf8_lossy(&service[1..]).to_ascii_lowercase();
+    let sub_protocol = story.sub_protocol().to_be_bytes();
+    let name = String::from_utf8_lossy(&sub_protocol[1..]).to_ascii_lowercase();
     Some(dir.join("kdx").join("table").join(format!("{name}.bin")))
 }
 
@@ -230,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn names_cache_files_for_the_service() {
+    fn names_cache_files_for_the_sub_protocol() {
         let names =
             Story::ALL.map(|story| cache_path(story).map(|p| p.file_name().unwrap().to_owned()));
         assert_eq!(names, [Some("kdx.bin".into()), Some("hgc.bin".into())]);

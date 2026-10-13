@@ -3,7 +3,7 @@
 use bytes::BytesMut;
 use kdx_codec::{Error, Handshake, HandshakeCodec};
 use kdx_proto::handshake::{
-    HandshakeError, Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SERVICE_KDX,
+    HandshakeError, Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SUB_PROTOCOL_KDX,
 };
 use kdx_proto::AccountKey;
 use tokio_util::codec::{Decoder, Encoder};
@@ -15,7 +15,7 @@ const RESPONSE: [u8; 20] = [7; 20];
 
 fn hello(version: u8, nonce: u8, name: &[u8]) -> Hello {
     Hello {
-        service: SERVICE_KDX,
+        sub_protocol: SUB_PROTOCOL_KDX,
         format: FORMAT,
         version,
         challenge: 0,
@@ -62,11 +62,11 @@ fn handshake_reports_truncation() {
 }
 
 #[test]
-fn handshake_rejects_bad_magic() {
+fn handshake_rejects_unknown_protocol() {
     let mut wire = BytesMut::from(&[0u8; 64][..]);
     assert!(matches!(
         HandshakeCodec::new().decode(&mut wire),
-        Err(Error::Handshake(HandshakeError::BadMagic(_)))
+        Err(Error::Handshake(HandshakeError::UnknownProtocol(_)))
     ));
 }
 

@@ -27,10 +27,10 @@ news, and server administration. Trackers list servers.
 
 A connection has two phases:
 
-1. **Handshake.** Both sides exchange a cleartext hello (`%TXP` magic, the
-   service `%KDX`, a version, a nonce, and the login name). Each side then
-   proves knowledge of the account key and of a 1739-byte challenge table
-   built into the programs. See [handshake.md](handshake.md).
+1. **Handshake.** Both sides exchange a cleartext hello (protocol `%TXP`,
+   sub-protocol `%KDX`, a version, a nonce, and the login name). Each side
+   then proves knowledge of the account key and of a 1739-byte challenge
+   table built into the programs. See [handshake.md](handshake.md).
 2. **Session.** Every message after that is a 16-byte header plus a payload,
    each block encrypted with Twofish-256 in ECB mode under the account key.
    See [session.md](session.md).

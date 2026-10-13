@@ -3,7 +3,9 @@
 use bytes::{Bytes, BytesMut};
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Error, Frame, Handshake, HandshakeCodec, SessionCodec};
-use kdx_proto::handshake::{Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SERVICE_KDX};
+use kdx_proto::handshake::{
+    Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SUB_PROTOCOL_KDX,
+};
 use kdx_proto::session::{Header, MessageType, SessionError, SERVER_MAX_PAYLOAD_LEN};
 use kdx_proto::AccountKey;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -13,7 +15,7 @@ const RESPONSE: [u8; 20] = [7; 20];
 
 fn hello(version: u8, nonce: u8, name: &[u8]) -> Hello {
     Hello {
-        service: SERVICE_KDX,
+        sub_protocol: SUB_PROTOCOL_KDX,
         format: FORMAT,
         version,
         challenge: 0,

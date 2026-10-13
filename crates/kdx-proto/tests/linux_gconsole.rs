@@ -1,7 +1,7 @@
 //! Checks against `captures/linux-gconsole.pcapng`: Client 1.620 for Linux as
 //! `admin`, connected to `kdx-probe --listen` as a GConsole peer.
 
-use kdx_proto::handshake::{Hello, Proof, GCONSOLE_VERSION, SERVICE_GCONSOLE};
+use kdx_proto::handshake::{Hello, Proof, GCONSOLE_VERSION, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::gconsole::{Color, Draw, DrawRecord, Key, Mouse, OpenWindow, Point, Rect};
 use kdx_proto::session::{Header, MessageType, Scramble, SessionCipher};
 use kdx_proto::{AccountKey, Story};
@@ -30,8 +30,8 @@ fn challenge_responses() {
     let (client, client_len) = Hello::decode(C2S).unwrap();
     let (peer, peer_len) = Hello::decode(S2C).unwrap();
     assert_eq!(
-        (peer.service, peer.version),
-        (SERVICE_GCONSOLE, GCONSOLE_VERSION)
+        (peer.sub_protocol, peer.version),
+        (SUB_PROTOCOL_GCONSOLE, GCONSOLE_VERSION)
     );
     // Frame 6: the peer's offset is past the end of the KDX table, so the client answered from GConsole's.
     assert!(peer.challenge >= Story::Kdx.offsets());

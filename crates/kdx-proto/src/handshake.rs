@@ -11,14 +11,14 @@ use crate::challenge::RESPONSE_LEN;
 use crate::session::block_mut;
 use crate::xor::xor_stream;
 
-/// `"%TXP"`, the transport magic.
-pub const MAGIC: u32 = 0x2554_5850;
-/// `"%KDX"`, the service used between clients and servers.
-pub const SERVICE_KDX: u32 = 0x254b_4458;
-/// `"%HGC"`, the service a GConsole peer sends; the client then switches to
+/// `"%TXP"`, the protocol of every hello.
+pub const PROTOCOL_TXP: u32 = 0x2554_5850;
+/// `"%KDX"`, the sub-protocol used between clients, servers, and trackers.
+pub const SUB_PROTOCOL_KDX: u32 = 0x254b_4458;
+/// `"%HGC"`, the sub-protocol a GConsole peer sends; the client then switches to
 /// [`Story::Hgc`](crate::challenge::Story::Hgc) and
 /// [`Scramble::GConsole`](crate::session::Scramble::GConsole).
-pub const SERVICE_GCONSOLE: u32 = 0x2548_4743;
+pub const SUB_PROTOCOL_GCONSOLE: u32 = 0x2548_4743;
 /// The only hello format that current programs accept.
 pub const FORMAT: u8 = 1;
 /// Version byte that Client 1.600 sends.
@@ -42,9 +42,9 @@ pub enum HandshakeError {
     /// More bytes are needed before the message can be decoded.
     #[error("need {0} bytes")]
     Incomplete(usize),
-    /// The magic is not `"%TXP"`.
-    #[error("bad magic {0:#010x}")]
-    BadMagic(u32),
+    /// The protocol is not `"%TXP"`.
+    #[error("unknown protocol {0:#010x}")]
+    UnknownProtocol(u32),
     /// The peer's hello format is older than [`FORMAT`].
     #[error("peer protocol too old (format {0})")]
     TooOld(u8),
@@ -68,8 +68,8 @@ pub enum HandshakeError {
 /// The first message from each side.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hello {
-    /// Service tag, normally [`SERVICE_KDX`].
-    pub service: u32,
+    /// Sub-protocol, normally [`SUB_PROTOCOL_KDX`].
+    pub sub_protocol: u32,
     /// Hello format, normally [`FORMAT`].
     pub format: u8,
     /// Program version byte, such as [`CLIENT_VERSION`] or [`SERVER_VERSION`].
@@ -109,7 +109,7 @@ impl Hello {
         let name_start = Self::HEADER_LEN - 4 + skip;
         let name = body[name_start..name_start + usize::from(body[11])].to_vec();
         let hello = Self {
-            service: be32(&body, 4),
+            sub_protocol: be32(&body, 4),
             format,
             version: body[9],
             challenge: be16(&body, 0x12),
@@ -127,8 +127,8 @@ impl Hello {
         let len = (Self::HEADER_LEN + self.name.len() + 3) & !3;
         let mut out = Vec::with_capacity(len);
         out.extend_from_slice(&key.to_be_bytes());
-        out.extend_from_slice(&MAGIC.to_be_bytes());
-        out.extend_from_slice(&self.service.to_be_bytes());
+        out.extend_from_slice(&PROTOCOL_TXP.to_be_bytes());
+        out.extend_from_slice(&self.sub_protocol.to_be_bytes());
         out.extend_from_slice(&[self.format, self.version, 0, self.name.len() as u8]);
         out.extend_from_slice(&[0; 6]);
         out.extend_from_slice(&self.challenge.to_be_bytes());
@@ -147,9 +147,9 @@ impl Hello {
             .try_into()
             .unwrap();
         xor_stream(be32(&header, 0), &mut header[4..]);
-        let magic = be32(&header, 4);
-        if magic != MAGIC {
-            return Err(HandshakeError::BadMagic(magic));
+        let protocol = be32(&header, 4);
+        if protocol != PROTOCOL_TXP {
+            return Err(HandshakeError::UnknownProtocol(protocol));
         }
         match header[0x0c] {
             0 => Err(HandshakeError::TooOld(0)),
@@ -171,7 +171,7 @@ impl Hello {
 pub enum Status {
     /// The sender accepted our hello.
     Ok,
-    /// The sender does not speak our protocol or service.
+    /// The sender does not speak our protocol or sub-protocol.
     UnknownProtocol,
     /// The sender considers us too old.
     TooOld,
@@ -322,7 +322,7 @@ mod tests {
 
     fn hello() -> Hello {
         Hello {
-            service: SERVICE_KDX,
+            sub_protocol: SUB_PROTOCOL_KDX,
             format: FORMAT,
             version: CLIENT_VERSION,
             challenge: 123,

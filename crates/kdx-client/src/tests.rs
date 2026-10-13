@@ -5,7 +5,7 @@ use std::io::Cursor;
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
-use kdx_proto::handshake::{Hello, Proof, FORMAT, SERVER_VERSION, SERVICE_KDX};
+use kdx_proto::handshake::{Hello, Proof, FORMAT, SERVER_VERSION, SUB_PROTOCOL_KDX};
 use kdx_proto::msg::tracker::{GetServerList, GroupListEntry};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, ServerInfo, Status, UserRecord};
@@ -29,7 +29,7 @@ async fn accept(listener: &TcpListener, key: &AccountKey) -> (Session, Vec<u8>) 
         panic!("no client hello");
     };
     let hello = Hello {
-        service: SERVICE_KDX,
+        sub_protocol: SUB_PROTOCOL_KDX,
         format: FORMAT,
         version: SERVER_VERSION,
         challenge: 100,

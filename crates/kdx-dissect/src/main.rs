@@ -13,7 +13,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
-use kdx_proto::handshake::{compute_auth, Hello, Proof, SERVICE_GCONSOLE};
+use kdx_proto::handshake::{compute_auth, Hello, Proof, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
     ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
@@ -284,9 +284,9 @@ fn dissect(
         let (hello, len) = Hello::decode(&stream.data).with_context(|| format!("{dir} hello"))?;
         writeln!(
             out,
-            "  [{}] {dir} hello: service {} format {} version {:#04x} challenge {} nonce {} name {}",
+            "  [{}] {dir} hello: sub-protocol {} format {} version {:#04x} challenge {} nonce {} name {}",
             stream.frame_at(0),
-            fourcc(hello.service),
+            fourcc(hello.sub_protocol),
             hello.format,
             hello.version,
             hello.challenge,
@@ -329,7 +329,7 @@ fn dissect(
         }
     )?;
 
-    let scramble = if hellos[1].0.service == SERVICE_GCONSOLE {
+    let scramble = if hellos[1].0.sub_protocol == SUB_PROTOCOL_GCONSOLE {
         Scramble::GConsole
     } else {
         Scramble::Kdx

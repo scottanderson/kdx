@@ -15,7 +15,7 @@ use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
 use kdx_client::{table, Connection, Login};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
-use kdx_proto::handshake::{Hello, Proof, Status, FORMAT, GCONSOLE_VERSION, SERVICE_GCONSOLE};
+use kdx_proto::handshake::{Hello, Proof, Status, FORMAT, GCONSOLE_VERSION, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::session::{Header, MessageType, Scramble};
 use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::net::{TcpListener, TcpStream};
@@ -183,13 +183,13 @@ async fn handshake(
         unreachable!("the codec reads a hello first");
     };
     println!(
-        "client hello: service {:#010x} version {:#04x} login {:?}",
-        client.service,
+        "client hello: sub-protocol {:#010x} version {:#04x} login {:?}",
+        client.sub_protocol,
         client.version,
         String::from_utf8_lossy(&client.name)
     );
     let ours = Hello {
-        service: SERVICE_GCONSOLE,
+        sub_protocol: SUB_PROTOCOL_GCONSOLE,
         format: FORMAT,
         version: GCONSOLE_VERSION,
         challenge: random_u32() as u16 % table.offsets(),

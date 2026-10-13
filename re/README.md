@@ -104,7 +104,7 @@ The addresses are the same.
 
 | Address | What |
 |---|---|
-| `0x08085328` | create connection object (magic `0x2aa24aec`, service, version) |
+| `0x08085328` | create connection object (magic `0x2aa24aec`, sub-protocol, version) |
 | `0x0808529c` | set challenge table (default "All your base…") |
 | `0x08085500` | set login name + 32-byte account key (also runs the Twofish key schedule) |
 | `0x08085a04` | handshake state machine |
