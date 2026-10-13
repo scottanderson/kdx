@@ -58,7 +58,7 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
 | 0x14 | 2 | ext_len | more bytes skipped before the name, sent as 0 **[S, O]** |
-| 0x16 | 2 | challenge | random offset into the challenge table, `< table_len - 0x13` **[S, O]** |
+| 0x16 | 2 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S, O]** |
 | 0x18 | 12 | nonce | per-connection value. It looks time-based (both sides' nonces share bytes) **[O]**. A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) **[S]** |
 | 0x24 | name_len | name | login name (client) or empty (server 1.620) **[O]**. See "Login names" |
 | … | | padding | zeros up to a 4-byte boundary |
@@ -161,6 +161,10 @@ fields, so every table works the same way **[S client]**:
   offset, if it is at most `len - 0x14`.
 - `FUN_080ea768` checks the peer's response against the 20 bytes at our
   own challenge.
+
+Both rules come to `offset + 0x14 <= len`, where `len` is the length of the
+table that side holds when it acts. On a GConsole connection the client's
+table changes between the two, as described below.
 
 There are three tables:
 
