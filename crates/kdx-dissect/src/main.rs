@@ -1,7 +1,7 @@
 //! Decodes KDX connections in a pcap or pcapng capture.
 //!
 //! Prints each UDP registration sent to the tracker port. Then, for each TCP connection
-//! to the server or tracker port, prints both handshakes, finds the account key from the
+//! to the server, tracker, or GConsole port, prints both handshakes, finds the account key from the
 //! candidate passwords, then decrypts and dumps every session message in capture order.
 
 use std::collections::BTreeMap;
@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
-use kdx_proto::handshake::{compute_auth, Hello, Proof};
+use kdx_proto::handshake::{compute_auth, Hello, Proof, SERVICE_GCONSOLE};
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
     ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
@@ -26,6 +26,7 @@ use kdx_proto::msg::file::{
     CatalogStatus, CreateFolder, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
     GenerateCatalog, LaunchFile, MoveItems, MoveToTrash, SetFileInfo, SetVolumeInfo, VolumeInfo,
 };
+use kdx_proto::msg::gconsole::{Draw, DrawRecord, Key, Mouse, OpenWindow, Point, Rect};
 use kdx_proto::msg::news::{
     NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
 };
@@ -40,7 +41,7 @@ use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged, RegistrationNotice
 use kdx_proto::msg::user_info::GetUserInfo;
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::registration::Registration;
-use kdx_proto::session::{Header, SessionCipher};
+use kdx_proto::session::{Header, Scramble, SessionCipher};
 use kdx_proto::{AccountKey, MessageType};
 use pcap_file::pcap::PcapReader;
 use pcap_file::pcapng::{Block, PcapNgReader};
@@ -60,6 +61,9 @@ struct Args {
     /// Tracker port, for TCP sessions and UDP registrations.
     #[arg(long, default_value_t = 10800)]
     tracker_port: u16,
+    /// GConsole port, where a client connects to a GConsole peer.
+    #[arg(long, default_value_t = 10900)]
+    gconsole_port: u16,
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
@@ -122,7 +126,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let frames = read_frames(&args.capture)?;
 
-    let ports = [args.port, args.tracker_port];
+    let ports = [args.port, args.tracker_port, args.gconsole_port];
     let mut connections: BTreeMap<(SocketAddr, SocketAddr), [Flow; 2]> = BTreeMap::new();
     let mut registrations = 0;
     for frame in &frames {
@@ -168,8 +172,8 @@ fn main() -> Result<()> {
     }
     if connections.is_empty() {
         println!(
-            "no TCP connections on port {} or {}",
-            args.port, args.tracker_port
+            "no TCP connections on port {}, {}, or {}",
+            args.port, args.tracker_port, args.gconsole_port
         );
     }
     let mut pending = Vec::new();
@@ -182,8 +186,12 @@ fn main() -> Result<()> {
                     .with_context(|| format!("writing {}", path.display()))?;
             }
         }
-        let kind = if server.port() == args.tracker_port && server.port() != args.port {
+        let kind = if server.port() == args.port {
+            "connection"
+        } else if server.port() == args.tracker_port {
             "tracker connection"
+        } else if server.port() == args.gconsole_port {
+            "GConsole connection"
         } else {
             "connection"
         };
@@ -286,7 +294,12 @@ fn dissect(
         }
     )?;
 
-    let cipher = SessionCipher::new(key);
+    let scramble = if hellos[1].0.service == SERVICE_GCONSOLE {
+        Scramble::GConsole
+    } else {
+        Scramble::Kdx
+    };
+    let cipher = SessionCipher::new(key).with_scramble(scramble);
     let mut messages = Vec::new();
     for ((stream, dir), (_, hello_len)) in streams.iter().zip(dirs).zip(&hellos) {
         let mut at = hello_len + Proof::LEN;
@@ -1082,12 +1095,166 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 stats.servers
             )
         }
+        MessageType::GCONSOLE_OPEN_WINDOW => {
+            let open = OpenWindow::decode(payload)?;
+            format!(
+                "window {}x{} colour {}",
+                open.width, open.height, open.color
+            )
+        }
+        MessageType::GCONSOLE_DRAW => Draw::decode(payload)?
+            .0
+            .iter()
+            .map(draw_record)
+            .collect::<Vec<_>>()
+            .join("\n      = "),
+        MessageType::GCONSOLE_KEY => {
+            let key = Key::decode(payload)?;
+            let action = match key.kind {
+                1 => "down",
+                2 => "up",
+                _ => "kind",
+            };
+            let mut text = format!(
+                "key {action} usage {:#04x} character {:#x} modifiers {:#x} time {}",
+                key.usage, key.character, key.modifiers, key.time
+            );
+            if !matches!(key.kind, 1 | 2) {
+                write!(text, " kind {}", key.kind).unwrap();
+            }
+            if key.value_0f != 0 {
+                write!(text, " byte 0x0f {:#04x}", key.value_0f).unwrap();
+            }
+            text
+        }
+        MessageType::GCONSOLE_MOUSE => {
+            let mouse = Mouse::decode(payload)?;
+            let action = match mouse.kind {
+                5 => "down".to_owned(),
+                6 => "up".to_owned(),
+                10 => format!("wheel {}", mouse.wheel),
+                kind => format!("kind {kind}"),
+            };
+            let mut text = format!(
+                "mouse {action} button {} at ({}, {}) time {}",
+                mouse.button, mouse.x, mouse.y, mouse.time
+            );
+            if mouse.value_04 != 0 {
+                write!(text, " value {:#x}", mouse.value_04).unwrap();
+            }
+            text
+        }
         _ => return Ok(None),
     };
     if text.is_empty() {
         return Ok(Some("(empty)".to_owned()));
     }
     Ok(Some(text))
+}
+
+/// Describes one record of 4001.
+fn draw_record(record: &DrawRecord) -> String {
+    let point = |p: &Point| format!("({}, {})", p.x, p.y);
+    let rect = |r: &Rect| format!("({}, {})-({}, {})", r.left, r.top, r.right, r.bottom);
+    match record {
+        DrawRecord::Create {
+            rect: r,
+            value_08,
+            id,
+            flags,
+            value_10,
+            object_type,
+            value_13,
+        } => format!(
+            "create object {id} at {} flags {flags:#06x} type {object_type} values {value_08:#x} {value_10:#x} {value_13:#x}",
+            rect(r)
+        ),
+        DrawRecord::Delete { id } => format!("delete object {id}"),
+        DrawRecord::Move { id, to } => format!("move object {id} to {}", point(to)),
+        DrawRecord::Fill {
+            id,
+            value_02,
+            rect: r,
+            color,
+        } => format!("object {id}: fill {} {color} value {value_02}", rect(r)),
+        DrawRecord::Gradient {
+            id,
+            value_02,
+            rect: r,
+            from,
+            to,
+        } => format!(
+            "object {id}: gradient {} {from} to {to} value {value_02}",
+            rect(r)
+        ),
+        DrawRecord::Frame {
+            id,
+            width,
+            rect: r,
+            color,
+        } => format!("object {id}: frame {} {color} width {width}", rect(r)),
+        DrawRecord::Pixel {
+            id,
+            value_02,
+            at,
+            color,
+        } => format!("object {id}: pixel {} {color} value {value_02}", point(at)),
+        DrawRecord::Line {
+            id,
+            value_02,
+            width,
+            from,
+            to,
+            color,
+        } => format!(
+            "object {id}: line {} to {} {color} width {width} value {value_02}",
+            point(from),
+            point(to)
+        ),
+        DrawRecord::Text {
+            kind,
+            id,
+            value_02,
+            rect: r,
+            value_0c,
+            text,
+        } => format!(
+            "object {id}: text ({kind}) {} {} value {value_02} {}",
+            rect(r),
+            quoted(text),
+            hex(value_0c)
+        ),
+        DrawRecord::Polygon {
+            id,
+            value_02,
+            color,
+            origin,
+            points,
+        } => format!(
+            "object {id}: polygon {color} at {} [{}] value {value_02}",
+            point(origin),
+            points.iter().map(point).collect::<Vec<_>>().join(", ")
+        ),
+        DrawRecord::FloodFill {
+            id,
+            value_02,
+            at,
+            color,
+        } => format!("object {id}: flood fill {} {color} value {value_02}", point(at)),
+        DrawRecord::Copy {
+            id,
+            value_02,
+            to,
+            from,
+            width,
+            height,
+        } => format!(
+            "object {id}: copy {width}x{height} from {} to {} value {value_02}",
+            point(from),
+            point(to)
+        ),
+        DrawRecord::Other { kind, body } => format!("kind {kind} {}", hex(body)),
+    }
 }
 
 /// Describes the sections of 711 or 712 that the tracker reads.

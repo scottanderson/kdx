@@ -7,6 +7,7 @@
 pub mod admin;
 pub mod chat;
 pub mod file;
+pub mod gconsole;
 pub mod news;
 pub mod path;
 pub mod private_message;
