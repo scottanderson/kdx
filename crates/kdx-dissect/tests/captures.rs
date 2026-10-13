@@ -15,7 +15,7 @@ const PASSWORDS: [&str; 7] = [
     "rs-test-pw3",
 ];
 
-/// Every problem the dissector reports, as `<capture> <client port>: <line>`.
+/// Every problem the dissector reports, as `<capture> <source port>: <line>`.
 ///
 /// Each one is a step in the capture's notes, not a decoding fault.
 const EXPECTED: &[&str] = &[
@@ -88,7 +88,7 @@ fn dissect(capture: &str, export: &Path) -> String {
     String::from_utf8(output.stdout).unwrap()
 }
 
-/// The lines of `output` that report a problem, tagged with the capture and client port.
+/// The lines of `output` that report a problem, tagged with the capture and source port.
 fn problems(capture: &str, output: &str) -> Vec<String> {
     let mut port = "";
     let mut found = Vec::new();

@@ -62,7 +62,7 @@ struct Args {
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
-    /// Write each connection's reassembled streams to DIR as `<client port>.c2s.bin` and `.s2c.bin`.
+    /// Write each connection's reassembled streams to DIR as `<source port>.c2s.bin` and `.s2c.bin`.
     #[arg(long, value_name = "DIR")]
     export: Option<PathBuf>,
 }

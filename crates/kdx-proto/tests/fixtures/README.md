@@ -13,7 +13,7 @@ Each proof carries 20 bytes of Haxial's challenge table, which the capture
 already holds. The full table is not in the repository.
 
 `probe-<port>.c2s.bin` and `probe-<port>.s2c.bin` are the admin connections of
-`captures/probe.pcapng`, named by client port, with the same password. They
+`captures/probe.pcapng`, named by source port, with the same password. They
 were written by `kdx-dissect --export`:
 
 ```sh
