@@ -17,6 +17,7 @@ Paths inside the container are:
 # import + auto-analyze (done once per binary; ~1 min)
 re/ghidra /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
 re/ghidra /work/projects kdxclient -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
+re/ghidra /work/projects kdxwinserver -import /work/bin/KDXServer1600-Win/extracted/KDXServer1600-Win/KDXServer.exe
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \
   -postScript decompile.py 0x08085a04 -postScript callers.py 0x08085328
@@ -169,6 +170,8 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle 1000 / handle 1001 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send 1002 / send 1003 / receive 1003 (IMA ADPCM) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806f864` | 903 handler: resize the frame buffer, decode, redraw the rectangle |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0811667c` | X key event: keysym to USB HID usage through the tables at `0x081681e0` (Latin-1) and `0x081680e0` (0xff00 keysyms) |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x080758dc` / `0x08074420` | 422 Volume Info handler / send 423 Set Volume Info with a bit per edited field |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x080a0410` | make a text field read-only when its bit is clear |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
@@ -185,6 +188,13 @@ Other binaries, by Ghidra project:
 | Client 1.600 Win (`kdxclient`) | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
 | Client 1.600 Win (`kdxclient`) | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
 | Client 1.600 Win (`kdxclient`) | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
+| Client 1.600 Win (`kdxclient`) | `0x0041b970` / `0x00448830` | send 905 keyboard / GConsole 4200 Key |
+| Client 1.600 Win (`kdxclient`) | `0x00463870` / `0x00463970` | modifier bits from the key state / key code to character; both index the key code table at `0x004ff1e8` |
+| Server 1.600 Win (`kdxwinserver`) | `0x00418dc0` / `0x00418fc0` / `0x00419110` | 900 Open View Display / 904 mouse / 905 keyboard |
+| Server 1.600 Win (`kdxwinserver`) | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send 903 / run encoder / two-colour encoder |
+| Server 1.600 Win (`kdxwinserver`) | `0x00418d60` | view display timer: grab again every 1500 ms |
+| Server 1.600 Win (`kdxwinserver`) | `0x0041ffd0` | grab the primary screen: `BitBlt` from the desktop window into a 24-bit DIB |
+| Server 1.600 Win (`kdxwinserver`) | `0x00420270` / `0x00420380` | inject a mouse event (`mouse_event`) / a key (`keybd_event`, through the key code table at `0x0047fe98`) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |
 | Tracker 1.110 (`kdxtracker`) | `0x0804bd9c` | TCP accept: connection with `%KDX`, version 0x30, story table; 5 per IP |
 | Tracker 1.110 (`kdxtracker`) | `0x0804bb78` / `0x0804bb4c` | login callback (guest or admin) / version callback |
