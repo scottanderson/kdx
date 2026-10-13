@@ -58,6 +58,8 @@ Put details in those files. Keep this file to rules.
 - Test wire code against capture fixtures in
   `crates/kdx-proto/tests/fixtures/`. Prove encoders by re-encoding a
   decoded capture byte for byte.
+- `crates/kdx-dissect/tests/captures.rs` dissects every capture. Add a new
+  capture's passwords and expected problems there.
 - Name a provisional message type with a doc comment that says
   "Provisional name" until a handler or log string confirms it.
 

@@ -6,6 +6,9 @@ server (824 bytes) and server to client (3120 bytes). Each starts with the hello
 and proof, followed by the session messages. The lab account password is
 `lab-only-pw!1`.
 
+`kdx-dissect`'s `captures` test checks every fixture here byte for byte
+against the capture it names.
+
 Each proof carries 20 bytes of Haxial's challenge table, which the capture
 already holds. The full table is not in the repository.
 
