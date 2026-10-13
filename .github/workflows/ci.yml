@@ -29,6 +29,3 @@ jobs:
         env:
           KDX_CHALLENGE_TABLE: ${{ secrets.KDX_CHALLENGE_TABLE }}
           KDX_REQUIRE_TABLE: 1
-      - run: >-
-          cargo run -p kdx-dissect --
-          captures/first-connect.pcapng --password 'lab-only-pw!1'
