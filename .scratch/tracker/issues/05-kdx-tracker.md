@@ -1,6 +1,6 @@
 # A Rust tracker
 
-Status: ready-for-human
+Status: done
 Blocked by: 01, 02
 
 Implement `kdx-tracker` (now a placeholder): accept registrations on UDP
@@ -17,3 +17,6 @@ Done when Client 1.620 beta 5 lists a lab server through it, and Server
 request in `captures/linux-tracker.pcapng`. Left: Client 1.620 beta 5
 listing a server through it, which needs someone at the GUI. Settings are
 kept as the 711 blob with the secrets, not XOR'd.
+
+2026-10-13: Done. Client 1.620 beta 5 listed `Lab Server` through
+`kdx-tracker`, as guest and as admin (`captures/kdx-tracker-gui.md`).

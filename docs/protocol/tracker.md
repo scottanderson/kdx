@@ -148,7 +148,9 @@ its replies match Tracker 1.110's byte for byte, but for the first-seen times:
 701 at 34, 234, and 247; 703 at 37, 58, 244, 250, and 257; 711 at 80 and 237;
 713 at 83 and 241; and the Status at 61 (`crates/kdx-tracker/src/tests.rs`)
 **[O]**. `captures/kdx-tracker.pcapng` has Server 1.620 registering with
-`kdx-tracker` (frame 16) and the 703 that lists it (frame 34) **[O]**.
+`kdx-tracker` (frame 16) and the 703 that lists it (frame 34), and
+`captures/kdx-tracker-gui.pcapng` has Client 1.620 beta 5 listing it
+(frames 15 and 33) **[O]**.
 
 ## Browsing (TCP)
 
