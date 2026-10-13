@@ -207,6 +207,6 @@ fn cached_table() -> Option<ChallengeTable> {
         .filter(|d| !d.is_empty())
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
-    let bytes = std::fs::read(dir.join("kdx").join("challenge-table.bin")).ok()?;
+    let bytes = std::fs::read(dir.join("kdx/table/kdx.bin")).ok()?;
     Some(ChallengeTable::from_bytes(&bytes).unwrap())
 }

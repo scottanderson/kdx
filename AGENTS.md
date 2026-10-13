@@ -23,6 +23,11 @@ Put details in those files. Keep this file to rules.
   fetch` cache, and skip without all three unless `KDX_REQUIRE_TABLE` is set.
   CI sets `KDX_REQUIRE_TABLE`, and `KDX_CHALLENGE_TABLE` from a repository
   secret of the same name.
+- Never commit GConsole's 3193-byte challenge table either. It works like
+  the first: code reads it through `GConsoleTable::extract` or `from_bytes`,
+  and tests read `HGC_CHALLENGE_TABLE` (base64), `vendor/haxial/`, or the
+  `kdx table fetch` cache, with the same `KDX_REQUIRE_TABLE` rule. CI sets
+  `HGC_CHALLENGE_TABLE` from a repository secret of the same name.
 - Don't accept Haxial's license agreement for the user. The user clicks
   "I Agree" in the client.
 

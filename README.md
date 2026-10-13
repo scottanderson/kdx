@@ -59,21 +59,23 @@ server and a tracker, all compatible with the original KDX programs (Server
 - `lab/` runs the original programs in a sandbox and captures their traffic.
 - `re/` holds the headless Ghidra tooling used for static analysis.
 
-The original Haxial binaries and the challenge table they embed are Haxial's
-copyrighted material. They are not in this repository; see
-`vendor/MANIFEST.md` for where they come from. The handshake needs the
-table, so `kdx` keeps a copy in `~/.cache/kdx/`. `kdx table fetch` downloads
-the smallest Haxial archive (248 KB) from the Internet Archive, checks its
-SHA-256, and extracts the table; it does nothing if the cache already holds
-a valid table, unless given `--force`. `kdx table import FILE` takes it from any
-KDX program, zip archive of one, or saved table instead.
+The original Haxial binaries and the challenge tables they embed are
+Haxial's copyrighted material. They are not in this repository; see
+`vendor/MANIFEST.md` for where they come from. The handshake needs the KDX
+table, and a GConsole connection a second one that only the clients hold, so
+`kdx` keeps a copy of each in `~/.cache/kdx/table/`, as `kdx.bin` and
+`hgc.bin`. `kdx table fetch` downloads the smallest Haxial archive that holds
+each (248 KB and 793 KB) from the Internet Archive, checks its SHA-256, and
+extracts the table; it skips a table the cache already holds, unless given
+`--force`. `kdx table import FILE` takes every table it finds in a KDX
+program, zip archive of one, or saved table instead.
 
 ## Getting started
 
 The crates need Rust 1.96 or newer. What else you need depends on the work:
 
 - **The client, the dissector, and the tests** need only `cargo`. Run `kdx
-  table fetch` once before connecting to a server; the tests that need the
+  table fetch` once before connecting to a server; the tests that need a
   table read it from `vendor/haxial/` or that cache, and skip without either.
 - **Captures in the lab** need the Haxial binaries (`vendor/fetch`) and the
   packages in `lab/README.md`.
