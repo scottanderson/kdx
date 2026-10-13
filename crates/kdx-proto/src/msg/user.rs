@@ -10,8 +10,8 @@ pub struct UserRecord {
     pub user_id: u32,
     /// Status value, also set by 110 Set Mini User Icon.
     pub status: u8,
-    /// UDP port for voice chat.
-    pub voice_port: u16,
+    /// TCP port of the client's client-to-client (DCC) listener; 0 if it has none.
+    pub client_port: u16,
     /// Six bytes the client chooses, probably two RGB colours.
     pub colors: [u8; 6],
     /// Set by the server from the account; 0xff for admin in the lab.
@@ -51,7 +51,7 @@ impl UserRecord {
         let record = Self {
             user_id: u32_at(buf, 0),
             status: buf[4],
-            voice_port: u16_at(buf, 0x0a),
+            client_port: u16_at(buf, 0x0a),
             colors: buf[0x0e..0x14].try_into().expect("6 bytes"),
             server_14: buf[0x14],
             server_15: buf[0x15],
@@ -84,7 +84,7 @@ impl UserRecord {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
         out[4] = self.status;
-        out[0x0a..0x0c].copy_from_slice(&self.voice_port.to_be_bytes());
+        out[0x0a..0x0c].copy_from_slice(&self.client_port.to_be_bytes());
         out[0x0c..0x0e].copy_from_slice(&(self.icon.len() as u16).to_be_bytes());
         out[0x0e..0x14].copy_from_slice(&self.colors);
         out[0x14] = self.server_14;
