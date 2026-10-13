@@ -6,6 +6,7 @@ use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
 use kdx_proto::handshake::{Hello, Proof, FORMAT, SERVER_VERSION, SERVICE_KDX};
+use kdx_proto::msg::tracker::{GetServerList, GroupListEntry};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, ServerInfo, Status, UserRecord};
 use kdx_proto::session::{Header, MessageType};
@@ -13,7 +14,7 @@ use kdx_proto::AccountKey;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_util::codec::Framed;
 
-use crate::{fake_response, Client, Login, Responses, ServerError};
+use crate::{fake_response, Client, Login, Responses, ServerError, Tracker};
 
 const SESSION_KEY: [u8; 32] = [9; 32];
 const USER_ID: u32 = 7;
@@ -323,4 +324,65 @@ async fn upload() {
         .await
         .unwrap();
     assert_eq!(start, 0x2000);
+}
+
+#[tokio::test]
+async fn tracker() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        let (mut session, name) = accept(&listener, &AccountKey::from_password(b"")).await;
+        assert!(name.is_empty());
+        send(
+            &mut session,
+            1,
+            MessageType::SERVER_GREETING,
+            false,
+            vec![0; 5],
+        )
+        .await;
+
+        let (header, _) = recv(&mut session).await;
+        assert_eq!(header.kind, MessageType::GET_TRACKER_GROUP_LIST);
+        let groups = GroupListEntry::encode_list(&[GroupListEntry {
+            servers: 1,
+            name: b"General".to_vec(),
+            ..GroupListEntry::default()
+        }])
+        .unwrap();
+        let kind = MessageType::TRACKER_GROUP_LIST;
+        send(&mut session, header.txid, kind, true, groups).await;
+
+        let (header, payload) = recv(&mut session).await;
+        assert_eq!(header.kind, MessageType::GET_TRACKER_SERVER_LIST);
+        assert_eq!(GetServerList::decode(&payload).unwrap().group, b"Lab");
+        let kind = MessageType::TRACKER_SERVER_LIST;
+        send(&mut session, header.txid, kind, true, Vec::new()).await;
+
+        // A guest's 720 gives the tracker's 8-byte error Status.
+        let (header, _) = recv(&mut session).await;
+        assert_eq!(header.kind, MessageType::GET_TRACKERSERV_STATISTICS);
+        let status = vec![0, 1, 0, 0x14, 0, 0, 2, 0xd0];
+        send(&mut session, header.txid, MessageType::STATUS, true, status).await;
+    });
+
+    let mut tracker = Tracker::login_with(addr, &Login::default(), &Responses::Fake)
+        .await
+        .unwrap();
+    let groups = tracker.groups().await.unwrap();
+    assert_eq!(
+        (groups[0].servers, &groups[0].name[..]),
+        (1, &b"General"[..])
+    );
+    assert!(tracker.servers(b"Lab").await.unwrap().is_empty());
+    let err = tracker.stats().await.unwrap_err();
+    assert_eq!(
+        err.downcast_ref::<ServerError>(),
+        Some(&ServerError {
+            request: MessageType::GET_TRACKERSERV_STATISTICS,
+            code: 0x10014
+        })
+    );
+    let (greeting, _) = tracker.next_event().await.unwrap();
+    assert_eq!(greeting.kind, MessageType::SERVER_GREETING);
 }

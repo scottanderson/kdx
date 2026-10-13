@@ -1,6 +1,6 @@
 # Browse a tracker from the CLI
 
-Status: ready-for-agent
+Status: done
 Blocked by: 02
 
 Add `kdx tracker groups <addr>` (700/701) and `kdx tracker servers <addr>

@@ -1,8 +1,9 @@
 //! An async KDX client on tokio.
 //!
-//! [`Client::login`] logs in and offers typed requests. Underneath,
-//! [`Connection::connect`] runs the handshake and returns a connection that
-//! sends and receives raw session messages through `kdx-codec`.
+//! [`Client::login`] logs in and offers typed requests, and [`Tracker::login`]
+//! does the same for a tracker. Underneath, [`Connection::connect`] runs the
+//! handshake and returns a connection that sends and receives raw session
+//! messages through `kdx-codec`.
 
 use anyhow::{bail, Context, Result};
 use bytes::Bytes;
@@ -19,8 +20,10 @@ mod client;
 pub mod table;
 #[cfg(test)]
 mod tests;
+mod tracker;
 
 pub use client::{Client, Event, ServerError};
+pub use tracker::Tracker;
 
 /// Login details for [`Connection::connect`].
 #[derive(Debug, Clone, Default)]
