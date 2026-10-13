@@ -92,9 +92,10 @@ fn problems(capture: &str, output: &str) -> Vec<String> {
     let mut found = Vec::new();
     for line in output.lines() {
         if let Some(rest) = line
-            .strip_prefix("connection ")
+            .strip_prefix("server connection ")
             .or_else(|| line.strip_prefix("tracker connection "))
             .or_else(|| line.strip_prefix("GConsole connection "))
+            .or_else(|| line.strip_prefix("DCC connection "))
         {
             let client = rest.split(' ').next().unwrap();
             port = client.rsplit(':').next().unwrap();
