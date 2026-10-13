@@ -33,7 +33,7 @@ other GUI capture uses Client 1.620 beta 5.
 | 174, 175, 804 | shutdown, upgrade, processes | 08 (done; 175 only fails) |
 | 175 succeeding, its 151, the relaunched server | server downgrade to 1.600 through 175 | 10 (done) |
 | none new | multi-byte text in names, chat, messages, news, nicks | 09 (done) |
-| 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
+| 117, 408 | no known sender | static analysis first (`re/message-types.md`) |
 
 ## How each session runs
 

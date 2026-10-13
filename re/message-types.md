@@ -1,4 +1,4 @@
-# Missing opcodes
+# Missing message types
 
 Message types that the protocol reference does not yet cover: types a program
 handles or sends that have no handler or layout in
