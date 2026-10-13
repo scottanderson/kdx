@@ -5,10 +5,11 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
-use kdx_client::{table, Client, Login};
+use kdx_client::{table, Client, Login, Tracker};
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
 use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
+use kdx_proto::msg::tracker::TrackerStats;
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
 use kdx_proto::{AccountKey, ChallengeTable};
@@ -22,7 +23,7 @@ struct Args {
     command: Command,
 }
 
-// Options for the subcommands that talk to a server; `main` adds them to each but `table`.
+// Options for the subcommands that talk to a server; `main` adds them to each but `table` and `tracker`.
 #[derive(clap::Args)]
 struct Connection {
     /// Server address.
@@ -42,12 +43,33 @@ struct Connection {
     table: Option<PathBuf>,
 }
 
+// Options for the `tracker` subcommands.
+#[derive(clap::Args)]
+struct TrackerConnection {
+    /// Tracker address; the port defaults to 10800.
+    tracker: String,
+    /// Admin login; omit for guest.
+    #[arg(long, short, default_value = "")]
+    login: String,
+    /// Admin password; also read from KDX_PASSWORD.
+    #[arg(long, env = "KDX_PASSWORD", hide_env_values = true)]
+    password: Option<String>,
+    /// Challenge table, or a KDX program file or zip archive that holds it; defaults to the cache.
+    #[arg(long)]
+    table: Option<PathBuf>,
+}
+
 #[derive(Subcommand)]
 enum Command {
     /// Get the challenge table into the cache.
     Table {
         #[command(subcommand)]
         action: TableAction,
+    },
+    /// Browse a tracker.
+    Tracker {
+        #[command(subcommand)]
+        action: TrackerAction,
     },
     /// List the users online.
     Who,
@@ -170,6 +192,26 @@ enum AccountAction {
 }
 
 #[derive(Subcommand)]
+enum TrackerAction {
+    /// List the groups.
+    Groups {
+        #[command(flatten)]
+        conn: TrackerConnection,
+    },
+    /// List the servers in a group.
+    Servers {
+        #[command(flatten)]
+        conn: TrackerConnection,
+        group: String,
+    },
+    /// Show the statistics; needs the admin login.
+    Stats {
+        #[command(flatten)]
+        conn: TrackerConnection,
+    },
+}
+
+#[derive(Subcommand)]
 enum TableAction {
     /// Download the smallest KDX archive from the Internet Archive and extract the table.
     Fetch {
@@ -187,13 +229,15 @@ enum TableAction {
 async fn main() -> Result<()> {
     let matches = Args::command()
         .mut_subcommands(|command| match command.get_name() {
-            "table" => command,
+            "table" | "tracker" => command,
             _ => Connection::augment_args(command),
         })
         .get_matches();
     let args = Args::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
-    if let Command::Table { action } = &args.command {
-        return table_command(action);
+    match args.command {
+        Command::Table { action } => return table_command(&action),
+        Command::Tracker { action } => return tracker_command(action).await,
+        _ => {}
     }
     let (_, matches) = matches.subcommand().expect("a subcommand is required");
     let conn = Connection::from_arg_matches(matches).unwrap_or_else(|e| e.exit());
@@ -210,7 +254,7 @@ async fn main() -> Result<()> {
     let mut client = Client::login(&conn.server, &login, &me, table).await?;
 
     match args.command {
-        Command::Table { .. } => unreachable!("handled above"),
+        Command::Table { .. } | Command::Tracker { .. } => unreachable!("handled above"),
         Command::Who => {
             for user in &client.users {
                 println!("{:>5}  {}", user.user_id, text(&user.nick));
@@ -356,6 +400,112 @@ fn table_command(action: &TableAction) -> Result<()> {
     };
     println!("saved {}", table::save_to_cache(&table)?.display());
     Ok(())
+}
+
+async fn tracker_command(action: TrackerAction) -> Result<()> {
+    let (TrackerAction::Groups { conn }
+    | TrackerAction::Servers { conn, .. }
+    | TrackerAction::Stats { conn }) = &action;
+    let table = challenge_table(conn.table.as_deref())?;
+    let login = Login {
+        name: conn.login.clone().into_bytes(),
+        password: conn.password.clone().unwrap_or_default().into_bytes(),
+    };
+    let mut tracker = Tracker::login(tracker_addr(&conn.tracker), &login, table).await?;
+    match action {
+        TrackerAction::Groups { .. } => {
+            for group in tracker.groups().await? {
+                println!(
+                    "{:>5}  {}{}",
+                    group.servers,
+                    text(&group.name),
+                    described(&group.description)
+                );
+            }
+        }
+        TrackerAction::Servers { group, .. } => {
+            for server in tracker.servers(group.as_bytes()).await? {
+                println!(
+                    "{:<21}  {:>4} users  {}{}",
+                    server.address,
+                    server.users,
+                    text(&server.name),
+                    described(&server.description)
+                );
+            }
+        }
+        TrackerAction::Stats { .. } => {
+            let TrackerStats {
+                start_time,
+                connections_accepted,
+                datagrams_received,
+                hours,
+                connections,
+                servers,
+            } = tracker.stats().await?;
+            println!("started:      {}", time_1900(start_time));
+            println!("hours:        {hours}");
+            println!("connections:  {connections_accepted} accepted, {connections} open");
+            println!("datagrams:    {datagrams_received}");
+            println!("servers:      {servers}");
+        }
+    }
+    Ok(())
+}
+
+/// Adds the default tracker port to an address that has none.
+fn tracker_addr(addr: &str) -> String {
+    if addr
+        .parse::<std::net::IpAddr>()
+        .is_ok_and(|ip| ip.is_ipv6())
+    {
+        return format!("[{addr}]:{}", Tracker::PORT);
+    }
+    let has_port = addr.rsplit_once(':').is_some_and(|(host, port)| {
+        port.parse::<u16>().is_ok() && (!host.contains(':') || host.ends_with(']'))
+    });
+    if has_port {
+        addr.to_owned()
+    } else {
+        format!("{addr}:{}", Tracker::PORT)
+    }
+}
+
+/// `: description`, or nothing for an empty one.
+fn described(description: &[u8]) -> String {
+    if description.is_empty() {
+        String::new()
+    } else {
+        format!(": {}", text(description))
+    }
+}
+
+/// Shows milliseconds since 1900 as a UTC time.
+fn time_1900(ms: u64) -> String {
+    // Days from 1900-01-01 to 1970-01-01.
+    const UNIX_EPOCH: i64 = 25_567;
+    let secs = (ms / 1000) as i64;
+    let (days, rem) = (
+        secs.div_euclid(86_400) - UNIX_EPOCH,
+        secs.rem_euclid(86_400),
+    );
+    // Howard Hinnant's civil_from_days.
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    format!(
+        "{year}-{month:02}-{day:02} {:02}:{:02}:{:02}.{:03} UTC",
+        rem / 3600,
+        rem / 60 % 60,
+        rem % 60,
+        ms % 1000
+    )
 }
 
 /// The table from `--table`, the cache, or, at a terminal, a download or file the user picks.
@@ -638,6 +788,25 @@ mod tests {
         assert_eq!(name_text(b"Erik\xd5s"), "Erik\\xd5s");
         assert_eq!(name_text(b"a/b\\c\r"), "a\\x2fb\\\\c\\x0d");
         assert_eq!(name_text("\u{85}".as_bytes()), "\\xc2\\x85");
+    }
+
+    #[test]
+    fn tracker_addresses() {
+        assert_eq!(tracker_addr("127.0.0.1"), "127.0.0.1:10800");
+        assert_eq!(tracker_addr("127.0.0.1:1234"), "127.0.0.1:1234");
+        assert_eq!(tracker_addr("example.com"), "example.com:10800");
+        assert_eq!(tracker_addr("::1"), "[::1]:10800");
+        assert_eq!(tracker_addr("[::1]:1234"), "[::1]:1234");
+    }
+
+    #[test]
+    fn times() {
+        // linux-tracker frame 37: the first seen time of Lab Server.
+        assert_eq!(
+            time_1900(0x0000_03a3_80f5_a144),
+            "2026-10-12 07:15:33.828 UTC"
+        );
+        assert_eq!(time_1900(0), "1900-01-01 00:00:00.000 UTC");
     }
 
     #[test]

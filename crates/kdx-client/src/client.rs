@@ -383,7 +383,7 @@ impl Client {
     }
 }
 
-async fn wait_reply(
+pub(crate) async fn wait_reply(
     conn: &mut Connection,
     kind: MessageType,
     txid: u32,

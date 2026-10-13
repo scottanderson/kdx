@@ -122,19 +122,33 @@ The tracker keys each server by its source IP and the port field
   **[S `FUN_0804b494`, `FUN_0804b604`]**.
 - A known key whose name, description, and group names are unchanged gets its
   users, flags, and last-seen time updated.
-- Otherwise the record is replaced, with a new first-seen time: after 255
-  changed the group, 257 lists the arrival time of 255, not of 23 **[O]**.
+- Otherwise the record is rebuilt from the datagram, keeping its first-seen
+  time **[S `FUN_0804b960`]**.
+- A registration with an empty name makes no record, and removes a known one
+  **[S `FUN_0804b604` returns none]**.
 
-The name is cut to 64 bytes. The record is listed in each of its groups that
-the tracker has configured; a group whose flag (+0x0c) is set only takes
+The name is cut to 64 bytes; the description is kept whole. The record is
+listed in each of its groups that the tracker has configured, matched byte for
+byte **[S `FUN_0806774c`]**; a group whose flag (+0x0c) is set only takes
 records whose flags bit 0 is set. A record with no matching group goes into a
 default group **[S `FUN_0804b604`]**, which is General: `Lab, Lab2` was listed
 there (frame 37) **[O]**. Once the tracker had a group `Lab`, the
 registration with group `Lab` (255) was listed in it (257) **[O]**.
 
+A new group list from 712 drops every record **[S `FUN_0804ab2c`; O frame 244,
+an empty General right after the group edit at 240]**. So 257 lists the
+arrival time of 255, not of 23 **[O]**.
+
 Records not seen for more than 850 (0x352) are removed. The sweep runs from
 the 700 handler, at most every 600 **[S `FUN_0804abf4`]**. Both are probably
 seconds **[I]**.
+
+Verified: `kdx-tracker` replays the requests of the `linux-tracker` capture and
+its replies match Tracker 1.110's byte for byte, but for the first-seen times:
+701 at 34, 234, and 247; 703 at 37, 58, 244, 250, and 257; 711 at 80 and 237;
+713 at 83 and 241; and the Status at 61 (`crates/kdx-tracker/src/tests.rs`)
+**[O]**. `captures/kdx-tracker.pcapng` has Server 1.620 registering with
+`kdx-tracker` (frame 16) and the 703 that lists it (frame 34) **[O]**.
 
 ## Browsing (TCP)
 
@@ -149,27 +163,30 @@ The tracker sends version 0x30. Like the server, it accepts only service
 Login **[S `FUN_0804bb78`]**:
 
 - An empty login checks the proof against the empty password's key (guest).
-- Any other login must be the tracker's admin login with the admin password.
-  It sets admin bit 0 at connection +0x2e, which 710, 712, and 720 require
-  (else 0x10014; **[O]** frames 61 and 164 for a guest's 710 and 720). A
-  wrong password fails the proof with status 1 (frame 104) **[O]**.
+- Any other login must be the tracker's admin login, compared ignoring case
+  (`FUN_0808244c` with its case flag set), with the admin password. It sets
+  admin bit 0 at connection +0x2e, which 710, 712, and 720 require (else
+  0x10014; **[O]** frames 61 and 164 for a guest's 710 and 720). A wrong
+  password fails the proof with status 1 (frame 104) **[O]**, in the error
+  form of `handshake.md`: `auth` is zero but for its key word.
 
 After login the tracker sends 107 Server Greeting, if it has one set
 **[S `FUN_0804bbf8`; O frame 117, before the client's 700]**. Each IP may
-hold 5 connections, and a connection idle for more than 1200 (0x4b0,
+hold 5 connections; the tracker closes a sixth at once, but counts it in
+720's connection counter. A connection idle for more than 1200 (0x4b0,
 probably seconds **[I]**) is closed **[S `FUN_0804bd9c`, `FUN_0804bbf8`]**.
 The receive cap is 0x10000 bytes **[S `FUN_0804bd9c`]**.
 
 The tracker's dispatcher `FUN_0804b378` handles 115, 700, 702, 710, 712, and
-720 **[S]**. The client's tracker connection `FUN_08069578` sends 700 as soon
-as it logs in and handles 1, 107, 116, 701, 703, 711, 713, and 721
-**[S client; O frames 33, 75]**.
+720, and ignores any other type without a reply **[S]**. The client's tracker
+connection `FUN_08069578` sends 700 as soon as it logs in and handles 1, 107,
+116, 701, 703, 711, 713, and 721 **[S client; O frames 33, 75]**.
 
 ### 1 Status
 
 The tracker's error Status is 8 bytes: the error code, then the request type
 as a u32, like the first 8 bytes of the server's 24-byte Status
-(`KDXProtocol.md`) **[O frames 61, 164]**:
+(`KDXProtocol.md`) **[O frames 61, 164; `kdx-cli-tracker` 39, 53]**:
 
 ```
 00 01 00 14  00 00 02 c6    0x10014 for 710
@@ -215,8 +232,9 @@ Group record, padded to a multiple of 4:
 | 0x03 | 1 | 0 | |
 | 0x04 | | group name | |
 
-An unknown group gives 0x1000c. Reply 703, with an empty payload for an empty
-group:
+A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown
+group 0x1000c **[O `kdx-cli-tracker` frame 39]**; group names match byte for
+byte **[S]**. Reply 703, with an empty payload for an empty group:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -274,10 +292,17 @@ present but empty section has size 0 and the offset where it would start
 byte for byte, and each general, groups, and admin section from its fields
 **[O]**.
 
-The parser reads a section only when its present byte is exactly 1 and its
-size is not 0; for the groups it then replaces the whole list, and for the
-admin section the size must be at least 0x94 **[S `FUN_0804d63c`]**. 711 sets
-them all **[O frame 80]**.
+The parser reads a section only when its present byte is exactly 1 **[S
+`FUN_0804d63c`]**. 711 sets them all **[O frame 80]**. Beyond that:
+
+- general: the size must be at least 0x4c and hold the strings;
+- upstream trackers: the section replaces the whole list, even when empty;
+- groups: the size must not be 0; the section replaces the whole list and
+  drops every registration (`FUN_0804ab2c`);
+- admin: the size must be at least 0x94 and hold the login; an empty login
+  keeps the old one;
+- greeting: a section that isn't present, or is shorter than 5 bytes, clears
+  the greeting; a longer one is kept up to 0xffff bytes.
 
 General settings at 0x78: four u16 limits at 0x78..0x7f (file only), flags
 at 0x98, the port at 0x9c (a u32), the server ID at 0xa4 (file only; 12
@@ -286,8 +311,11 @@ at 0xbe and 0xbf with the strings from 0xc4, padded to 4. Flags
 bit 0 is Register with Trackers (tracker +0x1a4) and bit 1 Enable Greeting
 (tracker +0x22c) **[S `FUN_0804d63c`]**. The flags are a u32: Enable Greeting
 alone is `00 00 00 02` **[O frame 82]**. The tracker clears bit 0 when the
-name is empty or no upstream tracker has an address. 711 sends the limits as
-0 **[O frame 80]**.
+name is empty, or no upstream tracker has an address, which includes an
+upstream section that isn't present. It keeps 63 bytes of the name and 255
+of the description. A port of 0 or above 0xfffe means 10800. 711 sends the
+limits and server ID as 0 **[O frame 80]**. A fresh tracker is named `New
+TrackerServ` **[O frame 80]**.
 
 The greeting section is a u32 0 and then the text. The tracker sends it as
 107 Server Greeting after login when Enable Greeting is on and the section
@@ -299,11 +327,15 @@ unused, groups 0-5, as in the server's tracker entry). A group has two u16
 values at +0x10 and +0x12, which nothing sets, so they are always 0; the
 name and description lengths at +0x18 and +0x19; and the strings from +0x1c.
 A group record is 0x1c bytes and the strings, padded to a multiple of 4 **[O
-frame 80]**. A group's flag (+0x0c) is set when its name contains `tracker`
-(`FUN_0808274c`, a substring search; case handling not checked). In 711 the
-`Trackers` group has 0 there **[O frame 80]**. After
-parsing, the tracker adds the groups `General` and `Trackers` back if they
-are missing. The admin section has a flags byte at +0x07 (bit 0: a key
+frame 80]**; the parser steps over records by the four lengths at +0x18..+0x1b
+**[S]**. A group's flag (+0x0c in memory) is set when its name contains
+`tracker` in any case (`FUN_0804aa30` calls the substring search
+`FUN_0808274c` with its case flag set) **[S]**, so `Trackers` takes only
+trackers. 711 doesn't send the flag: the `Trackers` group has 0 there **[O
+frame 80]**. The tracker keeps its groups sorted by name, byte for byte, so a
+new group `Lab` lands between General and Macintosh (frame 247) **[S; O]**.
+After parsing, the tracker adds the groups `General` and `Trackers` back if
+they are missing. The admin section has a flags byte at +0x07 (bit 0: a key
 follows), the 32-byte admin key at +0x08, the admin login length at +0x90,
 and the login from +0x94, padded to 4; 711 leaves the key out. The key is the
 `AccountKey` of the password, as for a server account: frame 82 carries the
@@ -328,8 +360,8 @@ password can't be changed remotely with this client **[S; O frame 82, and
 the new password is refused at 104]**. The client fills the groups section
 only when the group list has been edited (bit 12 at list +0x24); otherwise
 the section has offset and size 0, and the tracker keeps its groups **[S; O
-frames 82 and 240]**. The tracker saves
-`KDXTrackerServ.stg`, replies 713 with no payload, restarts its upstream
+frames 82 and 240]**. The tracker saves `KDXTrackerServ.stg`, replies 713
+with no payload, even to a blob it can't read, restarts its upstream
 registration, and logs `TrackerServ settings changed remotely` **[S
 `FUN_0804cc10`; O frame 83 and the tracker log]**. The file is XOR'd with a
 second LCG (seed 0xacb8fa74, multiplier 0x41a609fd, increment 0x1379); that

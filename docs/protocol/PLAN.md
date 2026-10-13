@@ -93,7 +93,8 @@ which build introduced it:
    protocol work.
 
 Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
-1.620 in the lab (`captures/kdx-cli.md`):
+1.620 or Tracker 1.110 in the lab (`captures/kdx-cli.md`,
+`captures/kdx-cli-tracker.md`):
 
 | Area | Documented | Codec tested on a capture | Client works |
 |---|---|---|---|
@@ -103,7 +104,7 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |
 | 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
 | 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 174, 175, and 804 captured (`linux-shutdown`); a successful 175 not yet | yes | account list, show, add, set, rm; passwd |
-| 7. Tracker | yes; registration, 700–703, 710–713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | no |
+| 7. Tracker | yes; registration, 700–703, 710–713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | groups, servers, stats |
 | 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
 
 ### Phase 4: Spec format
@@ -141,7 +142,7 @@ it does async I/O.
 | `kdx-cli` | programs | `kdx`, the command-line client, and `kdx-probe` |
 | `kdx-server` | library | for writing KDX servers (placeholder) |
 | `kdx-daemon` | program | the server built on `kdx-server` (placeholder) |
-| `kdx-tracker` | program | the tracker (placeholder) |
+| `kdx-tracker` | program | the tracker |
 | `kdx-dissect` | program | pcap to text |
 
 `kdx-proto::msg` has codecs for the payloads in areas 1 to 5, and in area 6

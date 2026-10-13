@@ -21,6 +21,8 @@ pub const FORMAT: u8 = 1;
 pub const CLIENT_VERSION: u8 = 0x10;
 /// Version byte that Server 1.620 sends.
 pub const SERVER_VERSION: u8 = 0x20;
+/// Version byte that Tracker 1.110 sends.
+pub const TRACKER_VERSION: u8 = 0x30;
 /// Largest hello that a receiver accepts.
 pub const MAX_HELLO_LEN: usize = 0x800;
 /// Longest login name that a hello can carry.
