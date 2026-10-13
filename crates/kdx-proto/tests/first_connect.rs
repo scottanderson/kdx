@@ -4,7 +4,7 @@ use kdx_proto::handshake::{
     compute_auth, Hello, Proof, Status, CLIENT_VERSION, SERVER_VERSION, SERVICE_KDX,
 };
 use kdx_proto::session::{Header, MessageType, SessionCipher};
-use kdx_proto::AccountKey;
+use kdx_proto::{AccountKey, Story};
 
 mod common;
 use common::{messages, PASSWORD};
@@ -75,7 +75,7 @@ fn proofs() {
 
 #[test]
 fn challenge_responses() {
-    let table = kdx_test_tables::challenge_table();
+    let table = kdx_test_tables::table(Story::Kdx);
     let (client, server) = (side(C2S), side(S2C));
     assert_eq!(
         table.response(server.hello.challenge),

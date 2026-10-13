@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use kdx_client::table;
+use kdx_proto::Story;
 use kdx_tracker::{Settings, Sockets, Tracker};
 
 /// A KDX tracker: servers register over UDP, and clients browse over TCP, on one port.
@@ -36,8 +37,8 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
     let table = match &args.table {
-        Some(path) => table::load(path)?,
-        None => table::cached().context("no cached challenge table; pass --table")?,
+        Some(path) => table::load(Story::Kdx, path)?,
+        None => table::cached(Story::Kdx).context("no cached KDX story; pass --table")?,
     };
 
     let (mut settings, mut changed) = if args.settings.exists() {

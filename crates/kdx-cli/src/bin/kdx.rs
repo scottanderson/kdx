@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
-use kdx_client::table::{self, Table};
+use kdx_client::table;
 use kdx_client::{Client, Login, Tracker};
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
@@ -13,7 +13,7 @@ use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
 use kdx_proto::msg::tracker::TrackerStats;
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
-use kdx_proto::{AccountKey, ChallengeTable, GConsoleTable};
+use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::fs::File;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
@@ -375,27 +375,27 @@ async fn main() -> Result<()> {
 
 fn table_command(action: &TableAction) -> Result<()> {
     if let TableAction::Import { file } = action {
-        let kdx = table::load::<ChallengeTable>(file);
-        let gconsole = table::load::<GConsoleTable>(file);
-        if let (Err(err), Err(_)) = (&kdx, &gconsole) {
+        let loaded = Story::ALL.map(|story| table::load(story, file));
+        if loaded.iter().all(Result::is_err) {
+            let [Err(err), ..] = &loaded else {
+                unreachable!("all failed")
+            };
             bail!("{err:#}");
         }
-        if let Ok(t) = kdx {
-            println!("saved {}", table::save_to_cache(&t)?.display());
-        }
-        if let Ok(t) = gconsole {
+        for t in loaded.into_iter().flatten() {
             println!("saved {}", table::save_to_cache(&t)?.display());
         }
         return Ok(());
     }
-    table_action::<ChallengeTable>(action)?;
-    table_action::<GConsoleTable>(action)
+    Story::ALL
+        .into_iter()
+        .try_for_each(|story| table_action(story, action))
 }
 
-/// Runs `kdx table path` or `kdx table fetch` for one table.
-fn table_action<T: Table>(action: &TableAction) -> Result<()> {
-    let path = table::cache_path::<T>().context("no cache directory")?;
-    let cached = table::cached::<T>().is_some();
+/// Runs `kdx table path` or `kdx table fetch` for one story.
+fn table_action(story: Story, action: &TableAction) -> Result<()> {
+    let path = table::cache_path(story).context("no cache directory")?;
+    let cached = table::cached(story).is_some();
     match action {
         TableAction::Path => {
             let state = if cached { "present" } else { "missing" };
@@ -408,8 +408,8 @@ fn table_action<T: Table>(action: &TableAction) -> Result<()> {
             );
         }
         TableAction::Fetch { .. } => {
-            eprintln!("downloading {}", T::FETCH_URL);
-            let table = table::fetch::<T>()?;
+            eprintln!("downloading {}", table::fetch_url(story));
+            let table = table::fetch(story)?;
             println!("saved {}", table::save_to_cache(&table)?.display());
         }
         TableAction::Import { .. } => unreachable!("handled by table_command"),
@@ -526,9 +526,9 @@ fn time_1900(ms: u64) -> String {
 /// The table from `--table`, the cache, or, at a terminal, a download or file the user picks.
 fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
     if let Some(path) = path {
-        return table::load(path);
+        return table::load(Story::Kdx, path);
     }
-    if let Some(table) = table::cached() {
+    if let Some(table) = table::cached(Story::Kdx) {
         return Ok(table);
     }
     let help = "KDX needs Haxial's challenge table, which this program can't include. \
@@ -538,10 +538,13 @@ fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
         bail!("{help}");
     }
     eprintln!("{help}");
-    eprint!("Download it now from {}? [y/N] ", ChallengeTable::FETCH_URL);
+    eprint!(
+        "Download it now from {}? [y/N] ",
+        table::fetch_url(Story::Kdx)
+    );
     std::io::stderr().flush()?;
     let table = if prompt()?.eq_ignore_ascii_case("y") {
-        table::fetch()?
+        table::fetch(Story::Kdx)?
     } else {
         eprint!("Path to a KDX program, archive, or table (empty to quit): ");
         std::io::stderr().flush()?;
@@ -549,7 +552,7 @@ fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
         if answer.is_empty() {
             bail!("no challenge table");
         }
-        table::load(Path::new(&answer))?
+        table::load(Story::Kdx, Path::new(&answer))?
     };
     eprintln!("saved {}", table::save_to_cache(&table)?.display());
     Ok(table)

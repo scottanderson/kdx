@@ -7,6 +7,7 @@ use kdx_client::{Connection, Login};
 use kdx_proto::handshake::TRACKER_VERSION;
 use kdx_proto::msg::tracker::{GetServerList, GroupListEntry, ServerListEntry, TrackerStats};
 use kdx_proto::session::MessageType;
+use kdx_proto::Story;
 use kdx_tracker::{Settings, Sockets, Tracker, MAX_CONNECTIONS_PER_IP};
 use tokio::net::UdpSocket;
 
@@ -17,7 +18,7 @@ const REGISTRATION: &[u8] =
 
 #[tokio::test(flavor = "multi_thread")]
 async fn browse() {
-    let table = kdx_test_tables::challenge_table();
+    let table = kdx_test_tables::table(Story::Kdx);
     let sockets = Sockets::bind("127.0.0.1".parse().unwrap(), 0)
         .await
         .unwrap();

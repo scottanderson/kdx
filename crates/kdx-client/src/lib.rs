@@ -98,7 +98,7 @@ impl Connection {
             service: SERVICE_KDX,
             format: FORMAT,
             version: CLIENT_VERSION,
-            challenge: random_u32()? as u16 % ChallengeTable::OFFSETS,
+            challenge: random_u32()? as u16 % responses.offsets(),
             nonce: random_bytes()?,
             name,
         };
@@ -244,11 +244,19 @@ enum Responses {
 }
 
 impl Responses {
+    fn offsets(&self) -> u16 {
+        match self {
+            Self::Table(table) => table.offsets(),
+            #[cfg(test)]
+            Self::Fake => kdx_proto::Story::Kdx.offsets(),
+        }
+    }
+
     fn response(&self, offset: u16) -> Option<[u8; kdx_proto::challenge::RESPONSE_LEN]> {
         match self {
             Self::Table(table) => table.response(offset),
             #[cfg(test)]
-            Self::Fake => (offset < ChallengeTable::OFFSETS).then(|| fake_response(offset)),
+            Self::Fake => (offset < kdx_proto::Story::Kdx.offsets()).then(|| fake_response(offset)),
         }
     }
 }

@@ -11,7 +11,7 @@ use kdx_proto::handshake::{
     Hello, Proof, Status, CLIENT_VERSION, FORMAT, NONCE_LEN, SERVICE_KDX, TRACKER_VERSION,
 };
 use kdx_proto::session::{Header, MessageType};
-use kdx_proto::{AccountKey, ChallengeTable};
+use kdx_proto::AccountKey;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_util::codec::Framed;
@@ -35,7 +35,7 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
         service: SERVICE_KDX,
         format: FORMAT,
         version: TRACKER_VERSION,
-        challenge: random_u32() as u16 % ChallengeTable::OFFSETS,
+        challenge: random_u32() as u16 % tracker.table.offsets(),
         nonce: random(),
         name: Vec::new(),
     };

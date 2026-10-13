@@ -175,11 +175,11 @@ from there, and check the SHA-256 above.
 ### Getting the stories
 
 The KDX and GConsole stories are Haxial's copyrighted text, so **don't
-commit them**. No connection in the client or server uses the 31-byte
-default, so the Rust implementation leaves it out. It treats each story as
-a required input, obtained once and cached in the same directory,
-`~/.cache/kdx/table/`, under its service with the `%` dropped (`kdx.bin` and
-`hgc.bin`), by `kdx_client::table`:
+commit them**. The Rust implementation works like the binaries: a
+`ChallengeTable` holds the 31-byte default, or a story substituted for it.
+It treats each story as a required input, obtained once and cached in the
+same directory, `~/.cache/kdx/table/`, under its service with the `%`
+dropped (`kdx.bin` and `hgc.bin`), by `kdx_client::table`:
 
 1. Use the cached copy if one exists and its SHA-256 matches.
 2. Otherwise, offer to fetch it. Download the smallest known Haxial archive

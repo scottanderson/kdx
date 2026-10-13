@@ -17,7 +17,7 @@ use kdx_client::{table, Connection, Login};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
 use kdx_proto::handshake::{Hello, Proof, Status, FORMAT, GCONSOLE_VERSION, SERVICE_GCONSOLE};
 use kdx_proto::session::{Header, MessageType, Scramble};
-use kdx_proto::{AccountKey, GConsoleTable};
+use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_util::codec::Framed;
 
@@ -64,8 +64,8 @@ async fn main() -> Result<()> {
         return listen(addr, &args).await;
     }
     let table = match &args.table {
-        Some(path) => table::load(path)?,
-        None => table::cached().context("no cached challenge table; pass --table")?,
+        Some(path) => table::load(Story::Kdx, path)?,
+        None => table::cached(Story::Kdx).context("no cached KDX story; pass --table")?,
     };
     let login = Login {
         name: args.login.into_bytes(),
@@ -128,9 +128,9 @@ async fn drain(conn: &mut Connection, wait: Duration) -> Result<()> {
 
 /// Accepts one client as a GConsole peer, sends the requests, and prints what it sends.
 async fn listen(addr: &str, args: &Args) -> Result<()> {
-    let table: GConsoleTable = match &args.table {
-        Some(path) => table::load(path)?,
-        None => table::cached().context("no cached GConsole table; pass --table")?,
+    let table = match &args.table {
+        Some(path) => table::load(Story::Hgc, path)?,
+        None => table::cached(Story::Hgc).context("no cached GConsole story; pass --table")?,
     };
     let requests = parse_requests(&args.requests)?;
     let key = AccountKey::from_password(args.password.as_bytes());
@@ -175,7 +175,7 @@ async fn listen(addr: &str, args: &Args) -> Result<()> {
 async fn handshake(
     stream: TcpStream,
     key: &AccountKey,
-    table: &GConsoleTable,
+    table: &ChallengeTable,
 ) -> Result<Framed<TcpStream, SessionCodec>> {
     stream.set_nodelay(true)?;
     let mut framed = Framed::new(stream, HandshakeCodec::new());
@@ -192,7 +192,7 @@ async fn handshake(
         service: SERVICE_GCONSOLE,
         format: FORMAT,
         version: GCONSOLE_VERSION,
-        challenge: random_u32() as u16 % GConsoleTable::OFFSETS,
+        challenge: random_u32() as u16 % table.offsets(),
         nonce: random(),
         name: Vec::new(),
     };

@@ -4,7 +4,7 @@
 use kdx_proto::handshake::{Hello, Proof, GCONSOLE_VERSION, SERVICE_GCONSOLE};
 use kdx_proto::msg::gconsole::{Color, Draw, DrawRecord, Key, Mouse, OpenWindow, Point, Rect};
 use kdx_proto::session::{Header, MessageType, Scramble, SessionCipher};
-use kdx_proto::{AccountKey, ChallengeTable};
+use kdx_proto::{AccountKey, Story};
 
 mod common;
 
@@ -26,7 +26,7 @@ fn of_type(messages: &[(Header, Vec<u8>)], kind: MessageType) -> Vec<&[u8]> {
 
 #[test]
 fn challenge_responses() {
-    let table = kdx_test_tables::gconsole_table();
+    let table = kdx_test_tables::table(Story::Hgc);
     let (client, client_len) = Hello::decode(C2S).unwrap();
     let (peer, peer_len) = Hello::decode(S2C).unwrap();
     assert_eq!(
@@ -34,7 +34,7 @@ fn challenge_responses() {
         (SERVICE_GCONSOLE, GCONSOLE_VERSION)
     );
     // Frame 6: the peer's offset is past the end of the KDX table, so the client answered from GConsole's.
-    assert!(peer.challenge >= ChallengeTable::OFFSETS);
+    assert!(peer.challenge >= Story::Kdx.offsets());
     let client_proof = Proof::decode(&C2S[client_len..]).unwrap();
     let peer_proof = Proof::decode(&S2C[peer_len..]).unwrap();
     assert_eq!(table.response(peer.challenge), Some(client_proof.response));

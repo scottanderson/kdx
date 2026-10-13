@@ -2,6 +2,8 @@
 
 use std::process::{Command, Output};
 
+use kdx_proto::Story;
+
 fn kdx(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_kdx"))
         .args(args)
@@ -31,8 +33,8 @@ fn server_commands_take_server_options() {
 #[test]
 fn fetch_keeps_cached_tables() {
     let (table, gconsole) = (
-        kdx_test_tables::challenge_table(),
-        kdx_test_tables::gconsole_table(),
+        kdx_test_tables::table(Story::Kdx),
+        kdx_test_tables::table(Story::Hgc),
     );
     let cache = std::env::temp_dir().join(format!("kdx-table-test-{}", std::process::id()));
     // The KDX table is at its legacy path, to be moved; the stale legacy GConsole table is removed.
