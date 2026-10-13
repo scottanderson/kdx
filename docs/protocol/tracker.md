@@ -23,7 +23,7 @@ When a tracker address has no `:port`, the server appends `:10800` before
 sending a registration **[S server `FUN_08060e4c`]**. The client picks the
 default port by connection type: 1 → 10700 (Server), 2 → 10600 (Client,
 DCC), 3 → 10800 (Tracker), 4 → 10900 (GConsole, a Haxial remote console;
-see [dcc.md](dcc.md#gconsole)) **[S client `FUN_0804bac0`]**.
+see [gconsole.md](gconsole.md)) **[S client `FUN_0804bac0`]**.
 
 ## Registration (UDP)
 
@@ -393,5 +393,5 @@ Verified: `kdx-proto` re-encodes frame 86 byte for byte **[O]**.
 - Resolved: registration offset 0x34 is the tracker entry's Login.
 - Resolved: 711 flags bit 1 is Enable Greeting, section 4 is the greeting,
   and 712 uses the 711 format.
-- Resolved: connection type 4 is GConsole ([dcc.md](dcc.md#gconsole)).
+- Resolved: connection type 4 is GConsole ([gconsole.md](gconsole.md)).
 - The units of the 850 and 600 sweep values and the 1200 idle limit.

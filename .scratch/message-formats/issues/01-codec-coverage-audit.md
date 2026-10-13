@@ -27,6 +27,9 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
 - [ ] The list of types with no codec, by issue number of this effort.
 - [ ] The list of lossy decoders, with the bytes they drop.
 - [ ] Add each finding to the issue for its area as a new gap.
+- [ ] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
+  Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
+  `gconsole.md`.
 
 Done when the test runs in `cargo test` and every lossy decoder or missing
 codec is recorded in an issue here.

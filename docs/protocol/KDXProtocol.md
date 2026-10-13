@@ -23,7 +23,7 @@ news, and server administration. Trackers list servers.
 | 10600 | TCP | client ↔ client (DCC): private chat and voice; the client advertises its port in the user record [O; S]; see [dcc.md](dcc.md) |
 | 10700 | TCP | client ↔ server: every message, and file transfers on extra connections [O] |
 | 10800 | UDP, TCP | tracker: server registration (UDP) and listing (TCP); see [tracker.md](tracker.md) [S] |
-| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it [S]; see [dcc.md](dcc.md) |
+| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it [S]; see [gconsole.md](gconsole.md) |
 
 A connection has two phases:
 
