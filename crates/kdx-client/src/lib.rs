@@ -9,7 +9,9 @@ use anyhow::{bail, Context, Result};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
-use kdx_proto::handshake::{Hello, Proof, CLIENT_VERSION, FORMAT, NONCE_LEN, SUB_PROTOCOL_KDX};
+use kdx_proto::handshake::{
+    Hello, Proof, CLIENT_SUB_VERSION, NONCE_LEN, SUB_PROTOCOL_KDX, VERSION,
+};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::{AccountKey, ChallengeTable};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
@@ -96,8 +98,8 @@ impl Connection {
 
         let hello = Hello {
             sub_protocol: SUB_PROTOCOL_KDX,
-            format: FORMAT,
-            version: CLIENT_VERSION,
+            version: VERSION,
+            sub_version: CLIENT_SUB_VERSION,
             challenge: random_u32()? as u16 % responses.offsets(),
             nonce: random_bytes()?,
             name,

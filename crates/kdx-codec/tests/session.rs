@@ -4,7 +4,7 @@ use bytes::{Bytes, BytesMut};
 use futures_util::{SinkExt, StreamExt};
 use kdx_codec::{Error, Frame, Handshake, HandshakeCodec, SessionCodec};
 use kdx_proto::handshake::{
-    Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SUB_PROTOCOL_KDX,
+    Hello, Proof, CLIENT_SUB_VERSION, SERVER_SUB_VERSION, SUB_PROTOCOL_KDX, VERSION,
 };
 use kdx_proto::session::{Header, MessageType, SessionError, SERVER_MAX_PAYLOAD_LEN};
 use kdx_proto::AccountKey;
@@ -13,11 +13,11 @@ use tokio_util::codec::{Decoder, Encoder, Framed};
 
 const RESPONSE: [u8; 20] = [7; 20];
 
-fn hello(version: u8, nonce: u8, name: &[u8]) -> Hello {
+fn hello(sub_version: u8, nonce: u8, name: &[u8]) -> Hello {
     Hello {
         sub_protocol: SUB_PROTOCOL_KDX,
-        format: FORMAT,
-        version,
+        version: VERSION,
+        sub_version,
         challenge: 0,
         nonce: [nonce; 12],
         name: name.to_vec(),
@@ -71,7 +71,7 @@ async fn login_message_and_upload() {
         let upload = upload.clone();
         tokio::spawn(async move {
             let mut framed = Framed::new(b, HandshakeCodec::new());
-            let peer = handshake(&mut framed, hello(SERVER_VERSION, 2, b""), &key).await;
+            let peer = handshake(&mut framed, hello(SERVER_SUB_VERSION, 2, b""), &key).await;
             assert_eq!(peer.name, b"admin");
             let mut framed = framed.map_codec(|_| SessionCodec::server(&key));
 
@@ -105,7 +105,7 @@ async fn login_message_and_upload() {
     };
 
     let mut framed = Framed::new(a, HandshakeCodec::new());
-    handshake(&mut framed, hello(CLIENT_VERSION, 1, b"admin"), &key).await;
+    handshake(&mut framed, hello(CLIENT_SUB_VERSION, 1, b"admin"), &key).await;
     let mut framed = framed.map_codec(|_| SessionCodec::client(&key));
     let set_identity = header(9, MessageType::SET_IDENTITY, 0);
     framed

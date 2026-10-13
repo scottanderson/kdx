@@ -28,9 +28,10 @@ news, and server administration. Trackers list servers.
 A connection has two phases:
 
 1. **Handshake.** Both sides exchange a cleartext hello (protocol `%TXP`,
-   sub-protocol `%KDX`, a version, a nonce, and the login name). Each side
-   then proves knowledge of the account key and of a 1739-byte challenge
-   table built into the programs. See [handshake.md](handshake.md).
+   sub-protocol `%KDX`, a version, a sub-version, a nonce, and the login
+   name). Each side then proves knowledge of the account key and of a
+   1739-byte challenge table built into the programs. See
+   [handshake.md](handshake.md).
 2. **Session.** Every message after that is a 16-byte header plus a payload,
    each block encrypted with Twofish-256 in ECB mode under the account key.
    See [session.md](session.md).
@@ -189,7 +190,7 @@ reason it needs Windows NT **[S]**. The tracker archives' notes predate the
 entry. Pre-1.2 builds are not vendored, so their charset is unknown;
 probably Mac OS Roman from a Mac and a Windows code page from a PC **[I]**.
 
-Nothing negotiates the charset. The handshake's version byte is 0x10 for
+Nothing negotiates the charset. The handshake's sub-version is 0x10 for
 every 1.6 client, and Server 1.620 accepts only 0x10 (see
 [handshake.md](handshake.md)); since 1.2 could still reach 1.1, the switch
 probably kept that byte **[I]**. No build branches on the peer's version

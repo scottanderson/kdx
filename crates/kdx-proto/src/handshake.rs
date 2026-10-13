@@ -19,16 +19,16 @@ pub const SUB_PROTOCOL_KDX: u32 = 0x254b_4458;
 /// [`Story::Hgc`](crate::challenge::Story::Hgc) and
 /// [`Scramble::GConsole`](crate::session::Scramble::GConsole).
 pub const SUB_PROTOCOL_GCONSOLE: u32 = 0x2548_4743;
-/// The only hello format that current programs accept.
-pub const FORMAT: u8 = 1;
-/// Version byte that Client 1.600 sends.
-pub const CLIENT_VERSION: u8 = 0x10;
-/// Version byte that Server 1.620 sends.
-pub const SERVER_VERSION: u8 = 0x20;
-/// Version byte that Tracker 1.110 sends.
-pub const TRACKER_VERSION: u8 = 0x30;
-/// Version byte that a GConsole peer must send.
-pub const GCONSOLE_VERSION: u8 = 0x40;
+/// The only hello version that current programs accept.
+pub const VERSION: u8 = 1;
+/// Sub-version that Client 1.600 sends.
+pub const CLIENT_SUB_VERSION: u8 = 0x10;
+/// Sub-version that Server 1.620 sends.
+pub const SERVER_SUB_VERSION: u8 = 0x20;
+/// Sub-version that Tracker 1.110 sends.
+pub const TRACKER_SUB_VERSION: u8 = 0x30;
+/// Sub-version that a GConsole peer must send.
+pub const GCONSOLE_SUB_VERSION: u8 = 0x40;
 /// Largest hello that a receiver accepts.
 pub const MAX_HELLO_LEN: usize = 0x800;
 /// Longest login name that a hello can carry.
@@ -45,11 +45,11 @@ pub enum HandshakeError {
     /// The protocol is not `"%TXP"`.
     #[error("unknown protocol {0:#010x}")]
     UnknownProtocol(u32),
-    /// The peer's hello format is older than [`FORMAT`].
-    #[error("peer protocol too old (format {0})")]
+    /// The peer's hello version is older than [`VERSION`].
+    #[error("peer protocol too old (version {0})")]
     TooOld(u8),
-    /// The peer's hello format is newer than [`FORMAT`].
-    #[error("peer protocol too new (format {0})")]
+    /// The peer's hello version is newer than [`VERSION`].
+    #[error("peer protocol too new (version {0})")]
     TooNew(u8),
     /// The hello is longer than [`MAX_HELLO_LEN`].
     #[error("hello too long ({0} bytes)")]
@@ -70,10 +70,10 @@ pub enum HandshakeError {
 pub struct Hello {
     /// Sub-protocol, normally [`SUB_PROTOCOL_KDX`].
     pub sub_protocol: u32,
-    /// Hello format, normally [`FORMAT`].
-    pub format: u8,
-    /// Program version byte, such as [`CLIENT_VERSION`] or [`SERVER_VERSION`].
+    /// Hello version, normally [`VERSION`].
     pub version: u8,
+    /// Sub-version, such as [`CLIENT_SUB_VERSION`] or [`SERVER_SUB_VERSION`].
+    pub sub_version: u8,
     /// Offset into the challenge table that the peer must answer.
     pub challenge: u16,
     /// Per-connection value that the peer's proof is computed over.
@@ -104,14 +104,14 @@ impl Hello {
         }
         let mut body = buf[4..len].to_vec();
         xor_stream(be32(buf, 0), &mut body);
-        let format = body[8];
+        let version = body[8];
         let skip = usize::from(body[10]) + usize::from(be16(&body, 0x10));
         let name_start = Self::HEADER_LEN - 4 + skip;
         let name = body[name_start..name_start + usize::from(body[11])].to_vec();
         let hello = Self {
             sub_protocol: be32(&body, 4),
-            format,
-            version: body[9],
+            version,
+            sub_version: body[9],
             challenge: be16(&body, 0x12),
             nonce: body[0x14..0x20].try_into().unwrap(),
             name,
@@ -129,7 +129,7 @@ impl Hello {
         out.extend_from_slice(&key.to_be_bytes());
         out.extend_from_slice(&PROTOCOL_TXP.to_be_bytes());
         out.extend_from_slice(&self.sub_protocol.to_be_bytes());
-        out.extend_from_slice(&[self.format, self.version, 0, self.name.len() as u8]);
+        out.extend_from_slice(&[self.version, self.sub_version, 0, self.name.len() as u8]);
         out.extend_from_slice(&[0; 6]);
         out.extend_from_slice(&self.challenge.to_be_bytes());
         out.extend_from_slice(&self.nonce);
@@ -153,8 +153,8 @@ impl Hello {
         }
         match header[0x0c] {
             0 => Err(HandshakeError::TooOld(0)),
-            FORMAT => Ok(header),
-            format => Err(HandshakeError::TooNew(format)),
+            VERSION => Ok(header),
+            version => Err(HandshakeError::TooNew(version)),
         }
     }
 
@@ -323,8 +323,8 @@ mod tests {
     fn hello() -> Hello {
         Hello {
             sub_protocol: SUB_PROTOCOL_KDX,
-            format: FORMAT,
-            version: CLIENT_VERSION,
+            version: VERSION,
+            sub_version: CLIENT_SUB_VERSION,
             challenge: 123,
             nonce: *b"0123456789ab",
             name: b"admin".to_vec(),
@@ -343,9 +343,9 @@ mod tests {
     }
 
     #[test]
-    fn hello_rejects_bad_format() {
+    fn hello_rejects_bad_version() {
         let mut bad = hello();
-        bad.format = 2;
+        bad.version = 2;
         let wire = bad.encode(7).unwrap();
         assert_eq!(Hello::decode(&wire), Err(HandshakeError::TooNew(2)));
     }

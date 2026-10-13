@@ -284,11 +284,11 @@ fn dissect(
         let (hello, len) = Hello::decode(&stream.data).with_context(|| format!("{dir} hello"))?;
         writeln!(
             out,
-            "  [{}] {dir} hello: sub-protocol {} format {} version {:#04x} challenge {} nonce {} name {}",
+            "  [{}] {dir} hello: sub-protocol {} version {} sub-version {:#04x} challenge {} nonce {} name {}",
             stream.frame_at(0),
             fourcc(hello.sub_protocol),
-            hello.format,
             hello.version,
+            hello.sub_version,
             hello.challenge,
             hex::encode(hello.nonce),
             quoted(&hello.name)

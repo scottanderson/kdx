@@ -3,7 +3,7 @@
 use bytes::BytesMut;
 use kdx_codec::{Error, Handshake, HandshakeCodec};
 use kdx_proto::handshake::{
-    HandshakeError, Hello, Proof, CLIENT_VERSION, FORMAT, SERVER_VERSION, SUB_PROTOCOL_KDX,
+    HandshakeError, Hello, Proof, CLIENT_SUB_VERSION, SERVER_SUB_VERSION, SUB_PROTOCOL_KDX, VERSION,
 };
 use kdx_proto::AccountKey;
 use tokio_util::codec::{Decoder, Encoder};
@@ -13,11 +13,11 @@ const S2C: &[u8] = include_bytes!("../../kdx-proto/tests/fixtures/first-connect.
 
 const RESPONSE: [u8; 20] = [7; 20];
 
-fn hello(version: u8, nonce: u8, name: &[u8]) -> Hello {
+fn hello(sub_version: u8, nonce: u8, name: &[u8]) -> Hello {
     Hello {
         sub_protocol: SUB_PROTOCOL_KDX,
-        format: FORMAT,
-        version,
+        version: VERSION,
+        sub_version,
         challenge: 0,
         nonce: [nonce; 12],
         name: name.to_vec(),
@@ -54,7 +54,7 @@ fn capture_round_trip() {
 fn handshake_reports_truncation() {
     let mut codec = HandshakeCodec::new();
     assert!(codec.decode_eof(&mut BytesMut::new()).unwrap().is_none());
-    let mut partial = BytesMut::from(&hello(CLIENT_VERSION, 1, b"x").encode(5).unwrap()[..30]);
+    let mut partial = BytesMut::from(&hello(CLIENT_SUB_VERSION, 1, b"x").encode(5).unwrap()[..30]);
     assert!(matches!(
         codec.decode_eof(&mut partial),
         Err(Error::Truncated)
@@ -74,7 +74,7 @@ fn handshake_rejects_unknown_protocol() {
 fn handshake_leaves_session_bytes() {
     let mut wire = BytesMut::new();
     let mut codec = HandshakeCodec::new();
-    let hello = hello(SERVER_VERSION, 3, b"");
+    let hello = hello(SERVER_SUB_VERSION, 3, b"");
     codec
         .encode(
             Handshake::Hello {

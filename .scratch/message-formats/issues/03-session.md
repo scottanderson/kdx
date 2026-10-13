@@ -9,6 +9,9 @@ in issue 14.
 
 ## Gaps
 
+- [ ] `handshake.md`'s sub-version row cites the server's version
+  callback by its bare address, `0x080526e0`. Define a function there in
+  Ghidra and cite it as `FUN_080526e0`.
 - [ ] 104 User Departed: byte 0x04 is 7 in every capture; 0x05..0x07 are 0.
   `UserDeparted::value_4` holds it.
 - [ ] 105 Server Info 0x00, 32 bytes: the table says "probably a session ID

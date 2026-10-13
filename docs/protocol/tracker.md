@@ -158,9 +158,9 @@ its replies match Tracker 1.110's byte for byte, but for the first-seen times:
 
 The handshake and session layer are the same as for a server (`handshake.md`,
 `session.md`), with the same challenge table **[S tracker `FUN_0804bd9c`]**.
-The tracker sends version 0x30. Like the server, it accepts only
-sub-protocol `%KDX` with version exactly 0x10 (0x40071 for another
-sub-protocol, 0x40072 / 0x40073 for a lower / higher version)
+The tracker sends sub-version 0x30. Like the server, it accepts only
+sub-protocol `%KDX` with sub-version exactly 0x10 (0x40071 for another
+sub-protocol, 0x40072 / 0x40073 for a lower / higher sub-version)
 **[S `FUN_0804bb4c`]**.
 
 Login **[S `FUN_0804bb78`]**:

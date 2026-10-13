@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use kdx_client::{Connection, Login};
-use kdx_proto::handshake::TRACKER_VERSION;
+use kdx_proto::handshake::TRACKER_SUB_VERSION;
 use kdx_proto::msg::tracker::{GetServerList, GroupListEntry, ServerListEntry, TrackerStats};
 use kdx_proto::session::MessageType;
 use kdx_proto::Story;
@@ -31,7 +31,7 @@ async fn browse() {
 
     let guest = Login::default();
     let mut conn = Connection::connect(addr, &guest, &table).await.unwrap();
-    assert_eq!(conn.server_hello.version, TRACKER_VERSION);
+    assert_eq!(conn.server_hello.sub_version, TRACKER_SUB_VERSION);
     let general = loop {
         let groups = GroupListEntry::decode_list(&request(&mut conn, 700, &[]).await).unwrap();
         let general = groups.into_iter().find(|g| g.name == b"General").unwrap();

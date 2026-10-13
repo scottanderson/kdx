@@ -104,7 +104,7 @@ The addresses are the same.
 
 | Address | What |
 |---|---|
-| `0x08085328` | create connection object (magic `0x2aa24aec`, sub-protocol, version) |
+| `0x08085328` | create connection object (magic `0x2aa24aec`, sub-protocol, sub-version) |
 | `0x0808529c` | set challenge table (default "All your base…") |
 | `0x08085500` | set login name + 32-byte account key (also runs the Twofish key schedule) |
 | `0x08085a04` | handshake state machine |
@@ -112,7 +112,7 @@ The addresses are the same.
 | `0x080876e8` | validate HELLO header and return its length |
 | `0x0808584c` | verify the peer's PROOF against a candidate key |
 | `0x0805270c` | server login callback (guest, session-attach, account lookup via `0x08054900`) |
-| `0x08052ad0` | server accept: creates the connection with `%KDX`, version 0x20, story table |
+| `0x08052ad0` | server accept: creates the connection with `%KDX`, sub-version 0x20, story table |
 | `0x080863b4` / `0x080868b4` / `0x08086a9c` | session: send message / send header only / send encrypted chunk |
 | `0x08086108` / `0x080879c4` | session: receive and validate header / ECB-decrypt buffered data |
 | `0x0804a510` | header scramble hook, installed by `0x08052ad0` |
@@ -126,7 +126,7 @@ The addresses are the same.
 | `0x08060e4c` | send a registration datagram to each tracker in the settings |
 | `0x0806fa28` | CRC-32 (poly 0x04c11db7, MSB first, caller's initial value) |
 | `0x080535b4` | settings defaults: port 10700, user count 0x2ba9 (kept XOR'd), random 12-byte server ID |
-| `0x080526e0` | handshake version callback: `%KDX` with version 0x10 only |
+| `0x080526e0` | handshake version callback: `%KDX` with sub-version 0x10 only |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |
 | `0x080528c8` | session read loop: drops replies, updates idle time, calls the dispatcher |
 | `0x0804fdac` | message dispatcher (type → handler); catch at `0x0805090c` sends Status (1) |
@@ -203,7 +203,7 @@ Other binaries, by Ghidra project:
 | Server 1.600 Win (`kdxwinserver`) | `0x0041ffd0` | grab the primary screen: `BitBlt` from the desktop window into a 24-bit DIB |
 | Server 1.600 Win (`kdxwinserver`) | `0x00420270` / `0x00420380` | inject a mouse event (`mouse_event`) / a key (`keybd_event`, through the key code table at `0x0047fe98`) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b378` | TCP message dispatcher: 115, 700, 702, 710, 712, 720 |
-| Tracker 1.110 (`kdxtracker`) | `0x0804bd9c` | TCP accept: connection with `%KDX`, version 0x30, story table; 5 per IP |
+| Tracker 1.110 (`kdxtracker`) | `0x0804bd9c` | TCP accept: connection with `%KDX`, sub-version 0x30, story table; 5 per IP |
 | Tracker 1.110 (`kdxtracker`) | `0x0804bb78` / `0x0804bb4c` | login callback (guest or admin) / version callback |
 | Tracker 1.110 (`kdxtracker`) | `0x0804bbf8` | session read loop: sends 107, calls the dispatcher, drops idle connections |
 | Tracker 1.110 (`kdxtracker`) | `0x0804c048` | UDP receive: decrypt and validate a registration |

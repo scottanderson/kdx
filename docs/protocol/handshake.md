@@ -51,9 +51,9 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 |---|---|---|---|
 | 0x00 | 4 | key | random XOR key, sent in the clear |
 | 0x04 | 4 | protocol | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
-| 0x08 | 4 | sub-protocol | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`, O]** |
-| 0x0c | 1 | format | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
+| 0x08 | 4 | sub-protocol | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`, O]** |
+| 0x0c | 1 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
+| 0x0d | 1 | sub-version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
 | 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
@@ -64,8 +64,11 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 | … | | padding | zeros up to a 4-byte boundary |
 
 The field names follow the server's error text: a wrong protocol or
-sub-protocol raises 0x40071, "The network protocol is unknown"
-**[S `FUN_08066d04`]**.
+sub-protocol raises 0x40071, "The network protocol is unknown", and a
+version or sub-version out of range raises 0x40072 or 0x40073, "The
+protocol version of the remote host is too OLD" or "…more recent"
+**[S `FUN_08066d04`]**. The sub-version also tells the peer's role: 0x10 a
+client, 0x20 a server, 0x30 a tracker, and 0x40 a GConsole peer.
 
 ## PROOF (44 bytes)
 
@@ -129,7 +132,7 @@ The client's Connect dialog has a Type menu **[S `FUN_0804bac0`]**:
 The peer's hello decides what kind of connection it is
 **[S `FUN_0804b824`, `FUN_0804b938`]**:
 
-| Sub-protocol | Version | Connection |
+| Sub-protocol | Sub-version | Connection |
 |---|---:|---|
 | `%KDX` | 0x10 | Client (DCC) |
 | `%KDX` | 0x20 | Server |
