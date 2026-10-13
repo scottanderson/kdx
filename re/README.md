@@ -45,6 +45,13 @@ Scripts (PyGhidra / Python 3):
 - `decompile_all.py` decompiles every function into one file,
   `re/out/<binary>/all.c`, with a `//// <address> <name>` line before each,
   for grepping.
+- `dump_bytes.py <addr> <count>` prints the program's bytes at an address,
+  such as a lookup table.
+
+`callers.py` takes a function's address. To find the code that reads a
+table, give the table's address to `find_scalars.py`. Each run logs a
+`java.net.UnknownHostException` because the container has no network;
+ignore it.
 
 `re/out/` holds decompiled Haxial code, so it stays local and is never
 committed. Write findings into `docs/protocol/` instead, citing function
