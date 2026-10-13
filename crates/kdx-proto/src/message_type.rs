@@ -197,6 +197,14 @@ impl MessageType {
     pub const REQUEST_GREETING: Self = Self(112);
     /// Sets an unknown per-user value. Provisional name.
     pub const UNNAMED_118: Self = Self(118);
+    /// GConsole: opens the client's window. Provisional name.
+    pub const GCONSOLE_OPEN_WINDOW: Self = Self(4000);
+    /// GConsole: draws in the client's window. Provisional name.
+    pub const GCONSOLE_DRAW: Self = Self(4001);
+    /// GConsole: a key in the client's window. Provisional name.
+    pub const GCONSOLE_KEY: Self = Self(4200);
+    /// GConsole: a mouse button or wheel in the client's window. Provisional name.
+    pub const GCONSOLE_MOUSE: Self = Self(4201);
 }
 
 impl std::fmt::Display for MessageType {

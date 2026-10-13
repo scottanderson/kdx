@@ -3,13 +3,11 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine as _;
-use kdx_client::{table, Connection, Login};
+use kdx_client::{Connection, Login};
 use kdx_proto::handshake::TRACKER_VERSION;
 use kdx_proto::msg::tracker::{GetServerList, GroupListEntry, ServerListEntry, TrackerStats};
 use kdx_proto::session::MessageType;
-use kdx_proto::ChallengeTable;
+use kdx_proto::Story;
 use kdx_tracker::{Settings, Sockets, Tracker, MAX_CONNECTIONS_PER_IP};
 use tokio::net::UdpSocket;
 
@@ -20,14 +18,7 @@ const REGISTRATION: &[u8] =
 
 #[tokio::test(flavor = "multi_thread")]
 async fn browse() {
-    // The table is not in the repository; skip unless the environment, lab binaries, or `kdx table fetch` provide it.
-    let Some(table) = env_table().or_else(vendor_table).or_else(table::cached) else {
-        let missing = "no challenge table in KDX_CHALLENGE_TABLE, vendor/haxial, or the kdx cache";
-        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
-        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
-        eprintln!("skipping: {missing}");
-        return;
-    };
+    let table = kdx_test_tables::table(Story::Kdx);
     let sockets = Sockets::bind("127.0.0.1".parse().unwrap(), 0)
         .await
         .unwrap();
@@ -96,24 +87,4 @@ async fn request(conn: &mut Connection, kind: u32, payload: &[u8]) -> Vec<u8> {
     assert_eq!(header.txid, txid);
     assert!(header.is_reply());
     payload
-}
-
-/// The table in `KDX_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
-fn env_table() -> Option<ChallengeTable> {
-    let b64 = std::env::var("KDX_CHALLENGE_TABLE")
-        .ok()
-        .filter(|v| !v.trim().is_empty())?;
-    let bytes = STANDARD
-        .decode(b64.trim())
-        .expect("KDX_CHALLENGE_TABLE is not base64");
-    Some(ChallengeTable::from_bytes(&bytes).unwrap())
-}
-
-/// The table extracted from the server binary that `vendor/fetch` downloads.
-fn vendor_table() -> Option<ChallengeTable> {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
-    );
-    Some(ChallengeTable::extract(&std::fs::read(path).ok()?).unwrap())
 }

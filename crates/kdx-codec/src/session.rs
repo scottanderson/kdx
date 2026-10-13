@@ -2,7 +2,7 @@
 
 use bytes::{Bytes, BytesMut};
 use kdx_proto::session::{
-    padded_len, padding_fill, Header, MessageType, SessionCipher, BLOCK_LEN,
+    padded_len, padding_fill, Header, MessageType, Scramble, SessionCipher, BLOCK_LEN,
     CLIENT_MAX_PAYLOAD_LEN, SERVER_MAX_PAYLOAD_LEN,
 };
 use kdx_proto::AccountKey;
@@ -78,6 +78,15 @@ impl SessionCodec {
     /// Creates a codec for a server, which accepts what Server 1.620 accepts from a client.
     pub fn server(key: &AccountKey) -> Self {
         Self::new(key, SERVER_MAX_PAYLOAD_LEN)
+    }
+
+    /// Uses `scramble` for headers instead of the `%KDX` one.
+    #[must_use]
+    pub fn with_scramble(self, scramble: Scramble) -> Self {
+        Self {
+            cipher: self.cipher.with_scramble(scramble),
+            ..self
+        }
     }
 
     /// Whether a header of this type opens a data stream.

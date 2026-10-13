@@ -139,3 +139,12 @@ as sent; 146 and 239 match 23 byte for byte.
 | `linux-tracker-reg-23` | the first registration: users 1, group `Lab, Lab2` |
 | `linux-tracker-reg-78` | users 2 |
 | `linux-tracker-reg-255` | group `Lab`, with two uncleared padding bytes |
+
+`linux-gconsole-51924.c2s.bin` and `.s2c.bin` come from
+`captures/linux-gconsole.pcapng`, where Client 1.620 for Linux logged in as
+admin to `kdx-probe --listen` as a GConsole peer. Its headers use GConsole's
+scramble.
+
+| Port | Messages |
+|---|---|
+| 51924 | 4000 Open Window, 4001 Draw with every record kind, 64 4200 Key, 14 4201 Mouse |

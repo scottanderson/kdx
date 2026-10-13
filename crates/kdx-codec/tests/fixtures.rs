@@ -7,7 +7,7 @@ use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
 use kdx_proto::handshake::{Hello, Proof};
 use kdx_proto::msg::ServerInfo;
 use kdx_proto::session::{
-    padding_fill, Header, MessageType, SessionCipher, CLIENT_MAX_PAYLOAD_LEN,
+    padding_fill, Header, MessageType, Scramble, SessionCipher, CLIENT_MAX_PAYLOAD_LEN,
     SERVER_MAX_PAYLOAD_LEN,
 };
 use kdx_proto::AccountKey;
@@ -61,6 +61,7 @@ fn key(name: &str) -> AccountKey {
     let (_, frames) = decode(
         &read(parent, "s2c"),
         &key(parent),
+        Scramble::Kdx,
         CLIENT_MAX_PAYLOAD_LEN,
         16,
     );
@@ -74,15 +75,25 @@ fn key(name: &str) -> AccountKey {
     AccountKey(ServerInfo::decode(info).unwrap().session_key)
 }
 
+/// The header scramble of a connection: GConsole's for the GConsole capture.
+fn scramble(name: &str) -> Scramble {
+    if name.starts_with("linux-gconsole-") {
+        Scramble::GConsole
+    } else {
+        Scramble::Kdx
+    }
+}
+
 /// Feeds `stream` to the codecs in pieces of `piece` bytes, switching codecs after the proof.
 fn decode(
     stream: &[u8],
     key: &AccountKey,
+    scramble: Scramble,
     max_len: u32,
     piece: usize,
 ) -> (Vec<Handshake>, Vec<Frame>) {
     let mut handshake = HandshakeCodec::new();
-    let mut session = SessionCodec::new(key, max_len);
+    let mut session = SessionCodec::new(key, max_len).with_scramble(scramble);
     let (mut greeting, mut frames) = (Vec::new(), Vec::new());
     let mut buf = BytesMut::new();
     for chunk in stream.chunks(piece.min(stream.len())) {
@@ -105,8 +116,8 @@ fn decode(
 }
 
 /// Decrypts the messages after the hello and proof with `kdx-proto` alone, as the proto tests do.
-fn reference(stream: &[u8], key: &AccountKey) -> Vec<(Header, Vec<u8>)> {
-    let cipher = SessionCipher::new(key);
+fn reference(stream: &[u8], key: &AccountKey, scramble: Scramble) -> Vec<(Header, Vec<u8>)> {
+    let cipher = SessionCipher::new(key).with_scramble(scramble);
     let (_, hello_len) = Hello::decode(stream).unwrap();
     let mut at = hello_len + Proof::LEN;
     let mut out = Vec::new();
@@ -134,13 +145,18 @@ fn join(frames: &[Frame]) -> Vec<(Header, Vec<u8>)> {
     out
 }
 
-fn encode(greeting: Vec<Handshake>, frames: Vec<Frame>, key: &AccountKey) -> Vec<u8> {
+fn encode(
+    greeting: Vec<Handshake>,
+    frames: Vec<Frame>,
+    key: &AccountKey,
+    scramble: Scramble,
+) -> Vec<u8> {
     let mut out = BytesMut::new();
     let mut handshake = HandshakeCodec::new();
     for item in greeting {
         handshake.encode(item, &mut out).unwrap();
     }
-    let mut session = SessionCodec::client(key);
+    let mut session = SessionCodec::client(key).with_scramble(scramble);
     for frame in frames {
         session.encode(frame, &mut out).unwrap();
     }
@@ -157,9 +173,9 @@ fn decode_matches_kdx_proto() {
             ("s2c", CLIENT_MAX_PAYLOAD_LEN),
         ] {
             let stream = read(&name, dir);
-            let expected = reference(&stream, &key);
+            let expected = reference(&stream, &key, scramble(&name));
             for piece in PIECES {
-                let (greeting, frames) = decode(&stream, &key, max_len, piece);
+                let (greeting, frames) = decode(&stream, &key, scramble(&name), max_len, piece);
                 assert!(
                     matches!(
                         greeting.as_slice(),
@@ -182,12 +198,13 @@ fn reencode_byte_for_byte() {
             ("s2c", CLIENT_MAX_PAYLOAD_LEN),
         ] {
             let stream = read(&name, dir);
-            let expected = without_download_padding(&stream, &key);
+            let scramble = scramble(&name);
+            let expected = without_download_padding(&stream, &key, scramble);
             for piece in [7, usize::MAX] {
-                let (greeting, frames) = decode(&stream, &key, max_len, piece);
-                let encoded = encode(greeting, frames, &key);
+                let (greeting, frames) = decode(&stream, &key, scramble, max_len, piece);
+                let encoded = encode(greeting, frames, &key, scramble);
                 assert!(
-                    without_download_padding(&encoded, &key) == expected,
+                    without_download_padding(&encoded, &key, scramble) == expected,
                     "{name}.{dir} in pieces of {piece}"
                 );
             }
@@ -196,8 +213,8 @@ fn reencode_byte_for_byte() {
 }
 
 /// Zeroes the last block of 414 data that ends mid-block, whose padding the encoder can't reproduce.
-fn without_download_padding(stream: &[u8], key: &AccountKey) -> Vec<u8> {
-    let cipher = SessionCipher::new(key);
+fn without_download_padding(stream: &[u8], key: &AccountKey, scramble: Scramble) -> Vec<u8> {
+    let cipher = SessionCipher::new(key).with_scramble(scramble);
     let mut out = stream.to_vec();
     let (_, hello_len) = Hello::decode(stream).unwrap();
     let mut at = hello_len + Proof::LEN;
@@ -272,6 +289,7 @@ fn downloads_stream_in_chunks() {
     let (_, frames) = decode(
         &read("probe-33082", "s2c"),
         &key,
+        Scramble::Kdx,
         CLIENT_MAX_PAYLOAD_LEN,
         usize::MAX,
     );
@@ -307,6 +325,7 @@ fn upload_streams() {
     let (_, frames) = decode(
         &read("probe-48796", "c2s"),
         &key,
+        Scramble::Kdx,
         SERVER_MAX_PAYLOAD_LEN,
         usize::MAX,
     );

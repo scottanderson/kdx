@@ -15,6 +15,10 @@ use crate::xor::xor_stream;
 pub const MAGIC: u32 = 0x2554_5850;
 /// `"%KDX"`, the service used between clients and servers.
 pub const SERVICE_KDX: u32 = 0x254b_4458;
+/// `"%HGC"`, the service a GConsole peer sends; the client then switches to
+/// [`Story::Hgc`](crate::challenge::Story::Hgc) and
+/// [`Scramble::GConsole`](crate::session::Scramble::GConsole).
+pub const SERVICE_GCONSOLE: u32 = 0x2548_4743;
 /// The only hello format that current programs accept.
 pub const FORMAT: u8 = 1;
 /// Version byte that Client 1.600 sends.
@@ -23,6 +27,8 @@ pub const CLIENT_VERSION: u8 = 0x10;
 pub const SERVER_VERSION: u8 = 0x20;
 /// Version byte that Tracker 1.110 sends.
 pub const TRACKER_VERSION: u8 = 0x30;
+/// Version byte that a GConsole peer must send.
+pub const GCONSOLE_VERSION: u8 = 0x40;
 /// Largest hello that a receiver accepts.
 pub const MAX_HELLO_LEN: usize = 0x800;
 /// Longest login name that a hello can carry.

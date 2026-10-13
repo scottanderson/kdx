@@ -94,6 +94,7 @@ fn problems(capture: &str, output: &str) -> Vec<String> {
         if let Some(rest) = line
             .strip_prefix("connection ")
             .or_else(|| line.strip_prefix("tracker connection "))
+            .or_else(|| line.strip_prefix("GConsole connection "))
         {
             let client = rest.split(' ').next().unwrap();
             port = client.rsplit(':').next().unwrap();

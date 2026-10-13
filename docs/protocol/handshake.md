@@ -51,9 +51,9 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 |---|---|---|---|
 | 0x00 | 4 | key | random XOR key, sent in the clear |
 | 0x04 | 4 | magic | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
-| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]** |
+| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([dcc.md](dcc.md#handshake)) **[S `FUN_0804b824`, O]** |
 | 0x0c | 1 | format | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**. Server 1.620 and Tracker 1.110 accept only service `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
+| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only service `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
 | 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
@@ -119,29 +119,80 @@ recovered from `Accounts.dat` alone **[I]**.
 - Anything else: an account login. The account's stored key is used to check
   the proof.
 
-## Challenge table
+## Challenge tables
+
+Each connection object holds a pointer to its table at +0xa4 and the
+table's length, a u16, at +0xa0 **[S client `FUN_080ea000`, server
+`FUN_0808529c`]**. Everything that touches the table reads those two
+fields, so every table works the same way **[S client]**:
+
+- `FUN_080ec058` picks the challenge for our hello: a random offset modulo
+  `len - 0x13`.
+- `FUN_080ec280` answers the peer's challenge with the 20 bytes at its
+  offset, if it is at most `len - 0x14`.
+- `FUN_080ea768` checks the peer's response against the 20 bytes at our
+  own challenge.
+
+There are three tables:
+
+| Table | Length | Used by |
+|---|---:|---|
+| the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create [S] |
+| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 [S `FUN_0804b824`, O] |
+| `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that [S `FUN_0808529c`] |
+
+Every connection starts with the KDX story, passed to the constructor
+(client `FUN_080ea08c`, nine callers; server `FUN_08085328`, one caller in
+`FUN_08052ad0`) **[S]**. The client swaps in the GConsole story after the
+peer's hello, so the challenge it already sent was drawn from the KDX
+story's length but is answered from the GConsole story. The 31-byte
+default is in every client, server, and tracker build, but no caller in
+Client 1.620 beta 5 or Server 1.620 passes a length of 0 **[S]**.
+
+### The KDX story
 
 A 1739-byte blob, identical in every client, server and tracker build
 (SHA-256 `4fca7636e77e85fdde95862a6be66e12e5e031ad61add65c5e975d3daff4b9e7`).
 It is a 1578-byte copyright notice and short story ("Sale of the Cesspool"),
 a NUL, and 160 bytes that look like PowerPC code. In the 1.620 Linux server
-it's at file offset `0x635a0`. Without a table, the code falls back to
-`"All your base are belong to us!"` **[S `FUN_0808529c`]**.
-
-The blob is Haxial's copyrighted text, so **don't commit it**. The Rust
-implementation treats it as a required input, obtained once and then cached:
-
-1. Use the cached copy if one exists and its SHA-256 matches.
-2. Otherwise, offer to fetch it. Download the smallest known Haxial archive
-   that contains it, `KDXTrackerServ1110-Win.zip` (about 249 KB, a plain zip
-   with no StuffIt; see `vendor/MANIFEST.md` for the Wayback URL). Extract
-   the blob from it.
-3. Otherwise, ask the user for either a KDX file to extract it from (any
-   client, server or tracker build; zip archives are opened) or the blob
-   itself.
+it's at file offset `0x635a0`.
 
 Extraction: find `This program including the following story`, take 1739
 bytes from there, and check the SHA-256 above.
+
+### The GConsole story
+
+A 3193-byte blob, identical in the Linux, Windows, and Mac clients and in no
+server or tracker (SHA-256
+`b43f22222971a57a0d8bdb3a5af2747c7ff511ea88f0ba8c24e38e9edc029c36`). It is a
+copyright notice and a second short story ("Who Wants To Be A Maggot?"),
+with `\n` line ends, and its trailing NUL. In Client 1.620 beta 5 for Linux
+it's at file offset `0x1029e0`.
+
+Extraction: find `The following story is Copyright 2004`, take 3193 bytes
+from there, and check the SHA-256 above.
+
+### Getting the stories
+
+The KDX and GConsole stories are Haxial's copyrighted text, so **don't
+commit them**. The Rust implementation works like the binaries: a
+`ChallengeTable` holds the 31-byte default, or a story substituted for it.
+It treats each story as a required input, obtained once and cached in the
+same directory, `~/.cache/kdx/table/`, under its service with the `%`
+dropped (`kdx.bin` and `hgc.bin`), by `kdx_client::table`:
+
+1. Use the cached copy if one exists and its SHA-256 matches.
+2. Otherwise, offer to fetch it. Download the smallest known Haxial archive
+   that contains it (see `vendor/MANIFEST.md` for the Wayback URLs), and
+   extract the story from it. For the KDX story that is
+   `KDXTrackerServ1110-Win.zip` (248 KB); for the GConsole story, which only
+   the clients hold, `KDXClient1600-Win.zip` (793 KB). Both are plain zips
+   with no StuffIt.
+3. Otherwise, ask the user for a KDX file to extract it from (zip archives
+   are opened) or the story itself. Any build holds the KDX story; only a
+   client holds the GConsole one.
+
+`kdx table fetch`, `import`, and `path` handle both stories.
 
 ## Error codes [S `FUN_08066fd8`, `FUN_08066c14`]
 

@@ -9,6 +9,7 @@ members = [
     "crates/kdx-daemon",
     "crates/kdx-tracker",
     "crates/kdx-dissect",
+    "crates/kdx-test-tables",
 ]
 
 [workspace.package]
@@ -29,6 +30,7 @@ kdx-proto = { path = "crates/kdx-proto", version = "0.1.0" }
 kdx-codec = { path = "crates/kdx-codec", version = "0.1.0" }
 kdx-client = { path = "crates/kdx-client", version = "0.1.0" }
 kdx-server = { path = "crates/kdx-server", version = "0.1.0" }
+kdx-test-tables = { path = "crates/kdx-test-tables" }
 
 # The cipher is slow unoptimized, and the capture tests decrypt megabytes.
 [profile.dev.package.twofish]

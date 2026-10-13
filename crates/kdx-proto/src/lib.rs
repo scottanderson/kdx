@@ -23,5 +23,5 @@ pub mod session;
 mod xor;
 
 pub use account::AccountKey;
-pub use challenge::ChallengeTable;
+pub use challenge::{ChallengeTable, Story};
 pub use message_type::MessageType;

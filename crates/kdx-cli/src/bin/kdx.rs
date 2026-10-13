@@ -5,14 +5,15 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use clap::{Args as _, CommandFactory, FromArgMatches, Parser, Subcommand};
-use kdx_client::{table, Client, Login, Tracker};
+use kdx_client::table;
+use kdx_client::{Client, Login, Tracker};
 use kdx_proto::msg::admin::Account;
 use kdx_proto::msg::chat::{ChatText, ChatTopicChanged, PUBLIC_CHAT};
 use kdx_proto::msg::news::{NewsMessage, NewsMessageChange};
 use kdx_proto::msg::tracker::TrackerStats;
 use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
-use kdx_proto::{AccountKey, ChallengeTable};
+use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::fs::File;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt};
 
@@ -61,7 +62,7 @@ struct TrackerConnection {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Get the challenge table into the cache.
+    /// Get the challenge tables into the cache: KDX's, and GConsole's.
     Table {
         #[command(subcommand)]
         action: TableAction,
@@ -213,15 +214,15 @@ enum TrackerAction {
 
 #[derive(Subcommand)]
 enum TableAction {
-    /// Download the smallest KDX archive from the Internet Archive and extract the table.
+    /// Download the smallest KDX archive that holds each table from the Internet Archive.
     Fetch {
         /// Download even if the cache already holds a valid table.
         #[arg(long, short)]
         force: bool,
     },
-    /// Extract the table from a KDX program file, zip archive, or saved table.
+    /// Extract each table a KDX program file, zip archive, or saved table holds.
     Import { file: PathBuf },
-    /// Show where the cached table is.
+    /// Show where the cached tables are.
     Path,
 }
 
@@ -373,32 +374,46 @@ async fn main() -> Result<()> {
 }
 
 fn table_command(action: &TableAction) -> Result<()> {
-    let table = match action {
-        TableAction::Path => {
-            let path = table::cache_path().context("no cache directory")?;
-            let state = if table::cached().is_some() {
-                "present"
-            } else {
-                "missing"
+    if let TableAction::Import { file } = action {
+        let loaded = Story::ALL.map(|story| table::load(story, file));
+        if loaded.iter().all(Result::is_err) {
+            let [Err(err), ..] = &loaded else {
+                unreachable!("all failed")
             };
-            println!("{} ({state})", path.display());
-            return Ok(());
+            bail!("{err:#}");
         }
-        TableAction::Fetch { force: false } if table::cached().is_some() => {
-            let path = table::cache_path().context("no cache directory")?;
+        for t in loaded.into_iter().flatten() {
+            println!("saved {}", table::save_to_cache(&t)?.display());
+        }
+        return Ok(());
+    }
+    Story::ALL
+        .into_iter()
+        .try_for_each(|story| table_action(story, action))
+}
+
+/// Runs `kdx table path` or `kdx table fetch` for one story.
+fn table_action(story: Story, action: &TableAction) -> Result<()> {
+    let path = table::cache_path(story).context("no cache directory")?;
+    let cached = table::cached(story).is_some();
+    match action {
+        TableAction::Path => {
+            let state = if cached { "present" } else { "missing" };
+            println!("{} ({state})", path.display());
+        }
+        TableAction::Fetch { force: false } if cached => {
             println!(
                 "already saved {}; use --force to download again",
                 path.display()
             );
-            return Ok(());
         }
         TableAction::Fetch { .. } => {
-            eprintln!("downloading {}", table::FETCH_URL);
-            table::fetch()?
+            eprintln!("downloading {}", table::fetch_url(story));
+            let table = table::fetch(story)?;
+            println!("saved {}", table::save_to_cache(&table)?.display());
         }
-        TableAction::Import { file } => table::load(file)?,
-    };
-    println!("saved {}", table::save_to_cache(&table)?.display());
+        TableAction::Import { .. } => unreachable!("handled by table_command"),
+    }
     Ok(())
 }
 
@@ -511,9 +526,9 @@ fn time_1900(ms: u64) -> String {
 /// The table from `--table`, the cache, or, at a terminal, a download or file the user picks.
 fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
     if let Some(path) = path {
-        return table::load(path);
+        return table::load(Story::Kdx, path);
     }
-    if let Some(table) = table::cached() {
+    if let Some(table) = table::cached(Story::Kdx) {
         return Ok(table);
     }
     let help = "KDX needs Haxial's challenge table, which this program can't include. \
@@ -523,10 +538,13 @@ fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
         bail!("{help}");
     }
     eprintln!("{help}");
-    eprint!("Download it now from {}? [y/N] ", table::FETCH_URL);
+    eprint!(
+        "Download it now from {}? [y/N] ",
+        table::fetch_url(Story::Kdx)
+    );
     std::io::stderr().flush()?;
     let table = if prompt()?.eq_ignore_ascii_case("y") {
-        table::fetch()?
+        table::fetch(Story::Kdx)?
     } else {
         eprint!("Path to a KDX program, archive, or table (empty to quit): ");
         std::io::stderr().flush()?;
@@ -534,7 +552,7 @@ fn challenge_table(path: Option<&Path>) -> Result<ChallengeTable> {
         if answer.is_empty() {
             bail!("no challenge table");
         }
-        table::load(Path::new(&answer))?
+        table::load(Story::Kdx, Path::new(&answer))?
     };
     eprintln!("saved {}", table::save_to_cache(&table)?.display());
     Ok(table)

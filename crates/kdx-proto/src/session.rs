@@ -124,32 +124,79 @@ pub const fn padded_len(len: usize) -> usize {
     len.div_ceil(BLOCK_LEN) * BLOCK_LEN
 }
 
-/// Applies the header scramble that runs before encryption.
+/// Applies the `%KDX` header scramble that runs before encryption.
 pub fn scramble(header: &mut [u8; Header::LEN]) {
-    let [h0, h1, h2, h3] = words(header);
-    set_words(
-        header,
-        [
-            h1.rotate_left(13) ^ 0x6e7d_fd34,
-            h2.rotate_right(6) ^ 0xe152_da04,
-            h0.rotate_left(7) ^ 0xa95a_759b,
-            h3.rotate_right(3) ^ 0x0699_2e25,
-        ],
-    );
+    Scramble::Kdx.apply(header);
 }
 
 /// Reverses [`scramble`] after decryption.
 pub fn unscramble(header: &mut [u8; Header::LEN]) {
-    let [w0, w1, w2, w3] = words(header);
-    set_words(
-        header,
-        [
-            (w2 ^ 0xa95a_759b).rotate_right(7),
-            (w0 ^ 0x6e7d_fd34).rotate_right(13),
-            (w1 ^ 0xe152_da04).rotate_left(6),
-            (w3 ^ 0x0699_2e25).rotate_left(3),
-        ],
-    );
+    Scramble::Kdx.reverse(header);
+}
+
+/// The keyless header scramble, which depends on the service.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Scramble {
+    /// The scramble of `%KDX` connections.
+    #[default]
+    Kdx,
+    /// The scramble of GConsole connections, whose peer says `%HGC`.
+    GConsole,
+}
+
+impl Scramble {
+    /// Rotations of words 1, 2, 0, and 3 before the XOR, positive to the left.
+    const fn rotations(self) -> [i32; 4] {
+        match self {
+            Self::Kdx => [13, -6, 7, -3],
+            Self::GConsole => [15, -4, 7, -5],
+        }
+    }
+
+    /// The XOR masks of output words 0 to 3.
+    const fn masks(self) -> [u32; 4] {
+        match self {
+            Self::Kdx => [0x6e7d_fd34, 0xe152_da04, 0xa95a_759b, 0x0699_2e25],
+            Self::GConsole => [0x5f54_7a17, 0x69c8_3e35, 0x1b20_e200, 0x8022_e8d1],
+        }
+    }
+
+    /// Scrambles a header before encryption.
+    pub fn apply(self, header: &mut [u8; Header::LEN]) {
+        let [h0, h1, h2, h3] = words(header);
+        let [r0, r1, r2, r3] = self.rotations();
+        let [m0, m1, m2, m3] = self.masks();
+        set_words(
+            header,
+            [
+                rotate(h1, r0) ^ m0,
+                rotate(h2, r1) ^ m1,
+                rotate(h0, r2) ^ m2,
+                rotate(h3, r3) ^ m3,
+            ],
+        );
+    }
+
+    /// Reverses [`apply`](Self::apply) after decryption.
+    pub fn reverse(self, header: &mut [u8; Header::LEN]) {
+        let [w0, w1, w2, w3] = words(header);
+        let [r0, r1, r2, r3] = self.rotations();
+        let [m0, m1, m2, m3] = self.masks();
+        set_words(
+            header,
+            [
+                rotate(w2 ^ m2, -r2),
+                rotate(w0 ^ m0, -r0),
+                rotate(w1 ^ m1, -r1),
+                rotate(w3 ^ m3, -r3),
+            ],
+        );
+    }
+}
+
+/// Rotates left by `by` bits, or right if `by` is negative.
+const fn rotate(word: u32, by: i32) -> u32 {
+    word.rotate_left(by.rem_euclid(32) as u32)
 }
 
 /// Views a 16-byte slice as a cipher block.
@@ -169,12 +216,24 @@ fn set_words(block: &mut [u8; BLOCK_LEN], words: [u32; 4]) {
 
 /// Encrypts and decrypts session messages for one connection.
 #[derive(Clone)]
-pub struct SessionCipher(Twofish);
+pub struct SessionCipher {
+    twofish: Twofish,
+    scramble: Scramble,
+}
 
 impl SessionCipher {
-    /// Creates the cipher for a session authenticated with `key`.
+    /// Creates the cipher for a `%KDX` session authenticated with `key`.
     pub fn new(key: &AccountKey) -> Self {
-        Self(Twofish::new_from_slice(&key.0).expect("32-byte key"))
+        Self {
+            twofish: Twofish::new_from_slice(&key.0).expect("32-byte key"),
+            scramble: Scramble::Kdx,
+        }
+    }
+
+    /// Uses `scramble` for headers instead of the `%KDX` one.
+    #[must_use]
+    pub fn with_scramble(self, scramble: Scramble) -> Self {
+        Self { scramble, ..self }
     }
 
     /// Encrypts a whole message. The header's `len` is set from `payload`.
@@ -195,8 +254,8 @@ impl SessionCipher {
     /// Encrypts a header as given, for a transfer data stream whose bytes follow separately.
     pub fn seal_header(&self, header: Header) -> [u8; Header::LEN] {
         let mut block = header.to_bytes();
-        scramble(&mut block);
-        self.0.encrypt_block(block_mut(&mut block));
+        self.scramble.apply(&mut block);
+        self.twofish.encrypt_block(block_mut(&mut block));
         block
     }
 
@@ -216,8 +275,8 @@ impl SessionCipher {
 
     fn decrypt_header(&self, block: &[u8; Header::LEN]) -> [u8; Header::LEN] {
         let mut plain = *block;
-        self.0.decrypt_block(block_mut(&mut plain));
-        unscramble(&mut plain);
+        self.twofish.decrypt_block(block_mut(&mut plain));
+        self.scramble.reverse(&mut plain);
         plain
     }
 
@@ -225,7 +284,7 @@ impl SessionCipher {
     pub fn encrypt_blocks(&self, data: &mut [u8]) {
         assert_eq!(data.len() % BLOCK_LEN, 0, "partial block");
         for block in data.chunks_exact_mut(BLOCK_LEN) {
-            self.0.encrypt_block(block_mut(block));
+            self.twofish.encrypt_block(block_mut(block));
         }
     }
 
@@ -233,7 +292,7 @@ impl SessionCipher {
     pub fn decrypt_blocks(&self, data: &mut [u8]) {
         assert_eq!(data.len() % BLOCK_LEN, 0, "partial block");
         for block in data.chunks_exact_mut(BLOCK_LEN) {
-            self.0.decrypt_block(block_mut(block));
+            self.twofish.decrypt_block(block_mut(block));
         }
     }
 
@@ -263,11 +322,30 @@ mod tests {
     #[test]
     fn scramble_round_trip() {
         let original: [u8; 16] = std::array::from_fn(|i| i as u8 * 17);
-        let mut block = original;
-        scramble(&mut block);
-        assert_ne!(block, original);
-        unscramble(&mut block);
-        assert_eq!(block, original);
+        for kind in [Scramble::Kdx, Scramble::GConsole] {
+            let mut block = original;
+            kind.apply(&mut block);
+            assert_ne!(block, original);
+            kind.reverse(&mut block);
+            assert_eq!(block, original);
+        }
+    }
+
+    #[test]
+    fn gconsole_scramble_matches_the_client() {
+        // FUN_0809aefc's receiving branch, written out.
+        let mut block: [u8; 16] = std::array::from_fn(|i| i as u8 * 17);
+        let [w0, w1, w2, w3] = words(&block);
+        Scramble::GConsole.reverse(&mut block);
+        assert_eq!(
+            words(&block),
+            [
+                (w2 ^ 0x1b20_e200).rotate_right(7),
+                (w0 ^ 0x5f54_7a17).rotate_right(15),
+                (w1 ^ 0x69c8_3e35).rotate_left(4),
+                (w3 ^ 0x8022_e8d1).rotate_left(5),
+            ]
+        );
     }
 
     #[test]
