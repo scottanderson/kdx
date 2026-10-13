@@ -3,7 +3,7 @@
 #
 #   vendor/fetch            the four builds the lab runs
 #   vendor/fetch all        every archive in the manifest
-#   vendor/fetch NAME...    named archives, e.g. KDXServer1620-Lnx.zip
+#   vendor/fetch NAME...    named archives, e.g. KDXServer1620-Lnx.zip or old/KDXServer1600-Lnx.zip
 #
 # Each archive lands in vendor/haxial/<name>/ with its contents in extracted/.
 # Nothing downloaded is executed; extraction uses unar.
@@ -25,8 +25,9 @@ manifest() {
 
 fetch_one() {
   local archive="$1" ts="$2" sha="$3"
-  local dir="$HAXIAL/${archive%.*}"
-  local file="$dir/$archive"
+  local name="${archive##*/}"
+  local dir="$HAXIAL/${name%.*}"
+  local file="$dir/$name"
   mkdir -p "$dir"
   if [[ ! -f "$file" ]] || ! echo "$sha  $file" | sha256sum -c --quiet 2>/dev/null; then
     echo "fetch: downloading $archive"

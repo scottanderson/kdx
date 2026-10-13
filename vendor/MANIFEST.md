@@ -35,12 +35,15 @@ still verifies and unpacks the archive.
 | KDXTrackerServ1110-Win.zip | Tracker 1.110, Win32 | 20051014065628 | 8f50ef0cd4f82fc5b071340932c498a9df3556ed6cff6f23ecd6c36c43683583 |
 | KDXTrackerServ1110-Mac.sit | Tracker 1.110, Mac PEF | 20051014065559 | 4ccf77333baf50d9f9e66dc59797d0c716451aaef2ee58bb5beefc47ab369d09 |
 | KDXTrackerServ1110-MacUnix.zip | Tracker 1.110, Mach-O ppc | 20051014070016 | 06437455a9b33ff4e0891380855c3552d6d562bb05c49b74c47ac9c44e81afa7 |
+| old/KDXServer1600-Lnx.zip | Server 1.600, Linux i386 (installed by 175 in the lab's downgrade test) | 20060515145257 | 75cfe75a26b625ec6ff767491b2e863fc74b0cc5f5a186c483e9d3d22d47b937 |
 
 URL pattern:
 `https://web.archive.org/web/<timestamp>id_/http://www.haxial.com:80/download/<archive>`
 
 Older builds (client 1.320–1.520, server 1.300–1.600 Linux) are in Wayback under
-`haxial.com/download/old/`. Use them to diff protocol versions if needed.
+`haxial.com/download/old/`. Use them to diff protocol versions if needed. A
+row for one names it with the `old/` prefix, and `vendor/fetch` keeps it in
+`vendor/haxial/<name>/` like the others.
 
 Version notes: some download sites list a "1.65 (2008)", but no such build was
 on Haxial's server, so treat it as unverified. The Linux binaries are stripped,

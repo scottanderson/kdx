@@ -1,7 +1,6 @@
 # Server upgrade
 
 Status: ready-for-human
-Blocked by: the Internet Archive, offline on 2026-10-12
 Scenario: `linux-upgrade`
 Targets: 175, the 151 it broadcasts, and the relaunched server's 105
 
@@ -35,3 +34,8 @@ shut-down choices: they run `/sbin/shutdown` (`FUN_080916e4`).
 2026-10-12: Tabled until the Internet Archive is back; its CDX API returned
 504 and 503. Shows whether a ticked Restart KDX adds bytes to the 175 body,
 which the server doesn't read (`captures/linux-shutdown.md`).
+
+2026-10-12: The archive is back. `vendor/fetch old/KDXServer1600-Lnx.zip`
+fetches the 1.600 server (Wayback 20060515145257, the only capture besides
+an identical one from 2007). Its KDXUpgradeHelper.lexe is byte-identical to
+1.620's.
