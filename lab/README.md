@@ -70,7 +70,8 @@ access answer (`yes`/`no`). The lab convention is login `admin`, password
 sandbox stays up after the server exits until the helper has exited too, so
 175 Upgrade Server Software can relaunch the server. The new server goes in
 `lab/run/server/Bases/KDXServer.lexe` (Haxial's `Documentation.pdf`,
-"Upgrade Server Software"). The next `kdx-lab server` puts back 1.620.
+"Upgrade Server Software"); the helper moves it over the server's program.
+The next `kdx-lab server` puts back 1.620.
 
 ## Tracker first run
 

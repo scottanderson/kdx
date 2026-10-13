@@ -5,7 +5,7 @@ at least one capture, made with Client 1.620 beta 5 (Linux). No Wine.
 
 ## What the captures hold now
 
-The seventeen captures in `captures/` decode fully (`kdx-dissect` with the lab
+The eighteen captures in `captures/` decode fully (`kdx-dissect` with the lab
 passwords), except the tracker messages and UDP registrations in
 `linux-tracker`, which wait for `.scratch/tracker/` issue 03. These types
 appear in at least one of them:
@@ -31,7 +31,7 @@ other GUI capture uses Client 1.620 beta 5.
 | 900–905 | View Display | 06 |
 | 1000–1003, client-to-client (DCC) on TCP 10600 | voice and DCC | 07 |
 | 174, 175, 804 | shutdown, upgrade, processes | 08 (done; 175 only fails) |
-| 175 succeeding, its 151, the relaunched server | server upgrade to 1.600 | 10 |
+| 175 succeeding, its 151, the relaunched server | server downgrade to 1.600 through 175 | 10 (done) |
 | none new | multi-byte text in names, chat, messages, news, nicks | 09 (done) |
 | 117, 408 | no known sender | static analysis first (`re/opcodes.md`) |
 
