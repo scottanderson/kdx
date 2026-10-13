@@ -123,7 +123,7 @@ Types never captured: 117, 404, 406, 408, 514, 901, 1000–1003, and 108/109
 from a GUI client (only `kdx-probe` sent them). 223 has been captured only
 empty. 184–191 are history record kinds, not messages.
 
-Out of scope: GConsole (4000, 4001, 4200, 4201), a remote-console
-connection type in the client's connection dialog (port 10900). The client
-is the display; no KDX server or tracker serves the other end, so nothing
-in the lab can produce it (`dcc.md`, GConsole).
+GConsole (4000, 4001, 4200, 4201) is a remote-console connection type in
+the client's connection dialog (port 10900). The client is the display; no
+KDX server or tracker serves the other end, so the capture needs a peer of
+our own (`.scratch/capture-gaps/issues/11-gconsole.md`).
