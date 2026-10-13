@@ -262,10 +262,38 @@ B (68–72). F1 opened the client's window menu instead of reaching the peer.
 All **[O]**, frames 20–46. Each wheel step sends two identical messages
 (40, 42).
 
+The modifier bits are Client 1.600's: Ctrl 0x21, Alt 2, Shift 8, Caps Lock
+4, Windows 0x30 **[S client 1.600 `FUN_00463870`]**. Client 1.600 sends its
+own key codes at 0x0c instead of HID usages; see 905 View Display Keyboard
+in [KDXProtocol.md](KDXProtocol.md#view-display) **[S `FUN_00448830`]**.
+
+### Compared with view display
+
+View display (900–905) and GConsole both put a remote screen in a client
+window and send input back, but share little else **[S]**:
+
+| | View display | GConsole |
+|---|---|---|
+| Peer | a KDX server, on a transfer connection to its port | anything that answers `%HGC` on 10900 |
+| Access | privileges 66 and 67; 902 says whether input is allowed | the GConsole login |
+| Size | in every 903; a new size reallocates the frame buffer | once, in 4000 |
+| Picture | the server's whole screen as RGB555 pixels, diffed against the last frame, compressed with runs and two-colour codes | draw records into objects: fills, gradients, lines, polygons, text, copies; colours are u32 with a transparency byte |
+| Updates | a timer every 1500 ms, and within 100 ms of a click or key | whenever the peer sends 4001 |
+| Mouse | 904: kinds 1 down, 2 up, 3 move, 4 wheel | 4201: kinds 5 down, 6 up, 10 wheel; no moves |
+| Keyboard | 905: kinds 1, 2, 3 | 4200: kinds 1, 2, 3 |
+
+The input messages carry the same client input event **[S `FUN_0806fc68`,
+`FUN_0806f1f4`, `FUN_08096188`, `FUN_0809607c`]**: 904 and 4201 send its
+modifiers, x, y, button, and wheel; 905 and 4200 send its modifiers,
+character, and key code. GConsole adds the client's clock and a 4-byte
+character, and leaves moves out. The servers rebuild that event from 904
+and 905 **[S `FUN_0805c344`, `FUN_0805c498`]**. No GConsole record uses the
+903 decoder, which only the 903 handler calls **[S `FUN_0806f864`]**.
+
 ## Open questions
 
 - Capture 1003 Voice Data, which could not be started in the sandbox; see
   `.scratch/capture-gaps/issues/07-dcc-voice.md`.
-- GConsole: what the u16 at 0x02 of kinds 100, 101, 103, and 105–109,
-  the 8 bytes at 0x0c of 105/106, and modifier 0x21 mean; what kind 3 of
-  4200 (window event 7) is.
+- GConsole: what the u16 at 0x02 of kinds 100, 101, 103, and 105–109 and
+  the 8 bytes at 0x0c of 105/106 mean; what kind 3 of 4200 (window event
+  7) is.
