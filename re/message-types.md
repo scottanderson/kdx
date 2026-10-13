@@ -95,8 +95,8 @@ connection handles 1000-1003. See `docs/protocol/dcc.md`.
   Client 1.620 beta 5.
 - The connection flood ban seen in `captures/kdx-accounts.pcapng` (30
   connections a minute); the per-request flood check is read.
-- GConsole 4200/4201: what the u32 and u16 fields hold (layouts in
-  `docs/protocol/dcc.md`).
+- GConsole: the unknown fields of 4001's records and of 4200 (see the open
+  questions in `docs/protocol/dcc.md`).
 
 ## Other behaviour found in the sweep
 

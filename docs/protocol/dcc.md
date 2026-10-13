@@ -141,9 +141,13 @@ kind **[S `FUN_0804b824`, `FUN_0804b938`]**:
 challenge table and a second header scramble before it checks the peer's
 proof **[S `FUN_0804b824`]**:
 
-- The challenge table is a 3193-byte text that starts `The following story
-  is Copyright 2004`, its trailing NUL included. The Linux, Windows, and
-  Mac clients hold the same bytes (SHA-256 `b43f2222…dc029c36`).
+- The challenge table is the GConsole story, which only the clients hold
+  ([handshake.md](handshake.md#the-gconsole-story)). The client uses it
+  exactly as it uses the KDX story
+  ([handshake.md](handshake.md#challenge-tables)). In
+  `captures/linux-gconsole.pcapng` the peer's challenge, 2832 (frame 6), is
+  past the end of the KDX story, and the client's proof answers it from
+  this one (frame 8) **[O]**.
 - The header scramble (`FUN_0809aefc`) has the shape of the `%KDX` one in
   [session.md](session.md#header-scramble) with other rotations and masks.
   Scrambling header words h0–h3 before encryption gives:
@@ -160,45 +164,86 @@ Opening GConsole..." shows once the proofs check out.
 
 ### Messages
 
+`captures/linux-gconsole.pcapng` shows every message below between Client
+1.620 beta 5 and `kdx-probe --listen` as the peer **[O]**. Each layout is
+in `kdx_proto::msg::gconsole`, tested against that capture. Names are
+provisional.
+
 The peer sends **[S `FUN_08095c84`]**:
 
-- **4000** opens the window, at least 0x18 bytes: u16 width
-  (0x40..0x1000), u16 height (0x10..0x1000), then a u32 the window is
-  filled with **[S `FUN_08094be8`]**. A second 4000 fails with 0x10003.
-- **4001** is a stream of draw records **[S `FUN_08095ac4`]**. Each starts
-  with a u32 whose top 10 bits give the kind and low 22 bits the body
-  length; the next record starts at the length plus 4, rounded up to 4.
+- **4000 Open Window**, at least 0x18 bytes: u16 width (0x40..0x1000),
+  u16 height (0x10..0x1000), then a u32 colour the window is filled with
+  **[S `FUN_08094be8`]**. A second 4000 fails with 0x10003. Frame 10 opened
+  a 0x200 × 0x180 window filled with 0x00336699 **[O]**.
+- **4001 Draw** is a stream of draw records **[S `FUN_08095ac4`]**. Each
+  starts with a u32 whose top 10 bits give the kind and low 22 bits the
+  body length; the next record starts at the length plus 4, rounded up to
+  4. Frame 14 holds 21 records **[O]**.
+
+A colour is a u32: a transparency byte, then red, green, and blue
+(0x00RRGGBB is opaque). 0 is opaque, 0x01–0xfe blend, and 0xff draws
+nothing **[S `FUN_080ba8d0`]**. The 4000 colour goes through
+`FUN_08114bc8` first.
 
 Every body except kind 2's starts with the u16 ID of an object that kind 2
-created. Coordinates are i16.
+created. Coordinates are i16, in the object; rects exclude their right and
+bottom edges. What each kind drew in frame 14 is **[O]**:
 
-| Kind | Body | Handler |
-|---:|---|---|
-| 2 | create: rect (left, top, right, bottom) at 0x00, ID at 0x0c, u16 at 0x0e, object type at 0x12 (only 1, an off-screen image, is known); at least 0x14 bytes | `FUN_08094d50` |
-| 3 | delete | `FUN_08094f2c` |
-| 4 | move: x, y at 0x02 | `FUN_08094fb8` |
-| 100 | rect at 0x04, u32 at 0x0c | `FUN_08095058` |
-| 101 | u16 at 0x02, rect at 0x04, u32s at 0x0c and 0x10 | `FUN_0809511c` |
-| 102 | u16 at 0x02, rect at 0x04, u32 colour at 0x0c | `FUN_080951fc` |
-| 103 | point at 0x04, u32 at 0x08 | `FUN_080952e4` |
-| 104 | byte at 0x03, two points at 0x04, u32 colour at 0x0c | `FUN_08095390` |
-| 105, 106 | u16 at 0x02, rect at 0x04, text from 0x14 | `FUN_08095480`, `FUN_08095590` |
-| 107 | u16 at 0x02, u32 colour at 0x04, point at 0x08, three or more points from 0x0c | `FUN_080956a0` |
-| 108 | point at 0x04, u32 at 0x08 | `FUN_08095904` |
-| 109 | destination point at 0x04, source point at 0x08, u16 width and height at 0x0c | `FUN_080959a4` |
+| Kind | Body | Drew | Handler |
+|---:|---|---|---|
+| 2 | create: rect (left, top, right, bottom) at 0x00 in the window, ID at 0x0c, flags at 0x0e (0x8 shows the object), object type at 0x12 (only 1, an off-screen image, is known); at least 0x14 bytes | an object; with flags 8 and type 1 it showed | `FUN_08094d50` |
+| 3 | delete | removed object 3 and its drawing | `FUN_08094f2c` |
+| 4 | move: x, y at 0x02, in the window | moved object 2 | `FUN_08094fb8` |
+| 100 | u16 at 0x02, rect at 0x04, colour at 0x0c | a filled rect; 0, 1, and 2 at 0x02 drew the same | `FUN_08095058` |
+| 101 | u16 at 0x02, rect at 0x04, colours at 0x0c and 0x10 | a fill from the first colour at the left to the second at the right | `FUN_0809511c` |
+| 102 | u16 line width at 0x02, rect at 0x04, colour at 0x0c | a rect's outline; widths 1 and 3 drew, 0 drew nothing | `FUN_080951fc` |
+| 103 | u16 at 0x02, point at 0x04, colour at 0x08 | one pixel | `FUN_080952e4` |
+| 104 | byte at 0x02, line width byte at 0x03, two points at 0x04, colour at 0x0c | a line, 2 wide | `FUN_08095390` |
+| 105, 106 | u16 at 0x02, rect at 0x04, 8 bytes at 0x0c, text from 0x14 to the end | the text, the same for both kinds | `FUN_08095480`, `FUN_08095590` |
+| 107 | u16 at 0x02, colour at 0x04, point at 0x08, three or more points from 0x0c | a filled polygon; the point at 0x08 was (0, 0) | `FUN_080956a0` |
+| 108 | u16 at 0x02, point at 0x04, colour at 0x08 | a flood fill of the area of like colour around the point | `FUN_08095904` |
+| 109 | u16 at 0x02, destination point at 0x04, source point at 0x08, u16 width and height at 0x0c | a copy within the object | `FUN_080959a4` |
 
-What each kind draws is [I] from its arguments: 100 fill, 102 frame, 103
-pixel, 104 line, 105/106 text, 107 polygon, 109 copy.
+The client sends back two 16-byte messages **[S `FUN_0809607c`,
+`FUN_08096188`]**, one for each key or button event in the window. Mouse
+moves send nothing **[O]** (frames 28–30, a drag).
 
-The client sends back two 16-byte messages **[S]**:
+**4200 Key** (`FUN_0809607c`):
 
-- **4200** (`FUN_0809607c`): u32, u32, u32, u16, a byte that is 1, 2, or 3
-  for window events 5, 6, and 7, and a zero byte. [I] mouse.
-- **4201** (`FUN_08096188`): u32, u32, u16, u16, a byte, a byte that is 5,
-  6, or 10 for window events 9, 10, and 14, and a u16. [I] keyboard.
+| Offset | Size | Field |
+|---:|---:|---|
+| 0x00 | 4 | the client's clock, in ms |
+| 0x04 | 4 | modifiers held before the event: 8 Shift (frame 54), 2 Alt (18) |
+| 0x08 | 4 | the character: `a` 0x61, `A` 0x41, Return 0x0a, BackSpace 0x08; 0 for keys with none and on release |
+| 0x0c | 2 | the key's USB HID usage: `a` 4, Return 0x28, Left 0x50, Left Shift 0xe1; 0 on most releases |
+| 0x0e | 1 | 1 pressed, 2 released, 3 for window event 7 (never seen) |
+| 0x0f | 1 | 0 |
+
+All **[O]** but kind 3. A held key repeats as a release and a press
+together, every 40 ms after 661 ms (frames 78–154). Ctrl+B sent Ctrl's
+press, a release with modifiers 0x21, and Ctrl's release, but no press for
+B (68–72). F1 opened the client's window menu instead of reaching the peer.
+
+**4201 Mouse** (`FUN_08096188`):
+
+| Offset | Size | Field |
+|---:|---:|---|
+| 0x00 | 4 | the client's clock, in ms |
+| 0x04 | 4 | 0x00040000 on a right button press (frame 32), else 0 |
+| 0x08 | 2 | x in the window |
+| 0x0a | 2 | y in the window |
+| 0x0c | 1 | button: 1 left, 2 right, 3 middle, 4 wheel up, 5 wheel down |
+| 0x0d | 1 | 5 pressed, 6 released, 10 wheel |
+| 0x0e | 2 | i16 wheel movement: 0x78 up, −0x78 down; 0 for buttons |
+
+All **[O]**, frames 20–46. Each wheel step sends two identical messages
+(40, 42).
 
 ## Open questions
 
 - Capture a private DCC chat and a voice call between two clients; see
   `.scratch/capture-gaps/issues/07-dcc-voice.md`.
 - Which side opens the primary connection, and from which UI action.
+- GConsole: what the u16 at 0x02 of kinds 100, 101, 103, and 105–109,
+  the 8 bytes at 0x0c of 105/106, and modifier 0x21 mean; what kind 3 of
+  4200 (window event 7) is.

@@ -1,6 +1,6 @@
 # GConsole
 
-Status: ready-for-agent
+Status: done
 Scenario: `linux-gconsole`
 Targets: 4000, 4001, 4200, 4201, and the client's login on TCP 10900
 
@@ -46,3 +46,10 @@ Steps (operator):
 2026-10-13: Added at the operator's request. 4200 is 0x1068 and 4201 is
 0x1069; each carries 16 bytes [S `FUN_0809607c`, `FUN_08096188`]. Whether
 4200 is mouse and 4201 keyboard is [I], from the event kinds.
+
+2026-10-13: Done in `captures/linux-gconsole.pcapng`, against `kdx-probe
+--listen`. The client accepted the peer and drew every record kind. The
+guess was backwards: 4200 is the keyboard and 4201 the mouse. Drags send no
+moves, and kind 3 of 4200 never appeared, so step 3's "drag" gave 4201
+press and release only. Layouts are in `dcc.md` and
+`kdx_proto::msg::gconsole`.

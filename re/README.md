@@ -179,7 +179,7 @@ Other binaries, by Ghidra project:
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x080ea08c` / `0x080ea000` | create connection object (KDX story) / set challenge table at +0xa4, length at +0xa0 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x080ec058` / `0x080ec280` / `0x080ea768` | challenge table: pick our challenge / answer the peer's / check the peer's response |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08094be8` / `0x08095ac4` | GConsole: handle 4000 / 4001 draw records |
-| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0809607c` / `0x08096188` | GConsole: send 4200 / 4201 |
+| Client 1.620 beta 5 (`kdxlnxclient`) | `0x0809607c` / `0x08096188` | GConsole: send 4200 Key / 4201 Mouse |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08069578` | tracker connection: sends 700, dispatches 1, 107, 116, 701, 703, 711, 713, 721 |
 | Client 1.620 beta 5 (`kdxlnxclient`) | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send 702 |
 | Client 1.600 Win (`kdxclient`) | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |

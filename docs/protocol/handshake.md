@@ -51,9 +51,9 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 |---|---|---|---|
 | 0x00 | 4 | key | random XOR key, sent in the clear |
 | 0x04 | 4 | magic | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
-| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([dcc.md](dcc.md#handshake)) **[S `FUN_0804b824`]** |
+| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([dcc.md](dcc.md#handshake)) **[S `FUN_0804b824`, O]** |
 | 0x0c | 1 | format | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S]**. Server 1.620 and Tracker 1.110 accept only service `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
+| 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only service `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
 | 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
@@ -138,7 +138,7 @@ There are three tables:
 | Table | Length | Used by |
 |---|---:|---|
 | the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create [S] |
-| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 [S `FUN_0804b824`] |
+| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 [S `FUN_0804b824`, O] |
 | `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that [S `FUN_0808529c`] |
 
 Every connection starts with the KDX story, passed to the constructor
