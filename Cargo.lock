@@ -389,10 +389,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64",
+ "bytes",
  "clap",
+ "futures-util",
+ "getrandom 0.3.4",
  "kdx-client",
+ "kdx-codec",
  "kdx-proto",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

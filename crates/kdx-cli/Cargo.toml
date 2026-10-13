@@ -8,10 +8,15 @@ description = "The kdx command-line KDX client, and kdx-probe for exercising a s
 
 [dependencies]
 kdx-client.workspace = true
+kdx-codec.workspace = true
 kdx-proto.workspace = true
 anyhow = "1.0.104"
+bytes = "1.12.1"
 clap = { version = "4.6.7", features = ["derive", "env"] }
-tokio = { version = "1.53.2", features = ["fs", "io-util", "macros", "rt", "time"] }
+futures-util = { version = "0.3.34", features = ["sink"] }
+getrandom = "0.3"
+tokio = { version = "1.53.2", features = ["fs", "io-util", "macros", "net", "rt", "time"] }
+tokio-util = { version = "0.7.20", features = ["codec"] }
 
 [dev-dependencies]
 base64 = "0.23.1"
