@@ -243,7 +243,7 @@ fn settings() {
     assert_eq!(
         general,
         GeneralSettings {
-            port: 10800,
+            tracker_port: 10800,
             name: b"New TrackerServ".to_vec(),
             ..GeneralSettings::default()
         }

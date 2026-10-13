@@ -1310,10 +1310,10 @@ fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
     )];
     if let Some(general) = settings.general()? {
         parts.push(format!(
-            "name {} description {} port {} flags {:#x}",
+            "name {} description {} tracker port {} flags {:#x}",
             quoted(&general.name),
             quoted(&general.description),
-            general.port,
+            general.tracker_port,
             general.flags
         ));
     }

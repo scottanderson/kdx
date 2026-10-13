@@ -19,9 +19,9 @@ struct Args {
     /// Address to listen on.
     #[arg(long, default_value = "0.0.0.0")]
     address: IpAddr,
-    /// Port for both TCP and UDP; saved in the settings.
+    /// Tracker port, for both TCP and UDP; saved in the settings.
     #[arg(long, value_parser = clap::value_parser!(u16).range(1..=0xfffe))]
-    port: Option<u16>,
+    tracker_port: Option<u16>,
     /// Admin login; saved in the settings. Needed on the first run.
     #[arg(long)]
     admin_login: Option<String>,
@@ -60,17 +60,17 @@ async fn main() -> Result<()> {
         changed |= key != settings.admin_key;
         settings.admin_key = key;
     }
-    if let Some(port) = args.port {
-        changed |= port != settings.port;
-        settings.port = port;
+    if let Some(port) = args.tracker_port {
+        changed |= port != settings.tracker_port;
+        settings.tracker_port = port;
     }
     if changed {
         settings.save(&args.settings)?;
     }
 
-    let sockets = Sockets::bind(args.address, settings.port)
+    let sockets = Sockets::bind(args.address, settings.tracker_port)
         .await
-        .with_context(|| format!("binding {}:{}", args.address, settings.port))?;
+        .with_context(|| format!("binding {}:{}", args.address, settings.tracker_port))?;
     eprintln!("listening on {}", sockets.local_addr()?);
     Tracker::new(settings, Some(args.settings), table)
         .run(sockets)
