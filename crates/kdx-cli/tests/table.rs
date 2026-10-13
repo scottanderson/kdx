@@ -2,11 +2,6 @@
 
 use std::process::{Command, Output};
 
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine as _;
-use kdx_client::table;
-use kdx_proto::{ChallengeTable, GConsoleTable};
-
 fn kdx(args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_kdx"))
         .args(args)
@@ -35,18 +30,10 @@ fn server_commands_take_server_options() {
 
 #[test]
 fn fetch_keeps_cached_tables() {
-    // The tables are not in the repository; skip unless the environment or `kdx table fetch` provide them.
-    let tables = env_table()
-        .or_else(table::cached)
-        .zip(env_gconsole_table().or_else(table::cached::<GConsoleTable>));
-    let Some((table, gconsole)) = tables else {
-        let missing =
-            "no challenge tables in KDX_CHALLENGE_TABLE and HGC_CHALLENGE_TABLE or the kdx cache";
-        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
-        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
-        eprintln!("skipping: {missing}");
-        return;
-    };
+    let (table, gconsole) = (
+        kdx_test_tables::challenge_table(),
+        kdx_test_tables::gconsole_table(),
+    );
     let cache = std::env::temp_dir().join(format!("kdx-table-test-{}", std::process::id()));
     // The KDX table is at its legacy path, to be moved; the stale legacy GConsole table is removed.
     std::fs::create_dir_all(cache.join("kdx/table")).unwrap();
@@ -73,26 +60,4 @@ fn fetch_keeps_cached_tables() {
     assert!(!stderr.contains("downloading"), "{stderr}");
     assert_eq!(moved.as_deref(), Some(table.as_bytes()));
     assert!(left.is_empty(), "legacy files left: {left:?}");
-}
-
-/// The table in `KDX_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
-fn env_table() -> Option<ChallengeTable> {
-    let b64 = std::env::var("KDX_CHALLENGE_TABLE")
-        .ok()
-        .filter(|v| !v.trim().is_empty())?;
-    let bytes = STANDARD
-        .decode(b64.trim())
-        .expect("KDX_CHALLENGE_TABLE is not base64");
-    Some(ChallengeTable::from_bytes(&bytes).unwrap())
-}
-
-/// The GConsole table in `HGC_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
-fn env_gconsole_table() -> Option<GConsoleTable> {
-    let b64 = std::env::var("HGC_CHALLENGE_TABLE")
-        .ok()
-        .filter(|v| !v.trim().is_empty())?;
-    let bytes = STANDARD
-        .decode(b64.trim())
-        .expect("HGC_CHALLENGE_TABLE is not base64");
-    Some(GConsoleTable::from_bytes(&bytes).unwrap())
 }

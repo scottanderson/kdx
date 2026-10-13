@@ -53,6 +53,8 @@ server and a tracker, all compatible with the original KDX programs (Server
   ```sh
   cargo run -p kdx-tracker -- --admin-login admin --admin-password secret
   ```
+- `crates/kdx-test-tables` gives the tests the challenge tables, which are
+  not in the repository.
 - The other crates are empty placeholders for the work in
   `docs/protocol/PLAN.md`. `crates/kdx-server` will be a library for writing
   KDX servers, and `crates/kdx-daemon` the server built on it.
@@ -74,9 +76,11 @@ program, zip archive of one, or saved table instead.
 
 The crates need Rust 1.96 or newer. What else you need depends on the work:
 
-- **The client, the dissector, and the tests** need only `cargo`. Run `kdx
-  table fetch` once before connecting to a server; the tests that need a
-  table read it from `vendor/haxial/` or that cache, and skip without either.
+- **The client, the dissector, and the tests** need only `cargo`. Run
+  `cargo run --bin kdx -- table fetch` once before connecting to a server or
+  running the tests; the tests that need a table read it from
+  `vendor/haxial/` or that cache, through `kdx-test-tables`, and fail without
+  either.
 - **Captures in the lab** need the Haxial binaries (`vendor/fetch`) and the
   packages in `lab/README.md`.
 - **Static analysis** needs the binaries, Docker, and Ghidra (`re/README.md`).

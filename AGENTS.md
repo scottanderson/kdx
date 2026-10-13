@@ -18,16 +18,15 @@ Put details in those files. Keep this file to rules.
   code), `re/projects/`, and `vendor/refs/*.html` are git-ignored. Keep it
   that way.
 - Never commit the 1739-byte challenge table (the "story"). Code reads it at
-  run time through `ChallengeTable::extract` or `from_bytes`. Tests that need
-  it read `KDX_CHALLENGE_TABLE` (base64), `vendor/haxial/`, or the `kdx table
-  fetch` cache, and skip without all three unless `KDX_REQUIRE_TABLE` is set.
-  CI sets `KDX_REQUIRE_TABLE`, and `KDX_CHALLENGE_TABLE` from a repository
-  secret of the same name.
+  run time through `ChallengeTable::extract` or `from_bytes`. Tests get it
+  from `kdx-test-tables`, which reads `KDX_CHALLENGE_TABLE` (base64),
+  `vendor/haxial/`, or the `kdx table fetch` cache, and fails without all
+  three. CI sets `KDX_CHALLENGE_TABLE` from a repository secret of the same
+  name.
 - Never commit GConsole's 3193-byte challenge table either. It works like
   the first: code reads it through `GConsoleTable::extract` or `from_bytes`,
-  and tests read `HGC_CHALLENGE_TABLE` (base64), `vendor/haxial/`, or the
-  `kdx table fetch` cache, with the same `KDX_REQUIRE_TABLE` rule. CI sets
-  `HGC_CHALLENGE_TABLE` from a repository secret of the same name.
+  and `kdx-test-tables` reads it from `HGC_CHALLENGE_TABLE` the same way. CI
+  sets `HGC_CHALLENGE_TABLE` from a repository secret of the same name.
 - Don't accept Haxial's license agreement for the user. The user clicks
   "I Agree" in the client.
 

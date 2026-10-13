@@ -388,7 +388,6 @@ name = "kdx-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64",
  "bytes",
  "clap",
  "futures-util",
@@ -396,6 +395,7 @@ dependencies = [
  "kdx-client",
  "kdx-codec",
  "kdx-proto",
+ "kdx-test-tables",
  "tokio",
  "tokio-util",
 ]
@@ -453,7 +453,7 @@ dependencies = [
 name = "kdx-proto"
 version = "0.1.0"
 dependencies = [
- "base64",
+ "kdx-test-tables",
  "sha1",
  "sha2",
  "thiserror 2.0.21",
@@ -468,11 +468,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "kdx-test-tables"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "kdx-client",
+ "kdx-proto",
+]
+
+[[package]]
 name = "kdx-tracker"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64",
  "bytes",
  "clap",
  "futures-util",
@@ -480,6 +488,7 @@ dependencies = [
  "kdx-client",
  "kdx-codec",
  "kdx-proto",
+ "kdx-test-tables",
  "tokio",
  "tokio-util",
 ]

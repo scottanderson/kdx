@@ -1,14 +1,10 @@
 //! Checks against `captures/linux-gconsole.pcapng`: Client 1.620 for Linux as
 //! `admin`, connected to `kdx-probe --listen` as a GConsole peer.
 
-use std::path::PathBuf;
-
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
 use kdx_proto::handshake::{Hello, Proof, GCONSOLE_VERSION, SERVICE_GCONSOLE};
 use kdx_proto::msg::gconsole::{Color, Draw, DrawRecord, Key, Mouse, OpenWindow, Point, Rect};
 use kdx_proto::session::{Header, MessageType, Scramble, SessionCipher};
-use kdx_proto::{AccountKey, ChallengeTable, GConsoleTable};
+use kdx_proto::{AccountKey, ChallengeTable};
 
 mod common;
 
@@ -30,14 +26,7 @@ fn of_type(messages: &[(Header, Vec<u8>)], kind: MessageType) -> Vec<&[u8]> {
 
 #[test]
 fn challenge_responses() {
-    // The table is not in the repository; skip unless the environment, lab binaries, or `kdx table fetch` provide it.
-    let Some(table) = env_table().or_else(vendor_table).or_else(cached_table) else {
-        let missing = "no GConsole table in HGC_CHALLENGE_TABLE, vendor/haxial, or the kdx cache";
-        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
-        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
-        eprintln!("skipping: {missing}");
-        return;
-    };
+    let table = kdx_test_tables::gconsole_table();
     let (client, client_len) = Hello::decode(C2S).unwrap();
     let (peer, peer_len) = Hello::decode(S2C).unwrap();
     assert_eq!(
@@ -50,36 +39,6 @@ fn challenge_responses() {
     let peer_proof = Proof::decode(&S2C[peer_len..]).unwrap();
     assert_eq!(table.response(peer.challenge), Some(client_proof.response));
     assert_eq!(table.response(client.challenge), Some(peer_proof.response));
-}
-
-/// The table in `HGC_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
-fn env_table() -> Option<GConsoleTable> {
-    let b64 = std::env::var("HGC_CHALLENGE_TABLE")
-        .ok()
-        .filter(|v| !v.trim().is_empty())?;
-    let bytes = STANDARD
-        .decode(b64.trim())
-        .expect("HGC_CHALLENGE_TABLE is not base64");
-    Some(GConsoleTable::from_bytes(&bytes).unwrap())
-}
-
-/// The table extracted from the client binary that `vendor/fetch` downloads.
-fn vendor_table() -> Option<GConsoleTable> {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../vendor/haxial/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClient.lexe"
-    );
-    Some(GConsoleTable::extract(&std::fs::read(path).ok()?).unwrap())
-}
-
-/// The table `kdx table fetch` saved, at the path `kdx_client::table::cache_path` uses.
-fn cached_table() -> Option<GConsoleTable> {
-    let dir = std::env::var_os("XDG_CACHE_HOME")
-        .filter(|d| !d.is_empty())
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
-    let bytes = std::fs::read(dir.join("kdx/table/hgc.bin")).ok()?;
-    Some(GConsoleTable::from_bytes(&bytes).unwrap())
 }
 
 #[test]

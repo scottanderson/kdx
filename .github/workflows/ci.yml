@@ -29,4 +29,3 @@ jobs:
         env:
           KDX_CHALLENGE_TABLE: ${{ secrets.KDX_CHALLENGE_TABLE }}
           HGC_CHALLENGE_TABLE: ${{ secrets.HGC_CHALLENGE_TABLE }}
-          KDX_REQUIRE_TABLE: 1

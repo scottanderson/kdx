@@ -1,13 +1,10 @@
 //! Checks against `captures/first-connect.pcapng`: Client 1.600 logs in as `admin` to Server 1.620.
 
-use base64::engine::general_purpose::STANDARD;
-use base64::Engine;
 use kdx_proto::handshake::{
     compute_auth, Hello, Proof, Status, CLIENT_VERSION, SERVER_VERSION, SERVICE_KDX,
 };
 use kdx_proto::session::{Header, MessageType, SessionCipher};
-use kdx_proto::{AccountKey, ChallengeTable};
-use std::path::PathBuf;
+use kdx_proto::AccountKey;
 
 mod common;
 use common::{messages, PASSWORD};
@@ -78,14 +75,7 @@ fn proofs() {
 
 #[test]
 fn challenge_responses() {
-    // The table is not in the repository; skip unless the environment, lab binaries, or `kdx table fetch` provide it.
-    let Some(table) = env_table().or_else(vendor_table).or_else(cached_table) else {
-        let missing = "no challenge table in KDX_CHALLENGE_TABLE, vendor/haxial, or the kdx cache";
-        // CI sets KDX_REQUIRE_TABLE so a missing table fails instead of skipping.
-        assert!(std::env::var_os("KDX_REQUIRE_TABLE").is_none(), "{missing}");
-        eprintln!("skipping: {missing}");
-        return;
-    };
+    let table = kdx_test_tables::challenge_table();
     let (client, server) = (side(C2S), side(S2C));
     assert_eq!(
         table.response(server.hello.challenge),
@@ -179,34 +169,4 @@ fn payloads() {
     ] {
         assert!(seen.contains(&kind), "{kind} not in the capture");
     }
-}
-
-/// The table in `KDX_CHALLENGE_TABLE`, as base64, which CI sets from a secret.
-fn env_table() -> Option<ChallengeTable> {
-    let b64 = std::env::var("KDX_CHALLENGE_TABLE")
-        .ok()
-        .filter(|v| !v.trim().is_empty())?;
-    let bytes = STANDARD
-        .decode(b64.trim())
-        .expect("KDX_CHALLENGE_TABLE is not base64");
-    Some(ChallengeTable::from_bytes(&bytes).unwrap())
-}
-
-/// The table extracted from the server binary that `vendor/fetch` downloads.
-fn vendor_table() -> Option<ChallengeTable> {
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
-    );
-    Some(ChallengeTable::extract(&std::fs::read(path).ok()?).unwrap())
-}
-
-/// The table `kdx table fetch` saved, at the path `kdx_client::table::cache_path` uses.
-fn cached_table() -> Option<ChallengeTable> {
-    let dir = std::env::var_os("XDG_CACHE_HOME")
-        .filter(|d| !d.is_empty())
-        .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
-    let bytes = std::fs::read(dir.join("kdx/table/kdx.bin")).ok()?;
-    Some(ChallengeTable::from_bytes(&bytes).unwrap())
 }

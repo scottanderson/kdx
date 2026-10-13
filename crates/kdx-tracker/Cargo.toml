@@ -19,7 +19,7 @@ tokio = { version = "1.53.2", features = ["macros", "net", "rt-multi-thread", "s
 tokio-util = { version = "0.7.20", features = ["codec"] }
 
 [dev-dependencies]
-base64 = "0.23.1"
+kdx-test-tables.workspace = true
 
 [lints]
 workspace = true
