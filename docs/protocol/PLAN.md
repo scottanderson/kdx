@@ -105,7 +105,7 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
 | 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 174, 175, and 804 captured (`linux-shutdown`); a successful 175 in `linux-upgrade` | yes | account list, show, add, set, rm; passwd |
 | 7. Tracker | yes; registration, 700–703, 710–713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | groups, servers, stats |
-| 8. Voice, view display | yes, statically (`dcc.md`; view display in `KDXProtocol.md`); not captured | no | no |
+| 8. Voice, view display | yes; view display 900–905 captured from a Windows server (`win-view-display`); voice statically only (`dcc.md`) | no | no |
 
 ### Phase 4: Spec format
 - `KDXProtocol.md` is the single reference: the message catalog, a

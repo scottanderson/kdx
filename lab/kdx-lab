@@ -16,6 +16,7 @@ LIBSTDCXX5_SHA256="c88f93cd5b7b32ca88b40f671fc09f3387c7fb514902b4737b471bd812786
 
 SERVER_BIN="$VENDOR/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe"
 UPGRADE_HELPER_BIN="$VENDOR/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXUpgradeHelper.lexe"
+SERVER_WIN_DIR="$VENDOR/KDXServer1600-Win/extracted/KDXServer1600-Win"
 TRACKER_BIN="$VENDOR/KDXTrackerServ1110-Lnx/extracted/KDXTrackerServ1110-Lnx/KDXTrackerServ.lexe"
 CLIENT_WIN_DIR="$VENDOR/KDXClient1600-Win/extracted/KDXClient1600-Win"
 CLIENT_LNX_BIN="$VENDOR/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClient.lexe"
@@ -34,11 +35,12 @@ usage: kdx-lab <command> [args]
   down                stop the capture and tear down the network
   status              show whether the lab is up and what it is capturing
   server [-d]         run KDX Server 1.620 (Linux); -d detaches (needs first-run setup done)
+  server win [-d]     run KDX Server 1.600 (Windows) under Wine; -d detaches
   tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
   client [win|linux]  run KDX Client 1.600 under Wine (default) or Client 1.620 beta 5 (Linux)
   shell               open a shell inside the lab network (for nc, tshark, ip, ...)
   run <cmd...>        run a trusted host command inside the lab network (e.g. a Rust probe)
-  reset <component>   wipe persistent state for server|tracker|client-win|client-linux
+  reset <component>   wipe persistent state for server|server-win|tracker|client-win|client-linux
 
 Inside the lab the server is reachable at 127.0.0.1:10700 (or address "0" in the client).
 EOF
@@ -202,30 +204,51 @@ run_console() {
 }
 
 cmd_server() {
+  [[ "${1:-}" == win ]] && { shift; cmd_server_win "$@"; return; }
   install_bin "$UPGRADE_HELPER_BIN" "$RUN/server"
   run_console server "$SERVER_BIN" "$@"
 }
+# The GUI programs get the WSLg X socket.
+x11_args() {
+  [[ -S /tmp/.X11-unix/X0 ]] || die "no X server socket at /tmp/.X11-unix/X0 (WSLg not running?)"
+  x11=(--ro-bind /tmp/.X11-unix/X0 /tmp/.X11-unix/X0 --setenv DISPLAY :0)
+}
+
+# Run a Windows program from $dir under Wine, with its own prefix in $state.
+wine_app() {
+  local state="$1" dir="$2" exe="$3"
+  [[ -f "$dir/$exe" ]] || die "missing $dir/$exe (see vendor/MANIFEST.md)"
+  local x11; x11_args
+  mkdir -p "$state/app"
+  cp -f "$dir"/* "$state/app/"
+  sandbox "$state" "${x11[@]}" \
+    --setenv WINEPREFIX /kdx/prefix --setenv WINEDEBUG -all \
+    --setenv WINEDLLOVERRIDES "mscoree,mshtml=" \
+    -- wine "/kdx/app/$exe"
+}
+
+cmd_server_win() {
+  require_up
+  if [[ "${1:-}" == "-d" ]]; then
+    wine_app "$RUN/server-win" "$SERVER_WIN_DIR" KDXServer.exe </dev/null >"$RUN/server-win.log" 2>&1 &
+    disown
+    echo "server-win detached; log: $RUN/server-win.log (stopped by kdx-lab down)"
+  else
+    wine_app "$RUN/server-win" "$SERVER_WIN_DIR" KDXServer.exe
+  fi
+}
+
 cmd_tracker() { run_console tracker "$TRACKER_BIN" "$@"; }
 
 cmd_client() {
   require_up
-  local kind="${1:-win}" state
-  [[ -S /tmp/.X11-unix/X0 ]] || die "no X server socket at /tmp/.X11-unix/X0 (WSLg not running?)"
-  local x11=(--ro-bind /tmp/.X11-unix/X0 /tmp/.X11-unix/X0 --setenv DISPLAY :0)
+  local kind="${1:-win}" x11
   case "$kind" in
-    win)
-      state="$RUN/client-win"
-      mkdir -p "$state/app"
-      cp -f "$CLIENT_WIN_DIR"/* "$state/app/"
-      sandbox "$state" "${x11[@]}" \
-        --setenv WINEPREFIX /kdx/prefix --setenv WINEDEBUG -all \
-        --setenv WINEDLLOVERRIDES "mscoree,mshtml=" \
-        -- wine /kdx/app/KDXClient.exe
-      ;;
+    win) wine_app "$RUN/client-win" "$CLIENT_WIN_DIR" KDXClient.exe ;;
     linux)
-      state="$RUN/client-linux"
-      install_bin "$CLIENT_LNX_BIN" "$state"
-      sandbox "$state" "${x11[@]}" -- ./KDXClient.lexe
+      x11_args
+      install_bin "$CLIENT_LNX_BIN" "$RUN/client-linux"
+      sandbox "$RUN/client-linux" "${x11[@]}" -- ./KDXClient.lexe
       ;;
     *) die "client kind must be win or linux" ;;
   esac
@@ -244,8 +267,8 @@ cmd_run() {
 
 cmd_reset() {
   case "${1:-}" in
-    server|tracker|client-win|client-linux) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
-    *) die "reset what? server|tracker|client-win|client-linux" ;;
+    server|server-win|tracker|client-win|client-linux) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
+    *) die "reset what? server|server-win|tracker|client-win|client-linux" ;;
   esac
 }
 

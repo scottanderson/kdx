@@ -1,7 +1,7 @@
 # View Display
 
-Status: ready-for-human
-Scenario: `linux-view-display`
+Status: done
+Scenario: `win-view-display`
 Targets: 900–905
 
 Server 1.620 for Linux has no screen support: 900 can only fail with 0x10004 (unimplemented),
@@ -33,3 +33,10 @@ connection that carries 900.
 
 2026-10-12: Worth doing: capture 900-905 from a Windows server under Wine.
 Deferred for token budget.
+
+2026-10-13: Captured from Server 1.600 for Windows under Wine
+(`lab/kdx-lab server win`) and Client 1.620 beta 5 as
+`captures/win-view-display`. `kdx-dissect` already decodes the transfer
+connection. The capture confirms 902, 903, and 904, and swaps the 905
+character and key code fields; see View display in
+`docs/protocol/KDXProtocol.md`.
