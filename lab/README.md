@@ -46,6 +46,7 @@ lab/kdx-lab server           # foreground; console accepts: exit, quit, about, i
 lab/kdx-lab server -d        # or detached, logging to lab/run/server.log
 lab/kdx-lab server win -d    # KDX Server 1.600 for Windows under Wine, logging to lab/run/server-win.log
 lab/kdx-lab client           # KDX Client 1.600 under Wine (or: client linux, for 1.620 beta 5)
+lab/kdx-lab client linux2    # a second 1.620 beta 5 with its own state in lab/run/client-linux2/
 lab/kdx-lab shell            # shell inside the lab network (nc, tshark, ss, python3 -I ...)
 lab/kdx-lab down             # stop capture, kill everything in the lab network
 ```
@@ -55,6 +56,10 @@ In the client, connect to `127.0.0.1` (or `0`). The default port is 10700.
 `up` also writes `captures/<scenario>.md`. Fill in its steps and observations,
 because a capture without its GUI steps is hard to interpret later. Use one
 scenario per feature you're exercising, and keep scenarios small.
+
+Two Linux clients share the lab's loopback, so only the first can listen for DCC
+on TCP 10600. The second logs a harmless error and can still call the first;
+give it another port only if the first must call it.
 
 ## Server first run
 
