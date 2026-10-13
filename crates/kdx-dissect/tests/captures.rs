@@ -37,6 +37,8 @@ const EXPECTED: &[&str] = &[
     "kdx-accounts 58350: key: --password #5 (server proof DOES NOT match)",
     // Step 8: `groups --login admin` with a wrong password.
     "kdx-cli-tracker 53576: stopped: no candidate key matches the client's proof; try --password",
+    // Step 1: a DCC login with a name, which the peer rejects.
+    "linux-dcc-voice-failed 44420: key: --password #1 (server proof DOES NOT match)",
     // A login with a wrong password.
     "linux-first-connect 35552: stopped: no candidate key matches the client's proof; try --password",
     // Step 6: the changed admin password, which the tracker ignored.

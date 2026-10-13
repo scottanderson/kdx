@@ -148,3 +148,11 @@ scramble.
 | Port | Messages |
 |---|---|
 | 51924 | 4000 Open Window, 4001 Draw with every record kind, 64 4200 Key, 14 4201 Mouse |
+
+`linux-dcc-voice-failed-<port>.c2s.bin` and `.s2c.bin` come from
+`captures/linux-dcc-voice-failed.pcapng`, where client B connected to client
+A's DCC listener. Both are Client 1.620 for Linux.
+
+| Port | Messages |
+|---|---|
+| 45702 | the primary connection, with no password: both 117 SKPKs, 100, and 300 |
