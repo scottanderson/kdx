@@ -190,6 +190,9 @@ Other binaries, by Ghidra project:
 | Tracker 1.110 (`kdxtracker`) | `0x0804abf4` / `0x0804adcc` | 700 handler (also expires servers) / 702 handler |
 | Tracker 1.110 (`kdxtracker`) | `0x0804cb90` / `0x0804cc10` / `0x0804cd88` | 710 handler / 712 handler / serialize settings (`%KDXTSTG`) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804b180` | 720 handler |
+| Tracker 1.110 (`kdxtracker`) | `0x0804aa30` / `0x0804ab2c` | add a group (sets the tracker-only flag) / drop all groups and server records |
+| Tracker 1.110 (`kdxtracker`) | `0x0804e81c` | parse an upstream tracker entry |
+| Tracker 1.110 (`kdxtracker`) | `0x0804ca60` | rebind TCP and UDP on a new port |
 | Tracker 1.110 (`kdxtracker`) | `0x0804d63c` | parse a `%KDXTSTG` settings blob (712 and the settings file) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804df70` | register with upstream trackers (flags bit 0) |
 | Tracker 1.110 (`kdxtracker`) | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |

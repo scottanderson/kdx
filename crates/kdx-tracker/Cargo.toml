@@ -8,6 +8,18 @@ description = "A KDX tracker"
 
 [dependencies]
 kdx-proto.workspace = true
+kdx-codec.workspace = true
+kdx-client.workspace = true
+anyhow = "1.0.104"
+bytes = "1.12.1"
+clap = { version = "4.6.7", features = ["derive", "env"] }
+futures-util = { version = "0.3.34", features = ["sink"] }
+getrandom = "0.3"
+tokio = { version = "1.53.2", features = ["macros", "net", "rt-multi-thread", "sync", "time"] }
+tokio-util = { version = "0.7.20", features = ["codec"] }
+
+[dev-dependencies]
+base64 = "0.23.1"
 
 [lints]
 workspace = true
