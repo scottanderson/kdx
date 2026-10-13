@@ -1,12 +1,12 @@
 # Server upgrade
 
-Status: ready-for-human
-Blocked by: the Internet Archive, offline on 2026-10-12
+Status: done
 Scenario: `linux-upgrade`
 Targets: 175, the 151 it broadcasts, and the relaunched server's 105
 
-Upgrade the lab server from 1.620 to 1.600 so the version in 105 Server Info
-proves that KDXUpgradeHelper swapped the binary. `kdx-lab server` already
+Use Upgrade Server Software to downgrade the lab server from 1.620 to 1.600,
+so the version in 105 Server Info proves that KDXUpgradeHelper swapped the
+binary. `kdx-lab server` already
 installs the helper and keeps the sandbox up for it (`lab/README.md`, Server
 upgrade).
 
@@ -35,3 +35,15 @@ shut-down choices: they run `/sbin/shutdown` (`FUN_080916e4`).
 2026-10-12: Tabled until the Internet Archive is back; its CDX API returned
 504 and 503. Shows whether a ticked Restart KDX adds bytes to the 175 body,
 which the server doesn't read (`captures/linux-shutdown.md`).
+
+2026-10-12: The archive is back. `vendor/fetch old/KDXServer1600-Lnx.zip`
+fetches the 1.600 server (Wayback 20060515145257, the only capture besides
+an identical one from 2007). Its KDXUpgradeHelper.lexe is byte-identical to
+1.620's.
+
+2026-10-13: Captured as `captures/linux-upgrade.pcapng`. Server 1.620
+downgraded to 1.600: 175 (still an empty body with Restart KDX ticked), 151
+"Upgrading server software, be back in 5 seconds!" with no Status, and
+the relaunched server's 105 reports 1600. The helper moved
+`Bases/KDXServer.lexe` over the server's program; 1.600 ran on 1.620's
+state unchanged. The lab state was restored from the backup.

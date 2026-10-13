@@ -837,18 +837,26 @@ re-encodes frame 47.
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
 (82). **[S `FUN_0806172c`]**
 
-The request has no fields; the handler reads no body **[S]**. With the
-dialog's restart options unticked the body is empty **[O
-`captures/linux-shutdown.pcapng` frame 19]**.
+The request has no fields; the handler reads no body **[S]**. The dialog's
+Restart KDX option doesn't reach the server: the body is empty with it
+unticked and ticked **[O `captures/linux-shutdown.pcapng` frame 19,
+`captures/linux-upgrade.pcapng` frame 19]**.
 
 Without `KDXServer.lexe` in the server's folder the reply is 1 Status
 0x1000c. The server then opens `KDXServer.lexe` in the folder it resolves
 for `Bases` (`FUN_08092db8`) and `KDXUpgradeHelper.lexe`; a missing file
-gets 0x30067 **[S]**. In the lab the first open fails its `stat`: 0x30067,
-module 0x46, line 0x198 **[O frame 20]**. On success the
-server broadcasts 151 Disconnect Message "Upgrading server software, be
-back in 5 seconds!", launches the helper, writes history record 0xaf, and
-exits after 0xd48 ms with mode 1 of 174 **[S]**.
+gets 0x30067 **[S]**. Without the new program in `Bases` the first open
+fails its `stat`: 0x30067, module 0x46, line 0x198 **[O
+`captures/linux-shutdown.pcapng` frame 20]**.
+
+On success there is no 1 Status. The server broadcasts 151 Disconnect
+Message with flag 4 and "Upgrading server software, be back in 5 seconds!"
+**[O `captures/linux-upgrade.pcapng` frame 20]**, launches the helper,
+writes history record 0xaf, and exits after 0xd48 ms with mode 1 of 174
+**[S]**. The helper moves `Bases/KDXServer.lexe` over the server's program
+and starts it, whatever its version. In the lab, 175 downgraded Server 1.620
+to 1.600, which was back about 5 s after the 151; the next login's 105
+reports version 1600 **[O `captures/linux-upgrade.pcapng` frame 37]**.
 
 **180 Server History Join** / **182 Server History Leave**
 Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
