@@ -189,8 +189,8 @@ impl Tracker {
         };
         let name = String::from_utf8_lossy(&reg.name);
         match registered {
-            Registered::Added => eprintln!("{from}: registered {name:?} port {}", reg.port),
-            Registered::Removed => eprintln!("{from}: unregistered port {}", reg.port),
+            Registered::Added => eprintln!("{from}: registered {name:?} port {}", reg.server_port),
+            Registered::Removed => eprintln!("{from}: unregistered port {}", reg.server_port),
             Registered::Updated | Registered::Ignored => {}
         }
     }

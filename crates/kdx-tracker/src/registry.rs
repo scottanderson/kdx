@@ -24,8 +24,8 @@ pub const MAX_NAME_LEN: usize = 64;
 pub struct Record {
     /// The registration's source address.
     pub ip: Ipv4Addr,
-    /// The registration's port field.
-    pub port: u32,
+    /// The registration's server port.
+    pub server_port: u32,
     /// The registration's flags.
     pub flags: u16,
     /// Users logged in.
@@ -54,7 +54,7 @@ impl Record {
             first_seen: self.first_seen,
             flags: self.flags,
             users: self.users,
-            address: SocketAddrV4::new(self.ip, self.port as u16),
+            address: SocketAddrV4::new(self.ip, self.server_port as u16),
             name: self.name.clone(),
             description: self.description.clone(),
             extra: Vec::new(),
@@ -104,10 +104,10 @@ impl Registry {
         let known = self
             .records
             .iter()
-            .position(|r| r.ip == ip && r.port == reg.port);
+            .position(|r| r.ip == ip && r.server_port == reg.server_port);
         let record = || Record {
             ip,
-            port: reg.port,
+            server_port: reg.server_port,
             flags: reg.flags,
             users: reg.users,
             name: reg.name[..reg.name.len().min(MAX_NAME_LEN)].to_vec(),
@@ -185,9 +185,9 @@ impl Registry {
 mod tests {
     use super::*;
 
-    fn reg(port: u32, name: &[u8], group: &[u8]) -> Registration {
+    fn reg(server_port: u32, name: &[u8], group: &[u8]) -> Registration {
         let mut reg = Registration {
-            port,
+            server_port,
             users: 1,
             name: name.to_vec(),
             ..Registration::default()

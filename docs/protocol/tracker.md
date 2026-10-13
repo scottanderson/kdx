@@ -58,7 +58,7 @@ them byte for byte (`crates/kdx-proto/tests/linux_tracker.rs`) **[O]**.
 ### Layout
 
 A 64-byte header, then the strings back to back with no length bytes of
-their own, then padding to a multiple of 4. Frame 23 is 92 bytes: port
+their own, then padding to a multiple of 4. Frame 23 is 92 bytes: server port
 0x29cc, users 1, the Login `trk-login`, the name `Lab Server`, and one group
 `Lab, Lab2` **[O]**. The client's Groups field is one text field, sent as
 group 0 as typed; Comments, Address, and the password are not sent **[O]**.
@@ -72,7 +72,7 @@ strings, then `12 22` **[O]**.
 | 0x06 | 2 | flags | bit 0: the sender is a tracker. Server 1.620 sends 0; Tracker 1.110 sends 1 |
 | 0x08 | 4 | checksum | see below |
 | 0x0c | 12 | server ID | Server 1.620 fills it with three random words the first time it runs and keeps them in its settings **[S server `FUN_080535b4`]**. Tracker 1.110 ignores it |
-| 0x18 | 4 | port | the sender's TCP port (Server 1.620: settings +0x258, default 10700) |
+| 0x18 | 4 | server port | the server's TCP port, which a tracker forwards unchanged (Server 1.620: settings +0x258, default 10700) |
 | 0x1c | 8 | 0 | |
 | 0x24 | 2 | users | number of users logged in. The server keeps it XOR'd with 0x2ba9 in memory and sends it plain **[S server `FUN_080528c8`, `FUN_0804a930`]** |
 | 0x26 | 13 | 0 | |

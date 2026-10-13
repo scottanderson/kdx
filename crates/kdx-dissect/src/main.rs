@@ -433,10 +433,10 @@ fn registration(frame: usize, src: SocketAddr, dst: SocketAddr, datagram: &[u8])
     };
     write!(
         out,
-        "    = checksum ok, flags {:#x} server id {} port {} users {} login {} name {} description {}",
+        "    = checksum ok, flags {:#x} server id {} server port {} users {} login {} name {} description {}",
         r.flags,
         hex(&r.server_id),
-        r.port,
+        r.server_port,
         r.users,
         quoted(&r.login),
         quoted(&r.name),

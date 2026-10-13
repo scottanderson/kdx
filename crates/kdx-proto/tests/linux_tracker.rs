@@ -68,7 +68,7 @@ fn registration() {
     let wire = include_bytes!("fixtures/linux-tracker-reg-23.bin");
     let first = decode_registration(wire);
     assert_eq!(first.flags, 0);
-    assert_eq!(first.port, 0x29cc);
+    assert_eq!(first.server_port, 0x29cc);
     assert_eq!(first.users, 1);
     assert!(first.string0.is_empty() && first.string4.is_empty());
     assert_eq!(first.login, b"trk-login");
