@@ -1632,7 +1632,7 @@ without the 8 bytes at 0x28 **[O probe.pcapng, port 50770]**:
 **502 Get Account Class** → **503 Account Class Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080552b8`; O]**
 
-The request is a u8 class index. The reply is the stored class record,
+The request is a u8 class index (`AccountClassIndex`). The reply is the stored class record,
 padded to 4:
 
 | Off | Size | Field | Notes |
@@ -1656,7 +1656,8 @@ The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**;
 **509 Get Account** → **510 Account Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
 
-The request is the account's login, with no length byte. An unknown login
+The request is the account's login, with no length byte (`AccountLogin`, as
+in 508 and 515). An unknown login
 gets 1 Status 0x1000c (`captures/kdx-accounts.pcapng` frame 554). The reply
 is the stored account record, with the key replaced by a flag. Its padding is
 uninitialised (frame 590) **[O]**; `kdx-proto` keeps it on a round trip.
@@ -1754,7 +1755,8 @@ Errors:
 Initiator: Client. Privilege: Change Own Password (53). **[S `FUN_08056a04`;
 O]**
 
-The request is the 32-byte key of the new password, not the password. The
+The request is the 32-byte key of the new password, not the password
+(`kdx_proto::msg::admin::ChangeOwnPassword`). The
 server stores it as the account's key and replies with an empty 551
 (frames 323–324). The old password stops working at once.
 

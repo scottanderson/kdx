@@ -1,7 +1,7 @@
 //! Administration: the connection monitor, disconnects, broadcasts, server
 //! history, accounts, processes, and folder access.
 
-use crate::MessageType;
+use crate::{AccountKey, MessageType};
 
 use super::{
     decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
@@ -590,6 +590,64 @@ impl HistoryList {
         let mut out = self.unknown_00.to_vec();
         encode_counted(&mut out, &self.records, HistoryRecord::encode)?;
         Ok(out)
+    }
+}
+
+/// An account login with no length byte: 508 Delete Account, 509 Get Account and 515 Account Deleted.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct AccountLogin(pub Vec<u8>);
+
+impl AccountLogin {
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self(buf.to_vec()))
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Vec<u8> {
+        self.0.clone()
+    }
+}
+
+/// A class index: 502 Get Account Class.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct AccountClassIndex(pub u8);
+
+impl AccountClassIndex {
+    /// Payload length.
+    pub const LEN: usize = 1;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self(buf[0]))
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        [self.0]
+    }
+}
+
+/// The key of the new password: 550 Change Own Password.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChangeOwnPassword(pub AccountKey);
+
+impl ChangeOwnPassword {
+    /// Payload length.
+    pub const LEN: usize = 32;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self(AccountKey(
+            buf[..Self::LEN].try_into().expect("32 bytes"),
+        )))
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.0 .0
     }
 }
 

@@ -17,10 +17,10 @@ use clap::Parser;
 use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, GetFolderAccessList,
-    HistoryList, HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast,
-    ShutdownServer, YourAddress,
+    Account, AccountClass, AccountClassIndex, AccountListEntry, AccountLogin, ChangeOwnPassword,
+    DisconnectMessage, DisconnectUser, ExitTerminateProcess, ExtraServerInfo, FolderAccess,
+    FolderAccessItem, GetFolderAccessList, HistoryList, HistoryRecord, MonitoredConnection,
+    ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -996,8 +996,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .collect::<Vec<_>>()
             .join("; "),
         MessageType::GET_ACCOUNT_CLASS => {
-            need(payload, 1)?;
-            format!("class {}", payload[0])
+            format!("class {}", AccountClassIndex::decode(payload)?.0)
         }
         MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryList::decode(payload)?
             .records
@@ -1034,9 +1033,14 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             )
         }
         MessageType::GET_ACCOUNT | MessageType::DELETE_ACCOUNT | MessageType::ACCOUNT_DELETED => {
-            format!("login {}", quoted(payload))
+            format!("login {}", quoted(&AccountLogin::decode(payload)?.0))
         }
-        MessageType::CHANGE_OWN_PASSWORD => format!("new key, {} bytes", payload.len()),
+        MessageType::CHANGE_OWN_PASSWORD => {
+            format!(
+                "new key, {} bytes",
+                ChangeOwnPassword::decode(payload)?.0 .0.len()
+            )
+        }
         MessageType::ACCOUNT_LIST => AccountListEntry::decode_list(payload)?
             .iter()
             .map(|a| {
@@ -1475,11 +1479,6 @@ fn reassemble(flow: &Flow) -> Stream {
         }
     }
     stream
-}
-
-fn need(payload: &[u8], len: usize) -> Result<()> {
-    anyhow::ensure!(payload.len() >= len, "payload too short: need {len} bytes");
-    Ok(())
 }
 
 fn path(path: &FilePath) -> String {
