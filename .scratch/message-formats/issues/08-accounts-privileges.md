@@ -46,6 +46,7 @@ Overrides Class **[I]**. Check them together with the user record's 0x14
 - [x] Audit (01): 513 Account List dropped byte 0x97, ff (`kdx-accounts`
   271). Fixed: `AccountListEntry` keeps every header gap and its padding.
 - [ ] Which 513 field holds that byte, and what is it?
-- [ ] Audit (01): no codec for 502 Get Account Class, 508 Delete Account,
+- [x] Audit (01): no codec for 502 Get Account Class, 508 Delete Account,
   509 Get Account, 515 Account Deleted, and 550 Change Own Password
-  (`linux-accounts-news` 17, 52, 46, 53; `kdx-accounts` 323).
+  (`linux-accounts-news` 17, 52, 46, 53; `kdx-accounts` 323). Fixed:
+  `AccountClassIndex`, `AccountLogin`, `ChangeOwnPassword`.

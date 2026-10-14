@@ -1,10 +1,10 @@
 //! Re-encodes each decoded payload to find message types the codecs don't reproduce.
 
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, FolderAccessName,
-    GetFolderAccessList, HistoryList, HistoryRecord, MonitoredConnection, ProcessList,
-    RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
+    Account, AccountClass, AccountClassIndex, AccountListEntry, AccountLogin, ChangeOwnPassword,
+    DisconnectMessage, DisconnectUser, ExitTerminateProcess, ExtraServerInfo, FolderAccess,
+    FolderAccessItem, FolderAccessName, GetFolderAccessList, HistoryList, HistoryRecord,
+    MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -143,6 +143,9 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::SKPK => one!(Skpk),
         M::SEND_PRIVATE_MESSAGE | M::INCOMING_PRIVATE_MESSAGE => one!(PrivateMessage),
         M::GET_FILE_LIST | M::GET_FILE_FOLDER_INFO => one!(FilePath),
+        M::GET_ACCOUNT_CLASS => one!(AccountClassIndex),
+        M::GET_ACCOUNT | M::DELETE_ACCOUNT | M::ACCOUNT_DELETED => one!(AccountLogin),
+        M::CHANGE_OWN_PASSWORD => one!(ChangeOwnPassword),
         M::DOWNLOAD_FILE_DATA | M::UPLOAD_FILE_DATA => one!(FileData),
         M::DISCONNECT_USER => one!(DisconnectUser),
         M::DISCONNECT_MESSAGE => one!(DisconnectMessage),
