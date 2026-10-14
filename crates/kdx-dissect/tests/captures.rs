@@ -4,6 +4,8 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use kdx_proto::MessageType;
+
 /// Every lab password the captures' notes give.
 const PASSWORDS: [&str; 7] = [
     "lab-only-pw!1",
@@ -49,33 +51,33 @@ const EXPECTED: &[&str] = &[
     "win-view-display 34156: stopped: no candidate key matches the client's proof; try --password",
 ];
 
-/// Each message type whose payloads `--audit` flags as `no codec`; a `mismatch` is a codec bug.
+/// The message types `--audit` flags as `no codec`, in order; a `mismatch` is a codec bug.
 ///
 /// Each one is a gap in an issue under `.scratch/message-formats/`.
-const EXPECTED_AUDIT: &[&str] = &[
-    "223 no codec",
-    "414 no codec",
-    "417 no codec",
-    "502 no codec",
-    "508 no codec",
-    "509 no codec",
-    "515 no codec",
-    "550 no codec",
-    "601 no codec",
-    "602 no codec",
-    "607 no codec",
-    "609 no codec",
-    "612 no codec",
-    "902 no codec",
-    "903 no codec",
-    "904 no codec",
-    "905 no codec",
-    "1001 no codec",
-    "1002 no codec",
-    "1101 no codec",
-    "1102 no codec",
-    "1103 no codec",
-    "1106 no codec",
+const NO_CODEC: &[MessageType] = &[
+    MessageType::CHAT_DCC_ADDRESSES,
+    MessageType::DOWNLOAD_FILE_DATA,
+    MessageType::UPLOAD_FILE_DATA,
+    MessageType::GET_ACCOUNT_CLASS,
+    MessageType::DELETE_ACCOUNT,
+    MessageType::GET_ACCOUNT,
+    MessageType::ACCOUNT_DELETED,
+    MessageType::CHANGE_OWN_PASSWORD,
+    MessageType::DELETE_NEWSGROUP,
+    MessageType::GET_NEWSGROUP,
+    MessageType::GET_NEWS_MESSAGES,
+    MessageType::GET_NEWS_MESSAGE,
+    MessageType::DELETE_NEWS_MESSAGE,
+    MessageType::VIEW_DISPLAY_PARAMS,
+    MessageType::VIEW_DISPLAY_UPDATE,
+    MessageType::VIEW_DISPLAY_MOUSE,
+    MessageType::VIEW_DISPLAY_KEYBOARD,
+    MessageType::START_VOICE_REPLY,
+    MessageType::SET_VOICE_FORMAT,
+    MessageType::DELETE_FOLDER_ACCESS,
+    MessageType::FOLDER_ACCESS_DELETED,
+    MessageType::GET_FOLDER_ACCESS,
+    MessageType::GET_FOLDER_ACCESS_LIST,
 ];
 
 fn root() -> PathBuf {
@@ -265,7 +267,14 @@ fn captures_dissect_cleanly_and_match_fixtures() {
         "fixtures with no capture: {unmatched:?}"
     );
     assert_eq!(found, EXPECTED);
-    let mut audited: Vec<_> = audited.into_iter().collect();
-    audited.sort_by_key(|row| row.split(' ').next().unwrap().parse::<u32>().unwrap());
-    assert_eq!(audited, EXPECTED_AUDIT);
+    let (mut missing, mut mismatches) = (Vec::new(), Vec::new());
+    for row in audited {
+        match row.split_once(' ').unwrap() {
+            (kind, "no codec") => missing.push(MessageType(kind.parse().unwrap())),
+            _ => mismatches.push(row),
+        }
+    }
+    missing.sort();
+    assert!(mismatches.is_empty(), "codec bugs: {mismatches:?}");
+    assert_eq!(missing, NO_CODEC);
 }

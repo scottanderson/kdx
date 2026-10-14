@@ -46,7 +46,7 @@ and every missing codec is recorded in an issue here.
 type, encodes it again, and prints `~ no codec`, or `~ mismatch` with the first
 differing offset and a note when the lengths differ. Empty payloads with no
 codec are not flagged. `crates/kdx-dissect/tests/captures.rs` runs it over every
-capture and pins the findings in `EXPECTED_AUDIT`, so a fixed or new gap fails
+capture and pins the findings in `NO_CODEC`, so a fixed or new gap fails
 the test until the list changes.
 
 No codec, by issue:
@@ -85,7 +85,7 @@ empty, but frames 109 and 155 there hold addresses. The list is fixed.
 2026-10-14: Data must round trip losslessly, so a difference is a codec bug,
 never an accepted category, and the audit no longer masks padding before
 comparing. Each type in the table above now stores its padding and unknown bytes
-and writes them back, `EXPECTED_AUDIT` lists only `no codec` types, and
+and writes them back, `NO_CODEC` lists only `no codec` types, and
 `crates/kdx-proto/tests/round_trip.rs` re-encodes the fixtures' payloads of
 those types. 401 and 510, whose padding the audit used to mask, keep it too.
 What the stored bytes mean stays open in each issue.

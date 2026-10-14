@@ -161,6 +161,6 @@ A's DCC listener. Both are Client 1.620 for Linux.
 types with no codec (`no codec`) or whose bytes don't come back byte for
 byte (`mismatch`, a codec bug). The codecs keep padding and unknown bytes,
 uninitialised ones included. The `captures` test runs it over every capture
-and checks its findings against `EXPECTED_AUDIT`, which lists only `no
+and checks its findings against `NO_CODEC`, which lists only `no
 codec` types. `tests/round_trip.rs` re-encodes the fixtures' payloads of
 the types that store padding or unknown bytes.
