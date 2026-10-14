@@ -51,7 +51,7 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 |---|---|---|---|
 | 0x00 | 4 | key | random XOR key, sent in the clear |
 | 0x04 | 4 | magic | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
-| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([dcc.md](dcc.md#handshake)) **[S `FUN_0804b824`, O]** |
+| 0x08 | 4 | service | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`, O]** |
 | 0x0c | 1 | format | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
 | 0x0d | 1 | version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only service `%KDX` (else 0x40071) with version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
 | 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
@@ -109,6 +109,28 @@ it on both sides **[O `captures/kdx-news.pcapng` port 40434, the `kdx` CLI;
 
 The server stores this 32-byte key per account, so the password can't be
 recovered from `Accounts.dat` alone **[I]**.
+
+## Connection types
+
+The client's Connect dialog has a Type menu **[S `FUN_0804bac0`]**:
+
+| Value | Type | Default port |
+|---:|---|---:|
+| 0 | Auto-Detect | none; needs a port |
+| 1 | Server | 10700 |
+| 2 | Client (DCC) | 10600, see [dcc.md](dcc.md) |
+| 3 | Tracker | 10800, see [tracker.md](tracker.md) |
+| 4 | GConsole | 10900, see [gconsole.md](gconsole.md) |
+
+The peer's hello decides what kind of connection it is
+**[S `FUN_0804b824`, `FUN_0804b938`]**:
+
+| Service | Version | Connection |
+|---|---:|---|
+| `%KDX` | 0x10 | Client (DCC) |
+| `%KDX` | 0x20 | Server |
+| `%KDX` | 0x30 | Tracker |
+| `%HGC` (0x25484743) | 0x40 | GConsole |
 
 ## Login names [S `FUN_0805270c`]
 
