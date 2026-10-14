@@ -1070,13 +1070,68 @@ impl ExitTerminateProcess {
     }
 }
 
+/// The payload of 1101 Delete Folder Access, 1102 Folder Access Deleted and 1103 Get Folder
+/// Access: an item name with no length byte or padding.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FolderAccessName(pub Vec<u8>);
+
+impl FolderAccessName {
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self(buf.to_vec()))
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Vec<u8> {
+        self.0.clone()
+    }
+}
+
+/// 1106 Get Folder Access List.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct GetFolderAccessList {
+    /// The optional u32; Client 1.620 sends 1 when it opens the file window.
+    pub flags: Option<u32>,
+    /// Bytes after the u32, or all of a payload under 4 bytes (under 4 long when `flags` is `None`).
+    pub rest: Vec<u8>,
+}
+
+impl GetFolderAccessList {
+    /// Length of the u32 when present.
+    pub const FLAGS_LEN: usize = 4;
+
+    /// Decodes the payload: a u32 if there are 4 bytes, then the rest.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        if buf.len() < Self::FLAGS_LEN {
+            return Ok(Self {
+                flags: None,
+                rest: buf.to_vec(),
+            });
+        }
+        Ok(Self {
+            flags: Some(u32_at(buf, 0)),
+            rest: buf[Self::FLAGS_LEN..].to_vec(),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        if let Some(flags) = self.flags {
+            out.extend_from_slice(&flags.to_be_bytes());
+        }
+        out.extend_from_slice(&self.rest);
+        out
+    }
+}
+
 /// An item of 1107 Folder Access List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FolderAccessItem {
-    /// Meaning unknown; 1, 2 and 0 in the lab.
-    pub unknown_00: u32,
-    /// Item ID, as in a 401 File List entry; 0 for `[Default]`.
-    pub item_id: u32,
+    /// [`FolderAccess::BUILT_IN`] and [`FolderAccess::OWNER_IN_NAME`]; 1, 2 and 0 in the lab.
+    pub flags: u32,
+    /// Icon, as in a 401 File List entry; 0 for `[Default]`.
+    pub icon: u32,
     /// Bytes 0x08 to 0x0f; meaning unknown.
     pub unknown_08: [u8; 8],
     /// Meaning unknown; 0 in the lab.
@@ -1103,8 +1158,8 @@ impl FolderAccessItem {
             let ([name, second, description], end) = strings(entry, Self::HEADER_LEN, lens)?;
             let (padding, padded) = padding(entry, end);
             let item = Self {
-                unknown_00: u32_at(entry, 0),
-                item_id: u32_at(entry, 4),
+                flags: u32_at(entry, 0),
+                icon: u32_at(entry, 4),
                 unknown_08: entry[8..0x10].try_into().expect("8 bytes"),
                 unknown_10: entry[0x10],
                 name,
@@ -1121,8 +1176,8 @@ impl FolderAccessItem {
         let mut out = Vec::new();
         encode_counted(&mut out, list, |item| {
             let mut entry = vec![0; Self::HEADER_LEN];
-            entry[0..4].copy_from_slice(&item.unknown_00.to_be_bytes());
-            entry[4..8].copy_from_slice(&item.item_id.to_be_bytes());
+            entry[0..4].copy_from_slice(&item.flags.to_be_bytes());
+            entry[4..8].copy_from_slice(&item.icon.to_be_bytes());
             entry[8..0x10].copy_from_slice(&item.unknown_08);
             entry[0x10] = item.unknown_10;
             entry[0x11] = len_u8(&item.name, "item name")?;

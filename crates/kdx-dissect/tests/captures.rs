@@ -69,10 +69,6 @@ const NO_CODEC: &[MessageType] = &[
     MessageType::VIEW_DISPLAY_KEYBOARD,
     MessageType::START_VOICE_REPLY,
     MessageType::SET_VOICE_FORMAT,
-    MessageType::DELETE_FOLDER_ACCESS,
-    MessageType::FOLDER_ACCESS_DELETED,
-    MessageType::GET_FOLDER_ACCESS,
-    MessageType::GET_FOLDER_ACCESS_LIST,
 ];
 
 fn root() -> PathBuf {
