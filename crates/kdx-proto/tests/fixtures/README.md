@@ -126,10 +126,10 @@ admin.
 | 38848 | 174 Shutdown Server and 151 Disconnect Message |
 
 `linux-tracker-<port>.c2s.bin` and `.s2c.bin` are tracker connections from
-`captures/linux-tracker.pcapng`, exported with `--port 10800 --password
-'lab-tracker-pw!1'`. Port 60698 is a guest, so its key is the empty
-password's. `linux-tracker-reg-<frame>.bin` are the server's UDP registrations,
-as sent; 146 and 239 match 23 byte for byte.
+`captures/linux-tracker.pcapng`, exported with `--password 'lab-tracker-pw!1'`.
+Port 60698 is a guest, so its key is the empty password's.
+`linux-tracker-reg-<frame>.bin` are the server's UDP registrations, as sent; 146
+and 239 match 23 byte for byte.
 
 | Fixture | Messages |
 |---|---|
@@ -148,3 +148,11 @@ scramble.
 | Port | Messages |
 |---|---|
 | 51924 | 4000 Open Window, 4001 Draw with every record kind, 64 4200 Key, 14 4201 Mouse |
+
+`linux-dcc-voice-failed-<port>.c2s.bin` and `.s2c.bin` come from
+`captures/linux-dcc-voice-failed.pcapng`, where client B connected to client
+A's DCC listener. Both are Client 1.620 for Linux.
+
+| Port | Messages |
+|---|---|
+| 45702 | the primary connection, with no password: both 117 SKPKs, 100, and 300 |

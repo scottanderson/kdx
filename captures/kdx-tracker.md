@@ -7,9 +7,9 @@
   with `lab/kdx-lab run`, admin / `lab-tracker-pw!1`.
 - Client: `kdx-probe`, no GUI client.
 
-Decode the server side with `kdx-dissect captures/kdx-tracker.pcapng
---password 'lab-only-pw!1'`, and the tracker side with `--port 10800
---password 'lab-tracker-pw!1'`.
+Decode the server side with
+`kdx-dissect captures/kdx-tracker.pcapng --password 'lab-only-pw!1'`, and the
+tracker side with `--password 'lab-tracker-pw!1'`.
 
 ## Steps
 

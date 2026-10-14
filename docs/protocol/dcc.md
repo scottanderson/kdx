@@ -1,11 +1,12 @@
 # Client-to-client (DCC) and voice
 
 KDX Client 1.620 beta 5 for Linux runs its own listener for direct
-client-to-client connections, which the client calls DCC. Private chat and
-voice use it. Everything here is read from the client's code **[S]**; no
-capture has a DCC connection yet (`captures/linux-files.md` notes the
-listener on TCP 10600, with no connection to it). Tags and number formats
-follow [KDXProtocol.md](KDXProtocol.md).
+client-to-client connections, which the client calls DCC. Private chat and voice
+use it. Most of this is read from the client's code **[S]**.
+`captures/linux-dcc-voice-failed.pcapng` has two copies of that client talking
+to each other, up to a voice call that fails before any voice data **[O]**; its
+frames are cited below. Tags and number formats follow
+[KDXProtocol.md](KDXProtocol.md).
 
 ## Listener
 
@@ -39,11 +40,16 @@ The login callback is `FUN_0808efcc` **[S]**:
 This mirrors the server's transfer connections, which attach to a session
 with a `00`+ID login.
 
+In the capture, a login named `admin` gets a proof with status 1 and closes
+(frames 1-11); the empty login opens a primary connection (13-28); and
+`00 00000002` and `00 00000004` open secondary connections whose proofs match
+with the peer's K from 117 SKPK (30-42, 125-141) **[O]**.
+
 ## Primary connection
 
-After login, each side sends **117 SKPK** and then **100 Set Identity**
-(a normal user record) **[S `FUN_0808f3e0`]**. The primary connection then
-handles **[S]**:
+After login, each side sends **117 SKPK** and then **100 Set Identity** (a
+normal user record) **[S `FUN_0808f3e0`; O]** (frames 22-26). The primary
+connection then handles **[S]**:
 
 | Type | Handler | Action |
 |---:|---|---|
@@ -52,9 +58,13 @@ handles **[S]**:
 | 117 SKPK | `FUN_0808ff64` | see below |
 | 300 Send Private Message | | a chat line: u32, 12 bytes, then the text (more than 0x10 bytes in all) |
 
-How a user opens a private DCC chat in the UI, and which side connects, has
-not been traced. The peer address would come from 223 Chat DCC Addresses
-or the user's address [I].
+A 300 in frame 28 is u32 1, 12 zero bytes, then "dcc message body" **[O]**.
+
+A user opens a primary connection from the Connect dialog with Type "Client".
+Joining a voice chat also opens one to each address in 223 Chat
+DCC Addresses: the member who joins calls the members already there
+(frames 108-123). Joining again while those connections stay open opens none
+(148-155) **[O]**. The joiner's own listener is not needed.
 
 **117 SKPK** (0x30 bytes) **[S `FUN_0808eefc`, `FUN_0808ff64`]**
 
@@ -62,10 +72,14 @@ or the user's address [I].
 |---|---|---|---|
 | 0x00 | 0x20 | key K | the sender's key for secondary connections to it |
 | 0x20 | 4 | DCC port | the sender's listener |
-| 0x24 | 4 | connection ID | the sender's ID for this primary connection |
+| 0x24 | 4 | connection ID | the sender's ID for this primary connection; each client numbers its own |
 | 0x28 | 2 | client version | 0x0654 (1620); the receiver warns if it is older or newer |
 | 0x2a | 2 | 0 | |
 | 0x2c | 4 | 0 | |
+
+Frames 22, 25, 119, and 122 match this layout, with ports 0x2968 and 0x2969 and
+connection IDs 2 and 4 **[O]**. `kdx_proto::msg::dcc::Skpk` re-encodes frames
+22 and 25 byte for byte.
 
 ## Voice
 
@@ -87,6 +101,12 @@ then runs on TCP between the clients, not over UDP.
    closes the connection **[S `FUN_08094218`]**.
 5. Both sides then send **1003 Voice Data** as they record.
 
+The capture confirms steps 1-3 **[O]**: 1000 and 1001 0x00640007 with the peer's
+Voice Controls closed (frames 39-40), and 1001 0 then both 1002s with it open
+(134-138). In the lab sandbox, which has no sound devices, each client answered
+the other's 1002 with status 0x10004 (unimplemented) and logged "Operation is
+unimplemented. (ID 1/4 @ S101)" (139-141), so no 1003 flowed.
+
 **1002 Set Voice Format** (0x18 bytes) **[S `FUN_08093ae0`,
 `FUN_080943a0`]**
 
@@ -98,6 +118,9 @@ then runs on TCP between the clients, not over UDP.
 | 0x14 | 2 | buffer | ms; the receiver divides by 10 and clamps to 35..500 |
 | 0x16 | 1 | channels | 1 |
 | 0x17 | 1 | bits per sample | 16 |
+
+Both sides sent 11025 Hz (0x2b11), `ADPC`, 500 ms (0x01f4), 1 channel, and 16
+bits (frames 136, 138) **[O]**.
 
 **1003 Voice Data** **[S `FUN_08093670`, `FUN_0809455c`, `FUN_080e15e4`]**
 
@@ -241,9 +264,8 @@ All **[O]**, frames 20–46. Each wheel step sends two identical messages
 
 ## Open questions
 
-- Capture a private DCC chat and a voice call between two clients; see
+- Capture 1003 Voice Data, which could not be started in the sandbox; see
   `.scratch/capture-gaps/issues/07-dcc-voice.md`.
-- Which side opens the primary connection, and from which UI action.
 - GConsole: what the u16 at 0x02 of kinds 100, 101, 103, and 105–109,
   the 8 bytes at 0x0c of 105/106, and modifier 0x21 mean; what kind 3 of
   4200 (window event 7) is.

@@ -8,8 +8,8 @@
   `lab/kdx-lab run`, settings from `kdx-tracker`, admin / `lab-tracker-pw!1`.
 - Client: linux 1.620 beta 5, driven by hand.
 
-Decode the tracker side with `kdx-dissect captures/kdx-tracker-gui.pcapng
---port 10800 --password 'lab-tracker-pw!1'`.
+Decode the tracker side with
+`kdx-dissect captures/kdx-tracker-gui.pcapng --password 'lab-tracker-pw!1'`.
 
 ## Steps
 

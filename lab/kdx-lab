@@ -38,9 +38,10 @@ usage: kdx-lab <command> [args]
   server win [-d]     run KDX Server 1.600 (Windows) under Wine; -d detaches
   tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
   client [win|linux]  run KDX Client 1.600 under Wine (default) or Client 1.620 beta 5 (Linux)
+  client linux2       run a second Client 1.620 beta 5 with its own state, e.g. for DCC
   shell               open a shell inside the lab network (for nc, tshark, ip, ...)
   run <cmd...>        run a trusted host command inside the lab network (e.g. a Rust probe)
-  reset <component>   wipe persistent state for server|server-win|tracker|client-win|client-linux
+  reset <component>   wipe persistent state for server|server-win|tracker|client-win|client-linux[2]
 
 Inside the lab the server is reachable at 127.0.0.1:10700 (or address "0" in the client).
 EOF
@@ -245,12 +246,12 @@ cmd_client() {
   local kind="${1:-win}" x11
   case "$kind" in
     win) wine_app "$RUN/client-win" "$CLIENT_WIN_DIR" KDXClient.exe ;;
-    linux)
+    linux|linux2)
       x11_args
-      install_bin "$CLIENT_LNX_BIN" "$RUN/client-linux"
-      sandbox "$RUN/client-linux" "${x11[@]}" -- ./KDXClient.lexe
+      install_bin "$CLIENT_LNX_BIN" "$RUN/client-$kind"
+      sandbox "$RUN/client-$kind" "${x11[@]}" -- ./KDXClient.lexe
       ;;
-    *) die "client kind must be win or linux" ;;
+    *) die "client kind must be win, linux, or linux2" ;;
   esac
 }
 
@@ -267,8 +268,8 @@ cmd_run() {
 
 cmd_reset() {
   case "${1:-}" in
-    server|server-win|tracker|client-win|client-linux) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
-    *) die "reset what? server|server-win|tracker|client-win|client-linux" ;;
+    server|server-win|tracker|client-win|client-linux|client-linux2) rm -rf "${RUN:?}/$1"; echo "reset $1" ;;
+    *) die "reset what? server|server-win|tracker|client-win|client-linux|client-linux2" ;;
   esac
 }
 

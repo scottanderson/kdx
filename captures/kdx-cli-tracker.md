@@ -9,9 +9,9 @@
   the server settings
 - Server state: fresh (admin / lab-only-pw!1, guest access yes)
 
-Decode the tracker side with `kdx-dissect captures/kdx-cli-tracker.pcapng
---port 10800 --password 'lab-tracker-pw!1'`, and the server side with
-`--password 'lab-only-pw!1'`.
+Decode the tracker side with
+`kdx-dissect captures/kdx-cli-tracker.pcapng --password 'lab-tracker-pw!1'`, and
+the server side with `--password 'lab-only-pw!1'`.
 
 ## Steps
 

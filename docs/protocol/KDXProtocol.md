@@ -1149,8 +1149,10 @@ The client then opens a TCP connection to each address for voice; see
 joining a voice chat. The reply was empty (len 0) when the client was alone
 (frames 72–73) and when a `kdx` CLI peer was also a member (frames
 119-120). The CLI sends DCC port 0, so the server leaves it out **[S]**.
-An entry has not been seen, so 223 has no codec yet.
-`kdx_proto::msg::chat::ChatId` re-encodes 222 byte for byte (test
+
+[O] `captures/linux-dcc-voice-failed.pcapng`: one entry, user 1 with length
+0xf and `127.0.0.1:10600`, padded with 0x22 rather than 0 (frame 109). 223 has
+no codec yet. `kdx_proto::msg::chat::ChatId` re-encodes 222 byte for byte (test
 `linux_chat_rooms`).
 
 ### Private messages

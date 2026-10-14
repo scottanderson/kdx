@@ -1,8 +1,9 @@
 //! Decodes KDX connections in a pcap or pcapng capture.
 //!
 //! Prints each UDP registration sent to the tracker port. Then, for each TCP connection
-//! to the server, tracker, or GConsole port, prints both handshakes, finds the account key from the
-//! candidate passwords, then decrypts and dumps every session message in capture order.
+//! to the client, server, tracker, or GConsole port, prints both handshakes, finds the
+//! account key from the candidate passwords, then decrypts and dumps every session message
+//! in capture order.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -22,6 +23,7 @@ use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
     ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
 };
+use kdx_proto::msg::dcc::Skpk;
 use kdx_proto::msg::file::{
     CatalogStatus, CreateFolder, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
     GenerateCatalog, LaunchFile, MoveItems, MoveToTrash, SetFileInfo, SetVolumeInfo, VolumeInfo,
@@ -55,21 +57,63 @@ const MAX_DUMP: usize = 0x400;
 struct Args {
     /// pcap or pcapng file.
     capture: PathBuf,
-    /// Server TCP port.
-    #[arg(long, default_value_t = 10700)]
-    port: u16,
-    /// Tracker port, for TCP sessions and UDP registrations.
-    #[arg(long, default_value_t = 10800)]
-    tracker_port: u16,
-    /// GConsole port, where a client connects to a GConsole peer.
-    #[arg(long, default_value_t = 10900)]
-    gconsole_port: u16,
+    #[command(flatten)]
+    ports: Ports,
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
     /// Write each connection's reassembled streams to DIR as `<client port>.c2s.bin` and `.s2c.bin`.
     #[arg(long, value_name = "DIR")]
     export: Option<PathBuf>,
+}
+
+/// The ports the capture's programs listen on.
+#[derive(clap::Args)]
+struct Ports {
+    /// Client port, where a client connects to another client (DCC).
+    #[arg(long, default_value_t = 10600)]
+    client_port: u16,
+    /// Server port, where a client connects to a server.
+    #[arg(long, default_value_t = 10700)]
+    server_port: u16,
+    /// Tracker port, where a client connects to a tracker and a server sends registrations.
+    #[arg(long, default_value_t = 10800)]
+    tracker_port: u16,
+    /// GConsole port, where a client connects to a GConsole peer.
+    #[arg(long, default_value_t = 10900)]
+    gconsole_port: u16,
+}
+
+impl Ports {
+    /// Each TCP port with the name of the connections to it, in port order.
+    const fn tcp(&self) -> [(u16, &'static str); 4] {
+        [
+            (self.client_port, "DCC connection"),
+            (self.server_port, "server connection"),
+            (self.tracker_port, "tracker connection"),
+            (self.gconsole_port, "GConsole connection"),
+        ]
+    }
+
+    /// The name of connections to `port`, or `None` if no program listens on it.
+    fn kind(&self, port: u16) -> Option<&'static str> {
+        self.tcp()
+            .into_iter()
+            .find(|&(p, _)| p == port)
+            .map(|(_, kind)| kind)
+    }
+
+    /// Whether a program listens on TCP `port`.
+    fn contains(&self, port: u16) -> bool {
+        self.kind(port).is_some()
+    }
+}
+
+impl std::fmt::Display for Ports {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let [(a, _), (b, _), (c, _), (d, _)] = self.tcp();
+        write!(f, "{a}, {b}, {c}, or {d}")
+    }
 }
 
 /// One captured frame, numbered from 1 as in Wireshark.
@@ -126,12 +170,12 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let frames = read_frames(&args.capture)?;
 
-    let ports = [args.port, args.tracker_port, args.gconsole_port];
+    let ports = &args.ports;
     let mut connections: BTreeMap<(SocketAddr, SocketAddr), [Flow; 2]> = BTreeMap::new();
     let mut registrations = 0;
     for frame in &frames {
         let (src, dst, tcp) = match parse_transport(frame) {
-            Some((src, dst, Transport::Udp(payload))) if dst.port() == args.tracker_port => {
+            Some((src, dst, Transport::Udp(payload))) if dst.port() == ports.tracker_port => {
                 registrations += 1;
                 print!("{}", registration(frame.number, src, dst, &payload));
                 continue;
@@ -139,9 +183,9 @@ fn main() -> Result<()> {
             Some((src, dst, Transport::Tcp(tcp))) => (src, dst, tcp),
             _ => continue,
         };
-        let (key, dir) = if ports.contains(&dst.port()) {
+        let (key, dir) = if ports.contains(dst.port()) {
             ((src, dst), Dir::ClientToServer)
-        } else if ports.contains(&src.port()) {
+        } else if ports.contains(src.port()) {
             ((dst, src), Dir::ServerToClient)
         } else {
             continue;
@@ -171,10 +215,7 @@ fn main() -> Result<()> {
         println!();
     }
     if connections.is_empty() {
-        println!(
-            "no TCP connections on port {}, {}, or {}",
-            args.port, args.tracker_port, args.gconsole_port
-        );
+        println!("no TCP connections on port {ports}");
     }
     let mut pending = Vec::new();
     for ((client, server), [c2s, s2c]) in &connections {
@@ -186,20 +227,14 @@ fn main() -> Result<()> {
                     .with_context(|| format!("writing {}", path.display()))?;
             }
         }
-        let kind = if server.port() == args.port {
-            "connection"
-        } else if server.port() == args.tracker_port {
-            "tracker connection"
-        } else if server.port() == args.gconsole_port {
-            "GConsole connection"
-        } else {
-            "connection"
-        };
+        let kind = ports
+            .kind(server.port())
+            .expect("each connection is to a listening port");
         pending.push((format!("{kind} {client} -> {server}\n"), streams, None));
     }
 
-    // Transfer connections use a session key from another connection's 105
-    // Server Info, so retry until no new key turns up.
+    // Transfer and DCC secondary connections use a key from another connection's
+    // 105 Server Info or 117 SKPK, so retry until no new key turns up.
     loop {
         let mut found = Vec::new();
         for (_, streams, output) in pending.iter_mut().filter(|(_, _, o)| o.is_none()) {
@@ -236,8 +271,8 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// Writes one connection to `out`, and returns the session keys its 105 Server
-/// Info messages carry, or `None` if no key matches its proof.
+/// Writes one connection to `out`, and returns the keys its 105 Server Info and
+/// 117 SKPK messages carry, or `None` if no key matches its proof.
 fn dissect(
     streams: &[Stream; 2],
     keys: &[(String, AccountKey)],
@@ -354,6 +389,15 @@ fn dissect(
                         new_keys.push((
                             format!("session key of user {}", info.user_id),
                             AccountKey(info.session_key),
+                        ));
+                    }
+                }
+                // A DCC peer's 117 SKPK starts with the key for secondary connections to it.
+                if header.kind == MessageType::SKPK {
+                    if let Ok(skpk) = Skpk::decode(&payload) {
+                        new_keys.push((
+                            format!("SKPK key of connection {:08x}", skpk.connection_id),
+                            skpk.key,
                         ));
                     }
                 }

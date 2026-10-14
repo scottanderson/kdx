@@ -1,15 +1,14 @@
 # Client-to-client (DCC) and voice
 
-Status: needs-info
+Status: ready-for-human
 Scenario: `linux-dcc-voice`
 Targets: 1000–1003, and what the clients send each other on TCP 10600
 
-Two copies of Client 1.620 beta 5 (Linux) run at once: one listens on TCP
-10600, and the other connects to it. The lab must run the second copy with
-its own state dir and a different DCC port, which `kdx-lab` cannot do yet.
-The sandboxes have no sound devices, so voice data (1003) may never flow.
-Everything is TCP with the normal `%KDX` handshake; kdx-dissect needs
-`--port 10600` and the empty password.
+Two copies of Client 1.620 beta 5 (Linux) run at once: one listens on TCP 10600,
+and the other connects to it. `kdx-lab client linux2` runs the second copy with
+its own state dir. The sandboxes have no sound devices, so voice data (1003) may
+never flow. Everything is TCP with the normal `%KDX` handshake; kdx-dissect
+decodes it with the empty password.
 
 1. Agent starts `client linux`; operator leaves it idle.
 2. In the second client: Connect button, Type "Client", Address
@@ -30,3 +29,15 @@ client to client, not UDP, after 222/223 give each member's DCC address. A
 voice connection is a secondary login (`00` + the connection ID from the
 peer's 117 SKPK). The capture should confirm 117, 1000-1003, and which side
 opens the primary connection for a private DCC chat.
+
+2026-10-13: Captured as `captures/linux-dcc-voice-failed.pcapng` with
+`kdx-lab client linux2` as the second client. It confirms the logins, 117, 300,
+1000-1002, 223 with an entry, and that the member who joins a voice chat calls
+the others, so the second client needs no DCC port of its own. No 1003: in the
+sandbox each client answered 1002 with 0x10004 (unimplemented). The voice stream
+could not be started in the sandbox, so a human will need to capture 1003
+manually, as `captures/linux-dcc-voice.pcapng`.
+
+2026-10-13: Everything that needs a microphone failed in the lab, Start
+Microphone included, so 1003 needs a capture by a human outside the lab.
+Files over a DCC connection were not tried.

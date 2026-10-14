@@ -6,6 +6,7 @@
 
 pub mod admin;
 pub mod chat;
+pub mod dcc;
 pub mod file;
 pub mod gconsole;
 pub mod news;
