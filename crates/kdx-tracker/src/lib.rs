@@ -8,7 +8,7 @@
 //! use kdx_tracker::{Settings, Sockets, Tracker};
 //!
 //! let settings = Settings::new(b"admin", b"password");
-//! let sockets = Sockets::bind("0.0.0.0".parse()?, settings.port).await?;
+//! let sockets = Sockets::bind("0.0.0.0".parse()?, settings.tracker_port).await?;
 //! Tracker::new(settings, None, table).run(sockets).await
 //! # }
 //! ```
@@ -89,7 +89,7 @@ pub struct Tracker {
     table: ChallengeTable,
     settings_path: Option<PathBuf>,
     state: Mutex<State>,
-    port: watch::Sender<u16>,
+    tracker_port: watch::Sender<u16>,
 }
 
 #[derive(Debug)]
@@ -124,7 +124,7 @@ impl Tracker {
         Arc::new(Self {
             table,
             settings_path,
-            port: watch::Sender::new(settings.port),
+            tracker_port: watch::Sender::new(settings.tracker_port),
             state: Mutex::new(State::new(settings)),
         })
     }
@@ -138,7 +138,7 @@ impl Tracker {
     ///
     /// A port set by 712 rebinds both sockets on the same address.
     pub async fn run(self: Arc<Self>, mut sockets: Sockets) -> Result<()> {
-        let mut port = self.port.subscribe();
+        let mut port = self.tracker_port.subscribe();
         let mut buf = vec![0; 0x10000];
         loop {
             tokio::select! {
@@ -189,8 +189,8 @@ impl Tracker {
         };
         let name = String::from_utf8_lossy(&reg.name);
         match registered {
-            Registered::Added => eprintln!("{from}: registered {name:?} port {}", reg.port),
-            Registered::Removed => eprintln!("{from}: unregistered port {}", reg.port),
+            Registered::Added => eprintln!("{from}: registered {name:?} port {}", reg.server_port),
+            Registered::Removed => eprintln!("{from}: unregistered port {}", reg.server_port),
             Registered::Updated | Registered::Ignored => {}
         }
     }
@@ -213,7 +213,7 @@ impl Tracker {
     /// Handles a request from a logged-in connection.
     fn handle(&self, kind: MessageType, payload: &[u8], admin: bool, peer: SocketAddr) -> Reply {
         let mut state = self.state();
-        let port = state.settings.port;
+        let port = state.settings.tracker_port;
         let reply = state.handle(kind, payload, admin, peer);
         if kind == MessageType::SET_TRACKERSERV_SETTINGS && matches!(reply, Reply::Message(..)) {
             eprintln!("{peer}: TrackerServ settings changed remotely");
@@ -222,8 +222,8 @@ impl Tracker {
                     eprintln!("{err:#}");
                 }
             }
-            if state.settings.port != port {
-                self.port.send_replace(state.settings.port);
+            if state.settings.tracker_port != port {
+                self.tracker_port.send_replace(state.settings.tracker_port);
             }
         }
         reply

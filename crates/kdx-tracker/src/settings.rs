@@ -10,8 +10,8 @@ use anyhow::{bail, Context, Result};
 use kdx_proto::msg::tracker::{AdminSettings, GeneralSettings, TrackerSettings};
 use kdx_proto::AccountKey;
 
-/// The default TCP and UDP port.
-pub const DEFAULT_PORT: u16 = 10800;
+/// The default tracker port, for both TCP and UDP.
+pub const DEFAULT_TRACKER_PORT: u16 = 10800;
 /// Where a registration that matches no group is listed.
 pub const DEFAULT_GROUP: &[u8] = b"General";
 /// The group added back with [`DEFAULT_GROUP`] when a group list leaves it out.
@@ -69,8 +69,8 @@ pub struct Settings {
     pub name: Vec<u8>,
     /// Tracker description.
     pub description: Vec<u8>,
-    /// TCP and UDP port.
-    pub port: u16,
+    /// Tracker port, for both TCP and UDP.
+    pub tracker_port: u16,
     /// Register with Trackers; kept, but this tracker registers nowhere.
     pub register: bool,
     /// Enable Greeting.
@@ -95,7 +95,7 @@ impl std::fmt::Debug for Settings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Settings")
             .field("name", &String::from_utf8_lossy(&self.name))
-            .field("port", &self.port)
+            .field("tracker_port", &self.tracker_port)
             .field("groups", &self.groups.len())
             .field("admin_login", &String::from_utf8_lossy(&self.admin_login))
             .finish_non_exhaustive()
@@ -115,7 +115,7 @@ impl Settings {
         Self {
             name: FRESH_NAME.to_vec(),
             description: Vec::new(),
-            port: DEFAULT_PORT,
+            tracker_port: DEFAULT_TRACKER_PORT,
             register: false,
             greeting_enabled: false,
             limits: [0; 4],
@@ -165,7 +165,7 @@ impl Settings {
             limits: if secrets { self.limits } else { [0; 4] },
             flags: (u32::from(self.register) * GeneralSettings::REGISTER)
                 | (u32::from(self.greeting_enabled) * GeneralSettings::GREETING_ENABLED),
-            port: u32::from(self.port),
+            tracker_port: u32::from(self.tracker_port),
             server_id: if secrets { self.server_id } else { [0; 12] },
             name: self.name.clone(),
             description: self.description.clone(),
@@ -202,9 +202,9 @@ impl Settings {
         {
             self.register = general.flags & GeneralSettings::REGISTER != 0;
             self.greeting_enabled = general.flags & GeneralSettings::GREETING_ENABLED != 0;
-            self.port = match general.port {
+            self.tracker_port = match general.tracker_port {
                 port @ 1..=0xfffe => port as u16,
-                _ => DEFAULT_PORT,
+                _ => DEFAULT_TRACKER_PORT,
             };
             if from_file {
                 self.limits = general.limits;
@@ -377,13 +377,13 @@ mod tests {
         settings.limits = [1, 2, 3, 4];
         let mut remote = settings.clone();
         remote.limits = [9; 4];
-        remote.port = 0;
+        remote.tracker_port = 0;
         let mut blob = remote.to_blob(false);
         // Client 1.620 beta 5 leaves the admin section unmarked.
         blob.present[TrackerSettings::ADMIN] = 0;
         settings.apply(&blob, false);
         assert_eq!(settings.limits, [1, 2, 3, 4]);
-        assert_eq!(settings.port, DEFAULT_PORT);
+        assert_eq!(settings.tracker_port, DEFAULT_TRACKER_PORT);
         assert_eq!(settings.admin_key, AccountKey::from_password(b"pw"));
     }
 

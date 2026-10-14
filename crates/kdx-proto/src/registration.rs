@@ -12,8 +12,8 @@ pub struct Registration {
     pub flags: u16,
     /// Random words the server picks on its first run; the tracker ignores them.
     pub server_id: [u8; 12],
-    /// The sender's TCP port.
-    pub port: u32,
+    /// The server's TCP port; a tracker forwards it unchanged.
+    pub server_port: u32,
     /// Users logged in.
     pub users: u16,
     /// The string of length byte 0x33; empty from Server 1.620.
@@ -80,7 +80,7 @@ impl Registration {
         Ok(Self {
             flags: u16_at(&buf, 6),
             server_id: buf[0x0c..0x18].try_into().expect("12 bytes"),
-            port: u32_at(&buf, 0x18),
+            server_port: u32_at(&buf, 0x18),
             users: u16_at(&buf, 0x24),
             string0: next(),
             login: next(),
@@ -109,7 +109,7 @@ impl Registration {
         out[6..8].copy_from_slice(&self.flags.to_be_bytes());
         out[8..0x0c].copy_from_slice(&Self::CHECKSUM_PLACEHOLDER);
         out[0x0c..0x18].copy_from_slice(&self.server_id);
-        out[0x18..0x1c].copy_from_slice(&self.port.to_be_bytes());
+        out[0x18..0x1c].copy_from_slice(&self.server_port.to_be_bytes());
         out[0x24..0x26].copy_from_slice(&self.users.to_be_bytes());
         for (i, (s, what)) in strings.enumerate() {
             out[Self::LENS_AT + i] = len_u8(s, what)?;
@@ -157,7 +157,7 @@ mod tests {
 
     fn sample() -> Registration {
         Registration {
-            port: 10700,
+            server_port: 10700,
             users: 3,
             name: b"Test".to_vec(),
             groups: [

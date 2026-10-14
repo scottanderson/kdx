@@ -62,7 +62,7 @@ struct Args {
     /// Candidate account password; repeat for several. The empty password is always tried.
     #[arg(long = "password", short)]
     passwords: Vec<String>,
-    /// Write each connection's reassembled streams to DIR as `<client port>.c2s.bin` and `.s2c.bin`.
+    /// Write each connection's reassembled streams to DIR as `<source port>.c2s.bin` and `.s2c.bin`.
     #[arg(long, value_name = "DIR")]
     export: Option<PathBuf>,
 }
@@ -433,10 +433,10 @@ fn registration(frame: usize, src: SocketAddr, dst: SocketAddr, datagram: &[u8])
     };
     write!(
         out,
-        "    = checksum ok, flags {:#x} server id {} port {} users {} login {} name {} description {}",
+        "    = checksum ok, flags {:#x} server id {} server port {} users {} login {} name {} description {}",
         r.flags,
         hex(&r.server_id),
-        r.port,
+        r.server_port,
         r.users,
         quoted(&r.login),
         quoted(&r.name),
@@ -1310,10 +1310,10 @@ fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
     )];
     if let Some(general) = settings.general()? {
         parts.push(format!(
-            "name {} description {} port {} flags {:#x}",
+            "name {} description {} tracker port {} flags {:#x}",
             quoted(&general.name),
             quoted(&general.description),
-            general.port,
+            general.tracker_port,
             general.flags
         ));
     }

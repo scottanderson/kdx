@@ -368,8 +368,8 @@ pub struct GeneralSettings {
     pub limits: [u16; 4],
     /// [`Self::REGISTER`] and [`Self::GREETING_ENABLED`].
     pub flags: u32,
-    /// TCP and UDP port; 0 or above 0xfffe means 10800.
-    pub port: u32,
+    /// Tracker port, for both TCP and UDP; 0 or above 0xfffe means 10800.
+    pub tracker_port: u32,
     /// Server ID for upstream registrations, taken from the settings file only.
     pub server_id: [u8; 12],
     /// Tracker name.
@@ -394,7 +394,7 @@ impl GeneralSettings {
         Ok(Self {
             limits: std::array::from_fn(|i| u16_at(buf, 2 * i)),
             flags: u32_at(buf, 0x20),
-            port: u32_at(buf, 0x24),
+            tracker_port: u32_at(buf, 0x24),
             server_id: buf[0x2c..0x38].try_into().expect("12 bytes"),
             name,
             description,
@@ -408,7 +408,7 @@ impl GeneralSettings {
             out[2 * i..2 * i + 2].copy_from_slice(&limit.to_be_bytes());
         }
         out[0x20..0x24].copy_from_slice(&self.flags.to_be_bytes());
-        out[0x24..0x28].copy_from_slice(&self.port.to_be_bytes());
+        out[0x24..0x28].copy_from_slice(&self.tracker_port.to_be_bytes());
         out[0x2c..0x38].copy_from_slice(&self.server_id);
         out[0x46] = len_u8(&self.name, "tracker name")?;
         out[0x47] = len_u8(&self.description, "tracker description")?;
@@ -521,7 +521,7 @@ mod tests {
     fn settings_from_parts() {
         let mut settings = TrackerSettings::default();
         let general = GeneralSettings {
-            port: 10800,
+            tracker_port: 10800,
             name: b"T".to_vec(),
             ..GeneralSettings::default()
         };
