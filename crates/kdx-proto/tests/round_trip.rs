@@ -4,9 +4,10 @@
 use std::net::{Ipv4Addr, SocketAddrV4};
 
 use kdx_proto::msg::admin::{
-    Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser, ExtraServerInfo,
-    FolderAccess, FolderAccessItem, FolderAccessName, GetFolderAccessList, HistoryList,
-    HistoryRecord, MonitoredConnection, Process, ProcessList, RcvBroadcast, ShutdownServer,
+    Account, AccountClass, AccountClassIndex, AccountListEntry, AccountLogin, ChangeOwnPassword,
+    DisconnectMessage, DisconnectUser, ExtraServerInfo, FolderAccess, FolderAccessItem,
+    FolderAccessName, GetFolderAccessList, HistoryList, HistoryRecord, MonitoredConnection,
+    Process, ProcessList, RcvBroadcast, ShutdownServer,
 };
 use kdx_proto::msg::chat::{
     ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText, ChatTopicChanged,
@@ -70,6 +71,14 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Vec<u8>> {
         M::GET_NEWS_MESSAGE | M::DELETE_NEWS_MESSAGE => {
             Ok(NewsMessageId::decode(p).unwrap().encode().to_vec())
         }
+        M::GET_ACCOUNT_CLASS => Ok(AccountClassIndex::decode(p).unwrap().encode().to_vec()),
+        M::GET_ACCOUNT | M::DELETE_ACCOUNT | M::ACCOUNT_DELETED => {
+            Ok(AccountLogin::decode(p).unwrap().encode())
+        }
+        M::DELETE_FOLDER_ACCESS | M::FOLDER_ACCESS_DELETED | M::GET_FOLDER_ACCESS => {
+            Ok(FolderAccessName::decode(p).unwrap().encode())
+        }
+        M::GET_FOLDER_ACCESS_LIST => Ok(GetFolderAccessList::decode(p).unwrap().encode()),
         M::PROCESS_LIST => ProcessList::decode(p).unwrap().encode(),
         M::CREATE_FOLDER_ACCESS | M::FOLDER_ACCESS_INFO => {
             FolderAccess::decode(p).unwrap().encode()
@@ -77,6 +86,25 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Vec<u8>> {
         _ => return None,
     };
     Some(out.unwrap())
+}
+
+#[test]
+fn change_own_password_round_trips() {
+    // Frame 323 of `kdx-accounts`, on a connection logged in as `rs-test`.
+    let key = AccountKey::from_password(b"rs-test-pw");
+    let all = common::session_with_key(
+        include_bytes!("fixtures/kdx-accounts-58336.c2s.bin"),
+        include_bytes!("fixtures/kdx-accounts-58336.s2c.bin"),
+        &key,
+    );
+    let wires: Vec<_> = all
+        .iter()
+        .filter(|(h, _)| h.kind == MessageType::CHANGE_OWN_PASSWORD)
+        .collect();
+    assert!(!wires.is_empty());
+    for (_, wire) in wires {
+        assert_eq!(ChangeOwnPassword::decode(wire).unwrap().encode(), wire[..]);
+    }
 }
 
 #[test]
@@ -89,6 +117,7 @@ fn padding_and_unknown_bytes_round_trip() {
         fixture!("kdx-news-40426"),
         fixture!("kdx-news-53204"),
         fixture!("kdx-news-53224"),
+        fixture!("linux-accounts-folder-access-55746"),
         fixture!("linux-accounts-news-51382"),
         fixture!("linux-catalog-volumes-58160"),
         fixture!("linux-chat-admin-37478"),
@@ -108,8 +137,8 @@ fn padding_and_unknown_bytes_round_trip() {
         }
     }
     let expected = [
-        102, 103, 143, 209, 401, 410, 503, 510, 513, 601, 602, 607, 608, 609, 610, 611, 612, 803,
-        1100, 1104,
+        102, 103, 143, 209, 401, 410, 502, 503, 508, 509, 510, 513, 515, 601, 602, 607, 608, 609,
+        610, 611, 612, 803, 1100, 1101, 1102, 1103, 1104, 1106,
     ];
     assert_eq!(seen.into_iter().collect::<Vec<_>>(), expected);
 }
