@@ -286,7 +286,7 @@ impl Default for TrackerSettings {
 
 impl TrackerSettings {
     /// The magic at the start of the blob.
-    pub const MAGIC: &'static [u8; 8] = b"%KDXTSTG";
+    pub const MAGIC: [u8; 8] = *b"%KDXTSTG";
     /// The format Tracker 1.110 writes.
     pub const FORMAT: u16 = 1;
     /// Size of the header, where the first section starts.
@@ -311,7 +311,7 @@ impl TrackerSettings {
     /// Decodes the blob.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        if &buf[..8] != Self::MAGIC {
+        if buf[..8] != Self::MAGIC {
             return Err(DecodeError::Invalid("tracker settings magic"));
         }
         let mut sections: [Option<Vec<u8>>; Self::SECTIONS] = Default::default();
@@ -341,7 +341,7 @@ impl TrackerSettings {
     /// Encodes the blob, with the sections back to back in the order the programs use.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..8].copy_from_slice(Self::MAGIC);
+        out[..8].copy_from_slice(&Self::MAGIC);
         out[8..0x0a].copy_from_slice(&self.format.to_be_bytes());
         out[0x0a..Self::TABLE_AT].copy_from_slice(&self.ignored);
         out[Self::PRESENT_AT..].copy_from_slice(&self.present);

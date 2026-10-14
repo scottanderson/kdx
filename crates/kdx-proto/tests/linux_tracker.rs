@@ -80,7 +80,9 @@ fn registration() {
     // The checksum is stored big-endian.
     let mut plain = wire.to_vec();
     registration::crypt(&mut plain);
-    assert_eq!(&plain[..8], b"%KDX\x00\x10\x00\x00");
+    assert_eq!(plain[..4], Registration::MAGIC);
+    assert_eq!(plain[4..6], Registration::VERSION.to_be_bytes());
+    assert_eq!(plain[6..8], [0, 0]);
     assert_eq!(plain[8..12], [0x40, 0x17, 0xb3, 0xa7]);
 
     // Frame 78 counts the guest; nothing else changes.
