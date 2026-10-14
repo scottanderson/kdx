@@ -55,7 +55,6 @@ const EXPECTED: &[&str] = &[
 ///
 /// Each one is a gap in an issue under `.scratch/message-formats/`.
 const NO_CODEC: &[MessageType] = &[
-    MessageType::CHAT_DCC_ADDRESSES,
     MessageType::DOWNLOAD_FILE_DATA,
     MessageType::UPLOAD_FILE_DATA,
     MessageType::GET_ACCOUNT_CLASS,

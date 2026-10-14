@@ -46,6 +46,7 @@ fn key(name: &str) -> AccountKey {
     let parent = match name {
         "kdx-news-40434"
         | "linux-accounts-news-36078"
+        | "linux-dcc-voice-failed-43114"
         | "linux-dcc-voice-failed-45702"
         | "linux-tracker-60698" => return AccountKey::EMPTY_PASSWORD,
         "linux-tracker-34704" | "linux-tracker-41900" => {
