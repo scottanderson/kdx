@@ -12,7 +12,7 @@ use kdx_proto::msg::chat::{
 };
 use kdx_proto::msg::dcc::Skpk;
 use kdx_proto::msg::file::{
-    CatalogStatus, CreateFolder, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
+    CatalogStatus, CreateFolder, FileData, FileInfo, FileListEntry, FileSearch, FileSearchEntry,
     GenerateCatalog, LaunchFile, MoveItems, MoveToTrash, SetFileInfo, SetVolumeInfo, VolumeInfo,
 };
 use kdx_proto::msg::gconsole::{Draw, Key, Mouse, OpenWindow};
@@ -143,6 +143,7 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::SKPK => one!(Skpk),
         M::SEND_PRIVATE_MESSAGE | M::INCOMING_PRIVATE_MESSAGE => one!(PrivateMessage),
         M::GET_FILE_LIST | M::GET_FILE_FOLDER_INFO => one!(FilePath),
+        M::DOWNLOAD_FILE_DATA | M::UPLOAD_FILE_DATA => one!(FileData),
         M::DISCONNECT_USER => one!(DisconnectUser),
         M::DISCONNECT_MESSAGE => one!(DisconnectMessage),
         M::GET_USER_INFO => one!(GetUserInfo),

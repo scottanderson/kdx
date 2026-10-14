@@ -68,5 +68,5 @@ Docs: `KDXProtocol.md`, Files and Transfer connections.
   `UploadFile::unknown_18` and `unknown_30` keep 0x18..0x45.
 - [ ] Name the 415 bytes: two u64 times at 0x18 and 0x20 that match the
   capture's date as milliseconds since 1900, and 01 at 0x33.
-- [ ] Audit (01): 414 Download File (D) and 417 Upload File (D) have no
-  codec (`linux-files` 148, 47).
+- [x] Audit (01): 414 Download File (D) and 417 Upload File (D) have no
+  codec (`linux-files` 148, 47). Fixed: `FileData` keeps the fork bytes as is.
