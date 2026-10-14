@@ -28,7 +28,7 @@ fn messages(name: &str, key: &AccountKey) -> Vec<(Header, Vec<u8>)> {
         let header = cipher.open_data_header(block).unwrap();
         at += Header::LEN;
         out.push((header, cipher.open_payload(&header, &stream[at..]).unwrap()));
-        at += header.padded_len();
+        at += header.padded_len() as usize;
     }
     out
 }

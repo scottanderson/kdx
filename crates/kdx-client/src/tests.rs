@@ -238,7 +238,7 @@ async fn download() {
             txid: header.txid,
             kind: MessageType::DOWNLOAD_FILE_DATA,
             flags: Header::FLAG_REPLY,
-            len: (served.len() - start) as u32,
+            len: (served.len() - start) as u64,
         };
         transfer.feed(Frame::DataHeader(data)).await.unwrap();
         for chunk in served[start..].chunks(30_000) {

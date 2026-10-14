@@ -127,7 +127,7 @@ fn reference(stream: &[u8], key: &AccountKey, scramble: Scramble) -> Vec<(Header
             .unwrap();
         at += Header::LEN;
         out.push((header, cipher.open_payload(&header, &stream[at..]).unwrap()));
-        at += header.padded_len();
+        at += header.padded_len() as usize;
     }
     out
 }
@@ -222,7 +222,7 @@ fn without_download_padding(stream: &[u8], key: &AccountKey, scramble: Scramble)
         let header = cipher
             .open_data_header(stream[at..at + 16].try_into().unwrap())
             .unwrap();
-        at += Header::LEN + header.padded_len();
+        at += Header::LEN + header.padded_len() as usize;
         if header.kind == MessageType::DOWNLOAD_FILE_DATA && !header.len.is_multiple_of(16) {
             out[at - 16..at].fill(0);
         }
@@ -264,8 +264,8 @@ fn transfer_padding() {
                 .open_data_header(stream[at..at + 16].try_into().unwrap())
                 .unwrap();
             at += Header::LEN;
-            let mut data = stream[at..at + header.padded_len()].to_vec();
-            at += header.padded_len();
+            let mut data = stream[at..at + header.padded_len() as usize].to_vec();
+            at += header.padded_len() as usize;
             if header.kind != kind || header.len.is_multiple_of(16) {
                 continue;
             }

@@ -26,12 +26,12 @@ pub enum SessionError {
     /// The header's message type is zero.
     #[error("zero message type")]
     ZeroType,
-    /// A header byte that must be zero is not.
-    #[error("reserved header bytes are not zero: {0:#06x}")]
-    Reserved(u32),
+    /// The reserved header byte is not zero.
+    #[error("reserved header byte is not zero: {0:#04x}")]
+    Reserved(u8),
     /// The payload is longer than the receiver accepts.
     #[error("payload too long ({0} bytes)")]
-    TooLong(u32),
+    TooLong(u64),
     /// Fewer bytes were given than the payload needs.
     #[error("need {0} payload bytes")]
     Incomplete(usize),
@@ -48,8 +48,8 @@ pub struct Header {
     pub kind: MessageType,
     /// Flag byte; see [`Self::FLAG_REPLY`].
     pub flags: u8,
-    /// Payload length in bytes, before padding.
-    pub len: u32,
+    /// Payload length in bytes, before padding; at most [`Self::MAX_LEN`].
+    pub len: u64,
 }
 
 impl Header {
@@ -57,6 +57,8 @@ impl Header {
     pub const LEN: usize = BLOCK_LEN;
     /// Flag bit set on replies.
     pub const FLAG_REPLY: u8 = 0x01;
+    /// Largest length a header holds: bytes 0x0a-0x0f, 48 bits.
+    pub const MAX_LEN: u64 = (1 << 48) - 1;
 
     /// Whether this message is a reply.
     pub const fn is_reply(&self) -> bool {
@@ -64,12 +66,17 @@ impl Header {
     }
 
     /// The plaintext bytes, before scrambling.
+    ///
+    /// # Panics
+    ///
+    /// If `len` exceeds [`Self::MAX_LEN`].
     pub fn to_bytes(&self) -> [u8; Self::LEN] {
+        assert!(self.len <= Self::MAX_LEN, "header length over 48 bits");
         let mut out = [0; Self::LEN];
         out[0..4].copy_from_slice(&self.txid.to_be_bytes());
         out[4..8].copy_from_slice(&self.kind.0.to_be_bytes());
         out[9] = self.flags;
-        out[12..16].copy_from_slice(&self.len.to_be_bytes());
+        out[10..16].copy_from_slice(&self.len.to_be_bytes()[2..]);
         out
     }
 
@@ -78,7 +85,7 @@ impl Header {
     /// `max_len` is the receiver's payload limit, such as [`SERVER_MAX_PAYLOAD_LEN`].
     pub fn from_bytes(bytes: &[u8; Self::LEN], max_len: u32) -> Result<Self, SessionError> {
         let header = Self::from_bytes_unbounded(bytes)?;
-        if header.len > max_len {
+        if header.len > u64::from(max_len) {
             return Err(SessionError::TooLong(header.len));
         }
         Ok(header)
@@ -87,28 +94,28 @@ impl Header {
     /// Like [`Self::from_bytes`], but allows any length, as transfer data headers need.
     pub fn from_bytes_unbounded(bytes: &[u8; Self::LEN]) -> Result<Self, SessionError> {
         let word = |i: usize| u32::from_be_bytes(bytes[i..i + 4].try_into().unwrap());
+        let mut len = [0; 8];
+        len[2..].copy_from_slice(&bytes[10..16]);
         let header = Self {
             txid: word(0),
             kind: MessageType(word(4)),
             flags: bytes[9],
-            len: word(12),
+            len: u64::from_be_bytes(len),
         };
-        let reserved =
-            u32::from(bytes[8]) << 16 | u32::from(u16::from_be_bytes([bytes[10], bytes[11]]));
         if header.txid == 0 {
             Err(SessionError::ZeroTxid)
         } else if header.kind.0 == 0 {
             Err(SessionError::ZeroType)
-        } else if reserved != 0 {
-            Err(SessionError::Reserved(reserved))
+        } else if bytes[8] != 0 {
+            Err(SessionError::Reserved(bytes[8]))
         } else {
             Ok(header)
         }
     }
 
     /// Length of the encrypted payload that follows this header.
-    pub const fn padded_len(&self) -> usize {
-        padded_len(self.len as usize)
+    pub const fn padded_len(&self) -> u64 {
+        self.len.div_ceil(BLOCK_LEN as u64) * BLOCK_LEN as u64
     }
 }
 
@@ -239,13 +246,14 @@ impl SessionCipher {
     /// Encrypts a whole message. The header's `len` is set from `payload`.
     pub fn seal(&self, header: Header, payload: &[u8]) -> Vec<u8> {
         let header = Header {
-            len: payload.len() as u32,
+            len: payload.len() as u64,
             ..header
         };
-        let mut out = Vec::with_capacity(Header::LEN + header.padded_len());
+        let padded = padded_len(payload.len());
+        let mut out = Vec::with_capacity(Header::LEN + padded);
         out.extend_from_slice(&self.seal_header(header));
         let fill = padding_fill(header.txid);
-        out.extend((0..header.padded_len()).map(|i| fill[i % 4]));
+        out.extend((0..padded).map(|i| fill[i % 4]));
         out[Header::LEN..Header::LEN + payload.len()].copy_from_slice(payload);
         self.encrypt_blocks(&mut out[Header::LEN..]);
         out
@@ -298,7 +306,7 @@ impl SessionCipher {
 
     /// Decrypts the payload that follows `header`. `data` must hold at least `header.padded_len()` bytes.
     pub fn open_payload(&self, header: &Header, data: &[u8]) -> Result<Vec<u8>, SessionError> {
-        let padded = header.padded_len();
+        let padded = usize::try_from(header.padded_len()).unwrap_or(usize::MAX);
         let mut out = data
             .get(..padded)
             .ok_or(SessionError::Incomplete(padded))?
@@ -381,11 +389,36 @@ mod tests {
         assert!(Header::from_bytes(&bytes, SERVER_MAX_PAYLOAD_LEN)
             .unwrap()
             .is_reply());
-        bytes[11] = 1;
+        bytes[8] = 1;
         assert_eq!(
             Header::from_bytes(&bytes, SERVER_MAX_PAYLOAD_LEN),
             Err(SessionError::Reserved(1))
         );
+    }
+
+    #[test]
+    fn high_length_bits() {
+        let mut bytes = Header {
+            txid: 1,
+            kind: MessageType::DOWNLOAD_FILE_DATA,
+            flags: 1,
+            len: 0,
+        }
+        .to_bytes();
+        bytes[11] = 1;
+        bytes[12..16].copy_from_slice(&0x2345_6789_u32.to_be_bytes());
+        let header = Header::from_bytes_unbounded(&bytes).unwrap();
+        assert_eq!(header.len, 0x1_2345_6789);
+        assert_eq!(header.to_bytes(), bytes);
+        assert_eq!(
+            Header::from_bytes(&bytes, CLIENT_MAX_PAYLOAD_LEN),
+            Err(SessionError::TooLong(0x1_2345_6789))
+        );
+        let max = Header {
+            len: Header::MAX_LEN,
+            ..header
+        };
+        assert_eq!(Header::from_bytes_unbounded(&max.to_bytes()), Ok(max));
     }
 
     #[test]
@@ -399,18 +432,17 @@ mod tests {
             }
             .to_bytes()
         };
-        let reply = header(SERVER_MAX_PAYLOAD_LEN + 1);
+        let reply = header(u64::from(SERVER_MAX_PAYLOAD_LEN) + 1);
         assert_eq!(
             Header::from_bytes(&reply, SERVER_MAX_PAYLOAD_LEN),
-            Err(SessionError::TooLong(SERVER_MAX_PAYLOAD_LEN + 1))
+            Err(SessionError::TooLong(u64::from(SERVER_MAX_PAYLOAD_LEN) + 1))
         );
         assert!(Header::from_bytes(&reply, CLIENT_MAX_PAYLOAD_LEN).is_ok());
-        assert!(
-            Header::from_bytes(&header(CLIENT_MAX_PAYLOAD_LEN), CLIENT_MAX_PAYLOAD_LEN).is_ok()
-        );
+        let client_max = u64::from(CLIENT_MAX_PAYLOAD_LEN);
+        assert!(Header::from_bytes(&header(client_max), CLIENT_MAX_PAYLOAD_LEN).is_ok());
         assert_eq!(
-            Header::from_bytes(&header(CLIENT_MAX_PAYLOAD_LEN + 1), CLIENT_MAX_PAYLOAD_LEN),
-            Err(SessionError::TooLong(CLIENT_MAX_PAYLOAD_LEN + 1))
+            Header::from_bytes(&header(client_max + 1), CLIENT_MAX_PAYLOAD_LEN),
+            Err(SessionError::TooLong(client_max + 1))
         );
     }
 }

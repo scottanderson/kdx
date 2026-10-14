@@ -176,7 +176,7 @@ impl Connection {
             Frame::Message(header, _) => bail!("expected transfer data, got {}", header.kind),
             Frame::Data(_) => bail!("transfer data without a header"),
         };
-        let mut left = u64::from(header.len);
+        let mut left = header.len;
         while left > 0 {
             let Frame::Data(chunk) = self.next_frame().await? else {
                 bail!("transfer data ended {left} bytes early");
@@ -192,7 +192,7 @@ impl Connection {
     pub async fn send_data(
         &mut self,
         kind: MessageType,
-        len: u32,
+        len: u64,
         source: &mut (impl AsyncRead + Unpin),
     ) -> Result<u32> {
         let txid = self.next_txid();
@@ -203,7 +203,7 @@ impl Connection {
             len,
         };
         self.framed.feed(Frame::DataHeader(header)).await?;
-        let mut left = u64::from(len);
+        let mut left = len;
         let mut chunk = vec![0; DATA_CHUNK];
         while left > 0 {
             let n = left.min(DATA_CHUNK as u64) as usize;

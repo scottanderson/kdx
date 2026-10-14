@@ -19,7 +19,7 @@ pub fn messages(stream: &[u8], cipher: &SessionCipher) -> Vec<(Header, Vec<u8>)>
         at += Header::LEN;
         let payload = cipher.open_payload(&header, &stream[at..]).unwrap();
         out.push((header, payload));
-        at += header.padded_len();
+        at += header.padded_len() as usize;
     }
     assert_eq!(at, stream.len());
     out

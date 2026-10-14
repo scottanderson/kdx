@@ -136,6 +136,7 @@ The addresses are the same.
 | `0x08052194` / `0x0805234c` | transfer connection: dispatcher (400, 402, 412, 415, 900, 904, 905) / read loop that switches to streaming |
 | `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
 | `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
+| `0x08094558` / `0x080945e0` | file: 64-bit fork size (`stat64`) / read a chunk at a 64-bit offset (`lseek64`) |
 | `0x080551b0` | account privilege check for 507/511: effective bits vs the requester's (0x640005) |
 | `0x08066a90` | is the key the empty password's key |
 | `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies 902, 903) / 904 mouse / 905 keyboard |

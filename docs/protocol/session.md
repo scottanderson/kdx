@@ -51,14 +51,15 @@ capture and gets the captured bytes back exactly, including the padding
 |---|---|---|---|
 | 0x00 | 4 | txid | nonzero. Each side counts up from a random start, per connection. A reply reuses the request's txid **[S, O]** |
 | 0x04 | 4 | type | nonzero, see below |
-| 0x08 | 1 | 0 | |
+| 0x08 | 1 | 0 | the server does not check it **[S `FUN_08086108`]** |
 | 0x09 | 1 | flags | bit 0 = this is a reply **[S, O]** |
-| 0x0a | 2 | 0 | the receiver rejects nonzero values with 0x40075 **[S `FUN_08086108`]** |
+| 0x0a | 2 | len high | bits 32–47 of the length, so the length is 48 bits. The sender writes them from a 64-bit length and fails with 0x40075 past 48 bits **[S `FUN_080868b4`]**. The receive path fails with 0x40075 when they are nonzero, as for any length past the cap **[S `FUN_08086108`]**. Only a transfer data header carries them: a 414 Download File (D) with more than 4 GiB left came with byte 0x0b = 0x01 from `kdx.erb.pw` **[O, not captured]** |
 | 0x0c | 4 | len | payload length. Each side caps what it receives and fails with 0x40075 past the cap. Server 1.620 caps messages from a client at 0x20000 **[S `FUN_080856cc` call in `FUN_08052ad0`]**. Client 1.600 caps messages from a server at 0x100000 **[S `FUN_0046d430` call in `FUN_00402310`, check in `FUN_0046e860`]** |
 
 The sender also has a header-only path (`FUN_080868b4`) followed by
-separately encrypted chunks (`FUN_08086a9c`). It's probably used for large or
-streamed payloads such as file transfers **[I]**.
+separately encrypted chunks (`FUN_08086a9c`). The server sends each 414
+Download File (D) through it, with the fork's remaining length as a 64-bit
+value **[S `FUN_08050984` at 0x0805101f, `FUN_080512b4`]**.
 
 ## Messages
 

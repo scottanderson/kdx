@@ -48,14 +48,14 @@ pub enum Error {
     Truncated,
     /// A payload is longer than a header can describe.
     #[error("payload too long ({0} bytes)")]
-    TooLong(usize),
+    TooLong(u64),
     /// A [`Frame::Data`] was sent with no data stream open.
     #[error("data sent outside a data stream")]
     NoDataStream,
     /// A [`Frame::Data`] holds more bytes than its stream has left.
     #[error("data exceeds its stream by {0} bytes")]
-    DataOverrun(usize),
+    DataOverrun(u64),
     /// A frame was sent while a data stream still had bytes left.
     #[error("data stream has {0} bytes left")]
-    DataPending(u32),
+    DataPending(u64),
 }

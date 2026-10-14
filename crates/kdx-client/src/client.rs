@@ -314,7 +314,7 @@ impl Client {
         }
         let start = info
             .data_size
-            .checked_sub(u64::from(data.len))
+            .checked_sub(data.len)
             .context("more data than the file holds")?;
         conn.recv_data(&mut tokio::io::sink()).await?;
         Ok((info, start))
@@ -356,7 +356,10 @@ impl Client {
         let start = UploadReply::decode(&reply)?.data_offset.min(len);
 
         source.seek(std::io::SeekFrom::Start(start)).await?;
-        let left = u32::try_from(len - start).context("file too large for one transfer")?;
+        let left = len - start;
+        if left > Header::MAX_LEN {
+            bail!("file too large for one transfer");
+        }
         conn.send_data(MessageType::UPLOAD_FILE_DATA, left, source)
             .await?;
         conn.send_data(MessageType::UPLOAD_FILE_DATA, 0, &mut tokio::io::empty())

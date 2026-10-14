@@ -49,13 +49,13 @@ pub struct SessionCodec {
 enum Read {
     Header,
     Payload(Header),
-    Data { left: u32, padded: usize },
+    Data { left: u64, padded: u64 },
 }
 
 #[derive(Debug, Clone)]
 struct Write {
     fill: [u8; 4],
-    left: u32,
+    left: u64,
     tail: BytesMut,
 }
 
@@ -126,13 +126,13 @@ impl Decoder for SessionCodec {
                         }
                         return Ok(Some(Frame::DataHeader(header)));
                     }
-                    if header.len > self.max_len {
+                    if header.len > u64::from(self.max_len) {
                         return Err(kdx_proto::session::SessionError::TooLong(header.len).into());
                     }
                     self.read = Read::Payload(header);
                 }
                 Read::Payload(header) => {
-                    let padded = header.padded_len();
+                    let padded = header.padded_len() as usize;
                     if src.len() < padded {
                         src.reserve(padded - src.len());
                         return Ok(None);
@@ -144,23 +144,22 @@ impl Decoder for SessionCodec {
                     return Ok(Some(Frame::Message(header, payload.freeze())));
                 }
                 Read::Data { left, padded } => {
-                    let n = (src.len() / BLOCK_LEN * BLOCK_LEN)
-                        .min(padded)
-                        .min(DATA_CHUNK);
+                    let window = padded.min(DATA_CHUNK as u64) as usize;
+                    let n = (src.len() / BLOCK_LEN * BLOCK_LEN).min(window);
                     if n == 0 {
-                        src.reserve(padded.min(DATA_CHUNK));
+                        src.reserve(window);
                         return Ok(None);
                     }
                     let mut chunk = src.split_to(n);
                     self.cipher.decrypt_blocks(&mut chunk);
-                    let keep = left.min(n as u32);
+                    let keep = left.min(n as u64);
                     chunk.truncate(keep as usize);
-                    self.read = if padded == n {
+                    self.read = if padded == n as u64 {
                         Read::Header
                     } else {
                         Read::Data {
                             left: left - keep,
-                            padded: padded - n,
+                            padded: padded - n as u64,
                         }
                     };
                     return Ok(Some(Frame::Data(chunk.freeze())));
@@ -185,11 +184,16 @@ impl Encoder<Frame> for SessionCodec {
         match frame {
             Frame::Message(header, payload) => {
                 self.check_no_stream()?;
-                u32::try_from(payload.len()).map_err(|_| Error::TooLong(payload.len()))?;
+                if payload.len() as u64 > Header::MAX_LEN {
+                    return Err(Error::TooLong(payload.len() as u64));
+                }
                 dst.extend_from_slice(&self.cipher.seal(header, &payload));
             }
             Frame::DataHeader(header) => {
                 self.check_no_stream()?;
+                if header.len > Header::MAX_LEN {
+                    return Err(Error::TooLong(header.len));
+                }
                 dst.extend_from_slice(&self.cipher.seal_header(header));
                 if header.len > 0 {
                     self.write = Some(Write {
@@ -201,10 +205,10 @@ impl Encoder<Frame> for SessionCodec {
             }
             Frame::Data(data) => {
                 let write = self.write.as_mut().ok_or(Error::NoDataStream)?;
-                let len = u32::try_from(data.len())
-                    .ok()
-                    .filter(|&len| len <= write.left)
-                    .ok_or_else(|| Error::DataOverrun(data.len() - write.left as usize))?;
+                let len = data.len() as u64;
+                if len > write.left {
+                    return Err(Error::DataOverrun(len - write.left));
+                }
                 write.left -= len;
                 write.tail.extend_from_slice(&data);
                 if write.left == 0 {

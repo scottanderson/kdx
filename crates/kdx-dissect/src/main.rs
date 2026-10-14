@@ -332,7 +332,7 @@ fn dissect(
                     break;
                 }
             }
-            at += Header::LEN + header.padded_len();
+            at += Header::LEN + header.padded_len() as usize;
         }
     }
 
