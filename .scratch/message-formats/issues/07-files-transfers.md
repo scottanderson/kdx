@@ -59,3 +59,11 @@ Docs: `KDXProtocol.md`, Files and Transfer connections.
   Windows client 1.600 for a sender and the Windows server 1.600 for a
   handler; document the layout if one exists, and hand off a `win-`
   capture only if both do.
+- [ ] Audit (01): 410 File/Folder Info drops byte 0x37: 01 in
+  `linux-files` 180, 183, 186, 195, 217, and 02 in 204.
+- [ ] Audit (01): 415 Upload File drops 13 bytes in its unnamed 0x18 field:
+  two u64 times at 0x18 and 0x20 that match the capture's date as
+  milliseconds since 1900, and 01 at 0x33 (`linux-files` 45,
+  `linux-text-encoding` 90).
+- [ ] Audit (01): 414 Download File (D) and 417 Upload File (D) have no
+  codec (`linux-files` 148, 47).

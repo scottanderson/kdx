@@ -55,3 +55,8 @@ Other messages:
   second with a CLI member whose DCC port is 0.
 - [ ] 300/301: 0x04, 0xc bytes. What the client puts there, and whether the
   server reads them.
+- [ ] Audit (01): 223 Chat DCC Addresses has no codec
+  (`linux-dcc-voice-failed` 109, 155).
+- [ ] Audit (01): 209 Set Chat Topic from `probe` 73 has 4 bytes, `ello`,
+  after the topic that `SetChatTopic` drops. Check whether `kdx-probe`
+  sent a short length on purpose.

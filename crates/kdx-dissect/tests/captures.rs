@@ -49,6 +49,49 @@ const EXPECTED: &[&str] = &[
     "win-view-display 34156: stopped: no candidate key matches the client's proof; try --password",
 ];
 
+/// Each message type whose payloads `--audit` flags, with how: `no codec` or `lossy`.
+///
+/// Each one is a gap in an issue under `.scratch/message-formats/`.
+const EXPECTED_AUDIT: &[&str] = &[
+    "102 lossy",
+    "103 lossy",
+    "143 lossy",
+    "209 lossy",
+    "223 no codec",
+    "410 lossy",
+    "414 no codec",
+    "415 lossy",
+    "417 no codec",
+    "502 no codec",
+    "503 lossy",
+    "508 no codec",
+    "509 no codec",
+    "513 lossy",
+    "515 no codec",
+    "550 no codec",
+    "601 no codec",
+    "602 no codec",
+    "607 no codec",
+    "608 lossy",
+    "609 no codec",
+    "610 lossy",
+    "611 lossy",
+    "612 no codec",
+    "803 lossy",
+    "902 no codec",
+    "903 no codec",
+    "904 no codec",
+    "905 no codec",
+    "1001 no codec",
+    "1002 no codec",
+    "1100 lossy",
+    "1101 no codec",
+    "1102 no codec",
+    "1103 no codec",
+    "1104 lossy",
+    "1106 no codec",
+];
+
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -75,7 +118,8 @@ fn dissect(capture: &str, export: &Path) -> String {
     command
         .arg(root().join(format!("captures/{capture}.pcapng")))
         .arg("--export")
-        .arg(export);
+        .arg(export)
+        .arg("--audit");
     for password in PASSWORDS {
         command.args(["--password", password]);
     }
@@ -86,6 +130,24 @@ fn dissect(capture: &str, export: &Path) -> String {
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap()
+}
+
+/// Each `--audit` finding in `output` as `<type> <how>`.
+fn audit(output: &str) -> BTreeSet<String> {
+    let mut kind = "";
+    let mut found = BTreeSet::new();
+    for line in output.lines() {
+        let text = line.trim_start();
+        if text.starts_with('[') {
+            if let Some((_, rest)) = text.split_once(" type ") {
+                kind = rest.split(' ').next().unwrap();
+            }
+        } else if let Some(how) = text.strip_prefix("~ ") {
+            let how = how.split(':').next().unwrap();
+            found.insert(format!("{kind} {how}"));
+        }
+    }
+    found
 }
 
 /// The lines of `output` that report a problem, tagged with the capture and source port.
@@ -137,6 +199,7 @@ fn captures_dissect_cleanly_and_match_fixtures() {
     let fixture_names = stems(&fixtures(), "bin");
     let mut matched = BTreeSet::new();
     let mut found = Vec::new();
+    let mut audited = BTreeSet::new();
 
     // One process per capture, all at once.
     let outputs: Vec<_> = std::thread::scope(|scope| {
@@ -160,6 +223,7 @@ fn captures_dissect_cleanly_and_match_fixtures() {
             "{capture}: no connection authenticated"
         );
         found.extend(problems(&capture, &output));
+        audited.extend(audit(&output));
 
         // A fixture is `<capture>-<port>`, or `<capture>` when it has one connection.
         for name in &fixture_names {
@@ -215,4 +279,7 @@ fn captures_dissect_cleanly_and_match_fixtures() {
         "fixtures with no capture: {unmatched:?}"
     );
     assert_eq!(found, EXPECTED);
+    let mut audited: Vec<_> = audited.into_iter().collect();
+    audited.sort_by_key(|row| row.split(' ').next().unwrap().parse::<u32>().unwrap());
+    assert_eq!(audited, EXPECTED_AUDIT);
 }

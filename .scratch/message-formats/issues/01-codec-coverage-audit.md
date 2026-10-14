@@ -1,6 +1,6 @@
 # Audit which captured payloads the codecs reproduce
 
-Status: ready-for-agent
+Status: done
 Type: task
 Targets: every message type in `captures/*.pcapng`
 
@@ -24,12 +24,57 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
 
 ## Gaps
 
-- [ ] The list of types with no codec, by issue number of this effort.
-- [ ] The list of lossy decoders, with the bytes they drop.
-- [ ] Add each finding to the issue for its area as a new gap.
-- [ ] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
+- [x] The list of types with no codec, by issue number of this effort.
+- [x] The list of lossy decoders, with the bytes they drop.
+- [x] Add each finding to the issue for its area as a new gap.
+- [x] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
   Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
   `gconsole.md`.
 
 Done when the test runs in `cargo test` and every lossy decoder or missing
 codec is recorded in an issue here.
+
+## Comments
+
+2026-10-14: `kdx-dissect --audit` decodes each payload with its
+`kdx-proto` type, encodes it again, and prints `~ no codec` or `~ lossy`
+with the first differing bytes. Empty payloads with no codec are not
+flagged. `crates/kdx-dissect/tests/captures.rs` runs it over every capture
+and pins the findings in `EXPECTED_AUDIT`, so a fixed or new gap fails the
+test until the list changes. `audit::without_padding` zeroes the padding
+`KDXProtocol.md` calls uninitialised before comparing: after each 401 File
+List entry and at the end of 510 Account Info. With it, 401 and 510 come
+back byte for byte. Other findings below may be padding too, which the
+Strings section says is uninitialised; each issue's gap asks for that.
+
+No codec, by issue:
+
+| Issue | Types |
+|---|---|
+| 06 | 223 |
+| 07 | 414, 417 |
+| 08 | 502, 508, 509, 515, 550 |
+| 09 | 601, 602, 607, 609, 612 |
+| 11 | 1101, 1102, 1103, 1106 |
+| 12 | 902, 903, 904, 905 |
+| 14 | 1001, 1002 |
+
+Lossy, by issue (each issue gives the frames):
+
+| Issue | Type | Bytes |
+|---|---|---|
+| 02 | 102, 103 | 1 to 3 trailing zero bytes after the record |
+| 04 | 143 | non-zero bytes in the last 2 |
+| 06 | 209 | 4 bytes after the topic (`probe` 73) |
+| 07 | 410 | 0x37 |
+| 07 | 415 | two times at 0x18 and 0x20, and 0x33 |
+| 08 | 503 | the editor login at 0x36; non-zero bytes in the last 3 |
+| 08 | 513 | 0x97 |
+| 09 | 608, 610 | non-zero bytes after strings |
+| 09 | 611 | the encoder pads to 4; the client doesn't |
+| 10 | 803 | 0x1dc |
+| 11 | 1100, 1104 | 0xc1, in the last 3 |
+
+The spec's never-captured list had 117, 1000 to 1002, and 108/109 from a
+GUI client, all in `linux-dcc-voice-failed`, and said 223 was captured only
+empty, but frames 109 and 155 there hold addresses. The list is fixed.

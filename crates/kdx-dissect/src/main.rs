@@ -5,6 +5,8 @@
 //! account key from the candidate passwords, then decrypts and dumps every session message
 //! in capture order.
 
+mod audit;
+
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::net::{IpAddr, SocketAddr};
@@ -65,6 +67,9 @@ struct Args {
     /// Write each connection's reassembled streams to DIR as `<source port>.c2s.bin` and `.s2c.bin`.
     #[arg(long, value_name = "DIR")]
     export: Option<PathBuf>,
+    /// After each payload, say whether its `kdx-proto` codec re-encodes it byte for byte.
+    #[arg(long)]
+    audit: bool,
 }
 
 /// The ports the capture's programs listen on.
@@ -239,7 +244,7 @@ fn main() -> Result<()> {
         let mut found = Vec::new();
         for (_, streams, output) in pending.iter_mut().filter(|(_, _, o)| o.is_none()) {
             let mut out = String::new();
-            match dissect(streams, &keys, &mut out) {
+            match dissect(streams, &keys, args.audit, &mut out) {
                 Ok(Some(new_keys)) => {
                     found.extend(new_keys);
                     *output = Some(out);
@@ -260,7 +265,7 @@ fn main() -> Result<()> {
     for (title, streams, output) in pending {
         let output = output.unwrap_or_else(|| {
             let mut out = String::new();
-            dissect(&streams, &keys, &mut out).ok();
+            dissect(&streams, &keys, args.audit, &mut out).ok();
             out.push_str(
                 "  stopped: no candidate key matches the client's proof; try --password\n",
             );
@@ -276,6 +281,7 @@ fn main() -> Result<()> {
 fn dissect(
     streams: &[Stream; 2],
     keys: &[(String, AccountKey)],
+    audit: bool,
     out: &mut String,
 ) -> Result<Option<Vec<(String, AccountKey)>>> {
     let dirs = [Dir::ClientToServer, Dir::ServerToClient];
@@ -405,6 +411,14 @@ fn dissect(
                     Ok(Some(text)) => writeln!(out, "      = {text}")?,
                     Ok(None) => {}
                     Err(err) => writeln!(out, "      ! {err}")?,
+                }
+                if audit {
+                    match audit::roundtrip(header.kind, &payload) {
+                        audit::Outcome::Same | audit::Outcome::Undecodable => {}
+                        audit::Outcome::NoCodec if payload.is_empty() => {}
+                        audit::Outcome::NoCodec => writeln!(out, "      ~ no codec")?,
+                        audit::Outcome::Lossy(how) => writeln!(out, "      ~ lossy: {how}")?,
+                    }
                 }
                 out.push_str(&hexdump(&payload[..payload.len().min(MAX_DUMP)], "      "));
                 if payload.len() > MAX_DUMP {

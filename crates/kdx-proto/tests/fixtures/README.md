@@ -156,3 +156,8 @@ A's DCC listener. Both are Client 1.620 for Linux.
 | Port | Messages |
 |---|---|
 | 45702 | the primary connection, with no password: both 117 SKPKs, 100, and 300 |
+
+`kdx-dissect --audit` re-encodes each payload it decodes and flags the
+types with no codec or with bytes that don't come back, apart from
+uninitialised padding. The `captures` test runs it over every capture and
+checks its findings against `EXPECTED_AUDIT`.

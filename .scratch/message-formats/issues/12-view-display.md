@@ -35,6 +35,9 @@ One `win-` capture can cover 903, 904, and 905 together: shift-click,
 right-click, the wheel, holding a key, and a window moving on the server's
 screen.
 
+- [ ] Audit (01): no codec for 902, 903, 904, and 905
+  (`win-view-display` 107, 108, 110, 312).
+
 ## Comments
 
 2026-10-13: Read statically in the Windows server; see `KDXProtocol.md`,

@@ -56,3 +56,7 @@ Session (`session.md`):
   they use it.
 - [ ] The server pads the data after a 414 header with "a repeated 32-bit
   value that is not this fill". Find where it comes from.
+- [ ] Audit (01): 102 and 103 records come with zero bytes after the record
+  that `UserRecord::encode` drops (`linux-server-settings` 199, 201: 3
+  bytes; `linux-dcc-voice-failed` 78: 2; `kdx-cli` 392: 2;
+  `linux-text-encoding` 328: 1). Pad the record to 4 or keep the trailer.

@@ -18,3 +18,5 @@ auxwww` (`FUN_0805b454`), so each field should map to a `ps` column.
   which Linux rejects with 0x10005. Read the Windows server 1.600 only if
   the Linux code gives no meaning.
 - [ ] 800/801: confirm the payload is empty or ignored.
+- [ ] Audit (01): 803 Process List loses byte 0x1dc, 32
+  (`linux-chat-admin` 155).
