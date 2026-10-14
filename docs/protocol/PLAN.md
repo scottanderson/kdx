@@ -108,12 +108,14 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | 8. Voice, view display | yes; view display 900–905 captured from a Windows server (`win-view-display`); voice statically only (`dcc.md`) | no | no |
 
 ### Phase 4: Spec format
-- `KDXProtocol.md` is the single reference: the message catalog, a
-  description of each message, error codes, privileges, and sequences. It
-  grows as each area is read and probed.
-- `handshake.md`, `session.md`, and `tracker.md` hold the long write-ups
-  that are too detailed for the reference. Add another such file only when an
-  area needs one (file transfers).
+- `KDXProtocol.md` is the entry point: the shape of a connection, the header,
+  the message catalog, and a map of the other pages. Each area of messages has
+  its own page under `messages/`, and `encodings.md`, `errors.md`,
+  `privileges.md`, and `sequences.md` hold the shared reference. Each kind of
+  connection has a page: `server.md`, `tracker.md`, `dcc.md`, `gconsole.md`.
+- `handshake.md` and `session.md` hold the long write-ups of connection setup
+  and framing. Add a page when an area outgrows its current one, and link it
+  from the map in `KDXProtocol.md`.
 - Each field or message gets an evidence tag, written in bold. **Observed**
   means a capture file and frame number. **Static** means a binary, build,
   and address. **Inferred** means a guess not yet verified. The goal is to

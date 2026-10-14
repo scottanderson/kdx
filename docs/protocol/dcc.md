@@ -12,7 +12,7 @@ frames are cited below. Tags and number formats follow
 
 The client listens on TCP 10600 by default when its preference for it is on
 **[S `FUN_0808fae4`]**. It puts that port in its user record (offset 0x0a,
-see [KDXProtocol.md](KDXProtocol.md#user-record)), so the server can hand
+see [KDXProtocol.md](encodings.md#user-record)), so the server can hand
 it out in 223 Chat DCC Addresses. With the listener off, the port is 0
 **[S `FUN_0804d654`]**. The client can also ask a UPnP router for a TCP
 mapping named `KDXClientDCC` **[S `FUN_08090344`]**; that is the client's
@@ -84,7 +84,7 @@ connection IDs 2 and 4 **[O]**. `kdx_proto::msg::dcc::Skpk` re-encodes frames
 ## Voice
 
 A voice chat is a server chat with flag bit 1 set (see the chat record in
-[KDXProtocol.md](KDXProtocol.md#chat-record)). On joining, the client sends
+[KDXProtocol.md](encodings.md#chat-record)). On joining, the client sends
 222 Get Chat DCC Addresses and gets each other member's `ip:port`. Voice
 then runs on TCP between the clients, not over UDP.
 
