@@ -173,12 +173,27 @@ impl Connection {
     /// The data is framed like a message, but its length can exceed the cap on
     /// normal payloads, so it comes in chunks rather than all at once.
     pub async fn recv_data(&mut self, sink: &mut (impl AsyncWrite + Unpin)) -> Result<Header> {
-        let header = match self.next_frame().await? {
-            Frame::DataHeader(header) => header,
+        let header = self.recv_data_header().await?;
+        self.recv_data_body(&header, sink).await?;
+        Ok(header)
+    }
+
+    /// Receives a transfer data header; its data must then go to [`Self::recv_data_body`].
+    pub async fn recv_data_header(&mut self) -> Result<Header> {
+        match self.next_frame().await? {
+            Frame::DataHeader(header) => Ok(header),
             Frame::Message(header, _) => bail!("expected transfer data, got {}", header.kind),
             Frame::Data(_) => bail!("transfer data without a header"),
-        };
-        let mut left = u64::from(header.len);
+        }
+    }
+
+    /// Streams the data that follows `header` into `sink`.
+    pub async fn recv_data_body(
+        &mut self,
+        header: &Header,
+        sink: &mut (impl AsyncWrite + Unpin),
+    ) -> Result<()> {
+        let mut left = header.len;
         while left > 0 {
             let Frame::Data(chunk) = self.next_frame().await? else {
                 bail!("transfer data ended {left} bytes early");
@@ -187,14 +202,14 @@ impl Connection {
             left -= chunk.len() as u64;
         }
         sink.flush().await?;
-        Ok(header)
+        Ok(())
     }
 
     /// Sends a transfer data header for `len` bytes, then the bytes from `source`.
     pub async fn send_data(
         &mut self,
         kind: MessageType,
-        len: u32,
+        len: u64,
         source: &mut (impl AsyncRead + Unpin),
     ) -> Result<u32> {
         let txid = self.next_txid();
@@ -205,7 +220,7 @@ impl Connection {
             len,
         };
         self.framed.feed(Frame::DataHeader(header)).await?;
-        let mut left = u64::from(len);
+        let mut left = len;
         let mut chunk = vec![0; DATA_CHUNK];
         while left > 0 {
             let n = left.min(DATA_CHUNK as u64) as usize;

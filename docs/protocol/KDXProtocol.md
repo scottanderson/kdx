@@ -46,11 +46,12 @@ A connection has two phases:
 | 0x04 | 4 | type | the message type, listed below |
 | 0x08 | 1 | 0 | |
 | 0x09 | 1 | flags | bit 0: this message is a reply |
-| 0x0a | 2 | 0 | |
+| 0x0a | 2 | len high | bits 32–47 of the length; nonzero only on transfer data headers |
 | 0x0c | 4 | len | payload length: at most 0x20000 to the server, 0x100000 to the client |
 
 The payload is padded to a multiple of 16 before encryption; the length
-field gives the real size.
+field gives the real size. The length is 48 bits, but only transfer data
+headers exceed 4 GiB; see [session.md](session.md).
 
 ## Requests, replies, and notifications
 
@@ -1422,6 +1423,17 @@ Download File (D), with length 0. [O]: offset 5000 resumed at 4096, and the
 65904 bytes that came back equal the full download from 0x1000; offset
 70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng`
 frames 271–281, 383–389, and 348–351; test `downloads`).
+
+Offsets and sizes are 64-bit throughout. The server rounds the offset
+down within its 64-bit value, reads with `lseek64` to it, and sends the
+remaining length as a 48-bit header length **[S `FUN_08050984`,
+`FUN_080945e0`]**. Server 1.600 for Windows seeks with the high half too
+**[S `FUN_0042c600`]**. So the data should start exactly at the rounded
+offset past 4 GiB as well. Once, though, a download from `kdx.erb.pw` with
+an offset above 4 GiB began 0xF000 bytes past the rounded offset **[O, not
+captured]**; the server's build is unknown, and the cause is open. A
+client should take the start as the data fork size less the 414 length,
+not as the rounded offset **[I]**.
 
 A file over 0x40000 bytes is refused with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25

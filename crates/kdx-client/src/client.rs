@@ -281,13 +281,14 @@ impl Client {
 
     /// Downloads a file's data fork from `offset` into `sink` on a new transfer connection.
     ///
-    /// The server resumes at `offset` rounded down to 0x1000; the returned
-    /// offset is where the written data starts.
+    /// The server resumes at `offset` rounded down to 0x1000, or so it
+    /// should. The data is written at the start the server's length implies,
+    /// which is also returned.
     pub async fn download(
         &mut self,
         path: &FilePath,
         offset: u64,
-        sink: &mut (impl AsyncWrite + Unpin),
+        sink: &mut (impl AsyncWrite + AsyncSeek + Unpin),
     ) -> Result<(DownloadInfo, u64)> {
         let mut conn = self.attach().await?;
         let request = DownloadFile {
@@ -308,14 +309,16 @@ impl Client {
         .await?;
         let info = DownloadInfo::decode(&reply)?;
 
-        let data = conn.recv_data(sink).await?;
+        let data = conn.recv_data_header().await?;
         if data.kind != MessageType::DOWNLOAD_FILE_DATA || data.txid != txid {
             bail!("expected the data fork, got {}", data.kind);
         }
         let start = info
             .data_size
-            .checked_sub(u64::from(data.len))
+            .checked_sub(data.len)
             .context("more data than the file holds")?;
+        sink.seek(std::io::SeekFrom::Start(start)).await?;
+        conn.recv_data_body(&data, sink).await?;
         conn.recv_data(&mut tokio::io::sink()).await?;
         Ok((info, start))
     }
@@ -356,7 +359,10 @@ impl Client {
         let start = UploadReply::decode(&reply)?.data_offset.min(len);
 
         source.seek(std::io::SeekFrom::Start(start)).await?;
-        let left = u32::try_from(len - start).context("file too large for one transfer")?;
+        let left = len - start;
+        if left > Header::MAX_LEN {
+            bail!("file too large for one transfer");
+        }
         conn.send_data(MessageType::UPLOAD_FILE_DATA, left, source)
             .await?;
         conn.send_data(MessageType::UPLOAD_FILE_DATA, 0, &mut tokio::io::empty())

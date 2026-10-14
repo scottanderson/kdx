@@ -24,7 +24,7 @@ fn hello(sub_version: u8, nonce: u8, name: &[u8]) -> Hello {
     }
 }
 
-const fn header(txid: u32, kind: MessageType, len: u32) -> Header {
+const fn header(txid: u32, kind: MessageType, len: u64) -> Header {
     Header {
         txid,
         kind,
@@ -117,7 +117,7 @@ async fn login_message_and_upload() {
     };
     assert!(h.is_reply() && h.txid == 9 && &p[..] == b"info");
 
-    let data = header(10, MessageType::UPLOAD_FILE_DATA, upload.len() as u32);
+    let data = header(10, MessageType::UPLOAD_FILE_DATA, upload.len() as u64);
     framed.send(Frame::DataHeader(data)).await.unwrap();
     // Odd sizes, so blocks straddle sends.
     for piece in upload.chunks(9999) {
@@ -160,10 +160,43 @@ fn encoder_checks_data_streams() {
 }
 
 #[test]
+fn data_streams_past_4_gib() {
+    let key = AccountKey::EMPTY_PASSWORD;
+    let len = 0x1_0000_1000;
+    let start = header(1, MessageType::DOWNLOAD_FILE_DATA, len);
+    let mut encoder = SessionCodec::server(&key);
+    let mut wire = BytesMut::new();
+    encoder.encode(Frame::DataHeader(start), &mut wire).unwrap();
+    let chunk = Bytes::from(vec![7; 0x1000]);
+    encoder
+        .encode(Frame::Data(chunk.clone()), &mut wire)
+        .unwrap();
+    assert!(matches!(
+        encoder.encode(
+            Frame::Message(header(2, MessageType::PING, 0), Bytes::new()),
+            &mut wire
+        ),
+        Err(Error::DataPending(0x1_0000_0000))
+    ));
+
+    let mut decoder = SessionCodec::client(&key);
+    assert_eq!(
+        decoder.decode(&mut wire).unwrap(),
+        Some(Frame::DataHeader(start))
+    );
+    assert_eq!(decoder.decode(&mut wire).unwrap(), Some(Frame::Data(chunk)));
+    assert!(!decoder.is_idle());
+}
+
+#[test]
 fn decoder_enforces_the_payload_limit() {
     let key = AccountKey::EMPTY_PASSWORD;
     let mut wire = BytesMut::new();
-    let big = header(1, MessageType::SEND_CHAT_TEXT, SERVER_MAX_PAYLOAD_LEN + 1);
+    let big = header(
+        1,
+        MessageType::SEND_CHAT_TEXT,
+        u64::from(SERVER_MAX_PAYLOAD_LEN) + 1,
+    );
     SessionCodec::client(&key)
         .encode(Frame::DataHeader(big), &mut wire)
         .unwrap();
