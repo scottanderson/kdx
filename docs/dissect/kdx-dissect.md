@@ -31,8 +31,8 @@ one whose proof matches. The empty password is always tried.
 ## The audit
 
 `--audit` decodes each payload with its `kdx-proto` type, encodes it again, and
-compares. A payload is the same, has `no codec`, or is a `mismatch`, which is a
-codec bug. `crates/kdx-dissect/tests/captures.rs` runs the audit over every
+compares. A payload is the same, has `no codec`, has `trailing` bytes after the
+message, or is a `mismatch`, which is a codec bug. `crates/kdx-dissect/tests/captures.rs` runs the audit over every
 capture and lists the types with no codec in `NO_CODEC`.
 
 The captures themselves, and how they are made, are in

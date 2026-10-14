@@ -419,6 +419,9 @@ fn dissect(
                         audit::Outcome::Same | audit::Outcome::Undecodable => {}
                         audit::Outcome::NoCodec if payload.is_empty() => {}
                         audit::Outcome::NoCodec => writeln!(out, "      ~ no codec")?,
+                        audit::Outcome::Trailing(n) => {
+                            writeln!(out, "      ~ trailing: {n} bytes after the message")?;
+                        }
                         audit::Outcome::Mismatch(how) => writeln!(out, "      ~ mismatch: {how}")?,
                     }
                 }

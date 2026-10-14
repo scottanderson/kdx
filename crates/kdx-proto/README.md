@@ -4,8 +4,8 @@ The wire format of the Haxial KDX protocol: the connection handshake, session
 encryption, message framing, and a typed codec for each message payload. It does
 no I/O and has no async runtime, so it fits under any transport.
 
-Every codec decodes a payload and encodes it again byte for byte, keeping the
-bytes it does not understand, so data survives a round trip unchanged.
+Codecs decode a payload and encode it again byte for byte, keeping the bytes
+they do not understand. `Decoded` also keeps bytes that follow a message.
 
 ```rust
 use kdx_proto::msg::chat::ChatId;

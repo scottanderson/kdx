@@ -42,6 +42,8 @@ pub enum Outcome {
     NoCodec,
     /// The decoder failed; `summary` reports why.
     Undecodable,
+    /// The encoder gave back the payload, which has this many more bytes after it.
+    Trailing(usize),
     /// The bytes that came back differ, which is a codec bug.
     Mismatch(String),
 }
@@ -78,6 +80,8 @@ pub fn roundtrip(kind: MessageType, payload: &[u8]) -> Outcome {
         Some(Ok(out)) => {
             if out == payload {
                 Outcome::Same
+            } else if let Some(rest) = payload.strip_prefix(out.as_slice()) {
+                Outcome::Trailing(rest.len())
             } else {
                 Outcome::Mismatch(difference(payload, &out))
             }
@@ -233,12 +237,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fixed_size_payload_with_extra_bytes_is_a_mismatch() {
+    fn bytes_after_the_message_are_trailing() {
         let outcome = roundtrip(MessageType::GET_NEWSGROUP, &[0, 0, 0, 2, 0xee]);
-        assert_eq!(
-            outcome,
-            Outcome::Mismatch("first at 0x4: ee became  (5 bytes in, 4 out)".into())
-        );
+        assert_eq!(outcome, Outcome::Trailing(1));
+        let outcome = roundtrip(MessageType::GET_NEWSGROUP, &[0, 0, 0, 2]);
+        assert_eq!(outcome, Outcome::Same);
         let outcome = roundtrip(MessageType::DELETE_NEWS_MESSAGE, &[0, 0, 0, 1, 0, 0, 0]);
         assert_eq!(outcome, Outcome::Undecodable);
     }

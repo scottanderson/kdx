@@ -1128,8 +1128,7 @@ impl ExitTerminateProcess {
     }
 }
 
-/// The payload of 1101 Delete Folder Access, 1102 Folder Access Deleted and 1103 Get Folder
-/// Access: an item name with no length byte or padding.
+/// 1101, 1102 and 1103: an item name with no length byte or padding.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FolderAccessName(pub Vec<u8>);
 

@@ -50,6 +50,52 @@ pub enum EncodeError {
     TooLong(&'static str),
 }
 
+/// A decoded value with the bytes that followed it on the wire.
+///
+/// Message types model only their wire fields. Wrap one in `Decoded` where the
+/// payload must come back byte for byte even if something follows the message.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Decoded<T> {
+    /// The message.
+    pub value: T,
+    /// The bytes after the message's own encoding.
+    pub rest: Vec<u8>,
+}
+
+impl<T> Decoded<T> {
+    /// Decodes `wire`, then keeps what `encode` does not reproduce as `rest`.
+    ///
+    /// Fails if `wire` does not start with the value's encoding, which means
+    /// the codec is not lossless for it.
+    pub fn decode(
+        wire: &[u8],
+        decode: impl FnOnce(&[u8]) -> Result<T, DecodeError>,
+        encode: impl FnOnce(&T) -> Result<Vec<u8>, EncodeError>,
+    ) -> Result<Self, DecodeError> {
+        let value = decode(wire)?;
+        let own = encode(&value).map_err(|_| DecodeError::Invalid("value"))?;
+        let rest = wire
+            .strip_prefix(own.as_slice())
+            .ok_or(DecodeError::Invalid(
+                "payload that does not re-encode to itself",
+            ))?;
+        Ok(Self {
+            value,
+            rest: rest.to_vec(),
+        })
+    }
+
+    /// The value's encoding followed by `rest`.
+    pub fn encode(
+        &self,
+        encode: impl FnOnce(&T) -> Result<Vec<u8>, EncodeError>,
+    ) -> Result<Vec<u8>, EncodeError> {
+        let mut out = encode(&self.value)?;
+        out.extend_from_slice(&self.rest);
+        Ok(out)
+    }
+}
+
 /// Checks that `buf` holds at least `need` bytes.
 pub(crate) const fn need(buf: &[u8], need: usize) -> Result<(), DecodeError> {
     if buf.len() < need {

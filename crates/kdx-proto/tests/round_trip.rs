@@ -30,7 +30,7 @@ use kdx_proto::msg::tracker::{
 };
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::user::{MiniUserIconChanged, UserDeparted};
-use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
+use kdx_proto::msg::{Decoded, FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::MessageType;
 use kdx_proto::AccountKey;
 
@@ -757,5 +757,63 @@ fn nonzero_gaps_round_trip() {
         draw.encode().unwrap(),
         &[6..8, 0x0c..0x0f, 0x0f..0x10],
         |p| Draw::decode(p).unwrap().encode().unwrap(),
+    );
+}
+
+const REST: &[u8] = b"\x01\xfe\x00\x7f\x55";
+
+#[test]
+fn trailing_bytes_round_trip() {
+    macro_rules! trailing {
+        ($($t:ty),* $(,)?) => {$({
+            let mut wire = <$t>::default().encode().unwrap();
+            wire.extend_from_slice(REST);
+            let decoded = Decoded::decode(&wire, <$t>::decode, <$t>::encode).unwrap();
+            assert_eq!(decoded.rest, REST, stringify!($t));
+            assert_eq!(decoded.encode(<$t>::encode).unwrap(), wire, stringify!($t));
+        })*};
+    }
+    trailing!(
+        ExtraServerInfo,
+        DisconnectUser,
+        DisconnectMessage,
+        ChatWindowInfo,
+        ChatTopicChanged,
+        ChatInvite,
+        ChatInvitation,
+        ChatRecord,
+        CreateFolder,
+        SetFileInfo,
+        VolumeInfo,
+        SetVolumeInfo,
+        FileSearch,
+        NewsgroupInfo,
+        ServerInfo,
+        GetServerList,
+        DownloadInfo,
+    );
+}
+
+#[test]
+fn trailing_bytes_after_list_round_trip() {
+    macro_rules! trailing {
+        ($($t:ty: $record:expr),* $(,)?) => {$({
+            let wire = [<$t>::encode_list(&[$record]).unwrap().as_slice(), REST].concat();
+            let decoded =
+                Decoded::decode(&wire, <$t>::decode_list, |v| <$t>::encode_list(v)).unwrap();
+            assert_eq!(decoded.rest, REST, stringify!($t));
+            assert_eq!(decoded.encode(|v| <$t>::encode_list(v)).unwrap(), wire, stringify!($t));
+        })*};
+    }
+    let a = || b"a".to_vec();
+    trailing!(
+        AccountClass: AccountClass { name: a(), ..Default::default() },
+        AccountListEntry: AccountListEntry { login: a(), ..Default::default() },
+        FolderAccessItem: FolderAccessItem { name: a(), ..Default::default() },
+        ChatListEntry: ChatListEntry { name: a(), ..Default::default() },
+        FileListEntry: FileListEntry { name: a(), ..Default::default() },
+        FileSearchEntry: FileSearchEntry { path: FilePath::new(["f"]), ..Default::default() },
+        NewsgroupEntry: NewsgroupEntry { name: a(), ..Default::default() },
+        GroupListEntry: GroupListEntry { name: a(), ..Default::default() },
     );
 }

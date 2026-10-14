@@ -29,9 +29,13 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
   back byte for byte.
 - [x] Store the header gaps that every other codec wrote as zeros, and the
   padding of list records, so a nonzero byte there comes back too.
-- [ ] Bytes after the last string or record of a payload are still dropped
-  by most single-message decoders and by the counted lists. Store them, or
-  reject them, once a capture or a handler shows any.
+- [x] Bytes after the last string or record of a payload: `msg::Decoded<T>`
+  keeps them beside the value and writes them back, so the message types stay
+  limited to their wire fields. `--audit` reports them as `trailing`.
+- [ ] `Decoded` needs the payload to start with the value's encoding. A tail
+  that begins inside a record's padding gains zeros, since the types that
+  keep their padding pad the result to 4, and 401, 453, and 703 encode no
+  records as an empty payload, so a bare zero count comes back empty.
 - [x] Add each finding to the issue for its area as a new gap.
 - [x] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
   Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
@@ -93,3 +97,9 @@ for its leading u32. A 4001 Draw record whose length isn't its kind's decodes
 as `Other`, and `Draw::padding` keeps each record's padding. 105's u16 at
 0x2a and 0x46 are stored as read. `round_trip.rs` sets every gap of each
 codec to nonzero bytes in a synthetic payload and checks it comes back.
+
+2026-10-14: `msg::Decoded<T>` pairs a value with the bytes after its encoding,
+found by re-encoding and taking what follows. `--audit` prints `~ trailing`
+for a payload that has them and `~ mismatch` only when the encoding differs.
+`round_trip.rs` appends bytes to a payload of each single-message type and
+list that has strings or records.
