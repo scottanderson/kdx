@@ -293,6 +293,7 @@ impl State {
                         value_02: 0,
                         name: group.name.clone(),
                         description: group.description.clone(),
+                        ..GroupListEntry::default()
                     })
                     .collect();
                 state.registry.sweep(Instant::now());
@@ -336,6 +337,7 @@ impl State {
                     hours: (state.start.elapsed().as_secs() / 3600) as u32,
                     connections: state.open.values().sum::<usize>() as u32,
                     servers: state.registry.len() as u32,
+                    ..TrackerStats::default()
                 };
                 Reply::Message(MessageType::TRACKERSERV_STATISTICS, stats.encode())
             }

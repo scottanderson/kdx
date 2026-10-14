@@ -23,3 +23,5 @@ than a new capture-gaps issue.
 - [ ] 1002 Set Voice Format: 0x00, 0xc bytes of 0; the codecs besides
   `ADPC`.
 - [ ] 1003 Voice Data: confirm nothing precedes the ADPCM bytes.
+- [ ] Audit (01): no codec for 1001 Start Voice (R) or 1002 Set Voice
+  Format (`linux-dcc-voice-failed` 135, 136).

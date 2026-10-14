@@ -59,3 +59,14 @@ Docs: `KDXProtocol.md`, Files and Transfer connections.
   Windows client 1.600 for a sender and the Windows server 1.600 for a
   handler; document the layout if one exists, and hand off a `win-`
   capture only if both do.
+- [x] Audit (01): 410 File/Folder Info dropped byte 0x37: 01 in
+  `linux-files` 180, 183, 186, 195, 217, and 02 in 204. Fixed:
+  `FileInfo::unknown_2c` keeps 0x2c..0x3c.
+- [ ] What is 410 byte 0x37?
+- [x] Audit (01): 415 Upload File dropped 13 bytes in its unnamed 0x18
+  field (`linux-files` 45, `linux-text-encoding` 90). Fixed:
+  `UploadFile::unknown_18` and `unknown_30` keep 0x18..0x45.
+- [ ] Name the 415 bytes: two u64 times at 0x18 and 0x20 that match the
+  capture's date as milliseconds since 1900, and 01 at 0x33.
+- [ ] Audit (01): 414 Download File (D) and 417 Upload File (D) have no
+  codec (`linux-files` 148, 47).

@@ -4,6 +4,8 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use kdx_proto::MessageType;
+
 /// Every lab password the captures' notes give.
 const PASSWORDS: [&str; 7] = [
     "lab-only-pw!1",
@@ -49,6 +51,35 @@ const EXPECTED: &[&str] = &[
     "win-view-display 34156: stopped: no candidate key matches the client's proof; try --password",
 ];
 
+/// The message types `--audit` flags as `no codec`, in order; a `mismatch` is a codec bug.
+///
+/// Each one is a gap in an issue under `.scratch/message-formats/`.
+const NO_CODEC: &[MessageType] = &[
+    MessageType::CHAT_DCC_ADDRESSES,
+    MessageType::DOWNLOAD_FILE_DATA,
+    MessageType::UPLOAD_FILE_DATA,
+    MessageType::GET_ACCOUNT_CLASS,
+    MessageType::DELETE_ACCOUNT,
+    MessageType::GET_ACCOUNT,
+    MessageType::ACCOUNT_DELETED,
+    MessageType::CHANGE_OWN_PASSWORD,
+    MessageType::DELETE_NEWSGROUP,
+    MessageType::GET_NEWSGROUP,
+    MessageType::GET_NEWS_MESSAGES,
+    MessageType::GET_NEWS_MESSAGE,
+    MessageType::DELETE_NEWS_MESSAGE,
+    MessageType::VIEW_DISPLAY_PARAMS,
+    MessageType::VIEW_DISPLAY_UPDATE,
+    MessageType::VIEW_DISPLAY_MOUSE,
+    MessageType::VIEW_DISPLAY_KEYBOARD,
+    MessageType::START_VOICE_REPLY,
+    MessageType::SET_VOICE_FORMAT,
+    MessageType::DELETE_FOLDER_ACCESS,
+    MessageType::FOLDER_ACCESS_DELETED,
+    MessageType::GET_FOLDER_ACCESS,
+    MessageType::GET_FOLDER_ACCESS_LIST,
+];
+
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -75,7 +106,8 @@ fn dissect(capture: &str, export: &Path) -> String {
     command
         .arg(root().join(format!("captures/{capture}.pcapng")))
         .arg("--export")
-        .arg(export);
+        .arg(export)
+        .arg("--audit");
     for password in PASSWORDS {
         command.args(["--password", password]);
     }
@@ -86,6 +118,24 @@ fn dissect(capture: &str, export: &Path) -> String {
         String::from_utf8_lossy(&output.stderr)
     );
     String::from_utf8(output.stdout).unwrap()
+}
+
+/// Each `--audit` finding in `output` as `<type> <how>`.
+fn audit(output: &str) -> BTreeSet<String> {
+    let mut kind = "";
+    let mut found = BTreeSet::new();
+    for line in output.lines() {
+        let text = line.trim_start();
+        if text.starts_with('[') {
+            if let Some((_, rest)) = text.split_once(" type ") {
+                kind = rest.split(' ').next().unwrap();
+            }
+        } else if let Some(how) = text.strip_prefix("~ ") {
+            let how = how.split(':').next().unwrap();
+            found.insert(format!("{kind} {how}"));
+        }
+    }
+    found
 }
 
 /// The lines of `output` that report a problem, tagged with the capture and source port.
@@ -137,6 +187,7 @@ fn captures_dissect_cleanly_and_match_fixtures() {
     let fixture_names = stems(&fixtures(), "bin");
     let mut matched = BTreeSet::new();
     let mut found = Vec::new();
+    let mut audited = BTreeSet::new();
 
     // One process per capture, all at once.
     let outputs: Vec<_> = std::thread::scope(|scope| {
@@ -160,6 +211,7 @@ fn captures_dissect_cleanly_and_match_fixtures() {
             "{capture}: no connection authenticated"
         );
         found.extend(problems(&capture, &output));
+        audited.extend(audit(&output));
 
         // A fixture is `<capture>-<port>`, or `<capture>` when it has one connection.
         for name in &fixture_names {
@@ -215,4 +267,14 @@ fn captures_dissect_cleanly_and_match_fixtures() {
         "fixtures with no capture: {unmatched:?}"
     );
     assert_eq!(found, EXPECTED);
+    let (mut missing, mut mismatches) = (Vec::new(), Vec::new());
+    for row in audited {
+        match row.split_once(' ').unwrap() {
+            (kind, "no codec") => missing.push(MessageType(kind.parse().unwrap())),
+            _ => mismatches.push(row),
+        }
+    }
+    missing.sort();
+    assert!(mismatches.is_empty(), "codec bugs: {mismatches:?}");
+    assert_eq!(missing, NO_CODEC);
 }

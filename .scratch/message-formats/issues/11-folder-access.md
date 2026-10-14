@@ -23,3 +23,10 @@ Docs: `KDXProtocol.md`, Folder access. Captures: `linux-files`,
 - [ ] The low u16 of each rule, and permission bit 15.
 - [ ] Record 0x90 (0x1d bytes of 0), 0xb0 (`unknown_b0`, perhaps the
   second string's length **[I]**), 0xb2 (6 bytes).
+- [x] Audit (01): 1100 and 1104 lost byte 0xc1, 01
+  (`linux-folder-access-guest` 21, 28). Fixed: `FolderAccess::padding`
+  keeps the bytes after the strings.
+- [ ] Is that byte uninitialised padding, as the client sends it?
+- [ ] Audit (01): no codec for 1101, 1102, 1103 (a name), or 1106 with its
+  optional u32 (`linux-accounts-folder-access` 70, 71, 60; `linux-files`
+  23).

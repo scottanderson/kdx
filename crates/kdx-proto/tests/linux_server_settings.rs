@@ -1,6 +1,6 @@
 //! Checks against `captures/linux-server-settings.pcapng`: Client 1.620 for Linux as `admin`.
 
-use kdx_proto::msg::admin::HistoryRecord;
+use kdx_proto::msg::admin::{HistoryList, HistoryRecord};
 use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
 use kdx_proto::msg::transfer::NotifySpeedLimit;
 use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged};
@@ -156,7 +156,13 @@ fn mini_user_icon() {
     assert_eq!((sets.len(), changes.len()), (2, 2));
     for ((set, changed), status) in sets.into_iter().zip(changes).zip([1, 0]) {
         let icon = MiniUserIcon::decode(set).unwrap();
-        assert_eq!(icon, MiniUserIcon { status });
+        assert_eq!(
+            icon,
+            MiniUserIcon {
+                status,
+                ..MiniUserIcon::default()
+            }
+        );
         assert_eq!(icon.encode(), set);
 
         // Frames 213 and 218, back to the sender, user 3.
@@ -171,7 +177,8 @@ fn server_history() {
     // Frame 33: 190 Server Started, then the peer's and the client's records.
     let first = first();
     let wire = one(&first, MessageType::SERVER_HISTORY_JOIN_REPLY);
-    let records = HistoryRecord::decode_list(wire).unwrap();
+    let list = HistoryList::decode(wire).unwrap();
+    let records = &list.records;
     assert_eq!(
         records.iter().map(|r| r.kind.0).collect::<Vec<_>>(),
         [190, 184, 202, 184, 180]
@@ -184,14 +191,15 @@ fn server_history() {
     assert_eq!(join.nick, b"cli-peer");
     assert_eq!(join.login, b"admin");
     assert_eq!(join.detail, b"Public Chat");
-    assert_eq!(HistoryRecord::encode_list(&records).unwrap(), wire);
+    assert_eq!(list.encode().unwrap(), wire);
 
     // Frame 89 has 12 records.
     let second = second();
     let wire = one(&second, MessageType::SERVER_HISTORY_JOIN_REPLY);
-    let records = HistoryRecord::decode_list(wire).unwrap();
+    let list = HistoryList::decode(wire).unwrap();
+    let records = &list.records;
     assert_eq!(records.len(), 12);
-    assert_eq!(HistoryRecord::encode_list(&records).unwrap(), wire);
+    assert_eq!(list.encode().unwrap(), wire);
 
     // Each 183 is one record padded to 4.
     let added: Vec<_> = all(&first, MessageType::SERVER_HISTORY_ADDED)

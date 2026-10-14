@@ -70,6 +70,7 @@ impl Tracker {
     pub async fn servers(&mut self, group: &[u8]) -> Result<Vec<ServerListEntry>> {
         let request = GetServerList {
             group: group.to_vec(),
+            ..GetServerList::default()
         };
         let reply = self
             .request(MessageType::GET_TRACKER_SERVER_LIST, &request.encode()?)

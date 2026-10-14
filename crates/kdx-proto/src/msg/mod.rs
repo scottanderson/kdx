@@ -100,6 +100,12 @@ pub(crate) const fn pad4(len: usize) -> usize {
     (len + 3) & !3
 }
 
+/// The bytes of `buf` from `end` to the next multiple of 4, and the length up to there.
+pub(crate) fn padding(buf: &[u8], end: usize) -> (Vec<u8>, usize) {
+    let padded = pad4(end).min(buf.len()).max(end);
+    (buf[end..padded].to_vec(), padded)
+}
+
 /// Reads a u32 count followed by that many records, each padded to 4.
 pub(crate) fn decode_counted<T>(
     buf: &[u8],

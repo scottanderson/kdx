@@ -5,6 +5,8 @@
 //! account key from the candidate passwords, then decrypts and dumps every session message
 //! in capture order.
 
+mod audit;
+
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::net::{IpAddr, SocketAddr};
@@ -16,8 +18,9 @@ use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
-    MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryList,
+    HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer,
+    YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -65,6 +68,9 @@ struct Args {
     /// Write each connection's reassembled streams to DIR as `<source port>.c2s.bin` and `.s2c.bin`.
     #[arg(long, value_name = "DIR")]
     export: Option<PathBuf>,
+    /// After each payload, say whether its `kdx-proto` codec re-encodes it byte for byte.
+    #[arg(long)]
+    audit: bool,
 }
 
 /// The ports the capture's programs listen on.
@@ -239,7 +245,7 @@ fn main() -> Result<()> {
         let mut found = Vec::new();
         for (_, streams, output) in pending.iter_mut().filter(|(_, _, o)| o.is_none()) {
             let mut out = String::new();
-            match dissect(streams, &keys, &mut out) {
+            match dissect(streams, &keys, args.audit, &mut out) {
                 Ok(Some(new_keys)) => {
                     found.extend(new_keys);
                     *output = Some(out);
@@ -260,7 +266,7 @@ fn main() -> Result<()> {
     for (title, streams, output) in pending {
         let output = output.unwrap_or_else(|| {
             let mut out = String::new();
-            dissect(&streams, &keys, &mut out).ok();
+            dissect(&streams, &keys, args.audit, &mut out).ok();
             out.push_str(
                 "  stopped: no candidate key matches the client's proof; try --password\n",
             );
@@ -276,6 +282,7 @@ fn main() -> Result<()> {
 fn dissect(
     streams: &[Stream; 2],
     keys: &[(String, AccountKey)],
+    audit: bool,
     out: &mut String,
 ) -> Result<Option<Vec<(String, AccountKey)>>> {
     let dirs = [Dir::ClientToServer, Dir::ServerToClient];
@@ -406,6 +413,14 @@ fn dissect(
                     Ok(None) => {}
                     Err(err) => writeln!(out, "      ! {err}")?,
                 }
+                if audit {
+                    match audit::roundtrip(header.kind, &payload) {
+                        audit::Outcome::Same | audit::Outcome::Undecodable => {}
+                        audit::Outcome::NoCodec if payload.is_empty() => {}
+                        audit::Outcome::NoCodec => writeln!(out, "      ~ no codec")?,
+                        audit::Outcome::Mismatch(how) => writeln!(out, "      ~ mismatch: {how}")?,
+                    }
+                }
                 out.push_str(&hexdump(&payload[..payload.len().min(MAX_DUMP)], "      "));
                 if payload.len() > MAX_DUMP {
                     writeln!(out, "      … {} more bytes", payload.len() - MAX_DUMP)?;
@@ -510,6 +525,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 module,
                 line,
                 extra,
+                ..
             } => format!(
                 "error {code:#x} for {request} at module {module:#x} line {line} extra {extra:#x}"
             ),
@@ -984,7 +1000,8 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             need(payload, 1)?;
             format!("class {}", payload[0])
         }
-        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryRecord::decode_list(payload)?
+        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryList::decode(payload)?
+            .records
             .iter()
             .map(history)
             .collect::<Vec<_>>()
@@ -1147,7 +1164,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             )
         }
         MessageType::GCONSOLE_DRAW => Draw::decode(payload)?
-            .0
+            .records
             .iter()
             .map(draw_record)
             .collect::<Vec<_>>()

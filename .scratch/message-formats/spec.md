@@ -58,7 +58,8 @@ Issues here are static analysis plus doc work, for an agent alone.
 5. Put each finding in `docs/protocol/`, tagged as `AGENTS.md` says, and add
    new landmarks to `re/README.md`. When a byte gets a name, rename the
    `kdx-proto` field that holds it, and keep its round-trip tests byte for
-   byte.
+   byte. The codecs store every byte they don't model, padding included, so
+   `kdx-dissect --audit` must report no `mismatch`.
 6. Tick the gap off in the issue. When none are left, set `Status: done`
    and add a comment summarising the result.
 
@@ -119,9 +120,8 @@ strike it here.
 | 08 | 503 Account Class Info 0x25 | Doc: flood protection | `AccountClass::unknown_25` |
 | 11 | 1107 Folder Access List 0x00, 0x04 | Doc: flags **[S]**, icon **[S]** | `FolderAccessItem::unknown_00`, `item_id` |
 
-Types never captured: 117, 404, 406, 408, 514, 901, 1000–1003, and 108/109
-from a GUI client (only `kdx-probe` sent them). 223 has been captured only
-empty. 184–191 are history record kinds, not messages.
+Types never captured: 404, 406, 408, 514, 901, and 1003. 184 to 191 are
+history record kinds, not messages.
 
 GConsole (4000, 4001, 4200, 4201) is a remote-console connection type in
 the client's connection dialog (port 10900). The client is the display; no

@@ -278,7 +278,7 @@ pub enum DrawRecord {
         /// Height.
         height: u16,
     },
-    /// A kind the client ignores, or a record too short for its kind.
+    /// A kind the client ignores, or a record whose length its kind doesn't have.
     Other {
         /// Kind.
         kind: u16,
@@ -306,10 +306,10 @@ impl DrawRecord {
         }
     }
 
-    /// Decodes a body of `kind`, keeping it whole when it's shorter than the client requires.
+    /// Decodes a body of `kind`, keeping it whole when its length isn't the kind's.
     fn decode(kind: u16, b: &[u8]) -> Self {
         let id = || u16_at(b, 0);
-        let fits = |len| b.len() >= len;
+        let fits = |len| b.len() == len;
         match kind {
             2 if fits(0x14) => Self::Create {
                 rect: rect_at(b, 0),
@@ -358,7 +358,7 @@ impl DrawRecord {
                 to: point_at(b, 8),
                 color: color_at(b, 0x0c),
             },
-            105 | 106 if fits(0x15) => Self::Text {
+            105 | 106 if b.len() >= 0x15 => Self::Text {
                 kind,
                 id: id(),
                 value_02: u16_at(b, 2),
@@ -366,7 +366,7 @@ impl DrawRecord {
                 value_0c: b[0x0c..0x14].try_into().unwrap(),
                 text: b[0x14..].to_vec(),
             },
-            107 if fits(0x18) && (b.len() - 0x0c).is_multiple_of(4) => Self::Polygon {
+            107 if b.len() >= 0x18 && (b.len() - 0x0c).is_multiple_of(4) => Self::Polygon {
                 id: id(),
                 value_02: u16_at(b, 2),
                 color: color_at(b, 4),
@@ -531,9 +531,14 @@ impl DrawRecord {
 /// 4001 Draw. Provisional name.
 ///
 /// Draw records, each a u32 of kind (top 10 bits) and body length,
-/// then the body, padded with zeros to 4 bytes.
+/// then the body, padded to 4 bytes.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Draw(pub Vec<DrawRecord>);
+pub struct Draw {
+    /// The records.
+    pub records: Vec<DrawRecord>,
+    /// Each record's padding, as received; a missing entry encodes as zeros.
+    pub padding: Vec<Vec<u8>>,
+}
 
 impl Draw {
     /// Longest record body the header can describe.
@@ -542,6 +547,7 @@ impl Draw {
     /// Decodes the payload. Like the client, it stops at a record that runs past the end.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         let mut records = Vec::new();
+        let mut padding = Vec::new();
         let mut at = 0;
         while buf.len() - at >= 4 {
             let word = u32_at(buf, at);
@@ -552,18 +558,19 @@ impl Draw {
                 return Err(DecodeError::Invalid("draw record length"));
             }
             records.push(DrawRecord::decode((word >> 22) as u16, &buf[at + 4..end]));
+            padding.push(buf[end..next].to_vec());
             at = next;
         }
         if at != buf.len() {
             return Err(DecodeError::Invalid("draw record length"));
         }
-        Ok(Self(records))
+        Ok(Self { records, padding })
     }
 
     /// Encodes the payload.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        for record in &self.0 {
+        for (i, record) in self.records.iter().enumerate() {
             let body = record.encode_body();
             if body.len() > Self::MAX_BODY_LEN || record.kind() >= 0x400 {
                 return Err(EncodeError::TooLong("draw record"));
@@ -571,6 +578,7 @@ impl Draw {
             let word = u32::from(record.kind()) << 22 | body.len() as u32;
             out.extend_from_slice(&word.to_be_bytes());
             out.extend_from_slice(&body);
+            out.extend_from_slice(self.padding.get(i).map_or(&[][..], Vec::as_slice));
             out.resize(out.len().next_multiple_of(4), 0);
         }
         Ok(out)
@@ -682,21 +690,27 @@ mod tests {
 
     #[test]
     fn draw_round_trip_pads_records() {
-        let draw = Draw(vec![
-            DrawRecord::Delete { id: 3 },
-            DrawRecord::Text {
-                kind: 105,
-                id: 1,
-                value_02: 0,
-                rect: Rect::default(),
-                value_0c: [0; 8],
-                text: b"abc".to_vec(),
-            },
-        ]);
+        let draw = Draw {
+            records: vec![
+                DrawRecord::Delete { id: 3 },
+                DrawRecord::Text {
+                    kind: 105,
+                    id: 1,
+                    value_02: 0,
+                    rect: Rect::default(),
+                    value_0c: [0; 8],
+                    text: b"abc".to_vec(),
+                },
+            ],
+            padding: Vec::new(),
+        };
         let wire = draw.encode().unwrap();
         assert_eq!(wire[..8], [0x00, 0xc0, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00]);
         assert_eq!(wire.len(), 8 + 4 + 0x18);
-        assert_eq!(Draw::decode(&wire).unwrap(), draw);
+        let decoded = Draw::decode(&wire).unwrap();
+        assert_eq!(decoded.records, draw.records);
+        assert_eq!(decoded.padding, [vec![0, 0], vec![0]]);
+        assert_eq!(decoded.encode().unwrap(), wire);
     }
 
     #[test]

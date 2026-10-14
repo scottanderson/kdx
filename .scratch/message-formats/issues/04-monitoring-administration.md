@@ -41,3 +41,10 @@ Docs: `KDXProtocol.md`, Monitoring and administration. The settings blob
 - [ ] History record kinds: list every kind the server writes (184–191, the
   logged request types, and the numbers such as 0xae, 0xaf, 0x1a7, 0x1c2,
   0x1c4, 0x324, 0x44d) and what its detail and path hold.
+- [x] Audit (01): 143 Connection Monitor Info had non-zero bytes in the
+  last 1 to 2 bytes of the payload: 0x93 is 02 (`linux-catalog-volumes` 78,
+  81), 0x12a..0x12b is `20 43` (`linux-chat-admin` 143, 146, 149), 0x8e..0x8f
+  is `6e 88` (`probe` 239). Fixed: `MonitoredConnection::padding` keeps
+  them.
+- [ ] Are those bytes uninitialised padding? `KDXProtocol.md` says so from
+  the captures **[O]**; confirm in the builder.
