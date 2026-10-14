@@ -8,7 +8,7 @@ Docs: `KDXProtocol.md`, Accounts and Access Privileges.
 
 Several unnamed bytes may be colours: 506 offset 0x29 is `ff 00 00` for
 Administrator and `00 00 ff` for User, and privilege bit 3 is Color
-Overrides Class [I]. Check them together with the user record's 0x14
+Overrides Class **[I]**. Check them together with the user record's 0x14
 (issue 02).
 
 ## Gaps
@@ -16,7 +16,7 @@ Overrides Class [I]. Check them together with the user record's 0x14
 - [ ] 506 Account Class List entry: 0x18, 0x10 bytes of 0; 0x29, 3 bytes.
 - [ ] 503 Account Class Info: 0x18 (0xd bytes); 0x26 (2 bytes, "stored as
   given"); 0x28 (8 bytes, left out of 506); 0x31, "probably the colour"
-  [I] (`AccountClass::unknown_after_index`); 0x32..0x33; the second
+  **[I]** (`AccountClass::unknown_after_index`); 0x32..0x33; the second
   string. `AccountClass::unknown_25` is the flood protection byte the doc
   names; rename it.
 - [ ] Account record (507, 510, 511): 0x58, 0x1e bytes of 0; 0x77, 3 bytes

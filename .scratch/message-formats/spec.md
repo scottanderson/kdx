@@ -74,7 +74,7 @@ A capture needs the operator, so it goes to `.scratch/capture-gaps/`:
   `Origin: message-formats NN`.
 - Give the setup the agent does, then numbered GUI steps with the types
   each step should produce, as the other capture-gaps issues do. Mark
-  guessed results [I].
+  guessed results **[I]**.
 - Prefer one scenario per issue here, with as many gaps as fit in one
   session.
 
@@ -111,13 +111,13 @@ strike it here.
 
 | Issue | Where | One says | The other says |
 |---|---|---|---|
-| 03 | 105 Server Info 0x00 | Session table: "probably a session ID for transfer connections" [I] | Transfer connections: the account key for an attached login |
-| 03 | 105 Server Info 0x20 | Session table: File Transfer port [S client `FUN_08052cc0`] | `ServerInfo::server_value`: "unknown meaning" |
+| 03 | 105 Server Info 0x00 | Session table: "probably a session ID for transfer connections" **[I]** | Transfer connections: the account key for an attached login |
+| 03 | 105 Server Info 0x20 | Session table: File Transfer port **[S client `FUN_08052cc0`]** | `ServerInfo::server_value`: "unknown meaning" |
 | 06 | chat record 0x04..0x13 | Chat record table: key at 0x04, then 0xc bytes at 0x08 | 217 Create Chat table: 0x10 bytes of 0 at 0x04 |
 | 06 | chat record 0x2c..0x2d | Chat record table: IRC server and channel lengths | 217 Create Chat table: a u32 0 |
-| 07 | 412 Download File options | 412: privilege bits 25 and 65 [I] | Access Privileges table: Allow Simultaneous Downloads (25) and Disable Encryption (65) |
+| 07 | 412 Download File options | 412: privilege bits 25 and 65 **[I]** | Access Privileges table: Allow Simultaneous Downloads (25) and Disable Encryption (65) |
 | 08 | 503 Account Class Info 0x25 | Doc: flood protection | `AccountClass::unknown_25` |
-| 11 | 1107 Folder Access List 0x00, 0x04 | Doc: flags [S], icon [S] | `FolderAccessItem::unknown_00`, `item_id` |
+| 11 | 1107 Folder Access List 0x00, 0x04 | Doc: flags **[S]**, icon **[S]** | `FolderAccessItem::unknown_00`, `item_id` |
 
 Types never captured: 117, 404, 406, 408, 514, 901, 1000–1003, and 108/109
 from a GUI client (only `kdx-probe` sent them). 223 has been captured only

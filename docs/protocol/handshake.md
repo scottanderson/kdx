@@ -98,7 +98,7 @@ The receiver recomputes `auth` with its own nonce and compares all 20 bytes,
 then compares the 20 challenge bytes with its own table **[S
 `FUN_08085a04`, `FUN_0808584c`]**. A failure is error 0x40070.
 
-### account_key(password) [S `FUN_080669cc`; O]
+### account_key(password) **[S `FUN_080669cc`; O]**
 
 ```
 password empty: fixed bytes  da39a3ee caaebe6e 5e6b4b0d ba8e29ba 3255bfef 18a2b5c4 95601890 afd80709
@@ -139,7 +139,7 @@ The peer's hello decides what kind of connection it is
 | `%KDX` | 0x30 | Tracker |
 | `%HGC` (0x25484743) | 0x40 | GConsole |
 
-## Login names [S `FUN_0805270c`]
+## Login names **[S `FUN_0805270c`]**
 
 - Empty: the server substitutes `guest`.
 - `0x00` followed by a big-endian 32-bit ID (name_len 5): this attaches to the
@@ -170,9 +170,9 @@ There are three tables:
 
 | Table | Length | Used by |
 |---|---:|---|
-| the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create [S] |
-| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 [S `FUN_0804b824`, O] |
-| `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that [S `FUN_0808529c`] |
+| the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create **[S]** |
+| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 **[S `FUN_0804b824`, O]** |
+| `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that **[S `FUN_0808529c`]** |
 
 Every connection starts with the KDX story, passed to the constructor
 (client `FUN_080ea08c`, nine callers; server `FUN_08085328`, one caller in
@@ -227,7 +227,7 @@ dropped (`kdx.bin` and `hgc.bin`), by `kdx_client::table`:
 
 `kdx table fetch`, `import`, and `path` handle both stories.
 
-## Error codes [S `FUN_08066fd8`, `FUN_08066c14`]
+## Error codes **[S `FUN_08066fd8`, `FUN_08066c14`]**
 
 Logged as `ID <hi>/<lo> @ <module><line>`. Here `<hi>/<lo>` are the two 16-bit
 halves of the code, and the module tag is three ASCII bytes passed as an

@@ -28,7 +28,7 @@ UDP registration (server `FUN_08060e4c`, tracker `FUN_0804c048`,
 
 TCP:
 
-- [ ] 115/116 on a tracker: handled inline [S] but never captured; every
+- [ ] 115/116 on a tracker: handled inline **[S]** but never captured; every
   115 on record goes to a server on port 10700. A Linux capture with
   `kdx-probe` or the CLI is enough.
 - [ ] 701 group record: 0x02, 4 bytes "not set by the tracker"
@@ -51,4 +51,4 @@ TCP:
   is confirmed.
 - [ ] 721: 0x18 (8 bytes of 0) and 0x2c (12 bytes of 0).
 - [ ] The units of the 850 and 600 sweep values and the 1200 idle limit,
-  "probably seconds" [I]. Read the clock they compare against.
+  "probably seconds" **[I]**. Read the clock they compare against.
