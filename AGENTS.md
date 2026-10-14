@@ -107,8 +107,9 @@ approved.
   that wrote it, such as
   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 - Pull requests are squash merged, and the PR description becomes the
-  commit body. Write it as a commit body: wrapped prose that gives the
-  reasons, with no headings and no `Co-Authored-By:` line. GitHub copies
+  commit body. Write it as a commit body: prose that gives the reasons,
+  with no headings and no `Co-Authored-By:` line. Don't hard wrap it; GitHub
+  wraps it when it builds the commit. GitHub copies
   that trailer from the branch's commits, so each of those commits must
   carry its own. Set the title and description after opening the PR, so any
   footer the tooling adds is removed. Leave out attribution footers.
