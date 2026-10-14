@@ -114,10 +114,10 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 - `handshake.md`, `session.md`, and `tracker.md` hold the long write-ups
   that are too detailed for the reference. Add another such file only when an
   area needs one (file transfers).
-- Each field or message gets an evidence tag. **Observed** means a capture file
-  and frame number. **Static** means a binary, build, and address.
-  **Inferred** means a guess not yet verified. The goal is to turn every
-  Inferred tag into one of the other two.
+- Each field or message gets an evidence tag, written in bold. **Observed**
+  means a capture file and frame number. **Static** means a binary, build,
+  and address. **Inferred** means a guess not yet verified. The goal is to
+  turn every Inferred tag into one of the other two.
 - Byte layouts use tables with offset, size, type, and meaning.
 
 ### Validation (connects the spec to the Rust code)

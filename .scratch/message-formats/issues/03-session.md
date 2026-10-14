@@ -15,9 +15,9 @@ in issue 14.
 - [ ] 104 User Departed: byte 0x04 is 7 in every capture; 0x05..0x07 are 0.
   `UserDeparted::value_4` holds it.
 - [ ] 105 Server Info 0x00, 32 bytes: the table says "probably a session ID
-  for transfer connections" [I], while Transfer connections says it is the
+  for transfer connections" **[I]**, while Transfer connections says it is the
   account key for an attached login. Reconcile them.
-- [ ] 105 0x20: the table calls it the File Transfer port [S], but
+- [ ] 105 0x20: the table calls it the File Transfer port **[S]**, but
   `ServerInfo::server_value` says "unknown meaning". Rename the field, and
   confirm with a capture whose server has a File Transfer port set
   (Linux). Every 105 in the 22 captures has 0 there, so none covers it.
@@ -30,7 +30,7 @@ in issue 14.
   1.620 beta 5 send 108, and when? Static first; a capture only if it
   does. No GUI capture has one, though the GUI session on port 42252 of
   `linux-tracker` stays open 725 s (frames 1–93).
-- [ ] 110 Set Mini User Icon: the status byte has values 0 and 1 [O]
+- [ ] 110 Set Mini User Icon: the status byte has values 0 and 1 **[O]**
   (`linux-server-settings` frames 210, 215, `/away` and `/back`); any
   others the client sends? 0x01..0x03 are 0.
 - [ ] 112: a provisional name. No Linux build names it; check the name
@@ -39,6 +39,6 @@ in issue 14.
 - [ ] 113/114 Extra Server Info: 0x00, 0x10 bytes; the "OS values" at 0x24
   and 0x28 (`ExtraServerInfo::os_value_24`, `os_value_28`); 0x2d..0x2f.
   Read how the Linux server fills them (`FUN_080619d8`).
-- [ ] 118: "reports whether the client is registered" [I], and the name is
-  provisional. The server's use is read [S]; settle the name from the
+- [ ] 118: "reports whether the client is registered" **[I]**, and the name is
+  provisional. The server's use is read **[S]**; settle the name from the
   client's sender (`FUN_0804c01c`, `FUN_08107e04`) or keep it provisional.

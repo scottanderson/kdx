@@ -20,10 +20,10 @@ news, and server administration. Trackers list servers.
 
 | Port | Transport | Use |
 |---|---|---|
-| 10600 | TCP | client ↔ client (DCC): private chat and voice; the client advertises its port in the user record [O; S]; see [dcc.md](dcc.md) |
-| 10700 | TCP | client ↔ server: every message, and file transfers on extra connections [O] |
-| 10800 | UDP, TCP | tracker: server registration (UDP) and listing (TCP); see [tracker.md](tracker.md) [S] |
-| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it [S]; see [gconsole.md](gconsole.md) |
+| 10600 | TCP | client ↔ client (DCC): private chat and voice; the client advertises its port in the user record **[O; S]**; see [dcc.md](dcc.md) |
+| 10700 | TCP | client ↔ server: every message, and file transfers on extra connections **[O]** |
+| 10800 | UDP, TCP | tracker: server registration (UDP) and listing (TCP); see [tracker.md](tracker.md) **[S]** |
+| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it **[S]**; see [gconsole.md](gconsole.md) |
 
 A connection has two phases:
 
@@ -85,13 +85,13 @@ Error form, 24 bytes:
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | code | an error code (see Error Codes) |
-| 0x04 | 4 | request type | e.g. 0x98 for a failed 152 Get User Info [O] |
+| 0x04 | 4 | request type | e.g. 0x98 for a failed 152 Get User Info **[O]** |
 | 0x08 | 4 | module | source module tag of the raise site, ASCII packed into an integer (`0x54524e` = `TRN`; 0x46 for the path code) |
 | 0x0c | 4 | line | source line of the raise site |
 | 0x10 | 4 | extra | a value the raise site passes along |
 | 0x14 | 4 | 0 | |
 
-[O] examples:
+**[O]** examples:
 
 - `152:00000003` (no user 3) returns `00 01 00 0c 00 00 00 98 00…`, which is
   0x1000c item does not exist.
@@ -239,10 +239,10 @@ This record is used in 100 Set Identity (client to server, user ID 0) and in
 | 0x00 | 4 | user ID | assigned by the server; 0 in 100 Set Identity |
 | 0x04 | 1 | status | the value set by 110 Set Mini User Icon |
 | 0x05 | 5 | 0 | |
-| 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture [O]; [S client `FUN_0804d654`]) |
+| 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture **[O]**; **[S client `FUN_0804d654`]**) |
 | 0x0c | 2 | icon length | < 0x709 |
-| 0x0e | 6 | | from the client: two 3-byte RGB colours [S client `FUN_0804d654`]; `00 00 00 ff cc 00` in the capture |
-| 0x14 | 1 | | set by the server; 0 from the client, 0xff for admin [O] |
+| 0x0e | 6 | | from the client: two 3-byte RGB colours **[S client `FUN_0804d654`]**; `00 00 00 ff cc 00` in the capture |
+| 0x14 | 1 | | set by the server; 0 from the client, 0xff for admin **[O]** |
 | 0x15 | 2 | | set by the server |
 | 0x17 | 1 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
 | 0x18 | 1 | extra length | skipped by the server |
@@ -281,8 +281,8 @@ This record is used in 217 Create Chat, 219 Chat Info, and 220.
 | 0x28 | 2 | flags | bit 0 private, bit 1 voice |
 | 0x2a | 1 | name length | ≤ 0x3f |
 | 0x2b | 1 | description length | ≤ 0x7f |
-| 0x2c | 1 | IRC server length | ≤ 0x7f; `host:port`, the client adds `:6667` if there is no port [S client `FUN_080823a0`] |
-| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix [S client] |
+| 0x2c | 1 | IRC server length | ≤ 0x7f; `host:port`, the client adds `:6667` if there is no port **[S client `FUN_080823a0`]** |
+| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix **[S client]** |
 | 0x30 | | strings | |
 
 The two IRC strings make the chat an IRC gateway (the client's chat editor
@@ -291,7 +291,7 @@ them. Each client that joins the chat opens its own connection to the IRC
 server, joins the channel, and uses a nick made from the user's nick (at most
 9 characters). The client's IRC sender treats a line starting with `/` as an
 IRC command and one starting with `\` as raw IRC; how a chat window splits
-text between KDX and IRC is not traced [I]. The client
+text between KDX and IRC is not traced **[I]**. The client
 answers CTCP VERSION with "Unholy Haxial KDX/IRC Client" **[S client
 `FUN_08082b90`, `FUN_0809767c`, `FUN_08097c30`, `FUN_08097f78`]**. So the
 "IRC bridge" is client-side; Server 1.620 has no IRC code.
@@ -496,7 +496,7 @@ with user ID 0.
     set.
 
   It also sends 103 User Joined to everyone else and writes a 184 Login history
-  record. [O]: 105, 107, 106 in that order
+  record. **[O]**: 105, 107, 106 in that order
   (`captures/linux-server-settings.pcapng` frames 80, 82, 83), and 213
   after 106 (`captures/linux-chat-rooms.pcapng` frame 167).
 - A later 100 Set Identity broadcasts 102 User Changed to everyone, the
@@ -532,16 +532,16 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 0x20 | | 32 bytes from the user object (+0x74), probably a session ID for transfer connections [I] |
-| 0x20 | 4 | file transfer port | the server's optional File Transfer port (settings +0x260); 0 if none. The client opens transfer connections there when it is nonzero [S client `FUN_08052cc0`] |
-| 0x24 | 4 | your user ID | [O] 7 and 8 in successive probes |
+| 0x00 | 0x20 | | 32 bytes from the user object (+0x74), probably a session ID for transfer connections **[I]** |
+| 0x20 | 4 | file transfer port | the server's optional File Transfer port (settings +0x260); 0 if none. The client opens transfer connections there when it is nonzero **[S client `FUN_08052cc0`]** |
+| 0x24 | 4 | your user ID | **[O]** 7 and 8 in successive probes |
 | 0x28 | 2 | server version | 0x0654 = 1620 |
 | 0x2a | 2 | can modify settings | 1 with Modify Server Settings |
-| 0x46 | 2 | | 2. Unless it is 2, the client compares the version and warns about an older or newer server [S client]; Server 1.620 always sends 2, so the warning never shows |
+| 0x46 | 2 | | 2. Unless it is 2, the client compares the version and warns about an older or newer server **[S client]**; Server 1.620 always sends 2, so the warning never shows |
 | 0x48 | 1 | name length | ≤ 0x3f |
 | 0x49 | 1 | description length | ≤ 0xff |
 | 0x4a | 1 | third string length | ≤ 0x7f |
-| 0x4c | | name, description, third string | "New Server" [O] |
+| 0x4c | | name, description, third string | "New Server" **[O]** |
 
 The whole message is at most 0x400 bytes.
 
@@ -549,7 +549,7 @@ The whole message is at most 0x400 bytes.
 Initiator: Server. **[O]**
 
 The server's icon bitmap, the same bytes as the icon section of the settings
-blob (see 171 Server Settings Info). [O]: 524 bytes for a 32×32 icon pasted
+blob (see 171 Server Settings Info). **[O]**: 524 bytes for a 32×32 icon pasted
 from the user icon, starting `01 20 20 04 00 01 00 00 00 ff cc 00`
 (`captures/linux-server-settings.pcapng` frame 83), equal to the icon
 section of the 171 at frame 221. `kdx_proto::msg::server_info::ServerIcon`
@@ -582,7 +582,7 @@ Initiator: Client. **[S `FUN_0804b6d4`; O]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 1 | status | 1 after `/away`, 0 after `/back` [O] |
+| 0x00 | 1 | status | 1 after `/away`, 0 after `/back` **[O]** |
 | 0x01 | 3 | 0 | the payload must be at least 4 bytes |
 
 There is no reply. If the value changed, the server broadcasts **111 Mini
@@ -593,7 +593,7 @@ User Icon Changed** to everyone, the sender included:
 | 0x00 | 4 | user ID |
 | 0x04 | 4 | the 110 payload |
 
-[O]: `/away` sent `01 00 00 00`, and the peer received `00 00 00 03 01 00 00
+**[O]**: `/away` sent `01 00 00 00`, and the peer received `00 00 00 03 01 00 00
 00` for user 3 (`captures/linux-server-settings.pcapng` frames 210, 211,
 213). `kdx_proto::msg::user::MiniUserIcon` and `MiniUserIconChanged`
 re-encode frames 210 to 218 byte for byte.
@@ -674,23 +674,23 @@ front, each padded to 4 **[S `FUN_0804b9b0`]**:
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | user ID | |
-| 0x04 | 4 | transfer ID | 0 in a connection record; the transfer's ID in a transfer record [S] |
-| 0x08 | 8 | login time | the transfer's start time in a transfer record [S] |
-| 0x10 | 8 | time | 0 in a transfer record [S] |
-| 0x18 | 8 | current server time | [S] |
-| 0x20 | 8 | bytes done | transfer record only: bytes moved minus bytes still queued to send [S] |
-| 0x28 | 8 | total bytes | transfer record only [S] |
-| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset [S]; 0x51a1 under a 0x5000 limit [O] |
-| 0x34 | 4 | seconds left | transfer record only: (total − done) / rate [S] |
-| 0x38 | 4 | | transfer record only; a per-transfer value [S]; 0x5000, the server's speed limit, in every record [O] |
-| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 [S]; 0x19c (412) for a download [O] |
+| 0x04 | 4 | transfer ID | 0 in a connection record; the transfer's ID in a transfer record **[S]** |
+| 0x08 | 8 | login time | the transfer's start time in a transfer record **[S]** |
+| 0x10 | 8 | time | 0 in a transfer record **[S]** |
+| 0x18 | 8 | current server time | **[S]** |
+| 0x20 | 8 | bytes done | transfer record only: bytes moved minus bytes still queued to send **[S]** |
+| 0x28 | 8 | total bytes | transfer record only **[S]** |
+| 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset **[S]**; 0x51a1 under a 0x5000 limit **[O]** |
+| 0x34 | 4 | seconds left | transfer record only: (total − done) / rate **[S]** |
+| 0x38 | 4 | | transfer record only; a per-transfer value **[S]**; 0x5000, the server's speed limit, in every record **[O]** |
+| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 **[S]**; 0x19c (412) for a download **[O]** |
 | 0x40 | 2 | 0 | |
-| 0x42 | 1 | account class index | [S] |
+| 0x42 | 1 | account class index | **[S]** |
 | 0x60 | 1 | nick length | |
 | 0x61 | 1 | login length | |
-| 0x62 | 1 | account class name length | `?` if the class is gone [S] |
-| 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record [S] |
-| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages [S, O] |
+| 0x62 | 1 | account class name length | `?` if the class is gone **[S]** |
+| 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record **[S]** |
+| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages **[S, O]** |
 | 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
 The padding after the strings is uninitialised **[O]**. Fields marked
@@ -758,9 +758,9 @@ Reply (120 bytes for the prober itself), padded to 4:
 | 0x20 | 0x1b | | |
 | 0x3b | 1 | address length | |
 | 0x3d | 1 | nick length | |
-| 0x3f | 1 | name length | `Administrator`; the class or the account name [I] |
+| 0x3f | 1 | name length | `Administrator`; the class or the account name **[I]** |
 | 0x40 | 1 | login length | |
-| 0x41 | 1 | name length | `Administrator`; the class or the account name [I] |
+| 0x41 | 1 | name length | `Administrator`; the class or the account name **[I]** |
 | 0x44 | | address, nick, name, login, name | |
 
 **154 Send Broadcast Message**
@@ -795,7 +795,7 @@ What the captures show (`captures/linux-server-settings.pcapng` frames 36,
 |---|---|---|---|
 | 0x00 | 8 | magic | `%KDXSSTG` |
 | 0x08 | 2 | version | 1 |
-| 0x0c | 0x58 | section table | 11 entries of u32 offset, u32 length [I] |
+| 0x0c | 0x58 | section table | 11 entries of u32 offset, u32 length **[I]** |
 | 0x0c | 8 | main section | entry 0: 0x70, 0x68 |
 | 0x24 | 8 | greeting section | entry 3: 0xd8, 0x17; length 0 when no greeting is set |
 | 0x34 | 8 | icon section | entry 5: 0xf0, 0x20c; 0xd8, 0 when none is set; 0xf0, 0 in a 172 without it |
@@ -803,7 +803,7 @@ What the captures show (`captures/linux-server-settings.pcapng` frames 36,
 | 0x64 | 12 | | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171; 0x6b is 0 in a 172, and 0x69 too in a 172 without the icon |
 | 0x93 | 1 | flags | bit 1: greeting enabled |
 | 0xa8 | 4 | total outgoing speed limit | bytes per second; 0x5000, or 0 when off |
-| 0xc2 | 1 | | 0x0a, the length of both names seen [I] |
+| 0xc2 | 1 | | 0x0a, the length of both names seen **[I]** |
 | 0xcc | | server name | NUL-terminated, at the end of the main section |
 
 Entries 1 and 2 are (0xd8, 0) and entries 4, 6, and 8 to 10 are all zero in
@@ -913,7 +913,7 @@ has the 203 Chat Window Info layout, with the creator as the only member
 | 0x24 | 4 × count | member user IDs: the creator |
 | … | | name, e.g. `Private 1` |
 
-[O]: the 49-byte reply at 85 holds time 0, chat ID 0xb06d05e6, key
+**[O]**: the 49-byte reply at 85 holds time 0, chat ID 0xb06d05e6, key
 0x4ca93520, 1 member, user 2, and `Private 1`. The u32 at 0x24 is the member
 list of 203, not a separate creator field.
 `kdx_proto::msg::chat::ChatWindowInfo` re-encodes it byte for byte (test
@@ -928,7 +928,7 @@ receives **221 Chat Deleted** {u32 chat ID, u32 user ID of the requester}
 before the requester's 1 Status success. Users outside the chat receive
 nothing.
 
-[O] `captures/linux-chat-rooms.pcapng`: deleting `lab-chat` (0xe8df4d29)
+**[O]** `captures/linux-chat-rooms.pcapng`: deleting `lab-chat` (0xe8df4d29)
 with two members sent `e8 df 4d 29 00 00 00 02` to both (frames 125, 127),
 then Status at 129. Deleting the empty `lab-room` sent no 221 to a user in
 Public Chat (frames 77–83). The client deleted a chat whose window was open
@@ -951,9 +951,9 @@ Reply (51 bytes in the lab):
 | 0x0c | 4 | key |
 | 0x14 | 2 | flags |
 | 0x16 | 2 | member count |
-| 0x1e | 1 | IRC server length | [S client `FUN_08082b90`] |
+| 0x1e | 1 | IRC server length | **[S client `FUN_08082b90`]** |
 | 0x1f | 1 | IRC channel length | |
-| 0x20 | 1 | name length | [O] |
+| 0x20 | 1 | name length | **[O]** |
 | 0x21 | 1 | topic length | |
 | 0x22 | 1 | topic setter length | the nick that set the topic |
 | 0x24 | 4 × count | member user IDs | |
@@ -962,7 +962,7 @@ Reply (51 bytes in the lab):
 In frame 68 of `captures/probe.pcapng` only the name (`Public Chat`) is
 set; the payload is not padded.
 
-[O] `captures/linux-chat-rooms.pcapng`: flags is 2 for a voice chat (frames
+**[O]** `captures/linux-chat-rooms.pcapng`: flags is 2 for a voice chat (frames
 70, 115) and 0 for Public Chat (frame 176). The time is set for Public Chat
 and 0 for chats made with 217 Create Chat.
 
@@ -1006,7 +1006,7 @@ classes. **[S `FUN_08058eac`; O]**
 | 0x0a | 1 | topic length |
 | 0x0c | | topic |
 
-[O]: a probe that put `Hello` at 0x10 with length 5 got the topic
+**[O]**: a probe that put `Hello` at 0x10 with length 5 got the topic
 `00 00 00 00 48`, so the server reads from 0x0c (`captures/probe.pcapng`
 frames 73–74).
 
@@ -1044,14 +1044,14 @@ Each invitee receives 212 Chat Invitation, not padded **[O]**:
 | 0x08 | 4 | inviter user ID |
 | 0x0c | 4 | 1 at 88, 2 at 120 |
 | 0x10 | 2 | 1 |
-| 0x18 | 1 | probably the message length [I]; 0 |
+| 0x18 | 1 | probably the message length **[I]**; 0 |
 | 0x19 | 1 | chat name length |
-| 0x1c | | message [I], chat name |
+| 0x1c | | message **[I]**, chat name |
 
-[O]: the client invited user 1 to `Private 1` (frame 87, 20 bytes), then
+**[O]**: the client invited user 1 to `Private 1` (frame 87, 20 bytes), then
 users 1 and 4 (frame 118, 24 bytes), with no message. User 4 had left, so
 only user 1 got a 212 each time (frames 88 and 120, 37 bytes each). The u32
-at 0x0c may be the request's invitee count or a running count [I]. The u16
+at 0x0c may be the request's invitee count or a running count **[I]**. The u16
 at 0x10 is 1 although 216 gave the chat flags 0. `ChatInvite` and
 `ChatInvitation` in `kdx_proto::msg::chat` re-encode both byte for byte
 (test `linux_chat_admin`).
@@ -1067,7 +1067,7 @@ join helper with chat ID 1 and key 0, which opens the chat window and sends
 `FUN_08080734`]**. If the window for chat 1 is already open, the helper only
 brings it to the front and sends nothing.
 
-[O] `captures/linux-chat-rooms.pcapng`: with bit 36 set in the
+**[O]** `captures/linux-chat-rooms.pcapng`: with bit 36 set in the
 Administrator class (504 Set Account Class at frame 145), 213 arrived after
 106 Server Icon (frame 167), and the client sent 202 for chat 1 (frame 175).
 
@@ -1087,7 +1087,7 @@ padded to 4:
 | 0x13 | 1 | description length |
 | 0x14 | | name, description |
 
-[O]: Public Chat (1), Voice Chat (2, flags 2), Admin Lounge (3). Chats
+**[O]**: Public Chat (1), Voice Chat (2, flags 2), Admin Lounge (3). Chats
 made with 217 Create Chat follow, with a random chat ID (0xc217598c and
 0xe8df4d29 in `captures/linux-chat-rooms.pcapng` frames 47, 90).
 
@@ -1116,12 +1116,12 @@ Chat record, not padded:
 | 0x2c | 4 | | 0 |
 | 0x30 | | name, description | |
 
-[O] `captures/linux-chat-rooms.pcapng`: 217 for `lab-room` / `lab` (frame
+**[O]** `captures/linux-chat-rooms.pcapng`: 217 for `lab-room` / `lab` (frame
 42), 219 and 220 for `lab edited` (frames 50, 52), 220 with Voice Chat ticked
 (flags 2, frame 62), and 219 for Public Chat (frame 137). The three class
 masks are `ff ff ff ff` for Public Chat and `80 00 00 00` for a chat whose
 Access was left at the default. Their bits are probably account classes,
-MSB first (Administrator is class 0), for join, send, and topic [I]. The
+MSB first (Administrator is class 0), for join, send, and topic **[I]**. The
 client sends 505 Get Account Class List before it opens the new-chat window
 (frame 39). 218 is the chat ID alone (frames 49, 59, 136). 217 gets 1 Status
 success 0xd9 and 220 gets 0xdc (frames 45, 55). `ChatRecord` and `ChatId` in
@@ -1147,12 +1147,12 @@ whose user record has a nonzero DCC port (0x0a), each padded to 4 **[S]**:
 The client then opens a TCP connection to each address for voice; see
 [dcc.md](dcc.md).
 
-[O] `captures/linux-chat-rooms.pcapng`: the client sends 222 right after
+**[O]** `captures/linux-chat-rooms.pcapng`: the client sends 222 right after
 joining a voice chat. The reply was empty (len 0) when the client was alone
 (frames 72–73) and when a `kdx` CLI peer was also a member (frames
 119-120). The CLI sends DCC port 0, so the server leaves it out **[S]**.
 
-[O] `captures/linux-dcc-voice-failed.pcapng`: one entry, user 1 with length
+**[O]** `captures/linux-dcc-voice-failed.pcapng`: one entry, user 1 with length
 0xf and `127.0.0.1:10600`, padded with 0x22 rather than 0 (frame 109). 223 has
 no codec yet. `kdx_proto::msg::chat::ChatId` re-encodes 222 byte for byte (test
 `linux_chat_rooms`).
@@ -1190,10 +1190,10 @@ entry per item, each padded to 4:
 | 0x08 | 8 | created | time |
 | 0x10 | 8 | modified | time |
 | 0x18 | 8 | | |
-| 0x20 | 4 | attributes | 1 for a file, 0x01000002 for a folder [O]; the server clears bit 24 and tests 0x42 [S] |
+| 0x20 | 4 | attributes | 1 for a file, 0x01000002 for a folder **[O]**; the server clears bit 24 and tests 0x42 **[S]** |
 | 0x24 | 0xa | | |
 | 0x2e | 2 | | 0xffff for folders, 0 for a file |
-| 0x30 | 2 | folder icon | the folder access entry's icon: 0x2c Dropbox, 0x2b Uploads; 0 for a file (see 1100 Create Folder Access) [S] |
+| 0x30 | 2 | folder icon | the folder access entry's icon: 0x2c Dropbox, 0x2b Uploads; 0 for a file (see 1100 Create Folder Access) **[S]** |
 | 0x32 | 2 | | |
 | 0x34 | 1 | | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, 0 for a file |
 | 0x35 | 1 | name length | |
@@ -1201,7 +1201,7 @@ entry per item, each padded to 4:
 | 0x37 | 1 | | |
 | 0x38 | | name, kind | |
 
-[O] `captures/kdx-cli.pcapng`: a 600000-byte `cli-big.bin` is listed with
+**[O]** `captures/kdx-cli.pcapng`: a 600000-byte `cli-big.bin` is listed with
 size 0x927c0 and kind `exttype/bin`. `kdx_proto::msg::file::FileListEntry`
 decodes both kinds of entry.
 
@@ -1240,17 +1240,17 @@ client `FUN_080758dc`; O `captures/linux-catalog-volumes.pcapng` frames
 | 0x10 | 8 | modified | time |
 | 0x18 | 8 | created | time |
 | 0x20 | 4 | item count | 0xffffffff if unknown |
-| 0x26 | 1 | disk type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy; 0 on Linux [O] |
-| 0x2c | 4 | | 0x88 [O] |
-| 0x30 | 4 | icon | 0x3d [O] |
+| 0x26 | 1 | disk type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy; 0 on Linux **[O]** |
+| 0x2c | 4 | | 0x88 **[O]** |
+| 0x30 | 4 | icon | 0x3d **[O]** |
 | 0x44 | 4 | flags | bit 0 name editable, bit 1 comments editable |
 | 0x48 | 4 | flags mask | the client ANDs it with 0x44 |
 | 0x4e | 1 | name length | |
 | 0x50 | 1 | format length | e.g. the file system name |
 | 0x51 | 1 | comments length | |
-| 0x54 | | name, format, comments | `/tmp` and `tmpfs` at 51 [O] |
+| 0x54 | | name, format, comments | `/tmp` and `tmpfs` at 51 **[O]** |
 
-On Linux the sizes and item count are all ones and the times are 0 [O].
+On Linux the sizes and item count are all ones and the times are 0 **[O]**.
 `kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for byte. The
 client labels are Free Size, Used Size, Total Size, Item Count, Disk Type,
 Format, Created, Modified, and Comments. It makes the name or comments field
@@ -1400,7 +1400,7 @@ O kdx-probe `--attach`]**
 
 The stream is encrypted unless the client asks for plain mode (request
 offset 0x17 bit 0, which needs privilege bit 65, probably Disable
-Encryption [I]). Encrypted data is framed exactly like a message: a header
+Encryption **[I]**). Encrypted data is framed exactly like a message: a header
 whose length gives the byte count, followed by that many bytes in 16-byte
 Twofish blocks. A client can read it with its normal receive path **[O]**.
 Plain mode has not been tried.
@@ -1419,7 +1419,7 @@ Initiator: Client, on a transfer connection. Privilege: Download (10).
 
 The payload must be at least 0x1a bytes. Each offset is rounded down to a
 multiple of 0x1000. An offset at or past the end still gets its 414
-Download File (D), with length 0. [O]: offset 5000 resumed at 4096, and the
+Download File (D), with length 0. **[O]**: offset 5000 resumed at 4096, and the
 65904 bytes that came back equal the full download from 0x1000; offset
 70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng`
 frames 271–281, 383–389, and 348–351; test `downloads`).
@@ -1437,7 +1437,7 @@ not as the rounded offset **[I]**.
 
 A file over 0x40000 bytes is refused with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25
-(probably Allow Simultaneous Downloads [I]).
+(probably Allow Simultaneous Downloads **[I]**).
 
 The server answers with **413 Download File (R)**, 99 bytes for a plain
 Linux file:
@@ -1455,10 +1455,10 @@ Linux file:
 | 0x49 | 1 | second string length | |
 | 0x4a | 1 | third string length | |
 | 0x4b | 1 | fourth string length | at most 0x41 |
-| 0x4c | | name, strings 2–4 | `probe-dl.bin`, `exttype/bin`, empty, empty [O] |
+| 0x4c | | name, strings 2–4 | `probe-dl.bin`, `exttype/bin`, empty, empty **[O]** |
 
 The second string is probably a type that the server derives from the file
-extension, since Linux files have no type code [I]. Then it streams:
+extension, since Linux files have no type code **[I]**. Then it streams:
 
 1. **414 Download File (D)** with the request's txid and the reply flag.
    The length is the data-fork bytes that remain. The data follows.
@@ -1482,7 +1482,7 @@ Initiator: Server. **[O]**
 | 0x00 | 4 | speed limit, in bytes per second |
 
 It came on the session, not on the transfer connection, when a download
-started under the total outgoing speed limit. [O]: `00 00 50 00`, the
+started under the total outgoing speed limit. **[O]**: `00 00 50 00`, the
 20480 bytes per second set in the server settings, came right after the 413
 (`captures/linux-server-settings.pcapng` frames 106, 110).
 `kdx_proto::msg::transfer::NotifySpeedLimit` re-encodes it.
@@ -1509,7 +1509,7 @@ The server writes to a temporary name until the upload finishes. If the
 name already exists, it fails with 0x30073. An earlier partial upload of
 the same name is resumed. At the end, the server applies the second to
 fourth strings to the file. They probably carry type and comment
-information [I].
+information **[I]**.
 
 The server answers with **416 Upload File (R)**, 24 bytes:
 
@@ -1524,11 +1524,11 @@ The client then sends:
 1. A **417 Upload File (D)** header. Its length must equal the data-fork
    bytes that remain, or the server fails with 0x40074. The data follows.
 2. A **417 Upload File (D)** header for the resource fork, then its data.
-   This build expects length 0 here [S].
+   This build expects length 0 here **[S]**.
 
 When both forks are complete, the server renames the file into place,
 writes a 189 Finished File Upload history record, and sends an empty
-**418 Upload File (C)** with its own txid **[O]**. [O]: 100 bytes uploaded
+**418 Upload File (C)** with its own txid **[O]**. **[O]**: 100 bytes uploaded
 to `Uploads [UL]` arrived byte for byte, and so did 300000 bytes sent under
 one 417 header (`captures/kdx-cli.pcapng` frame 244).
 
@@ -1577,7 +1577,7 @@ padded to 4:
 | 0x18 | 4 | path length |
 | 0x20 | 4 | attributes, as in 401 |
 | 0x2e | 2 | as in 401 |
-| 0x34 | 1 | 0x10 for a file [O] |
+| 0x34 | 1 | 0x10 for a file **[O]** |
 | 0x36 | 1 | name length |
 | 0x38 | | name, then the item's full file path (root first) |
 
@@ -1595,7 +1595,7 @@ byte for byte (test `linux_catalog_volumes`).
 **505 Get Account Class List** → **506 Account Class List**
 Initiator: Client. Any one of View Folder Access (27), Create/Modify Chats
 (37), View Accounts (50), or Create/Modify Newsgroups (73), since every
-class-list editor uses it [I]. **[S `FUN_0805572c`; O]**
+class-list editor uses it **[I]**. **[S `FUN_0805572c`; O]**
 
 Reply: a u32 count (12 classes in the lab), then one record per class,
 padded to 4 with zeros. A record is the 503 Account Class Info record
@@ -1611,7 +1611,7 @@ without the 8 bytes at 0x28 **[O probe.pcapng, port 50770]**:
 | 0x2c | 1 | name length | |
 | 0x30 | | name | |
 
-[O] privilege bytes:
+**[O]** privilege bytes:
 
 - Admin: `28 31 e8 5b f4 d0 3c 0d c3 e0 80`
 - User: `28 30 00 03 f0 c0 04 08 03 20`
@@ -1628,14 +1628,14 @@ padded to 4:
 | 0x00 | 0x10 | privileges | 11 bytes used |
 | 0x10 | 8 | time | |
 | 0x18 | 0xd | | |
-| 0x25 | 1 | flood protection | commands per 2 minutes; 0x50 (Relaxed) for Administrator, 0x28 (Strict) for Guest; see Flood ban [S]; 0x3c (Average) for User, which 504 sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43 [O] |
-| 0x26 | 2 | | stored as given [S] |
+| 0x25 | 1 | flood protection | commands per 2 minutes; 0x50 (Relaxed) for Administrator, 0x28 (Strict) for Guest; see Flood ban **[S]**; 0x3c (Average) for User, which 504 sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43 **[O]** |
+| 0x26 | 2 | | stored as given **[S]** |
 | 0x28 | 8 | | |
 | 0x30 | 1 | class index | 0, 2 |
-| 0x31 | 1 | | 0xff for Administrator, 0 for Guest; probably the colour [I] |
+| 0x31 | 1 | | 0xff for Administrator, 0 for Guest; probably the colour **[I]** |
 | 0x34 | 1 | name length | |
-| 0x35 | 1 | second string length | [S] |
-| 0x36 | 1 | editor login length | set by the server on 504 [S] |
+| 0x35 | 1 | second string length | **[S]** |
+| 0x36 | 1 | editor login length | set by the server on 504 **[S]** |
 | 0x38 | | name, second string, editor login | |
 
 The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**.
@@ -1795,10 +1795,10 @@ Reply: a u32 count, then one entry per group:
 | 0x00 | 8 | time | |
 | 0x08 | 4 | group ID | |
 | 0x0c | 4 | | |
-| 0x10 | 2 | message count | 1 [I] |
+| 0x10 | 2 | message count | 1 **[I]** |
 | 0x12 | 4 | | |
 | 0x16 | 1 | name length | |
-| 0x17 | 1 | | 0, probably the description length [I] |
+| 0x17 | 1 | | 0, probably the description length **[I]** |
 | 0x18 | | name | `General News` |
 
 **602 Get Newsgroup** → **603 Newsgroup Info**
@@ -1818,10 +1818,10 @@ bytes, for the 14-byte name `test newsgroup` and the description `desc`
 | 0x10 | 8 | time of the last post | 611 Post News Message sets it |
 | 0x18 | 4 | read classes | a class bitmap, class 0 in the top bit; `ffffffff` |
 | 0x1c | 4 | post classes | the same; `ffffffff` |
-| 0x20 | 4 | | a third class bitmap; `01 00 00 00`; the client sends 0 [S] |
+| 0x20 | 4 | | a third class bitmap; `01 00 00 00`; the client sends 0 **[S]** |
 | 0x24 | 0xc | | 0 |
 | 0x30 | 2 | message count | 1 |
-| 0x32 | 2 | archive size | KiB, clamped to 4..1024; 0x32 (50 KiB) by default [S `FUN_0805c8f8`] |
+| 0x32 | 2 | archive size | KiB, clamped to 4..1024; 0x32 (50 KiB) by default **[S `FUN_0805c8f8`]** |
 | 0x34 | 8 | | 0 |
 | 0x3c | 1 | name length | at most 0x3f |
 | 0x3d | 1 | description length | at most 0x7f; 0 in the lab |
@@ -1879,10 +1879,10 @@ the group's post classes unless the user has privilege 0. **[S
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | group ID | |
-| 0x04 | 8 | | ignored by the server [S] |
+| 0x04 | 8 | | ignored by the server **[S]** |
 | 0x0c | 2 | body length | the server keeps at most 0x4000 bytes |
 | 0x0e | 1 | subject length | the server keeps at most 0x80 bytes |
-| 0x0f | 1 | | ignored by the server [S] |
+| 0x0f | 1 | | ignored by the server **[S]** |
 | 0x10 | | subject, body | lines end in CR |
 
 There is no reply on success (frames 356–361). The server stores a 610 News
@@ -1964,8 +1964,8 @@ up in the list) and replies:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 8 | | about 33 GB; host memory [I] |
-| 0x08 | 8 | | about 33 GB [I] |
+| 0x00 | 8 | | about 33 GB; host memory **[I]** |
+| 0x08 | 8 | | about 33 GB **[I]** |
 | 0x10 | 0xc | | |
 | 0x1c | 4 | count | |
 | 0x20 | | process entries | |
@@ -2019,8 +2019,8 @@ Reply: a u32 count, then one entry per item, each padded to 4:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 4 | flags | 1 built-in (`[Default]`), 2 Owner Login In Folder Name; 1, 2, 0 in the lab [S] |
-| 0x04 | 4 | icon | 0 for `[Default]`, 0x2c Dropbox (`DB`), 0x2b Uploads (`UL`) [S] |
+| 0x00 | 4 | flags | 1 built-in (`[Default]`), 2 Owner Login In Folder Name; 1, 2, 0 in the lab **[S]** |
+| 0x04 | 4 | icon | 0 for `[Default]`, 0x2c Dropbox (`DB`), 0x2b Uploads (`UL`) **[S]** |
 | 0x08 | 8 | | not written by the server |
 | 0x10 | 1 | | |
 | 0x11 | 1 | name length | |
@@ -2044,8 +2044,8 @@ the three captured records byte for byte, padding included (test
 | 0x00 | 4 | | |
 | 0x04 | 4 | flags | byte 7: bit 0 built-in, bit 1 Owner Login In Folder Name |
 | 0x08 | 4 | icon | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
-| 0x0c | 0x80 | class rules | 32 entries at 0x0c + 4 × class index: u16 permission bits, MSB = bit 0, then u16 0. User (class 1) is at 0x10 and Guest (class 2) at 0x14 [O]. The first, 0xfffe0000 (every permission) in both lab items, is probably Administrator's [I] |
-| 0x8c | 4 | | 0xfffe0000 in `DB`, 0 in `[Default]`; probably the owner's rule [I] |
+| 0x0c | 0x80 | class rules | 32 entries at 0x0c + 4 × class index: u16 permission bits, MSB = bit 0, then u16 0. User (class 1) is at 0x10 and Guest (class 2) at 0x14 **[O]**. The first, 0xfffe0000 (every permission) in both lab items, is probably Administrator's **[I]** |
+| 0x8c | 4 | | 0xfffe0000 in `DB`, 0 in `[Default]`; probably the owner's rule **[I]** |
 | 0x90 | 0x1d | 0 | |
 | 0xad | 1 | name length | the tag, such as `DB` |
 | 0xae | 1 | owner login length | |
@@ -2195,7 +2195,7 @@ Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
 | 0x00 | 4 | modifiers | as in 905; Client 1.620 beta 5's bits are unknown **[I]** |
 | 0x04 | 2 | x | in screen pixels |
 | 0x06 | 2 | y | |
-| 0x08 | 2 | wheel | the event field 4201 sends as its wheel; 0 for clicks and moves [O] |
+| 0x08 | 2 | wheel | the event field 4201 sends as its wheel; 0 for clicks and moves **[O]** |
 | 0x0a | 1 | button | 1 left, 2 right, 3 middle **[S `FUN_00420270`]** |
 | 0x0b | 1 | kind | 1 down, 2 up, 3 move, 4 wheel **[S `FUN_0805c344`]** |
 
@@ -2217,9 +2217,9 @@ Display (67). **[S `FUN_0805c498`, client `FUN_0806f1f4`]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 4 | modifiers | from Client 1.600: Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 [S client 1.600 `FUN_00463870`]; Client 1.620 beta 5's bits are unknown **[I]** |
-| 0x04 | 2 | character | [O] |
-| 0x06 | 2 | key code | [O]; `a` = 4, `b` = 5, `c` = 6 from Client 1.620 |
+| 0x00 | 4 | modifiers | from Client 1.600: Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 **[S client 1.600 `FUN_00463870`]**; Client 1.620 beta 5's bits are unknown **[I]** |
+| 0x04 | 2 | character | **[O]** |
+| 0x06 | 2 | key code | **[O]**; `a` = 4, `b` = 5, `c` = 6 from Client 1.620 |
 | 0x08 | 3 | 0 | |
 | 0x0b | 1 | kind | 1 key down, 2 key up, 3 key repeat **[S `FUN_0805c498`]** |
 

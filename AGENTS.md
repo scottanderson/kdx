@@ -41,6 +41,8 @@ Put details in those files. Keep this file to rules.
 
 - Tag each claim with its evidence: **[O]** observed in a capture, **[S]**
   read in a binary, **[I]** inferred.
+- Write each tag in bold, in tables and headings too:
+  `**[S FUN_08085a04]**`. Leave tags in code blocks plain.
 - Cite static findings by function address (`FUN_08085a04`), and cite
   captures by file and frame number.
 - Write numbers in the protocol as hex where the binary uses hex. Write all

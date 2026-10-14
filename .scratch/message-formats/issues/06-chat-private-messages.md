@@ -18,7 +18,7 @@ Chat record (`FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`):
   0x2c and 0x2d; the 217 table has a u32 0 there. Reconcile, and find
   0x2e..0x2f.
 - [ ] The three class masks at 0x14, 0x18, 0x1c are "probably" join, send,
-  and topic classes [I]; confirm from the handlers (202, 207, 209) and
+  and topic classes **[I]**; confirm from the handlers (202, 207, 209) and
   `ChatRecord`.
 - [ ] A Linux capture of a chat made with Make IRC Gateway, to see the IRC
   strings on the wire (in the record and in 203). No capture has one.
@@ -37,16 +37,16 @@ Other messages:
 - [ ] 210 Chat Topic Changed: 0x10, 8 bytes of 0, and 0x1a..0x1b.
 - [ ] 211 Chat Invite: 0x04..0x07 and 0x0a..0x0e.
 - [ ] 212 Chat Invitation: the u32 at 0x0c, "the request's invitee count
-  or a running count" [I] (`ChatInvitation::unknown_0c`); the u16 at 0x10,
+  or a running count" **[I]** (`ChatInvitation::unknown_0c`); the u16 at 0x10,
   1 although the chat's flags were 0 (`unknown_10`); 0x12..0x17; 0x18,
-  "probably the message length" [I]; 0x1a..0x1b. A Linux capture of an
+  "probably the message length" **[I]**; 0x1a..0x1b. A Linux capture of an
   invitation with a message settles 0x18; the two on record have none.
   They don't separate the 0x0c readings either: it is 1, then 2
   (`linux-chat-admin` frames 88, 120), for 211s that invite one user,
   then two (frames 87, 118). Inviting two users first would.
 - [ ] 215 Chat List entry: 0x08..0x0d.
 - [ ] 223 Chat DCC Addresses: an entry has never been seen, so 223 has no
-  codec. Entry bytes 0x04..0x0d and 0x0f are listed as 0 [S]. A Linux
+  codec. Entry bytes 0x04..0x0d and 0x0f are listed as 0 **[S]**. A Linux
   capture is enough: the GUI client with its DCC listener on (port 10600
   in its user record) joins a voice chat after a second member asks with
   222. The second member can be `kdx-probe` or the CLI with a nonzero DCC
