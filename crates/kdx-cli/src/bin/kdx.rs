@@ -15,7 +15,7 @@ use kdx_proto::msg::{FilePath, PrivateMessage, UserRecord};
 use kdx_proto::session::MessageType;
 use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::fs::File;
-use tokio::io::{AsyncSeekExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 
 #[derive(Parser)]
 #[command(about = "A KDX client")]
@@ -577,8 +577,6 @@ async fn download(client: &mut Client, path: &FilePath, output: &Path, resume: b
         .open(output)
         .await
         .with_context(|| format!("opening {}", output.display()))?;
-    // The server resumes at a multiple of 0x1000, so the returned start may be earlier.
-    file.seek(std::io::SeekFrom::Start(offset & !0xfff)).await?;
     let (info, start) = client.download(path, offset, &mut file).await?;
     file.flush().await?;
     file.set_len(info.data_size).await?;

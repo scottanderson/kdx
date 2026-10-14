@@ -210,6 +210,21 @@ async fn login_and_requests() {
 
 #[tokio::test]
 async fn download() {
+    let (start, sink, file) = download_from(5000, 0).await;
+    assert_eq!(start, 0x1000);
+    assert!(sink[0x1000..] == file[0x1000..]);
+}
+
+#[tokio::test]
+async fn download_starting_late() {
+    // As seen once from kdx.erb.pw past 4 GiB.
+    let (start, sink, file) = download_from(0x2000, 0xf000).await;
+    assert_eq!(start, 0x11000);
+    assert!(sink[0x11000..] == file[0x11000..]);
+}
+
+/// Downloads a 200000-byte file from `offset` off a server that starts `late` bytes past where it should.
+async fn download_from(offset: u64, late: usize) -> (u64, Vec<u8>, Vec<u8>) {
     const LEN: u32 = 200_000;
     let file: Vec<u8> = (0..LEN).map(|i| (i % 251) as u8).collect();
     let served = file.clone();
@@ -220,7 +235,7 @@ async fn download() {
         assert_eq!(header.kind, MessageType::DOWNLOAD_FILE);
         let request = DownloadFile::decode(&payload).unwrap();
         assert_eq!(request.path, FilePath::new(["a", "b"]));
-        let start = (request.data_offset & !0xfff) as usize;
+        let start = (request.data_offset & !0xfff) as usize + late;
         let info = DownloadInfo {
             data_size: LEN.into(),
             ..DownloadInfo::default()
@@ -255,11 +270,11 @@ async fn download() {
     })
     .await;
 
-    let mut sink = Vec::new();
+    let mut sink = Cursor::new(Vec::new());
     let path = FilePath::new(["a", "b"]);
-    let (info, start) = client.download(&path, 5000, &mut sink).await.unwrap();
-    assert_eq!((info.data_size, start), (LEN.into(), 0x1000));
-    assert!(sink == file[0x1000..]);
+    let (info, start) = client.download(&path, offset, &mut sink).await.unwrap();
+    assert_eq!(info.data_size, LEN.into());
+    (start, sink.into_inner(), file)
 }
 
 #[tokio::test]
