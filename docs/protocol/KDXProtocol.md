@@ -1480,7 +1480,8 @@ extension, since Linux files have no type code **[I]**. Then it streams:
 One 414 header covers the whole fork, even past the limits on
 normal payloads: a 600000-byte file came as a single 414 of length 600000,
 byte for byte, and a resume from 300000 as one of 300992 from 299008
-(`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**. Data is read in
+(`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**.
+`kdx_proto::msg::file::FileData` holds the payload of 414 and 417 unchanged. Data is read in
 chunks starting at 0x10000 and growing to 0x80000. With a
 speed limit, chunks are multiples of 0x1000. At the end the server writes a
 188 Finished File Download history record.

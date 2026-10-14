@@ -10,6 +10,21 @@ pub const ATTR_FILE: u32 = 1;
 /// The attributes value of a folder.
 pub const ATTR_FOLDER: u32 = 0x0100_0002;
 
+/// The payload of 414 Download File (D) and 417 Upload File (D): the bytes of one fork, unframed.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FileData(pub Vec<u8>);
+
+impl FileData {
+    /// Takes the payload as it is; any bytes are valid.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self(buf.to_vec()))
+    }
+
+    /// The payload.
+    pub fn encode(&self) -> Vec<u8> {
+        self.0.clone()
+    }
+}
 /// An entry of 401 File List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FileListEntry {
