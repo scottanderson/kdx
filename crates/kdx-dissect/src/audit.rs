@@ -17,7 +17,8 @@ use kdx_proto::msg::file::{
 };
 use kdx_proto::msg::gconsole::{Draw, Key, Mouse, OpenWindow};
 use kdx_proto::msg::news::{
-    NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
+    NewsMessage, NewsMessageChange, NewsMessageId, NewsMessages, NewsgroupEntry, NewsgroupId,
+    NewsgroupInfo, PostNewsMessage,
 };
 use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
 use kdx_proto::msg::tracker::{
@@ -179,6 +180,8 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::FILE_SEARCH => one!(FileSearch),
         M::FILE_SEARCH_REPLY => list!(FileSearchEntry),
         M::NOTIFY_SPEED_LIMIT => one!(NotifySpeedLimit),
+        M::DELETE_NEWSGROUP | M::GET_NEWSGROUP | M::GET_NEWS_MESSAGES => one!(NewsgroupId),
+        M::GET_NEWS_MESSAGE | M::DELETE_NEWS_MESSAGE => one!(NewsMessageId),
         M::NEWSGROUP_LIST => list!(NewsgroupEntry),
         M::NEWS_MESSAGE => (|| Ok(NewsMessage::decode(p)?.0.encode()?))(),
         M::POST_NEWS_MESSAGE => one!(PostNewsMessage),
@@ -214,4 +217,20 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         _ => return None,
     };
     Some(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fixed_size_payload_with_extra_bytes_is_a_mismatch() {
+        let outcome = roundtrip(MessageType::GET_NEWSGROUP, &[0, 0, 0, 2, 0xee]);
+        assert_eq!(
+            outcome,
+            Outcome::Mismatch("first at 0x4: ee became  (5 bytes in, 4 out)".into())
+        );
+        let outcome = roundtrip(MessageType::DELETE_NEWS_MESSAGE, &[0, 0, 0, 1, 0, 0, 0]);
+        assert_eq!(outcome, Outcome::Undecodable);
+    }
 }

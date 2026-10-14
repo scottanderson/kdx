@@ -1817,10 +1817,12 @@ Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
 `FUN_0805cc24`; O 76 bytes; O `captures/linux-accounts-news.pcapng` frames
 68-69]**
 
-The request is a u32 group ID. An unknown group gets 1 Status 0x1000c. The
-reply is not padded: frame 69 of `captures/linux-accounts-news.pcapng` is 82
-bytes, for the 14-byte name `test newsgroup` and the description `desc`
-**[O]**. The record is:
+The request is a u32 group ID, 4 bytes and unpadded, which `NewsgroupId`
+encodes (`captures/linux-accounts-news.pcapng` frame 68,
+`captures/linux-first-connect.pcapng` frame 130) **[O]**. An unknown group
+gets 1 Status 0x1000c. The reply is not padded: frame 69 of
+`captures/linux-accounts-news.pcapng` is 82 bytes, for the 14-byte name
+`test newsgroup` and the description `desc` **[O]**. The record is:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1845,7 +1847,9 @@ Post News Message check **[S]**.
 **607 Get News Messages** → **608 News Messages**
 Initiator: Client. **[S `FUN_0805d2e8`; O]**
 
-The request is a u32 group ID. Reply:
+The request is a u32 group ID, 4 bytes, as `NewsgroupId` encodes it
+(`captures/kdx-news.pcapng` frame 76, `captures/linux-accounts-news.pcapng`
+frames 65, 78, and 107) **[O]**. Reply:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -1863,8 +1867,10 @@ just the 16-byte header with permissions 1 and count 0 **[S]**.
 **609 Get News Message** → **610 News Message**
 Initiator: Client. **[S `FUN_0805d54c`; O]**
 
-Request: {u32 group ID, u32 message ID}. 609 Get News Message does not reset
-the idle timer.
+Request: {u32 group ID, u32 message ID}, 8 bytes, as `NewsMessageId` encodes
+it (`captures/kdx-news.pcapng` frame 137, `captures/linux-first-connect.pcapng`
+frames 99 and 112) **[O]**. 609 Get News Message does not reset the idle
+timer.
 
 The reply is one news message record, padded to 4:
 
@@ -1912,11 +1918,13 @@ group (frame 160) and 0x10014 for a guest (frame 182).
 **612 Delete News Message**
 Initiator: Client. **[S `FUN_0805db44`; O]**
 
-Request: {u32 group ID, u32 message ID}. The user's class must be in the
-group's read classes unless the user has privilege 0. Without Delete News
-Messages (72), the user may delete only the group's last message, and only
-if they posted it (the login at 0x1d matches); otherwise 1 Status 0x10014
-(frame 226, a guest).
+Request: {u32 group ID, u32 message ID}, 8 bytes, as `NewsMessageId` encodes
+it (`captures/linux-first-connect.pcapng` frame 102,
+`captures/kdx-news.pcapng` frames 225 and 406) **[O]**. The user's class must
+be in the group's read classes unless the user has privilege 0. Without
+Delete News Messages (72), the user may delete only the group's last message,
+and only if they posted it (the login at 0x1d matches); otherwise 1 Status
+0x10014 (`kdx-news` frame 226, a guest).
 
 There is no reply on success. The server broadcasts 614 News Message Deleted
 to every user (frames 409–411). An unknown group or message gets no reply
@@ -1956,8 +1964,9 @@ group **[S `FUN_0805ed88`]**.
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
 `FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81-84]**
 
-The request is a u32 group ID. An unknown group gets 0x1000c. Success is
-1 Status 0x259 (frame 84). 602 Get Newsgroup also writes history record 0x25a.
+The request is a u32 group ID, 4 bytes, as `NewsgroupId` encodes it (frame
+81) **[O]**. An unknown group gets 0x1000c. Success is 1 Status 0x259 (frame
+84). 602 Get Newsgroup also writes history record 0x25a.
 
 **604 Set Newsgroup**
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S

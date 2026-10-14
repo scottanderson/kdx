@@ -33,7 +33,8 @@ use kdx_proto::msg::file::{
 };
 use kdx_proto::msg::gconsole::{Draw, DrawRecord, Key, Mouse, OpenWindow, Point, Rect};
 use kdx_proto::msg::news::{
-    NewsMessage, NewsMessageChange, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
+    NewsMessage, NewsMessageChange, NewsMessageId, NewsMessages, NewsgroupEntry, NewsgroupId,
+    NewsgroupInfo, PostNewsMessage,
 };
 use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
 use kdx_proto::msg::tracker::{
@@ -875,17 +876,10 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .join("; "),
         MessageType::DELETE_NEWSGROUP
         | MessageType::GET_NEWSGROUP
-        | MessageType::GET_NEWS_MESSAGES => {
-            need(payload, 4)?;
-            format!("group {}", u32::from_be_bytes(payload[..4].try_into()?))
-        }
+        | MessageType::GET_NEWS_MESSAGES => format!("group {}", NewsgroupId::decode(payload)?.0),
         MessageType::GET_NEWS_MESSAGE | MessageType::DELETE_NEWS_MESSAGE => {
-            need(payload, 8)?;
-            format!(
-                "group {} message {}",
-                u32::from_be_bytes(payload[..4].try_into()?),
-                u32::from_be_bytes(payload[4..8].try_into()?)
-            )
+            let id = NewsMessageId::decode(payload)?;
+            format!("group {} message {}", id.group_id, id.message_id)
         }
         MessageType::NEWS_MESSAGE => {
             let (m, _) = NewsMessage::decode(payload)?;

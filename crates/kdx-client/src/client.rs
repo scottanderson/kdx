@@ -7,7 +7,9 @@ use anyhow::{bail, Context, Result};
 use kdx_proto::msg::admin::{Account, AccountClass, AccountListEntry};
 use kdx_proto::msg::chat::{ChatListEntry, ChatText, ChatWindowInfo, JoinChat};
 use kdx_proto::msg::file::FileListEntry;
-use kdx_proto::msg::news::{NewsMessage, NewsMessages, NewsgroupEntry, PostNewsMessage};
+use kdx_proto::msg::news::{
+    NewsMessage, NewsMessageId, NewsMessages, NewsgroupEntry, NewsgroupId, PostNewsMessage,
+};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, MessageType};
@@ -179,15 +181,21 @@ impl Client {
     /// 607 Get News Messages.
     pub async fn news(&mut self, group_id: u32) -> Result<NewsMessages> {
         let reply = self
-            .request(MessageType::GET_NEWS_MESSAGES, &group_id.to_be_bytes())
+            .request(
+                MessageType::GET_NEWS_MESSAGES,
+                &NewsgroupId(group_id).encode(),
+            )
             .await?;
         Ok(NewsMessages::decode(&reply)?)
     }
 
     /// 609 Get News Message.
     pub async fn news_message(&mut self, group_id: u32, message_id: u32) -> Result<NewsMessage> {
-        let mut request = group_id.to_be_bytes().to_vec();
-        request.extend_from_slice(&message_id.to_be_bytes());
+        let request = NewsMessageId {
+            group_id,
+            message_id,
+        }
+        .encode();
         let reply = self
             .request(MessageType::GET_NEWS_MESSAGE, &request)
             .await?;
@@ -208,8 +216,11 @@ impl Client {
 
     /// 612 Delete News Message.
     pub async fn delete_news(&mut self, group_id: u32, message_id: u32) -> Result<()> {
-        let mut request = group_id.to_be_bytes().to_vec();
-        request.extend_from_slice(&message_id.to_be_bytes());
+        let request = NewsMessageId {
+            group_id,
+            message_id,
+        }
+        .encode();
         self.send_checked(MessageType::DELETE_NEWS_MESSAGE, &request)
             .await
     }

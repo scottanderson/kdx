@@ -1,6 +1,6 @@
 //! Checks against `captures/kdx-news.pcapng`: the `kdx` CLI posting and deleting news on Server 1.620.
 
-use kdx_proto::msg::news::{NewsMessage, NewsMessageChange, PostNewsMessage};
+use kdx_proto::msg::news::{NewsMessage, NewsMessageChange, NewsMessageId, PostNewsMessage};
 use kdx_proto::msg::Status;
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -48,7 +48,9 @@ fn post() {
 fn delete() {
     let session = connection!("53224");
     let (_, wire) = one(&session, MessageType::DELETE_NEWS_MESSAGE);
-    assert_eq!(wire, [0, 0, 0, 1, 0, 0, 0, 4]);
+    let id = NewsMessageId::decode(wire).unwrap();
+    assert_eq!((id.group_id, id.message_id), (1, 4));
+    assert_eq!(id.encode(), wire);
     let (header, wire) = one(&session, MessageType::NEWS_MESSAGE_DELETED);
     assert!(!header.is_reply());
     let deleted = NewsMessageChange::decode(wire).unwrap();
@@ -59,6 +61,10 @@ fn delete() {
 #[test]
 fn read_one() {
     let session = connection!("40426");
+    let (_, wire) = one(&session, MessageType::GET_NEWS_MESSAGE);
+    let id = NewsMessageId::decode(wire).unwrap();
+    assert_eq!((id.group_id, id.message_id), (1, 2));
+    assert_eq!(id.encode(), wire);
     let (_, wire) = one(&session, MessageType::NEWS_MESSAGE);
     let (message, _) = NewsMessage::decode(wire).unwrap();
     assert_eq!(message.message_id, 2);

@@ -1,6 +1,4 @@
-//! News: 600 Create Newsgroup, 603 Newsgroup Info, 604 Set Newsgroup, 606 Newsgroup List,
-//! 608 News Messages, 610 News Message, 611 Post News Message, and 613 and 614 News Message
-//! Posted and Deleted.
+//! News: 600 to 614, from Create Newsgroup to News Message Deleted.
 
 use super::{
     len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError,
@@ -393,6 +391,57 @@ impl NewsMessageChange {
         out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.message_id.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.message_count.to_be_bytes());
+        out
+    }
+}
+
+/// A bare newsgroup ID: 601 Delete Newsgroup, 602 Get Newsgroup, and 607 Get News Messages.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct NewsgroupId(pub u32);
+
+impl NewsgroupId {
+    /// Payload length.
+    pub const LEN: usize = 4;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self(u32_at(buf, 0)))
+    }
+
+    /// Encodes the payload.
+    pub const fn encode(&self) -> [u8; Self::LEN] {
+        self.0.to_be_bytes()
+    }
+}
+
+/// A news message's address: 609 Get News Message and 612 Delete News Message.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct NewsMessageId {
+    /// Newsgroup ID.
+    pub group_id: u32,
+    /// Message ID within the group.
+    pub message_id: u32,
+}
+
+impl NewsMessageId {
+    /// Payload length.
+    pub const LEN: usize = 8;
+
+    /// Decodes the payload.
+    pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        need(buf, Self::LEN)?;
+        Ok(Self {
+            group_id: u32_at(buf, 0),
+            message_id: u32_at(buf, 4),
+        })
+    }
+
+    /// Encodes the payload.
+    pub fn encode(&self) -> [u8; Self::LEN] {
+        let mut out = [0; Self::LEN];
+        out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
+        out[4..8].copy_from_slice(&self.message_id.to_be_bytes());
         out
     }
 }
