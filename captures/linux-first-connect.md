@@ -31,7 +31,7 @@ and confirmed by the operator.
 
 ## Observations
 
-- The hello carries version 0x10 (frames 8, 20), as Client 1.600's does; the
+- The hello carries sub-version 0x10 (frames 8, 20), as Client 1.600's does; the
   server answers 0x20.
 - A wrong password gets a server proof with status 1 and the connection is
   closed (frames 13–14).

@@ -134,7 +134,7 @@ pub fn unscramble(header: &mut [u8; Header::LEN]) {
     Scramble::Kdx.reverse(header);
 }
 
-/// The keyless header scramble, which depends on the service.
+/// The keyless header scramble, which depends on the sub-protocol.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Scramble {
     /// The scramble of `%KDX` connections.

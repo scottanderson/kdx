@@ -35,7 +35,7 @@ Decode the tracker side with
 
 - Client 1.620 beta 5 lists a server through `kdx-tracker`, as guest and as
   admin.
-- The client's hello has version 0x10, and its name is empty as guest and
+- The client's hello has sub-version 0x10, and its name is empty as guest and
   `admin` as admin (frames 5 and 20).
 - The registration at 1 is 88 bytes with users 0, as no one was logged in
   to the server. `Lab` matches no group, so the record is in General.

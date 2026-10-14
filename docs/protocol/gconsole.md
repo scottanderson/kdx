@@ -9,13 +9,14 @@ them **[S]**. Tags and number formats follow [KDXProtocol.md](KDXProtocol.md).
 
 ## Handshake
 
-The client sends its usual hello (`%KDX`, version 0x10) with the login
+The client sends its usual hello (`%KDX`, sub-version 0x10) with the login
 from the GConsole Login dialog. The peer's hello decides the connection
 kind ([handshake.md](handshake.md#connection-types)); a GConsole peer sends
-`%HGC` (0x25484743) with version 0x40 **[S `FUN_0804b824`]**. `%HGC` with
-any other version fails with 0x40072 (lower) or 0x40073 (higher). On `%HGC`
-the client switches the connection to a second challenge table and a second
-header scramble before it checks the peer's proof **[S `FUN_0804b824`]**:
+`%HGC` (0x25484743) with sub-version 0x40 **[S `FUN_0804b824`]**. `%HGC`
+with any other sub-version fails with 0x40072 (lower) or 0x40073 (higher).
+On `%HGC` the client switches the connection to a second challenge table
+and a second header scramble before it checks the peer's proof
+**[S `FUN_0804b824`]**:
 
 - The challenge table is the GConsole story, which only the clients hold
   ([handshake.md](handshake.md#the-gconsole-story)). The client uses it

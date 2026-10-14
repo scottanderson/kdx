@@ -35,7 +35,7 @@ tracker side with `--password 'lab-tracker-pw!1'`.
 
 - The registration at 16 is 92 bytes, like `linux-tracker` frame 23, with
   users 1 (the probe).
-- The tracker's hello at 26 has version 0x30, and its proof at 29 checks
+- The tracker's hello at 26 has sub-version 0x30, and its proof at 29 checks
   out against the empty password's key.
 - 701 at 31 is the same as `linux-tracker` frame 34: eight groups, with 1
   server in General. 703 at 34 lists `Lab Server` at `127.0.0.1:10700`

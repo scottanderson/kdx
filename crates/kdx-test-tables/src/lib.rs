@@ -31,10 +31,13 @@ pub fn table(story: Story) -> ChallengeTable {
     })
 }
 
-/// The story's variable: its service with the `%` dropped, then `_CHALLENGE_TABLE`.
+/// The story's variable: its sub-protocol with the `%` dropped, then `_CHALLENGE_TABLE`.
 fn env_var(story: Story) -> String {
-    let service = story.service().to_be_bytes();
-    format!("{}_CHALLENGE_TABLE", String::from_utf8_lossy(&service[1..]))
+    let sub_protocol = story.sub_protocol();
+    format!(
+        "{}_CHALLENGE_TABLE",
+        String::from_utf8_lossy(&sub_protocol[1..])
+    )
 }
 
 /// A lab binary that holds the story: Server 1.620 or Client 1.620 beta 5 for Linux.

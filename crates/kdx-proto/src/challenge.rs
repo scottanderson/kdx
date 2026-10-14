@@ -13,7 +13,7 @@ use std::borrow::Cow;
 
 use sha2::{Digest, Sha256};
 
-use crate::handshake::{SERVICE_GCONSOLE, SERVICE_KDX};
+use crate::handshake::{SUB_PROTOCOL_GCONSOLE, SUB_PROTOCOL_KDX};
 
 /// Length of a challenge response in bytes.
 pub const RESPONSE_LEN: usize = 20;
@@ -34,11 +34,11 @@ impl Story {
     /// Every story.
     pub const ALL: [Self; 2] = [Self::Kdx, Self::Hgc];
 
-    /// The hello service of the connections that use the story.
-    pub const fn service(self) -> u32 {
+    /// The hello sub-protocol of the connections that use the story.
+    pub const fn sub_protocol(self) -> [u8; 4] {
         match self {
-            Self::Kdx => SERVICE_KDX,
-            Self::Hgc => SERVICE_GCONSOLE,
+            Self::Kdx => SUB_PROTOCOL_KDX,
+            Self::Hgc => SUB_PROTOCOL_GCONSOLE,
         }
     }
 

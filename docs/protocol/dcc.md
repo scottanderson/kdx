@@ -19,11 +19,11 @@ mapping named `KDXClientDCC` **[S `FUN_08090344`]**; that is the client's
 only use of UDP.
 
 A DCC connection uses the same handshake as a server connection
-([handshake.md](handshake.md)): service `%KDX`, version 0x10 (the only one
-it accepts), the same challenge table, and messages framed and encrypted as
-in [session.md](session.md) **[S `FUN_0808f77c`]**. The listener accepts a
-payload of at most 0x80000 bytes and fewer than 6 connections from one
-address.
+([handshake.md](handshake.md)): sub-protocol `%KDX`, sub-version 0x10 (the
+only one it accepts), the same challenge table, and messages framed and
+encrypted as in [session.md](session.md) **[S `FUN_0808f77c`]**. The
+listener accepts a payload of at most 0x80000 bytes and fewer than 6
+connections from one address.
 
 ## Logins
 

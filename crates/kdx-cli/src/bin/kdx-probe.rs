@@ -15,7 +15,9 @@ use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
 use kdx_client::{table, Connection, Login};
 use kdx_codec::{Frame, Handshake, HandshakeCodec, SessionCodec};
-use kdx_proto::handshake::{Hello, Proof, Status, FORMAT, GCONSOLE_VERSION, SERVICE_GCONSOLE};
+use kdx_proto::handshake::{
+    Hello, Proof, Status, GCONSOLE_SUB_VERSION, SUB_PROTOCOL_GCONSOLE, VERSION,
+};
 use kdx_proto::session::{Header, MessageType, Scramble};
 use kdx_proto::{AccountKey, ChallengeTable, Story};
 use tokio::net::{TcpListener, TcpStream};
@@ -73,8 +75,8 @@ async fn main() -> Result<()> {
     };
     let mut conn = Connection::connect(&args.addr, &login, &table).await?;
     println!(
-        "connected; server version {:#04x}",
-        conn.server_hello.version
+        "connected; server sub-version {:#04x}",
+        conn.server_hello.sub_version
     );
 
     let mut requests = Vec::new();
@@ -183,15 +185,15 @@ async fn handshake(
         unreachable!("the codec reads a hello first");
     };
     println!(
-        "client hello: service {:#010x} version {:#04x} login {:?}",
-        client.service,
-        client.version,
+        "client hello: sub-protocol \"{}\" sub-version {:#04x} login {:?}",
+        client.sub_protocol.escape_ascii(),
+        client.sub_version,
         String::from_utf8_lossy(&client.name)
     );
     let ours = Hello {
-        service: SERVICE_GCONSOLE,
-        format: FORMAT,
-        version: GCONSOLE_VERSION,
+        sub_protocol: SUB_PROTOCOL_GCONSOLE,
+        version: VERSION,
+        sub_version: GCONSOLE_SUB_VERSION,
         challenge: random_u32() as u16 % table.offsets(),
         nonce: random(),
         name: Vec::new(),

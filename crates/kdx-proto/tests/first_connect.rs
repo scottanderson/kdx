@@ -1,7 +1,7 @@
 //! Checks against `captures/first-connect.pcapng`: Client 1.600 logs in as `admin` to Server 1.620.
 
 use kdx_proto::handshake::{
-    compute_auth, Hello, Proof, Status, CLIENT_VERSION, SERVER_VERSION, SERVICE_KDX,
+    compute_auth, Hello, Proof, Status, CLIENT_SUB_VERSION, SERVER_SUB_VERSION, SUB_PROTOCOL_KDX,
 };
 use kdx_proto::session::{Header, MessageType, SessionCipher};
 use kdx_proto::{AccountKey, Story};
@@ -31,8 +31,8 @@ fn side(stream: &[u8]) -> Side {
 #[test]
 fn hellos() {
     let client = side(C2S);
-    assert_eq!(client.hello.service, SERVICE_KDX);
-    assert_eq!(client.hello.version, CLIENT_VERSION);
+    assert_eq!(client.hello.sub_protocol, SUB_PROTOCOL_KDX);
+    assert_eq!(client.hello.sub_version, CLIENT_SUB_VERSION);
     assert_eq!(client.hello.name, b"admin");
     assert_eq!(client.hello_len, 44);
     assert_eq!(
@@ -44,7 +44,7 @@ fn hellos() {
     );
 
     let server = side(S2C);
-    assert_eq!(server.hello.version, SERVER_VERSION);
+    assert_eq!(server.hello.sub_version, SERVER_SUB_VERSION);
     assert!(server.hello.name.is_empty());
     assert_eq!(
         server
