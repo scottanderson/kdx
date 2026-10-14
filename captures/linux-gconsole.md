@@ -33,7 +33,7 @@ drove the client with `xdotool`; the GConsole window's content starts at
 3. The operator pressed Alt+Print Screen to take a screenshot of the
    window: Alt's press at 16, then a release with no usage and Alt held
    at 18. Like B in Ctrl+B (step 5), Print Screen sent no press; 18 is
-   likely its release, and Alt's own release never arrived [I].
+   likely its release, and Alt's own release never arrived **[I]**.
 4. Left clicks at (100, 50) and (150, 100) (20–26); a left drag from
    (200, 150) to (300, 200) in five moves (28, 30); a right click and a
    middle click at (100, 200) (32–38); one wheel step up (40, 42) and one

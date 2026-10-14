@@ -7,7 +7,7 @@ Roman, UTF-8, or raw bytes, in 401, 412, 415, 402, 207/208, 300/301, 611,
 and 100.
 
 When this was written, the spec said text is Mac OS Roman and that the server
-rejects a path that spells a Mac Roman name in UTF-8 [I]. The Linux client
+rejects a path that spells a Mac Roman name in UTF-8 **[I]**. The Linux client
 reads keys with `Xutf8LookupString` and pastes `UTF8_STRING`, so it may send
 UTF-8. The `kdx` CLI sends all text as UTF-8.
 

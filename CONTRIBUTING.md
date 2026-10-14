@@ -36,6 +36,9 @@ Facts go in `docs/protocol/`. Tag each claim with its evidence:
 - **[S]** read in a binary; cite the function address, as in `FUN_08085a04`.
 - **[I]** inferred.
 
+Write each tag in bold, in tables and headings too, as in
+`**[S FUN_08085a04]**`. Leave tags in code blocks plain.
+
 Name a message by its type and title, as in 412 Download File. Write
 multi-byte fields as big-endian.
 
