@@ -24,7 +24,7 @@ use kdx_proto::msg::admin::{
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
-    ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
+    ChatTopicChanged, ChatUserChange, ChatWindowInfo, DccAddress, JoinChat, SetChatTopic,
 };
 use kdx_proto::msg::dcc::Skpk;
 use kdx_proto::msg::file::{
@@ -713,6 +713,11 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                     c.member_count
                 )
             })
+            .collect::<Vec<_>>()
+            .join("; "),
+        MessageType::CHAT_DCC_ADDRESSES => DccAddress::decode_list(payload)?
+            .iter()
+            .map(|d| format!("user {} {}", d.user_id, quoted(&d.address)))
             .collect::<Vec<_>>()
             .join("; "),
         MessageType::CREATE_CHAT | MessageType::CHAT_INFO | MessageType::SET_CHAT => {

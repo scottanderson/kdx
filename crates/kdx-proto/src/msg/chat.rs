@@ -522,6 +522,63 @@ impl ChatListEntry {
     }
 }
 
+/// One member's entry in 223 Chat DCC Addresses.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct DccAddress {
+    /// User ID.
+    pub user_id: u32,
+    /// Bytes 0x04 to 0x0d; the server writes zeros.
+    pub unknown_04: [u8; 10],
+    /// Byte 0x0f; the server writes zero.
+    pub unknown_0f: u8,
+    /// `ip:port` text of the member's DCC listener.
+    pub address: Vec<u8>,
+    /// Bytes after the address up to the next multiple of 4, as received.
+    pub padding: Vec<u8>,
+}
+
+impl DccAddress {
+    /// Size of the fixed part before the address.
+    pub const HEADER_LEN: usize = 0x10;
+
+    /// Decodes the payload of 223 Chat DCC Addresses: entries until the end.
+    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+        let mut at = 0;
+        let mut list = Vec::new();
+        while at < buf.len() {
+            let entry = &buf[at..];
+            need(entry, Self::HEADER_LEN)?;
+            let ([address], end) = strings(entry, Self::HEADER_LEN, [usize::from(entry[0x0e])])?;
+            let (padding, padded) = padding(entry, end);
+            list.push(Self {
+                user_id: u32_at(entry, 0),
+                unknown_04: entry[4..0x0e].try_into().expect("10 bytes"),
+                unknown_0f: entry[0x0f],
+                address,
+                padding,
+            });
+            at += padded;
+        }
+        Ok(list)
+    }
+
+    /// Encodes the payload of 223 Chat DCC Addresses.
+    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+        let mut out = Vec::new();
+        for entry in list {
+            let start = out.len();
+            out.extend_from_slice(&entry.user_id.to_be_bytes());
+            out.extend_from_slice(&entry.unknown_04);
+            out.push(len_u8(&entry.address, "DCC address")?);
+            out.push(entry.unknown_0f);
+            out.extend_from_slice(&entry.address);
+            out.extend_from_slice(&entry.padding);
+            out.resize(start + pad4(out.len() - start), 0);
+        }
+        Ok(out)
+    }
+}
+
 /// The chat record of 217 Create Chat, 219 Chat Info and 220 Set Chat.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatRecord {

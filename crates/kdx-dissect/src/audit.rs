@@ -8,7 +8,7 @@ use kdx_proto::msg::admin::{
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
-    ChatTopicChanged, ChatUserChange, ChatWindowInfo, JoinChat, SetChatTopic,
+    ChatTopicChanged, ChatUserChange, ChatWindowInfo, DccAddress, JoinChat, SetChatTopic,
 };
 use kdx_proto::msg::dcc::Skpk;
 use kdx_proto::msg::file::{
@@ -160,6 +160,7 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::CHAT_INVITE => one!(ChatInvite),
         M::CHAT_INVITATION => one!(ChatInvitation),
         M::CHAT_LIST => list!(ChatListEntry),
+        M::CHAT_DCC_ADDRESSES => list!(DccAddress),
         M::CREATE_CHAT | M::CHAT_INFO | M::SET_CHAT => one!(ChatRecord),
         M::CHAT_DELETED => one!(ChatDeleted),
         M::FILE_LIST => list!(FileListEntry),

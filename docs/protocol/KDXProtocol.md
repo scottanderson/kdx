@@ -1163,9 +1163,10 @@ joining a voice chat. The reply was empty (len 0) when the client was alone
 119-120). The CLI sends DCC port 0, so the server leaves it out **[S]**.
 
 **[O]** `captures/linux-dcc-voice-failed.pcapng`: one entry, user 1 with length
-0xf and `127.0.0.1:10600`, padded with 0x22 rather than 0 (frame 109). 223 has
-no codec yet. `kdx_proto::msg::chat::ChatId` re-encodes 222 byte for byte (test
-`linux_chat_rooms`).
+0xf and `127.0.0.1:10600`, padded with 0x22 rather than 0 (frames 109 and
+155). The padding byte is probably uninitialised **[I]**;
+`DccAddress::padding` keeps it. `ChatId` re-encodes 222 and `DccAddress` re-encodes 223
+byte for byte (tests `linux_chat_rooms`, `linux_dcc_voice_failed`).
 
 ### Private messages
 

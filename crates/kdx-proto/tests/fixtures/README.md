@@ -161,6 +161,7 @@ A's DCC listener. Both are Client 1.620 for Linux.
 | Port | Messages |
 |---|---|
 | 45702 | the primary connection, with no password: both 117 SKPKs, 100, and 300 |
+| 43114 | B's server connection, logged in as guest with no password: both 223s |
 
 `kdx-dissect --audit` re-encodes each payload it decodes and flags the
 types with no codec (`no codec`) or whose bytes don't come back byte for

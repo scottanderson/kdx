@@ -45,18 +45,14 @@ Other messages:
   (`linux-chat-admin` frames 88, 120), for 211s that invite one user,
   then two (frames 87, 118). Inviting two users first would.
 - [ ] 215 Chat List entry: 0x08..0x0d.
-- [ ] 223 Chat DCC Addresses: an entry has never been seen, so 223 has no
-  codec. Entry bytes 0x04..0x0d and 0x0f are listed as 0 **[S]**. A Linux
-  capture is enough: the GUI client with its DCC listener on (port 10600
-  in its user record) joins a voice chat after a second member asks with
-  222. The second member can be `kdx-probe` or the CLI with a nonzero DCC
-  port, so two GUI clients aren't needed (unlike capture-gaps 07). Both
-  223s on record are empty (`linux-chat-rooms` frames 73, 120), the
-  second with a CLI member whose DCC port is 0.
+- [ ] 223 Chat DCC Addresses: entry bytes 0x04..0x0d and 0x0f are listed as
+  0 **[S]**, and are 0 in the one entry on record (`linux-dcc-voice-failed`
+  frames 109, 155). The padding byte there is 0x22; whether it is
+  uninitialised is not settled.
 - [ ] 300/301: 0x04, 0xc bytes. What the client puts there, and whether the
   server reads them.
-- [ ] Audit (01): 223 Chat DCC Addresses has no codec
-  (`linux-dcc-voice-failed` 109, 155).
+- [x] Audit (01): 223 Chat DCC Addresses has no codec
+  (`linux-dcc-voice-failed` 109, 155). Fixed: `DccAddress`.
 - [x] Audit (01): 209 Set Chat Topic from `probe` 73 has 4 bytes, `ello`,
   after the topic. Fixed: `SetChatTopic::rest` keeps them.
 - [ ] Check whether `kdx-probe` sent the short length on purpose; the doc
