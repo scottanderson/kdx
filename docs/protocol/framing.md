@@ -86,6 +86,69 @@ separately encrypted chunks (`FUN_08086a9c`). The server sends each 414
 Download File (D) through it, with the fork's remaining length as a 64-bit
 value (`FUN_08050984` at 0x0805101f) **[S `FUN_08050984`, `FUN_080512b4`]**.
 
+## Across versions
+
+The header has the same layout and checks in every build with `%KDX`, from
+Server 0.921 to Server 1.620. Each x86 build below has one receive function
+that raises both 0x40074 and 0x40075, and they agree **[S]**:
+
+- 0x40075 when the length is past the cap or bytes 0x0a–0x0b are nonzero.
+- 0x40074 when the txid or the type is 0.
+- Flags bit 0 marks a reply. Byte 0x08 is never read.
+
+The only difference is how they raise the error. Server 1.620 and Client
+betas 4 and 5 log the TRN module and line; the older builds raise the bare
+code **[S]**.
+
+Every 1.x build has the header scramble's four constants: Windows, Linux, Mac
+PEF, and Mach-O, from Client 1.110 and Server 1.300 on. The `%HGC` constants
+first appear in Client 1.320 **[S]** (`re/scan_consts.py`). The x86 builds
+use them in the same scramble; the Mac builds aren't decompiled **[I]**.
+
+Server 0.921 (Mac PEF) has the same 16-byte header with no scramble hook. Its
+receive function `FUN_10035790` makes the same checks, and its header-only
+send `FUN_10035b20` the same 48-bit check. It encrypts with a cipher at
+connection offset 0x12a that is not yet identified **[S]**.
+
+The header-only send, with the 48-bit length check, is in every build but
+Tracker 1.110 for Windows **[S]**.
+
+Receive caps, from the calls to each build's cap setter **[S]**:
+
+| Role | Cap | Where |
+|---|---|---|
+| Server, 1.300–1.620 | 0x20000 | each accepted connection |
+| Tracker 1.110 | 0x10000 | each accepted connection |
+| Client, 1.110–beta 5 | 0x100000 | connection to a server |
+| Client, 1.110–beta 5 | 0x8000 | transfer connection (sends 402, 412, 415, or 417) |
+| Client, 1.110–beta 5 | 0x80000 | DCC listener (see [dcc.md](dcc.md)) |
+| Client 1.600, beta 5 | 0x1000000 | one caller, not identified (`FUN_0041bde0`, `FUN_0806f61c`) |
+
+Function addresses by Ghidra project (`re/README.md`):
+
+| Project | Receive header | Send header only | Set receive cap |
+|---|---|---|---|
+| `KDXClient1110-Win` | `FUN_00460320` | `FUN_00460850` | `FUN_0045ef70` |
+| `KDXClient1320-Win` | `FUN_00464cf0` | `FUN_00465220` | `FUN_00463870` |
+| `KDXClient1400-Win` | `FUN_004677f0` | `FUN_00467d00` | `FUN_004663c0` |
+| `KDXClient1500-Win` | `FUN_0046d530` | `FUN_0046da40` | `FUN_0046c100` |
+| `KDXClient1520-Win` | `FUN_0046d7f0` | `FUN_0046dd00` | `FUN_0046c3c0` |
+| `KDXClient1600-Win` | `FUN_0046e860` | `FUN_0046ed70` | `FUN_0046d430` |
+| `KDXClient-Lnx-beta4` | `FUN_080e94a4` | `FUN_080e9c50` | `FUN_080e8a68` |
+| `KDXClient-Lnx-beta5` | `FUN_080eae6c` | `FUN_080eb618` | `FUN_080ea430` |
+| `KDXServer1300-Win` | `FUN_0042cf20` | `FUN_0042d450` | `FUN_0042ba90` |
+| `KDXServer1500-Win` | `FUN_004300e0` | `FUN_004305f0` | `FUN_0042ec90` |
+| `KDXServer1520-Win` | `FUN_00430240` | `FUN_00430750` | `FUN_0042edf0` |
+| `KDXServer1520-Lnx` | `FUN_0808ac04` | `FUN_0808b108` | `FUN_0808a248` |
+| `KDXServer1600-Win` | `FUN_004317a0` | `FUN_00431cb0` | `FUN_00430350` |
+| `KDXServer1600-Lnx` | `FUN_0808b71c` | `FUN_0808bc20` | `FUN_0808ad60` |
+| `KDXServer1620-Lnx` | `FUN_08086108` | `FUN_080868b4` | `FUN_080856cc` |
+| `KDXTrackerServ1110-Win` | `FUN_00414d00` | none | `FUN_00413990` |
+| `KDXTrackerServ1110-Lnx` | `FUN_080885dc` | `FUN_08088ae0` | `FUN_08087c20` |
+
+Client 1.110 is `KDXClient-Win.zip` from a local download dated 2003-12-15.
+It isn't in `vendor/MANIFEST.md` because no Wayback capture of it was found.
+
 ## Messages
 
 The message types and payload layouts are in
