@@ -18,9 +18,9 @@ use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryList,
-    HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer,
-    YourAddress,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, GetFolderAccessList,
+    HistoryList, HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast,
+    ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -1065,22 +1065,18 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .iter()
             .map(|i| {
                 format!(
-                    "item {:#x} {} {}",
-                    i.item_id,
+                    "item {} icon {:#x} flags {:#x} {}",
                     quoted(&i.name),
+                    i.icon,
+                    i.flags,
                     quoted(&i.description)
                 )
             })
             .collect::<Vec<_>>()
             .join("; "),
-        MessageType::GET_FOLDER_ACCESS_LIST if payload.is_empty() => String::new(),
-        MessageType::GET_FOLDER_ACCESS_LIST => {
-            need(payload, 4)?;
-            format!(
-                "flags {:#010x}",
-                u32::from_be_bytes(payload[..4].try_into()?)
-            )
-        }
+        MessageType::GET_FOLDER_ACCESS_LIST => GetFolderAccessList::decode(payload)?
+            .flags
+            .map_or_else(String::new, |flags| format!("flags {flags:#010x}")),
         MessageType::DELETE_FOLDER_ACCESS
         | MessageType::FOLDER_ACCESS_DELETED
         | MessageType::GET_FOLDER_ACCESS => format!("item {}", quoted(payload)),

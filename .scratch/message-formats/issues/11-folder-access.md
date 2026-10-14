@@ -11,10 +11,11 @@ Docs: `KDXProtocol.md`, Folder access. Captures: `linux-files`,
 
 - [ ] 1106 request: the optional u32, of which only the top byte's bit 0 is
   read **[S]**. Confirm no other bit matters.
-- [ ] 1107 entry: 0x00 is named flags in the doc **[S]** but
+- [x] 1107 entry: 0x00 is named flags in the doc **[S]** but
   `FolderAccessItem::unknown_00` in code, and 0x04 is the icon in the doc
-  but `item_id` in code; rename them. 0x08 (8 bytes, "not written by the
-  server"); 0x10 (`unknown_10`); the second string (`second`).
+  but `item_id` in code; rename them. Fixed: `flags` and `icon`.
+- [ ] 1107 entry: 0x08 (8 bytes, "not written by the server"); 0x10
+  (`unknown_10`); the second string (`second`).
 - [ ] Record 0x00, a u32 (`FolderAccess::unknown_00`).
 - [ ] Record 0x0c: the first class rule, 0xfffe0000 in both lab items, is
   "probably Administrator's" **[I]**; 0x8c is "probably the owner's rule"
@@ -27,6 +28,7 @@ Docs: `KDXProtocol.md`, Folder access. Captures: `linux-files`,
   (`linux-folder-access-guest` 21, 28). Fixed: `FolderAccess::padding`
   keeps the bytes after the strings.
 - [ ] Is that byte uninitialised padding, as the client sends it?
-- [ ] Audit (01): no codec for 1101, 1102, 1103 (a name), or 1106 with its
+- [x] Audit (01): no codec for 1101, 1102, 1103 (a name), or 1106 with its
   optional u32 (`linux-accounts-folder-access` 70, 71, 60; `linux-files`
-  23).
+  23). Fixed: `FolderAccessName` and `GetFolderAccessList`, which keeps
+  the bytes after the u32, or a payload under 4 bytes, in `rest`.

@@ -350,10 +350,7 @@ fn folder_access() {
     let session = connection!("59006");
     let wire = one(&session, MessageType::FOLDER_ACCESS_LIST);
     let list = FolderAccessItem::decode_list(wire).unwrap();
-    let items: Vec<(u32, &[u8])> = list
-        .iter()
-        .map(|i| (i.item_id, i.name.as_slice()))
-        .collect();
+    let items: Vec<(u32, &[u8])> = list.iter().map(|i| (i.icon, i.name.as_slice())).collect();
     assert_eq!(
         items,
         [(0, &b"[Default]"[..]), (0x2c, b"DB"), (0x2b, b"UL")]

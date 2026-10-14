@@ -5,8 +5,8 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser, ExtraServerInfo,
-    FolderAccess, FolderAccessItem, HistoryList, HistoryRecord, MonitoredConnection, Process,
-    ProcessList, RcvBroadcast, ShutdownServer,
+    FolderAccess, FolderAccessItem, FolderAccessName, GetFolderAccessList, HistoryList,
+    HistoryRecord, MonitoredConnection, Process, ProcessList, RcvBroadcast, ShutdownServer,
 };
 use kdx_proto::msg::chat::{
     ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText, ChatTopicChanged,
@@ -401,6 +401,22 @@ fn nonzero_gaps_round_trip() {
     .unwrap();
     gaps("1107", wire, &at(4, &[8..0x10, 0x15..0x18]), |p| {
         FolderAccessItem::encode_list(&FolderAccessItem::decode_list(p).unwrap()).unwrap()
+    });
+    let wire = GetFolderAccessList {
+        flags: Some(0),
+        rest: vec![0; 4],
+    }
+    .encode();
+    gaps("1106", wire, &[0..8], |p| {
+        GetFolderAccessList::decode(p).unwrap().encode()
+    });
+    for n in 0..4 {
+        gaps("1106 short", vec![0; n], &[0..n], |p| {
+            GetFolderAccessList::decode(p).unwrap().encode()
+        });
+    }
+    gaps("1101", vec![0; 4], &[0..4], |p| {
+        FolderAccessName::decode(p).unwrap().encode()
     });
     let wire = FolderAccess {
         name: a(),

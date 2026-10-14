@@ -2,9 +2,9 @@
 
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryList,
-    HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer,
-    YourAddress,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, FolderAccessName,
+    GetFolderAccessList, HistoryList, HistoryRecord, MonitoredConnection, ProcessList,
+    RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -201,6 +201,10 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::ACCOUNT_LIST => list!(AccountListEntry),
         M::PROCESS_LIST => one!(ProcessList),
         M::EXIT_TERMINATE_PROCESS => one!(ExitTerminateProcess),
+        M::DELETE_FOLDER_ACCESS | M::FOLDER_ACCESS_DELETED | M::GET_FOLDER_ACCESS => {
+            one!(FolderAccessName)
+        }
+        M::GET_FOLDER_ACCESS_LIST => one!(GetFolderAccessList),
         M::FOLDER_ACCESS_LIST => list!(FolderAccessItem),
         M::CREATE_FOLDER_ACCESS | M::FOLDER_ACCESS_INFO | M::SET_FOLDER_ACCESS => {
             one!(FolderAccess)

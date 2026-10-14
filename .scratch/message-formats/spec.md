@@ -118,7 +118,7 @@ strike it here.
 | 06 | chat record 0x2c..0x2d | Chat record table: IRC server and channel lengths | 217 Create Chat table: a u32 0 |
 | 07 | 412 Download File options | 412: privilege bits 25 and 65 **[I]** | Access Privileges table: Allow Simultaneous Downloads (25) and Disable Encryption (65) |
 | 08 | 503 Account Class Info 0x25 | Doc: flood protection | `AccountClass::unknown_25` |
-| 11 | 1107 Folder Access List 0x00, 0x04 | Doc: flags **[S]**, icon **[S]** | `FolderAccessItem::unknown_00`, `item_id` |
+| ~~11~~ | ~~1107 Folder Access List 0x00, 0x04~~ | ~~Doc: flags **[S]**, icon **[S]**~~ | ~~`FolderAccessItem::unknown_00`, `item_id`~~; renamed `flags`, `icon` |
 
 Types never captured: 404, 406, 408, 514, 901, and 1003. 184 to 191 are
 history record kinds, not messages.

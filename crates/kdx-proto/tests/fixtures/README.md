@@ -107,6 +107,11 @@ the `gui-test` account messages, and 600, 602, 604, 607, and 601 for a new
 newsgroup. Port 36078 is the same client logged in as guest, so its key is
 the empty password's.
 
+`linux-accounts-folder-access-55746.c2s.bin` and `.s2c.bin` come from
+`captures/linux-accounts-folder-access.pcapng`, where Client 1.620 for Linux
+logged in as admin. The connection holds 1100, 1103, 1104, 1105, 1106, and
+1107 for `lab-item`, then 1101 and 1102.
+
 `linux-server-settings-<port>.c2s.bin` and `.s2c.bin` come from
 `captures/linux-server-settings.pcapng`, where Client 1.620 for Linux logged
 in as admin.

@@ -1,6 +1,6 @@
 //! Checks against `captures/linux-files.pcapng`: Client 1.620 for Linux as `admin`.
 
-use kdx_proto::msg::admin::FolderAccess;
+use kdx_proto::msg::admin::{FolderAccess, FolderAccessName, GetFolderAccessList};
 use kdx_proto::msg::file::{CreateFolder, MoveItems, MoveToTrash, SetFileInfo};
 use kdx_proto::msg::{FilePath, Status};
 use kdx_proto::session::{Header, MessageType};
@@ -158,14 +158,22 @@ fn folder_access() {
     // Frames 23 and 232.
     let lists: Vec<_> = all(&session, MessageType::GET_FOLDER_ACCESS_LIST)
         .into_iter()
-        .map(|(_, wire)| wire)
+        .map(|(_, wire)| {
+            let list = GetFolderAccessList::decode(wire).unwrap();
+            assert_eq!(list.encode(), wire);
+            list.flags
+        })
         .collect();
-    assert_eq!(lists, [&[0, 0, 0, 1][..], &[]]);
+    assert_eq!(lists, [Some(1), None]);
 
     // Frames 225 and 228.
     let gets: Vec<_> = all(&session, MessageType::GET_FOLDER_ACCESS)
         .into_iter()
-        .map(|(_, wire)| wire)
+        .map(|(_, wire)| {
+            let name = FolderAccessName::decode(wire).unwrap();
+            assert_eq!(name.encode(), wire);
+            name.0
+        })
         .collect();
     assert_eq!(gets, [&b"DB"[..], b"[Default]"]);
 

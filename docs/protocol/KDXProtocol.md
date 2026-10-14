@@ -2041,6 +2041,10 @@ The request is empty or a u32. If the u32's top byte has bit 0 set, a user
 without the privilege gets no reply instead of 1 Status 0x10014. Client
 1.620 for Linux sends `00000001` when it opens the file window and an empty
 request after 1100 (`captures/linux-files.pcapng` frames 23 and 232) **[O]**.
+`kdx_proto::msg::admin::GetFolderAccessList` keeps the u32 and any bytes
+after it, or all of a payload under 4 bytes. It re-encodes frames 23 and
+232 and the three empty requests of
+`captures/linux-accounts-folder-access.pcapng` (frames 50, 54, 64) **[O]**.
 
 Reply: a u32 count, then one entry per item, each padded to 4:
 
@@ -2109,6 +2113,8 @@ The request is the item name, with no length byte. An unknown name gets
 0x1000c. There is no Status reply: the server sends 1102, payload the name,
 to the requester and writes history record 0x44d. 1102 carries the server's
 own next txid, not the request's (`f2cfecc3` at frame 71) **[O]**.
+`kdx_proto::msg::admin::FolderAccessName` re-encodes frames 70 and 71
+(`lab-item`, 8 bytes, unpadded) **[O]**.
 
 **1103 Get Folder Access** → **1104 Folder Access Info**
 Initiator: Client. Privilege: View Folder Access (27). **[S
@@ -2118,6 +2124,10 @@ The request is the item name, with no length byte (`DB` at 225, `[Default]`
 at 228). The reply is the stored folder access record. After a 1105, that is
 the 1105's record as sent, with its current name
 (`captures/linux-folder-access-guest.pcapng` frames 30, 38) **[O]**.
+The request is unpadded: 2 bytes and 9 bytes in `captures/linux-files.pcapng`
+frames 225 and 228 **[O]**.
+`kdx_proto::msg::admin::FolderAccessName` re-encodes it (also
+`captures/linux-accounts-folder-access.pcapng` frame 60) **[O]**.
 
 **1105 Set Folder Access**
 Initiator: Client. Privilege: Modify Folder Access (28). **[S
