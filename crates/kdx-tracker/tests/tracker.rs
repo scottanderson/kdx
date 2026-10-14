@@ -34,7 +34,11 @@ async fn browse() {
     assert_eq!(conn.server_hello.sub_version, TRACKER_SUB_VERSION);
     let general = loop {
         let groups = GroupListEntry::decode_list(&request(&mut conn, 700, &[]).await).unwrap();
-        let general = groups.into_iter().find(|g| g.name == b"General").unwrap();
+        let general = groups
+            .records
+            .into_iter()
+            .find(|g| g.name == b"General")
+            .unwrap();
         if general.servers > 0 {
             break general;
         }
@@ -47,7 +51,8 @@ async fn browse() {
     };
     let servers =
         ServerListEntry::decode_list(&request(&mut conn, 702, &list.encode().unwrap()).await)
-            .unwrap();
+            .unwrap()
+            .records;
     assert_eq!(servers.len(), 1);
     assert_eq!(servers[0].name, b"Lab Server");
     assert_eq!(servers[0].address, "127.0.0.1:10700".parse().unwrap());

@@ -29,9 +29,18 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
   back byte for byte.
 - [x] Store the header gaps that every other codec wrote as zeros, and the
   padding of list records, so a nonzero byte there comes back too.
-- [ ] Bytes after the last string or record of a payload are still dropped
-  by most single-message decoders and by the counted lists. Store them, or
-  reject them, once a capture or a handler shows any.
+- [x] Store the bytes after the last string or record of a payload in a
+  `rest` field: in the single-message decoders that read strings, in 181,
+  608, and 803, and through `CountedList` in the counted lists 215, 401,
+  453, 506, 513, 606, 701, 703, and 1107.
+- [ ] Some payloads still don't come back when bytes follow their last
+  field. `UserRecord::decode` and `NewsMessage::decode`, used alone for 100,
+  102, 103, and 610, drop the bytes after the record's padding. The types
+  that keep every trailing byte in `padding` (153, 183, 503, 510, 1104, the
+  tracker's settings sections) pad the result to 4, so unaligned extra
+  bytes gain zeros. A list payload that ends inside a record's padding
+  gains zeros too. 401, 453, and 703 encode no records as an empty payload,
+  so a payload of a zero count comes back empty.
 - [x] Add each finding to the issue for its area as a new gap.
 - [x] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
   Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
@@ -93,3 +102,12 @@ for its leading u32. A 4001 Draw record whose length isn't its kind's decodes
 as `Other`, and `Draw::padding` keeps each record's padding. 105's u16 at
 0x2a and 0x46 are stored as read. `round_trip.rs` sets every gap of each
 codec to nonzero bytes in a synthetic payload and checks it comes back.
+
+2026-10-14: Every single-message decoder that reads strings, and the counted
+lists 181, 608, and 803, now keep the bytes after their last string or record
+in `rest` and write them back. The other counted lists decode to a
+`CountedList`, which holds the records and the `rest`; their `encode_list`
+takes one. Fixed-size types with a `LEN` still drop extra bytes, which the
+audit reports as a mismatch, and the path decoders reject them. 223 and 143
+have no count and read records to the end. `round_trip.rs` appends bytes to
+a payload of each changed type and checks they come back.

@@ -7,7 +7,7 @@ use kdx_proto::msg::tracker::{
     AdminSettings, GeneralSettings, GetServerList, GroupListEntry, ServerListEntry, SettingsGroup,
     TrackerSettings, TrackerStats,
 };
-use kdx_proto::msg::Status;
+use kdx_proto::msg::{CountedList, Status};
 use kdx_proto::registration::{self, Registration};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -130,8 +130,9 @@ fn group_list() {
     // Frame 34: a fresh tracker's eight groups, with the registration in General.
     let guest = guest();
     let wire = one(&guest, MessageType::TRACKER_GROUP_LIST);
-    let groups = GroupListEntry::decode_list(wire).unwrap();
-    assert_eq!(GroupListEntry::encode_list(&groups).unwrap(), wire);
+    let list = GroupListEntry::decode_list(wire).unwrap();
+    assert_eq!(GroupListEntry::encode_list(&list).unwrap(), wire);
+    let groups = list.records;
     let names: Vec<_> = groups.iter().map(|g| g.name.as_slice()).collect();
     assert_eq!(
         names,
@@ -155,8 +156,9 @@ fn group_list() {
     // Frame 247: the new group `Lab`, still empty.
     let edit = group_edit();
     let wire = all(&edit, MessageType::TRACKER_GROUP_LIST)[1];
-    let groups = GroupListEntry::decode_list(wire).unwrap();
-    assert_eq!(GroupListEntry::encode_list(&groups).unwrap(), wire);
+    let list = GroupListEntry::decode_list(wire).unwrap();
+    assert_eq!(GroupListEntry::encode_list(&list).unwrap(), wire);
+    let groups = list.records;
     assert_eq!(groups.len(), 9);
     assert_eq!(groups[5].name, b"Lab");
     assert_eq!(groups[5].description, b"lab group");
@@ -179,11 +181,13 @@ fn server_list() {
         .collect();
     assert_eq!(groups, [b"General".to_vec(), b"Chat".to_vec()]);
     assert_eq!(replies[1], b"");
-    assert_eq!(ServerListEntry::decode_list(replies[1]).unwrap(), []);
-    assert_eq!(ServerListEntry::encode_list(&[]).unwrap(), b"");
+    let empty = ServerListEntry::decode_list(replies[1]).unwrap();
+    assert_eq!(empty, CountedList::default());
+    assert_eq!(ServerListEntry::encode_list(&empty).unwrap(), b"");
 
-    let servers = ServerListEntry::decode_list(replies[0]).unwrap();
-    assert_eq!(ServerListEntry::encode_list(&servers).unwrap(), replies[0]);
+    let list = ServerListEntry::decode_list(replies[0]).unwrap();
+    assert_eq!(ServerListEntry::encode_list(&list).unwrap(), replies[0]);
+    let servers = list.records;
     let lab = ServerListEntry {
         // 07:15:33.828 UTC, when registration 23 arrived.
         first_seen: 0x0000_03a3_80f5_a144,
@@ -202,8 +206,9 @@ fn server_list() {
     // Frame 257: group `Lab` after registration 255, which replaced the record.
     let edit = group_edit();
     let wire = *all(&edit, MessageType::TRACKER_SERVER_LIST).last().unwrap();
-    let servers = ServerListEntry::decode_list(wire).unwrap();
-    assert_eq!(ServerListEntry::encode_list(&servers).unwrap(), wire);
+    let list = ServerListEntry::decode_list(wire).unwrap();
+    assert_eq!(ServerListEntry::encode_list(&list).unwrap(), wire);
+    let servers = list.records;
     assert_eq!(servers.len(), 1);
     // 07:36:12.034 UTC, when registration 255 arrived.
     assert_eq!(servers[0].first_seen, 0x0000_03a3_8108_8602);

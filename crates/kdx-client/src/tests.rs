@@ -361,11 +361,14 @@ async fn tracker() {
 
         let (header, _) = recv(&mut session).await;
         assert_eq!(header.kind, MessageType::GET_TRACKER_GROUP_LIST);
-        let groups = GroupListEntry::encode_list(&[GroupListEntry {
-            servers: 1,
-            name: b"General".to_vec(),
-            ..GroupListEntry::default()
-        }])
+        let groups = GroupListEntry::encode_list(
+            &[GroupListEntry {
+                servers: 1,
+                name: b"General".to_vec(),
+                ..GroupListEntry::default()
+            }]
+            .into(),
+        )
         .unwrap();
         let kind = MessageType::TRACKER_GROUP_LIST;
         send(&mut session, header.txid, kind, true, groups).await;

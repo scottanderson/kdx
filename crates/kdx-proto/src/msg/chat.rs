@@ -1,7 +1,8 @@
 //! Chat: 201 Delete Chat through 222 Get Chat DCC Addresses.
 
 use super::{
-    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError,
+    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, CountedList, DecodeError,
+    EncodeError,
 };
 
 /// The ID of Public Chat, which always exists.
@@ -81,6 +82,8 @@ pub struct ChatWindowInfo {
     pub members: Vec<u32>,
     /// The five strings whose lengths are at 0x1e; the third is the name.
     pub strings: [Vec<u8>; 5],
+    /// Bytes after the strings, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ChatWindowInfo {
@@ -102,7 +105,7 @@ impl ChatWindowInfo {
             .map(|i| u32_at(buf, Self::HEADER_LEN + 4 * i))
             .collect();
         let lens = [0x1e, 0x1f, 0x20, 0x21, 0x22].map(|at| usize::from(buf[at]));
-        let (strings, _) = strings(buf, ids_end, lens)?;
+        let (strings, end) = strings(buf, ids_end, lens)?;
         Ok(Self {
             time: u64_at(buf, 0),
             chat_id: u32_at(buf, 8),
@@ -113,6 +116,7 @@ impl ChatWindowInfo {
             unknown_23: buf[0x23],
             members,
             strings,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -138,6 +142,7 @@ impl ChatWindowInfo {
         for s in &self.strings {
             out.extend_from_slice(s);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -287,6 +292,8 @@ pub struct ChatTopicChanged {
     pub topic: Vec<u8>,
     /// The setter's nick.
     pub nick: Vec<u8>,
+    /// Bytes after the nick, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ChatTopicChanged {
@@ -297,7 +304,7 @@ impl ChatTopicChanged {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(buf[0x18]), usize::from(buf[0x19])];
-        let ([topic, nick], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([topic, nick], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             time: u64_at(buf, 0),
             chat_id: u32_at(buf, 8),
@@ -306,6 +313,7 @@ impl ChatTopicChanged {
             unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
             topic,
             nick,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -321,6 +329,7 @@ impl ChatTopicChanged {
         out[0x1a..0x1c].copy_from_slice(&self.unknown_1a);
         out.extend_from_slice(&self.topic);
         out.extend_from_slice(&self.nick);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -338,6 +347,8 @@ pub struct ChatInvite {
     pub user_ids: Vec<u32>,
     /// Message to the invitees.
     pub message: Vec<u8>,
+    /// Bytes after the message, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ChatInvite {
@@ -355,13 +366,14 @@ impl ChatInvite {
         let user_ids = (0..count)
             .map(|i| u32_at(buf, Self::HEADER_LEN + 4 * i))
             .collect();
-        let ([message], _) = strings(buf, ids_end, [usize::from(buf[0x0f])])?;
+        let ([message], end) = strings(buf, ids_end, [usize::from(buf[0x0f])])?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
             unknown_04: buf[4..8].try_into().expect("4 bytes"),
             unknown_0a: buf[0x0a..0x0f].try_into().expect("5 bytes"),
             user_ids,
             message,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -380,6 +392,7 @@ impl ChatInvite {
             out.extend_from_slice(&id.to_be_bytes());
         }
         out.extend_from_slice(&self.message);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -405,6 +418,8 @@ pub struct ChatInvitation {
     pub message: Vec<u8>,
     /// Chat name.
     pub name: Vec<u8>,
+    /// Bytes after the name, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ChatInvitation {
@@ -415,7 +430,7 @@ impl ChatInvitation {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(buf[0x18]), usize::from(buf[0x19])];
-        let ([message, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([message, name], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
             key: u32_at(buf, 4),
@@ -426,6 +441,7 @@ impl ChatInvitation {
             unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
             message,
             name,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -443,6 +459,7 @@ impl ChatInvitation {
         out[0x1a..0x1c].copy_from_slice(&self.unknown_1a);
         out.extend_from_slice(&self.message);
         out.extend_from_slice(&self.name);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -473,7 +490,7 @@ impl ChatListEntry {
     pub const HEADER_LEN: usize = 0x14;
 
     /// Decodes the payload of 215 Chat List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         need(buf, 4)?;
         let count = u32_at(buf, 0) as usize;
         let mut at = 4;
@@ -496,14 +513,18 @@ impl ChatListEntry {
             });
             at += padded;
         }
-        Ok(list)
+        Ok(CountedList {
+            records: list,
+            rest: buf[at..].to_vec(),
+        })
     }
 
     /// Encodes the payload of 215 Chat List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
-        let count = u32::try_from(list.len()).map_err(|_| EncodeError::TooLong("chat list"))?;
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
+        let count =
+            u32::try_from(list.records.len()).map_err(|_| EncodeError::TooLong("chat list"))?;
         let mut out = count.to_be_bytes().to_vec();
-        for entry in list {
+        for entry in &list.records {
             let mut fixed = [0; Self::HEADER_LEN];
             fixed[0..4].copy_from_slice(&entry.chat_id.to_be_bytes());
             fixed[4..8].copy_from_slice(&entry.key.to_be_bytes());
@@ -518,6 +539,7 @@ impl ChatListEntry {
             out.extend_from_slice(&entry.padding);
             out.resize(pad4(out.len()), 0);
         }
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -608,6 +630,8 @@ pub struct ChatRecord {
     pub third: Vec<u8>,
     /// Meaning unknown.
     pub fourth: Vec<u8>,
+    /// Bytes after the fourth string, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ChatRecord {
@@ -618,7 +642,7 @@ impl ChatRecord {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x2a, 0x2b, 0x2c, 0x2d].map(|at| usize::from(buf[at]));
-        let ([name, description, third, fourth], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description, third, fourth], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
             key: u32_at(buf, 4),
@@ -633,6 +657,7 @@ impl ChatRecord {
             description,
             third,
             fourth,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -655,6 +680,7 @@ impl ChatRecord {
         for s in [&self.name, &self.description, &self.third, &self.fourth] {
             out.extend_from_slice(s);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }

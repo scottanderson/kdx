@@ -117,7 +117,7 @@ impl Client {
     /// 214 Get Chat List.
     pub async fn chat_list(&mut self) -> Result<Vec<ChatListEntry>> {
         let reply = self.request(MessageType::GET_CHAT_LIST, &[]).await?;
-        Ok(ChatListEntry::decode_list(&reply)?)
+        Ok(ChatListEntry::decode_list(&reply)?.records)
     }
 
     /// 202 Join Chat.
@@ -169,13 +169,13 @@ impl Client {
         let reply = self
             .request(MessageType::GET_FILE_LIST, &path.encode()?)
             .await?;
-        Ok(FileListEntry::decode_list(&reply)?)
+        Ok(FileListEntry::decode_list(&reply)?.records)
     }
 
     /// 605 Get Newsgroup List.
     pub async fn newsgroups(&mut self) -> Result<Vec<NewsgroupEntry>> {
         let reply = self.request(MessageType::GET_NEWSGROUP_LIST, &[]).await?;
-        Ok(NewsgroupEntry::decode_list(&reply)?)
+        Ok(NewsgroupEntry::decode_list(&reply)?.records)
     }
 
     /// 607 Get News Messages.
@@ -251,13 +251,13 @@ impl Client {
         let reply = self
             .request(MessageType::GET_ACCOUNT_CLASS_LIST, &[])
             .await?;
-        Ok(AccountClass::decode_list(&reply)?)
+        Ok(AccountClass::decode_list(&reply)?.records)
     }
 
     /// 512 Get Account List.
     pub async fn accounts(&mut self) -> Result<Vec<AccountListEntry>> {
         let reply = self.request(MessageType::GET_ACCOUNT_LIST, &[]).await?;
-        Ok(AccountListEntry::decode_list(&reply)?)
+        Ok(AccountListEntry::decode_list(&reply)?.records)
     }
 
     /// 509 Get Account.

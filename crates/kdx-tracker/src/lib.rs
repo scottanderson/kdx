@@ -297,7 +297,7 @@ impl State {
                     })
                     .collect();
                 state.registry.sweep(Instant::now());
-                let reply = GroupListEntry::encode_list(&list).expect("lengths fit");
+                let reply = GroupListEntry::encode_list(&list.into()).expect("lengths fit");
                 Reply::Message(MessageType::TRACKER_GROUP_LIST, reply)
             }
             MessageType::GET_TRACKER_SERVER_LIST => {
@@ -313,7 +313,7 @@ impl State {
                     .listed(group, groups)
                     .map(registry::Record::entry)
                     .collect();
-                let reply = ServerListEntry::encode_list(&list).expect("lengths fit");
+                let reply = ServerListEntry::encode_list(&list.into()).expect("lengths fit");
                 Reply::Message(MessageType::TRACKER_SERVER_LIST, reply)
             }
             MessageType::GET_TRACKERSERV_SETTINGS => Reply::Message(

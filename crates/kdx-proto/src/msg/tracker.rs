@@ -9,7 +9,7 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 use super::server_info::ServerGreeting;
 use super::{
     decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
-    DecodeError, EncodeError,
+    CountedList, DecodeError, EncodeError,
 };
 use crate::AccountKey;
 
@@ -33,7 +33,7 @@ impl GroupListEntry {
     pub const HEADER_LEN: usize = 8;
 
     /// Decodes the payload of 701 Tracker Group List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         decode_counted(buf, 0, |entry| {
             need(entry, Self::HEADER_LEN)?;
             let lens = [usize::from(entry[6]), usize::from(entry[7])];
@@ -51,9 +51,9 @@ impl GroupListEntry {
     }
 
     /// Encodes the payload of 701 Tracker Group List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        encode_counted(&mut out, list, |group| {
+        encode_counted(&mut out, &list.records, |group| {
             let mut out = vec![0; Self::HEADER_LEN];
             out[0..2].copy_from_slice(&group.servers.to_be_bytes());
             out[2..6].copy_from_slice(&group.value_02.to_be_bytes());
@@ -64,6 +64,7 @@ impl GroupListEntry {
             out.extend_from_slice(&group.padding);
             Ok(out)
         })?;
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -77,6 +78,8 @@ pub struct GetServerList {
     pub unknown_03: u8,
     /// Group name; an unknown group gives 0x1000c.
     pub group: Vec<u8>,
+    /// Bytes after the group name, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl GetServerList {
@@ -86,11 +89,12 @@ impl GetServerList {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let ([group], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[2])])?;
+        let ([group], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[2])])?;
         Ok(Self {
             unknown_00: buf[..2].try_into().expect("2 bytes"),
             unknown_03: buf[3],
             group,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -101,6 +105,7 @@ impl GetServerList {
         out[2] = len_u8(&self.group, "group name")?;
         out[3] = self.unknown_03;
         out.extend_from_slice(&self.group);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -137,9 +142,9 @@ impl ServerListEntry {
     pub const ADDR_LEN: u8 = 6;
 
     /// Decodes the payload of 703 Tracker Server List; an empty payload is an empty group.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         if buf.is_empty() {
-            return Ok(Vec::new());
+            return Ok(CountedList::default());
         }
         decode_counted(buf, 0, |entry| {
             need(entry, Self::HEADER_LEN)?;
@@ -169,12 +174,12 @@ impl ServerListEntry {
     }
 
     /// Encodes the payload of 703 Tracker Server List, which is empty for no servers.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        if list.is_empty() {
+        if list.records.is_empty() && list.rest.is_empty() {
             return Ok(out);
         }
-        encode_counted(&mut out, list, |server| {
+        encode_counted(&mut out, &list.records, |server| {
             let mut out = vec![0; Self::HEADER_LEN];
             out[0..8].copy_from_slice(&server.first_seen.to_be_bytes());
             out[8..0x0e].copy_from_slice(&server.unknown_08);
@@ -193,6 +198,7 @@ impl ServerListEntry {
             out.extend_from_slice(&server.padding);
             Ok(out)
         })?;
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -679,7 +685,7 @@ mod tests {
             unknown_12: [0; 6],
             padding: Vec::new(),
         };
-        let mut wire = ServerListEntry::encode_list(&[server]).unwrap();
+        let mut wire = ServerListEntry::encode_list(&[server].into()).unwrap();
         wire[4 + 0x18] = 18;
         assert_eq!(
             ServerListEntry::decode_list(&wire),

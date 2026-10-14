@@ -1,8 +1,8 @@
 //! File listings, folder changes, volumes, launching, the catalog, and search.
 
 use super::{
-    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError,
-    FilePath,
+    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, CountedList, DecodeError,
+    EncodeError, FilePath,
 };
 
 /// The attributes value of a file.
@@ -68,9 +68,9 @@ impl FileListEntry {
     }
 
     /// Decodes the payload of 401 File List; an empty payload is an empty folder.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         if buf.is_empty() {
-            return Ok(Vec::new());
+            return Ok(CountedList::default());
         }
         need(buf, 4)?;
         let count = u32_at(buf, 0) as usize;
@@ -100,17 +100,21 @@ impl FileListEntry {
             });
             at += padded;
         }
-        Ok(list)
+        Ok(CountedList {
+            records: list,
+            rest: buf[at..].to_vec(),
+        })
     }
 
     /// Encodes the payload of 401 File List, padding with zeros past each stored padding.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
-        if list.is_empty() {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
+        if list.records.is_empty() && list.rest.is_empty() {
             return Ok(Vec::new());
         }
-        let count = u32::try_from(list.len()).map_err(|_| EncodeError::TooLong("file list"))?;
+        let count =
+            u32::try_from(list.records.len()).map_err(|_| EncodeError::TooLong("file list"))?;
         let mut out = count.to_be_bytes().to_vec();
-        for entry in list {
+        for entry in &list.records {
             let mut fixed = [0; Self::HEADER_LEN];
             fixed[0..8].copy_from_slice(&entry.size.to_be_bytes());
             fixed[8..0x10].copy_from_slice(&entry.created.to_be_bytes());
@@ -131,6 +135,7 @@ impl FileListEntry {
             out.extend_from_slice(&entry.padding);
             out.resize(pad4(out.len()), 0);
         }
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -223,6 +228,8 @@ pub struct CreateFolder {
     pub access: Vec<u8>,
     /// An owner login that the server appends to the tag.
     pub owner: Vec<u8>,
+    /// Bytes after the path, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl CreateFolder {
@@ -238,13 +245,14 @@ impl CreateFolder {
             usize::from(buf[0x17]),
             usize::from(u16_at(buf, 0x14)),
         ];
-        let ([name, access, owner, path], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, access, owner, path], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             unknown_00: buf[..0x13].try_into().expect("19 bytes"),
             path: FilePath::decode(&path)?,
             name,
             access,
             owner,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -261,6 +269,7 @@ impl CreateFolder {
         for part in [&self.name, &self.access, &self.owner, &path] {
             out.extend_from_slice(part);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -350,6 +359,8 @@ pub struct SetFileInfo {
     pub path: FilePath,
     /// The new name.
     pub name: Vec<u8>,
+    /// Bytes after the name, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl Default for SetFileInfo {
@@ -362,6 +373,7 @@ impl Default for SetFileInfo {
             unknown_32: [0; 2],
             path: FilePath::default(),
             name: Vec::new(),
+            rest: Vec::new(),
         }
     }
 }
@@ -376,7 +388,7 @@ impl SetFileInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(u16_at(buf, 0x2e)), usize::from(buf[0x31])];
-        let ([path, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([path, name], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             unknown_00: buf[..0x28].try_into().expect("40 bytes"),
             flags: u32_at(buf, 0x28),
@@ -385,6 +397,7 @@ impl SetFileInfo {
             unknown_32: buf[0x32..0x34].try_into().expect("2 bytes"),
             path: FilePath::decode(&path)?,
             name,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -402,6 +415,7 @@ impl SetFileInfo {
         out[0x32..0x34].copy_from_slice(&self.unknown_32);
         out.extend_from_slice(&path);
         out.extend_from_slice(&self.name);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -447,6 +461,8 @@ pub struct VolumeInfo {
     pub format: Vec<u8>,
     /// Comments.
     pub comments: Vec<u8>,
+    /// Bytes after the comments, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl VolumeInfo {
@@ -457,7 +473,7 @@ impl VolumeInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [buf[0x4e], buf[0x50], buf[0x51]].map(usize::from);
-        let ([name, format, comments], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, format, comments], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             total: u64_at(buf, 0),
             free: u64_at(buf, 8),
@@ -478,6 +494,7 @@ impl VolumeInfo {
             name,
             format,
             comments,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -506,6 +523,7 @@ impl VolumeInfo {
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.format);
         out.extend_from_slice(&self.comments);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -529,6 +547,8 @@ pub struct SetVolumeInfo {
     pub format: Vec<u8>,
     /// The new comments.
     pub comments: Vec<u8>,
+    /// Bytes after the comments, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl Default for SetVolumeInfo {
@@ -542,6 +562,7 @@ impl Default for SetVolumeInfo {
             new_name: Vec::new(),
             format: Vec::new(),
             comments: Vec::new(),
+            rest: Vec::new(),
         }
     }
 }
@@ -558,7 +579,7 @@ impl SetVolumeInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [buf[0x4e], buf[0x4f], buf[0x50], buf[0x51]].map(usize::from);
-        let ([name, new_name, format, comments], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, new_name, format, comments], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             unknown_00: buf[..0x44].try_into().expect("68 bytes"),
             flags: u32_at(buf, 0x44),
@@ -568,6 +589,7 @@ impl SetVolumeInfo {
             new_name,
             format,
             comments,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -585,6 +607,7 @@ impl SetVolumeInfo {
         for part in [&self.name, &self.new_name, &self.format, &self.comments] {
             out.extend_from_slice(part);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -698,6 +721,8 @@ pub struct FileSearch {
     pub unknown_55: [u8; 3],
     /// Text to find in item names; at least 3 bytes.
     pub query: Vec<u8>,
+    /// Bytes after the query, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl Default for FileSearch {
@@ -706,6 +731,7 @@ impl Default for FileSearch {
             unknown_00: [0; 0x54],
             unknown_55: [0; 3],
             query: Vec::new(),
+            rest: Vec::new(),
         }
     }
 }
@@ -717,11 +743,12 @@ impl FileSearch {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let ([query], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x54])])?;
+        let ([query], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x54])])?;
         Ok(Self {
             unknown_00: buf[..0x54].try_into().expect("84 bytes"),
             unknown_55: buf[0x55..0x58].try_into().expect("3 bytes"),
             query,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -732,6 +759,7 @@ impl FileSearch {
         out[0x54] = len_u8(&self.query, "search query")?;
         out[0x55..0x58].copy_from_slice(&self.unknown_55);
         out.extend_from_slice(&self.query);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -774,9 +802,9 @@ impl FileSearchEntry {
     pub const HEADER_LEN: usize = 0x38;
 
     /// Decodes the payload of 453 File Search (R); an empty payload has no hits.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         if buf.is_empty() {
-            return Ok(Vec::new());
+            return Ok(CountedList::default());
         }
         need(buf, 4)?;
         let count = u32_at(buf, 0) as usize;
@@ -810,18 +838,21 @@ impl FileSearchEntry {
             });
             at += padded;
         }
-        Ok(list)
+        Ok(CountedList {
+            records: list,
+            rest: buf[at..].to_vec(),
+        })
     }
 
     /// Encodes the payload of 453 File Search (R), padding with zeros past each stored padding.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
-        if list.is_empty() {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
+        if list.records.is_empty() && list.rest.is_empty() {
             return Ok(Vec::new());
         }
-        let count =
-            u32::try_from(list.len()).map_err(|_| EncodeError::TooLong("search results"))?;
+        let count = u32::try_from(list.records.len())
+            .map_err(|_| EncodeError::TooLong("search results"))?;
         let mut out = count.to_be_bytes().to_vec();
-        for entry in list {
+        for entry in &list.records {
             let path = entry.path.encode()?;
             let path_len = u32::try_from(path.len()).map_err(|_| EncodeError::TooLong("path"))?;
             let mut fixed = [0; Self::HEADER_LEN];
@@ -844,6 +875,7 @@ impl FileSearchEntry {
             out.extend_from_slice(&entry.padding);
             out.resize(pad4(out.len()), 0);
         }
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }

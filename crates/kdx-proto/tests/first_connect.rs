@@ -146,7 +146,7 @@ fn payloads() {
             }
             MessageType::NEWSGROUP_LIST => {
                 let list = NewsgroupEntry::decode_list(payload).unwrap();
-                assert!(!list.is_empty());
+                assert!(!list.records.is_empty());
                 assert_eq!(NewsgroupEntry::encode_list(&list).unwrap(), payload);
             }
             MessageType::NEWS_MESSAGES => {

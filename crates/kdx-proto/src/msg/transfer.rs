@@ -115,6 +115,8 @@ pub struct DownloadInfo {
     pub unknown_34: [u8; 0x14],
     /// Name and type strings.
     pub strings: FileStrings,
+    /// Bytes after the strings, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl DownloadInfo {
@@ -124,7 +126,7 @@ impl DownloadInfo {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let (strings, _) = FileStrings::decode(buf, 0x48)?;
+        let (strings, end) = FileStrings::decode(buf, 0x48)?;
         Ok(Self {
             data_size: u64_at(buf, 0),
             rsrc_size: u64_at(buf, 8),
@@ -135,6 +137,7 @@ impl DownloadInfo {
             unknown_30: u32_at(buf, 0x30),
             unknown_34: buf[0x34..0x48].try_into().expect("20 bytes"),
             strings,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -150,6 +153,7 @@ impl DownloadInfo {
         out[0x30..0x34].copy_from_slice(&self.unknown_30.to_be_bytes());
         out[0x34..0x48].copy_from_slice(&self.unknown_34);
         self.strings.encode(&mut out, 0x48)?;
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }

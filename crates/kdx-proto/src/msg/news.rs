@@ -1,7 +1,8 @@
 //! News: 600 to 614, from Create Newsgroup to News Message Deleted.
 
 use super::{
-    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, DecodeError, EncodeError,
+    len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at, CountedList, DecodeError,
+    EncodeError,
 };
 
 /// An entry of 606 Newsgroup List.
@@ -30,7 +31,7 @@ impl NewsgroupEntry {
     pub const HEADER_LEN: usize = 0x18;
 
     /// Decodes the payload of 606 Newsgroup List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         let count = list_count(buf)?;
         let mut at = 4;
         let mut list = Vec::with_capacity(count.min(buf.len()));
@@ -52,13 +53,16 @@ impl NewsgroupEntry {
             });
             at += padded;
         }
-        Ok(list)
+        Ok(CountedList {
+            records: list,
+            rest: buf[at..].to_vec(),
+        })
     }
 
     /// Encodes the payload of 606 Newsgroup List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
-        let mut out = encode_count(list.len())?;
-        for entry in list {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
+        let mut out = encode_count(list.records.len())?;
+        for entry in &list.records {
             let mut fixed = [0; Self::HEADER_LEN];
             fixed[0..8].copy_from_slice(&entry.time.to_be_bytes());
             fixed[8..0x0c].copy_from_slice(&entry.group_id.to_be_bytes());
@@ -73,6 +77,7 @@ impl NewsgroupEntry {
             out.extend_from_slice(&entry.padding);
             out.resize(pad4(out.len()), 0);
         }
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -106,6 +111,8 @@ pub struct NewsgroupInfo {
     pub name: Vec<u8>,
     /// Description.
     pub description: Vec<u8>,
+    /// Bytes after the description, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl NewsgroupInfo {
@@ -116,7 +123,7 @@ impl NewsgroupInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(buf[0x3c]), usize::from(buf[0x3d])];
-        let ([name, description], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             group_id: u32_at(buf, 0),
             unknown_04: buf[4..0x10].try_into().expect("12 bytes"),
@@ -131,6 +138,7 @@ impl NewsgroupInfo {
             unknown_3e: buf[0x3e..0x40].try_into().expect("2 bytes"),
             name,
             description,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -152,6 +160,7 @@ impl NewsgroupInfo {
         out[0x3e..0x40].copy_from_slice(&self.unknown_3e);
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.description);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -260,6 +269,8 @@ pub struct NewsMessages {
     pub unknown_08: [u8; 4],
     /// The messages.
     pub messages: Vec<NewsMessage>,
+    /// Bytes after the last message, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl NewsMessages {
@@ -282,6 +293,7 @@ impl NewsMessages {
             permissions: u32_at(buf, 4),
             unknown_08: buf[8..0x0c].try_into().expect("4 bytes"),
             messages,
+            rest: buf[at..].to_vec(),
         })
     }
 
@@ -294,6 +306,7 @@ impl NewsMessages {
         for message in &self.messages {
             out.extend(message.encode()?);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }

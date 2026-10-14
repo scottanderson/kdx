@@ -5,7 +5,7 @@ use crate::{AccountKey, MessageType};
 
 use super::{
     decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
-    DecodeError, EncodeError, FilePath,
+    CountedList, DecodeError, EncodeError, FilePath,
 };
 
 /// 114 Extra Server Info.
@@ -27,6 +27,8 @@ pub struct ExtraServerInfo {
     pub unknown_2d: [u8; 3],
     /// Operating system description, as from `uname`.
     pub os: Vec<u8>,
+    /// Bytes after the OS string, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl ExtraServerInfo {
@@ -36,7 +38,7 @@ impl ExtraServerInfo {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let ([os], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x2c])])?;
+        let ([os], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x2c])])?;
         Ok(Self {
             unknown_00: buf[..0x10].try_into().expect("16 bytes"),
             start_time: u64_at(buf, 0x10),
@@ -46,6 +48,7 @@ impl ExtraServerInfo {
             os_value_28: u32_at(buf, 0x28),
             unknown_2d: buf[0x2d..0x30].try_into().expect("3 bytes"),
             os,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -61,26 +64,36 @@ impl ExtraServerInfo {
         out[0x2c] = len_u8(&self.os, "OS string")?;
         out[0x2d..0x30].copy_from_slice(&self.unknown_2d);
         out.extend_from_slice(&self.os);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
 
 /// 116 Your Address: the client's address as the server sees it, as `ip:port`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct YourAddress(pub Vec<u8>);
+pub struct YourAddress {
+    /// The address.
+    pub address: Vec<u8>,
+    /// Bytes after the address, as received; empty by default.
+    pub rest: Vec<u8>,
+}
 
 impl YourAddress {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, 1)?;
-        let ([address], _) = strings(buf, 1, [usize::from(buf[0])])?;
-        Ok(Self(address))
+        let ([address], end) = strings(buf, 1, [usize::from(buf[0])])?;
+        Ok(Self {
+            address,
+            rest: buf[end..].to_vec(),
+        })
     }
 
     /// Encodes the payload.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
-        let mut out = vec![len_u8(&self.0, "address")?];
-        out.extend_from_slice(&self.0);
+        let mut out = vec![len_u8(&self.address, "address")?];
+        out.extend_from_slice(&self.address);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -243,6 +256,8 @@ pub struct DisconnectUser {
     pub unknown_15: [u8; 3],
     /// Message for the user.
     pub message: Vec<u8>,
+    /// Bytes after the message, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl DisconnectUser {
@@ -256,7 +271,7 @@ impl DisconnectUser {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let ([message], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x14])])?;
+        let ([message], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x14])])?;
         Ok(Self {
             user_id: u32_at(buf, 0),
             unknown_04: buf[4..8].try_into().expect("4 bytes"),
@@ -266,6 +281,7 @@ impl DisconnectUser {
             unknown_12: buf[0x12..0x14].try_into().expect("2 bytes"),
             unknown_15: buf[0x15..0x18].try_into().expect("3 bytes"),
             message,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -281,6 +297,7 @@ impl DisconnectUser {
         out[0x14] = len_u8(&self.message, "message")?;
         out[0x15..0x18].copy_from_slice(&self.unknown_15);
         out.extend_from_slice(&self.message);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -302,6 +319,8 @@ pub struct DisconnectMessage {
     pub message: Vec<u8>,
     /// The sender's name.
     pub name: Vec<u8>,
+    /// Bytes after the name, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl DisconnectMessage {
@@ -316,7 +335,7 @@ impl DisconnectMessage {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(buf[0x12]), usize::from(buf[0x13])];
-        let ([message, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([message, name], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             user_id: u32_at(buf, 0),
             unknown_04: buf[4..0x0c].try_into().expect("8 bytes"),
@@ -325,6 +344,7 @@ impl DisconnectMessage {
             value_10: u16_at(buf, 0x10),
             message,
             name,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -340,6 +360,7 @@ impl DisconnectMessage {
         out[0x13] = len_u8(&self.name, "name")?;
         out.extend_from_slice(&self.message);
         out.extend_from_slice(&self.name);
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -573,15 +594,18 @@ pub struct HistoryList {
     pub unknown_00: [u8; 4],
     /// The records.
     pub records: Vec<HistoryRecord>,
+    /// Bytes after the last record, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl HistoryList {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
-        let records = decode_counted(buf, 4, HistoryRecord::decode)?;
+        let CountedList { records, rest } = decode_counted(buf, 4, HistoryRecord::decode)?;
         Ok(Self {
             unknown_00: buf[..4].try_into().expect("4 bytes"),
             records,
+            rest,
         })
     }
 
@@ -589,6 +613,7 @@ impl HistoryList {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = self.unknown_00.to_vec();
         encode_counted(&mut out, &self.records, HistoryRecord::encode)?;
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -701,7 +726,7 @@ impl AccountClass {
     }
 
     /// Decodes 506 Account Class List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         decode_counted(buf, 0, |entry| Self::decode_at(entry, Self::LIST_INDEX_AT))
     }
 
@@ -718,9 +743,12 @@ impl AccountClass {
     }
 
     /// Encodes 506 Account Class List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        encode_counted(&mut out, list, |c| c.encode_at(Self::LIST_INDEX_AT))?;
+        encode_counted(&mut out, &list.records, |c| {
+            c.encode_at(Self::LIST_INDEX_AT)
+        })?;
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 
@@ -932,7 +960,7 @@ impl AccountListEntry {
     pub const HEADER_LEN: usize = 0x28;
 
     /// Decodes the payload of 513 Account List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         decode_counted(buf, 0, |entry| {
             need(entry, Self::HEADER_LEN)?;
             let lens = [usize::from(entry[0x24]), usize::from(entry[0x25])];
@@ -957,9 +985,9 @@ impl AccountListEntry {
     }
 
     /// Encodes the payload of 513 Account List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        encode_counted(&mut out, list, |account| {
+        encode_counted(&mut out, &list.records, |account| {
             let mut entry = vec![0; Self::HEADER_LEN];
             entry[0..8].copy_from_slice(&account.created.to_be_bytes());
             entry[8..0x10].copy_from_slice(&account.last_login.to_be_bytes());
@@ -977,6 +1005,7 @@ impl AccountListEntry {
             entry.extend_from_slice(&account.padding);
             Ok(entry)
         })?;
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }
@@ -992,6 +1021,8 @@ pub struct ProcessList {
     pub unknown_10: [u8; 0x0c],
     /// The processes.
     pub processes: Vec<Process>,
+    /// Bytes after the last process, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 /// A process in 803 Process List.
@@ -1038,7 +1069,7 @@ impl ProcessList {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let processes = decode_counted(buf, Self::HEADER_LEN, |entry| {
+        let list = decode_counted(buf, Self::HEADER_LEN, |entry| {
             need(entry, Self::ENTRY_LEN)?;
             let lens = [usize::from(entry[0x3a]), usize::from(entry[0x39])];
             let ([command, user], end) = strings(entry, Self::ENTRY_LEN, lens)?;
@@ -1059,7 +1090,8 @@ impl ProcessList {
             memory_00: u64_at(buf, 0),
             memory_08: u64_at(buf, 8),
             unknown_10: buf[0x10..0x1c].try_into().expect("12 bytes"),
-            processes,
+            processes: list.records,
+            rest: list.rest,
         })
     }
 
@@ -1083,6 +1115,7 @@ impl ProcessList {
             entry.extend_from_slice(&process.padding);
             Ok(entry)
         })?;
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }
@@ -1209,7 +1242,7 @@ impl FolderAccessItem {
     pub const HEADER_LEN: usize = 0x14;
 
     /// Decodes the payload of 1107 Folder Access List.
-    pub fn decode_list(buf: &[u8]) -> Result<Vec<Self>, DecodeError> {
+    pub fn decode_list(buf: &[u8]) -> Result<CountedList<Self>, DecodeError> {
         decode_counted(buf, 0, |entry| {
             need(entry, Self::HEADER_LEN)?;
             let lens = [0x11, 0x12, 0x13].map(|at| usize::from(entry[at]));
@@ -1230,9 +1263,9 @@ impl FolderAccessItem {
     }
 
     /// Encodes the payload of 1107 Folder Access List.
-    pub fn encode_list(list: &[Self]) -> Result<Vec<u8>, EncodeError> {
+    pub fn encode_list(list: &CountedList<Self>) -> Result<Vec<u8>, EncodeError> {
         let mut out = Vec::new();
-        encode_counted(&mut out, list, |item| {
+        encode_counted(&mut out, &list.records, |item| {
             let mut entry = vec![0; Self::HEADER_LEN];
             entry[0..4].copy_from_slice(&item.flags.to_be_bytes());
             entry[4..8].copy_from_slice(&item.icon.to_be_bytes());
@@ -1246,6 +1279,7 @@ impl FolderAccessItem {
             }
             Ok(entry)
         })?;
+        out.extend_from_slice(&list.rest);
         Ok(out)
     }
 }

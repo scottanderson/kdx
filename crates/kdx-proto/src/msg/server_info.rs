@@ -28,6 +28,8 @@ pub struct ServerInfo {
     pub description: Vec<u8>,
     /// A third string of unknown meaning.
     pub third: Vec<u8>,
+    /// Bytes after the third string, as received; empty by default.
+    pub rest: Vec<u8>,
 }
 
 impl Default for ServerInfo {
@@ -44,6 +46,7 @@ impl Default for ServerInfo {
             name: Vec::new(),
             description: Vec::new(),
             third: Vec::new(),
+            rest: Vec::new(),
         }
     }
 }
@@ -56,7 +59,7 @@ impl ServerInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x48, 0x49, 0x4a].map(|at| usize::from(buf[at]));
-        let ([name, description, third], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description, third], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             session_key: buf[..32].try_into().expect("32 bytes"),
             server_value: u32_at(buf, 0x20),
@@ -69,6 +72,7 @@ impl ServerInfo {
             name,
             description,
             third,
+            rest: buf[end..].to_vec(),
         })
     }
 
@@ -89,6 +93,7 @@ impl ServerInfo {
         for part in [&self.name, &self.description, &self.third] {
             out.extend_from_slice(part);
         }
+        out.extend_from_slice(&self.rest);
         Ok(out)
     }
 }

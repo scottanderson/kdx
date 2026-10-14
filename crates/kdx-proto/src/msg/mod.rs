@@ -106,22 +106,58 @@ pub(crate) fn padding(buf: &[u8], end: usize) -> (Vec<u8>, usize) {
     (buf[end..padded].to_vec(), padded)
 }
 
-/// Reads a u32 count followed by that many records, each padded to 4.
+/// The records of a counted list payload and the bytes after the last one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CountedList<T> {
+    /// The records.
+    pub records: Vec<T>,
+    /// Bytes after the last record, as received; empty by default.
+    pub rest: Vec<u8>,
+}
+
+impl<T> Default for CountedList<T> {
+    fn default() -> Self {
+        Self {
+            records: Vec::new(),
+            rest: Vec::new(),
+        }
+    }
+}
+
+impl<T> From<Vec<T>> for CountedList<T> {
+    fn from(records: Vec<T>) -> Self {
+        Self {
+            records,
+            rest: Vec::new(),
+        }
+    }
+}
+
+impl<T, const N: usize> From<[T; N]> for CountedList<T> {
+    fn from(records: [T; N]) -> Self {
+        Vec::from(records).into()
+    }
+}
+
+/// Reads a u32 count followed by that many records, each padded to 4, then the rest.
 pub(crate) fn decode_counted<T>(
     buf: &[u8],
     count_at: usize,
     mut decode: impl FnMut(&[u8]) -> Result<(T, usize), DecodeError>,
-) -> Result<Vec<T>, DecodeError> {
+) -> Result<CountedList<T>, DecodeError> {
     need(buf, count_at + 4)?;
     let count = u32_at(buf, count_at) as usize;
     let mut at = count_at + 4;
-    let mut list = Vec::with_capacity(count.min(buf.len()));
+    let mut records = Vec::with_capacity(count.min(buf.len()));
     for _ in 0..count {
         let (item, len) = decode(&buf[at..])?;
-        list.push(item);
+        records.push(item);
         at = (at + pad4(len)).min(buf.len());
     }
-    Ok(list)
+    Ok(CountedList {
+        records,
+        rest: buf[at..].to_vec(),
+    })
 }
 
 /// Appends a u32 count, then each record padded with zeros to 4.

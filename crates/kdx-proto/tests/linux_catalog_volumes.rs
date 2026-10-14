@@ -111,7 +111,7 @@ fn set_account_class() {
         );
 
         // The 506 after it holds the saved class, with the time set by the server.
-        let saved = &AccountClass::decode_list(list).unwrap()[0];
+        let saved = &AccountClass::decode_list(list).unwrap().records[0];
         assert_ne!(saved.time, 0);
         assert_eq!(saved.privileges, class.privileges);
         assert_eq!(saved.name, class.name);
@@ -178,8 +178,8 @@ fn file_search() {
     // Frame 29.
     let (_, wire) = one(&session, MessageType::FILE_SEARCH_REPLY);
     let hits = FileSearchEntry::decode_list(wire).unwrap();
-    assert_eq!(hits.len(), 1);
-    let hit = &hits[0];
+    assert_eq!(hits.records.len(), 1);
+    let hit = &hits.records[0];
     assert_eq!(hit.size, 6);
     assert_eq!(hit.attributes, ATTR_FILE);
     assert_eq!(hit.created, hit.modified);

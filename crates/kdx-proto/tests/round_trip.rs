@@ -7,7 +7,7 @@ use kdx_proto::msg::admin::{
     Account, AccountClass, AccountClassIndex, AccountListEntry, AccountLogin, ChangeOwnPassword,
     DisconnectMessage, DisconnectUser, ExtraServerInfo, FolderAccess, FolderAccessItem,
     FolderAccessName, GetFolderAccessList, HistoryList, HistoryRecord, MonitoredConnection,
-    Process, ProcessList, RcvBroadcast, ShutdownServer,
+    Process, ProcessList, RcvBroadcast, ShutdownServer, YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText, ChatTopicChanged,
@@ -174,6 +174,81 @@ fn with(mut wire: Vec<u8>, n: usize) -> Vec<u8> {
 /// Shifts each range by `by`, for a record after a list count.
 fn at(by: usize, ranges: &[std::ops::Range<usize>]) -> Vec<std::ops::Range<usize>> {
     ranges.iter().map(|r| r.start + by..r.end + by).collect()
+}
+
+#[test]
+fn trailing_bytes_round_trip() {
+    macro_rules! trailing {
+        ($($t:ty),* $(,)?) => {$({
+            let mut wire = <$t>::default().encode().unwrap();
+            wire.extend_from_slice(b"\x01\xfe\x00\x7f\x55");
+            let decoded = <$t>::decode(&wire).unwrap();
+            assert_eq!(decoded.rest, b"\x01\xfe\x00\x7f\x55", stringify!($t));
+            assert_eq!(decoded.encode().unwrap(), wire, stringify!($t));
+        })*};
+    }
+    trailing!(
+        ExtraServerInfo,
+        YourAddress,
+        DisconnectUser,
+        DisconnectMessage,
+        HistoryList,
+        ProcessList,
+        ChatWindowInfo,
+        ChatTopicChanged,
+        ChatInvite,
+        ChatInvitation,
+        ChatRecord,
+        CreateFolder,
+        SetFileInfo,
+        VolumeInfo,
+        SetVolumeInfo,
+        FileSearch,
+        NewsgroupInfo,
+        NewsMessages,
+        ServerInfo,
+        GetServerList,
+        DownloadInfo,
+    );
+}
+
+#[test]
+fn trailing_bytes_after_list_round_trip() {
+    const REST: &[u8] = b"\x01\xfe\x00\x7f\x55";
+    macro_rules! trailing {
+        ($($t:ty: $record:expr),* $(,)?) => {$({
+            let empty = [&[0; 4], REST].concat();
+            let one = [<$t>::encode_list(&[$record].into()).unwrap().as_slice(), REST].concat();
+            for wire in [empty, one] {
+                let decoded = <$t>::decode_list(&wire).unwrap();
+                assert_eq!(decoded.rest, REST, stringify!($t));
+                assert_eq!(<$t>::encode_list(&decoded).unwrap(), wire, stringify!($t));
+            }
+        })*};
+    }
+    let a = || b"a".to_vec();
+    trailing!(
+        AccountClass: AccountClass { name: a(), ..Default::default() },
+        AccountListEntry: AccountListEntry { login: a(), ..Default::default() },
+        FolderAccessItem: FolderAccessItem { name: a(), ..Default::default() },
+        ChatListEntry: ChatListEntry { name: a(), ..Default::default() },
+        FileListEntry: FileListEntry { name: a(), ..Default::default() },
+        FileSearchEntry: FileSearchEntry { path: FilePath::new(["f"]), ..Default::default() },
+        NewsgroupEntry: NewsgroupEntry { name: a(), ..Default::default() },
+        GroupListEntry: GroupListEntry { name: a(), ..Default::default() },
+        ServerListEntry: ServerListEntry {
+            first_seen: 0,
+            unknown_08: [0; 6],
+            flags: 0,
+            users: 0,
+            unknown_12: [0; 6],
+            address: SocketAddrV4::new(Ipv4Addr::LOCALHOST, 10700),
+            name: a(),
+            description: Vec::new(),
+            extra: Vec::new(),
+            padding: Vec::new(),
+        },
+    );
 }
 
 #[test]
@@ -373,7 +448,7 @@ fn nonzero_gaps_round_trip() {
         &[0x18..0x25, 0x26..0x30, 0x31..0x34, 0x37..0x38, 0x39..0x3c],
         |p| AccountClass::decode_info(p).unwrap().encode_info().unwrap(),
     );
-    let wire = AccountClass::encode_list(&[class]).unwrap();
+    let wire = AccountClass::encode_list(&[class].into()).unwrap();
     gaps(
         "506",
         wire,
@@ -395,10 +470,13 @@ fn nonzero_gaps_round_trip() {
         &[0x58..0x76, 0x77..0x7a, 0x7e..0x80, 0x81..0x84],
         |p| Account::decode(p).unwrap().encode().unwrap(),
     );
-    let wire = AccountListEntry::encode_list(&[AccountListEntry {
-        login: a(),
-        ..Default::default()
-    }])
+    let wire = AccountListEntry::encode_list(
+        &[AccountListEntry {
+            login: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps(
         "513",
@@ -423,10 +501,13 @@ fn nonzero_gaps_round_trip() {
         &[[0x10..0x1c].as_slice(), &process_gaps].concat(),
         |p| ProcessList::decode(p).unwrap().encode().unwrap(),
     );
-    let wire = FolderAccessItem::encode_list(&[FolderAccessItem {
-        name: a(),
-        ..Default::default()
-    }])
+    let wire = FolderAccessItem::encode_list(
+        &[FolderAccessItem {
+            name: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps("1107", wire, &at(4, &[8..0x10, 0x15..0x18]), |p| {
         FolderAccessItem::encode_list(&FolderAccessItem::decode_list(p).unwrap()).unwrap()
@@ -509,10 +590,13 @@ fn nonzero_gaps_round_trip() {
         &[0x12..0x18, 0x1a..0x1c],
         |p| ChatInvitation::decode(p).unwrap().encode().unwrap(),
     );
-    let wire = ChatListEntry::encode_list(&[ChatListEntry {
-        name: a(),
-        ..Default::default()
-    }])
+    let wire = ChatListEntry::encode_list(
+        &[ChatListEntry {
+            name: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps("215", wire, &at(4, &[8..0x0e, 0x15..0x18]), |p| {
         ChatListEntry::encode_list(&ChatListEntry::decode_list(p).unwrap()).unwrap()
@@ -525,10 +609,13 @@ fn nonzero_gaps_round_trip() {
     );
 
     // Files.
-    let wire = FileListEntry::encode_list(&[FileListEntry {
-        name: a(),
-        ..Default::default()
-    }])
+    let wire = FileListEntry::encode_list(
+        &[FileListEntry {
+            name: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps(
         "401",
@@ -590,10 +677,13 @@ fn nonzero_gaps_round_trip() {
         &[0..0x54, 0x55..0x58],
         |p| FileSearch::decode(p).unwrap().encode().unwrap(),
     );
-    let wire = FileSearchEntry::encode_list(&[FileSearchEntry {
-        path: file(),
-        ..Default::default()
-    }])
+    let wire = FileSearchEntry::encode_list(
+        &[FileSearchEntry {
+            path: file(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     let hit_gaps = at(
         4,
@@ -611,10 +701,13 @@ fn nonzero_gaps_round_trip() {
     });
 
     // News.
-    let wire = NewsgroupEntry::encode_list(&[NewsgroupEntry {
-        name: a(),
-        ..Default::default()
-    }])
+    let wire = NewsgroupEntry::encode_list(
+        &[NewsgroupEntry {
+            name: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps(
         "606",
@@ -660,10 +753,13 @@ fn nonzero_gaps_round_trip() {
     });
 
     // Tracker.
-    let wire = GroupListEntry::encode_list(&[GroupListEntry {
-        name: a(),
-        ..Default::default()
-    }])
+    let wire = GroupListEntry::encode_list(
+        &[GroupListEntry {
+            name: a(),
+            ..Default::default()
+        }]
+        .into(),
+    )
     .unwrap();
     gaps("701", wire, &at(4, &[9..0x0c]), |p| {
         GroupListEntry::encode_list(&GroupListEntry::decode_list(p).unwrap()).unwrap()
@@ -686,7 +782,7 @@ fn nonzero_gaps_round_trip() {
         extra: Vec::new(),
         padding: Vec::new(),
     };
-    let wire = ServerListEntry::encode_list(&[server]).unwrap();
+    let wire = ServerListEntry::encode_list(&[server].into()).unwrap();
     gaps(
         "703",
         wire,

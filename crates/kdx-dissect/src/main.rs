@@ -704,6 +704,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             )
         }
         MessageType::CHAT_LIST => ChatListEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|c| {
                 format!(
@@ -735,6 +736,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             format!("chat {} by user {}", deleted.chat_id, deleted.user_id)
         }
         MessageType::FILE_LIST => FileListEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|e| {
                 if e.is_folder() {
@@ -859,6 +861,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             format!("query {}", quoted(&FileSearch::decode(payload)?.query))
         }
         MessageType::FILE_SEARCH_REPLY => FileSearchEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|e| format!("{} {} bytes", path(&e.path), e.size))
             .collect::<Vec<_>>()
@@ -868,6 +871,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             NotifySpeedLimit::decode(payload)?.bytes_per_second
         ),
         MessageType::NEWSGROUP_LIST => NewsgroupEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|g| {
                 format!(
@@ -971,7 +975,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 settings.icon().len()
             )
         }
-        MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.0),
+        MessageType::YOUR_ADDRESS => quoted(&YourAddress::decode(payload)?.address),
         MessageType::CONNECTION_MONITOR_INFO => MonitoredConnection::decode_list(payload)?
             .iter()
             .map(|c| match c.transfer_id {
@@ -1008,6 +1012,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         MessageType::ACCOUNT_CLASS_INFO => class(&AccountClass::decode_info(payload)?),
         MessageType::SET_ACCOUNT_CLASS => class(&AccountClass::decode_set(payload)?),
         MessageType::ACCOUNT_CLASS_LIST => AccountClass::decode_list(payload)?
+            .records
             .iter()
             .map(class)
             .collect::<Vec<_>>()
@@ -1042,6 +1047,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             )
         }
         MessageType::ACCOUNT_LIST => AccountListEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|a| {
                 format!(
@@ -1071,6 +1077,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             format!("pid {} flags {:#x}", request.pid, request.flags)
         }
         MessageType::FOLDER_ACCESS_LIST => FolderAccessItem::decode_list(payload)?
+            .records
             .iter()
             .map(|i| {
                 format!(
@@ -1107,6 +1114,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             text
         }
         MessageType::TRACKER_GROUP_LIST => GroupListEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|g| {
                 let mut text = format!("{} ({} servers)", quoted(&g.name), g.servers);
@@ -1122,6 +1130,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         }
         MessageType::TRACKER_SERVER_LIST if payload.is_empty() => String::new(),
         MessageType::TRACKER_SERVER_LIST => ServerListEntry::decode_list(payload)?
+            .records
             .iter()
             .map(|s| {
                 let mut text = format!(

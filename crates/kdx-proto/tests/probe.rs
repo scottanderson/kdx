@@ -92,9 +92,9 @@ fn chat_list() {
     let session = connection!("50770");
     let wire = one(&session, MessageType::CHAT_LIST);
     let list = ChatListEntry::decode_list(wire).unwrap();
-    let names: Vec<&[u8]> = list.iter().map(|c| c.name.as_slice()).collect();
+    let names: Vec<&[u8]> = list.records.iter().map(|c| c.name.as_slice()).collect();
     assert_eq!(names, [&b"Public Chat"[..], b"Voice Chat", b"Admin Lounge"]);
-    assert_eq!(list[1].flags, 2);
+    assert_eq!(list.records[1].flags, 2);
     assert_eq!(ChatListEntry::encode_list(&list).unwrap(), wire);
 }
 
@@ -103,10 +103,11 @@ fn files() {
     for session in [connection!("32980"), connection!("54328")] {
         for wire in payloads(&session, MessageType::FILE_LIST) {
             let list = FileListEntry::decode_list(wire).unwrap();
-            if let [first, second] = &list[..] {
+            if let [first, second] = &list.records[..] {
                 assert_eq!(first.name, b"Admin Dropbox [DB]");
                 assert_eq!(second.name, b"Uploads [UL]");
                 assert!(list
+                    .records
                     .iter()
                     .all(|e| e.attributes == ATTR_FOLDER && e.is_folder()));
                 assert_eq!((first.access_item, second.access_item), (0x2c, 0x2b));
@@ -114,7 +115,7 @@ fn files() {
                 assert_eq!(first.padding.len(), 2);
                 assert_ne!(first.padding, [0, 0]);
             } else {
-                assert!(list.is_empty());
+                assert!(list.records.is_empty());
             }
             assert_eq!(FileListEntry::encode_list(&list).unwrap(), wire);
         }
@@ -234,6 +235,7 @@ fn upload() {
     let listing = payloads(&session, MessageType::FILE_LIST);
     let names: Vec<_> = FileListEntry::decode_list(listing[0])
         .unwrap()
+        .records
         .into_iter()
         .map(|e| (e.name, e.size))
         .collect();
@@ -253,7 +255,7 @@ fn server_info() {
 
     let wire = one(&session, MessageType::YOUR_ADDRESS);
     let address = YourAddress::decode(wire).unwrap();
-    assert_eq!(address.0, b"127.0.0.1:50770");
+    assert_eq!(address.address, b"127.0.0.1:50770");
     assert_eq!(address.encode().unwrap(), wire);
 }
 
@@ -278,15 +280,19 @@ fn account_classes() {
     let session = connection!("50770");
     let wire = one(&session, MessageType::ACCOUNT_CLASS_LIST);
     let list = AccountClass::decode_list(wire).unwrap();
-    assert_eq!(list.len(), 12);
-    let names: Vec<&[u8]> = list[..3].iter().map(|c| c.name.as_slice()).collect();
+    assert_eq!(list.records.len(), 12);
+    let names: Vec<&[u8]> = list.records[..3]
+        .iter()
+        .map(|c| c.name.as_slice())
+        .collect();
     assert_eq!(names, [&b"Administrator"[..], b"User", b"Guest"]);
     assert!(list
+        .records
         .iter()
         .enumerate()
         .all(|(i, c)| usize::from(c.index) == i));
-    assert_eq!(list[0].unknown_after_index, [0xff, 0, 0]);
-    assert_eq!(list[1].unknown_after_index, [0, 0, 0xff]);
+    assert_eq!(list.records[0].unknown_after_index, [0xff, 0, 0]);
+    assert_eq!(list.records[1].unknown_after_index, [0, 0, 0xff]);
     assert_eq!(AccountClass::encode_list(&list).unwrap(), wire);
 
     let session = connection!("59006");
@@ -299,7 +305,7 @@ fn account_classes() {
                 unknown_25,
                 unknown_28: class.unknown_28,
                 padding: class.padding.clone(),
-                ..list[index].clone()
+                ..list.records[index].clone()
             }
         );
         // The server leaves the padding uninitialised; the codec keeps it.
@@ -313,10 +319,13 @@ fn accounts() {
     for session in [connection!("50770"), connection!("59006")] {
         let wire = one(&session, MessageType::ACCOUNT_LIST);
         let list = AccountListEntry::decode_list(wire).unwrap();
-        let logins: Vec<&[u8]> = list.iter().map(|a| a.login.as_slice()).collect();
+        let logins: Vec<&[u8]> = list.records.iter().map(|a| a.login.as_slice()).collect();
         assert_eq!(logins, [&b"admin"[..], b"guest"]);
-        assert_eq!((list[0].class_index, list[1].class_index), (0, 2));
-        assert_eq!(list[1].last_login, 0);
+        assert_eq!(
+            (list.records[0].class_index, list.records[1].class_index),
+            (0, 2)
+        );
+        assert_eq!(list.records[1].last_login, 0);
         assert_eq!(AccountListEntry::encode_list(&list).unwrap(), wire);
     }
 
@@ -350,13 +359,17 @@ fn folder_access() {
     let session = connection!("59006");
     let wire = one(&session, MessageType::FOLDER_ACCESS_LIST);
     let list = FolderAccessItem::decode_list(wire).unwrap();
-    let items: Vec<(u32, &[u8])> = list.iter().map(|i| (i.icon, i.name.as_slice())).collect();
+    let items: Vec<(u32, &[u8])> = list
+        .records
+        .iter()
+        .map(|i| (i.icon, i.name.as_slice()))
+        .collect();
     assert_eq!(
         items,
         [(0, &b"[Default]"[..]), (0x2c, b"DB"), (0x2b, b"UL")]
     );
-    assert!(list.iter().all(|i| i.second.is_empty()));
-    assert_eq!(list[1].description, b"Dropbox.");
+    assert!(list.records.iter().all(|i| i.second.is_empty()));
+    assert_eq!(list.records[1].description, b"Dropbox.");
     assert_eq!(FolderAccessItem::encode_list(&list).unwrap(), wire);
 }
 

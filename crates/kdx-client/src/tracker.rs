@@ -63,7 +63,7 @@ impl Tracker {
         let reply = self
             .request(MessageType::GET_TRACKER_GROUP_LIST, &[])
             .await?;
-        Ok(GroupListEntry::decode_list(&reply)?)
+        Ok(GroupListEntry::decode_list(&reply)?.records)
     }
 
     /// 702 Get Tracker Server List.
@@ -75,7 +75,7 @@ impl Tracker {
         let reply = self
             .request(MessageType::GET_TRACKER_SERVER_LIST, &request.encode()?)
             .await?;
-        Ok(ServerListEntry::decode_list(&reply)?)
+        Ok(ServerListEntry::decode_list(&reply)?.records)
     }
 
     /// 720 Get TrackerServ Statistics; needs the admin login.

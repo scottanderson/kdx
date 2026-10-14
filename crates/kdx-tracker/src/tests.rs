@@ -99,7 +99,7 @@ fn replay(state: &mut State, session: &Session, kind: MessageType, n: usize, adm
     {
         let theirs = ServerListEntry::decode_list(theirs).unwrap();
         let mut list = ServerListEntry::decode_list(ours).unwrap();
-        for (ours, theirs) in list.iter_mut().zip(&theirs) {
+        for (ours, theirs) in list.records.iter_mut().zip(&theirs.records) {
             ours.first_seen = theirs.first_seen;
         }
         *ours = ServerListEntry::encode_list(&list).unwrap();
