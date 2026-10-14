@@ -470,8 +470,14 @@ status.
 | 1105 | Set Folder Access | Client | `FUN_08057634` |
 | 1106 | Get Folder Access List | Client | `FUN_080578d8` |
 | 1107 | Folder Access List | Server | |
+| 4000 | Open Window | GConsole peer | client `FUN_08094be8` **[S]**; frame 10 of `linux-gconsole` **[O]** |
+| 4001 | Draw | GConsole peer | client `FUN_08095ac4` **[S]**; frame 14 of `linux-gconsole` **[O]** |
+| 4200 | Key | Client (to GConsole peer) | the peer; client sender `FUN_0809607c` **[S]**; frame 18 of `linux-gconsole` **[O]** |
+| 4201 | Mouse | Client (to GConsole peer) | the peer; client sender `FUN_08096188` **[S]**; frame 32 of `linux-gconsole` **[O]** |
 
 A type the dispatcher doesn't know is ignored without a reply **[S]**.
+4000 to 4201 belong to GConsole, not the server, so their names are
+provisional; see [gconsole.md](gconsole.md).
 
 ## Message Description
 
