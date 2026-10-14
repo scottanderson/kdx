@@ -35,7 +35,7 @@ impl Story {
     pub const ALL: [Self; 2] = [Self::Kdx, Self::Hgc];
 
     /// The hello sub-protocol of the connections that use the story.
-    pub const fn sub_protocol(self) -> u32 {
+    pub const fn sub_protocol(self) -> [u8; 4] {
         match self {
             Self::Kdx => SUB_PROTOCOL_KDX,
             Self::Hgc => SUB_PROTOCOL_GCONSOLE,

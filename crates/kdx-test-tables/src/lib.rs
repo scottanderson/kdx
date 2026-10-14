@@ -33,7 +33,7 @@ pub fn table(story: Story) -> ChallengeTable {
 
 /// The story's variable: its sub-protocol with the `%` dropped, then `_CHALLENGE_TABLE`.
 fn env_var(story: Story) -> String {
-    let sub_protocol = story.sub_protocol().to_be_bytes();
+    let sub_protocol = story.sub_protocol();
     format!(
         "{}_CHALLENGE_TABLE",
         String::from_utf8_lossy(&sub_protocol[1..])

@@ -50,7 +50,7 @@ pub fn cache_path(story: Story) -> Option<PathBuf> {
         .filter(|d| !d.is_empty())
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))?;
-    let sub_protocol = story.sub_protocol().to_be_bytes();
+    let sub_protocol = story.sub_protocol();
     let name = String::from_utf8_lossy(&sub_protocol[1..]).to_ascii_lowercase();
     Some(dir.join("kdx").join("table").join(format!("{name}.bin")))
 }

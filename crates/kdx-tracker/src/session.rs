@@ -51,8 +51,8 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
             .send(Handshake::Proof(Proof::new_error(&client.nonce, status)))
             .await?;
         bail!(
-            "refused sub-protocol {:#010x} sub-version {:#04x}",
-            client.sub_protocol,
+            "refused sub-protocol \"{}\" sub-version {:#04x}",
+            client.sub_protocol.escape_ascii(),
             client.sub_version
         );
     }
@@ -137,7 +137,7 @@ pub(crate) async fn serve(tracker: &Tracker, stream: TcpStream, peer: SocketAddr
 }
 
 /// The proof status that refuses a client's hello, as `FUN_0804bb4c` decides.
-const fn refuse(client: &Hello) -> Option<Status> {
+fn refuse(client: &Hello) -> Option<Status> {
     if client.sub_protocol != SUB_PROTOCOL_KDX {
         Some(Status::UnknownProtocol)
     } else if client.sub_version < CLIENT_SUB_VERSION {

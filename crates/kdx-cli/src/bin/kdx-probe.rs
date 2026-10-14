@@ -185,8 +185,8 @@ async fn handshake(
         unreachable!("the codec reads a hello first");
     };
     println!(
-        "client hello: sub-protocol {:#010x} sub-version {:#04x} login {:?}",
-        client.sub_protocol,
+        "client hello: sub-protocol \"{}\" sub-version {:#04x} login {:?}",
+        client.sub_protocol.escape_ascii(),
         client.sub_version,
         String::from_utf8_lossy(&client.name)
     );

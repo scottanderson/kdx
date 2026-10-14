@@ -11,14 +11,14 @@ use crate::challenge::RESPONSE_LEN;
 use crate::session::block_mut;
 use crate::xor::xor_stream;
 
-/// `"%TXP"`, the protocol of every hello.
-pub const PROTOCOL_TXP: u32 = 0x2554_5850;
-/// `"%KDX"`, the sub-protocol used between clients, servers, and trackers.
-pub const SUB_PROTOCOL_KDX: u32 = 0x254b_4458;
-/// `"%HGC"`, the sub-protocol a GConsole peer sends; the client then switches to
+/// The protocol of every hello.
+pub const PROTOCOL_TXP: [u8; 4] = *b"%TXP";
+/// The sub-protocol used between clients, servers, and trackers.
+pub const SUB_PROTOCOL_KDX: [u8; 4] = *b"%KDX";
+/// The sub-protocol a GConsole peer sends; the client then switches to
 /// [`Story::Hgc`](crate::challenge::Story::Hgc) and
 /// [`Scramble::GConsole`](crate::session::Scramble::GConsole).
-pub const SUB_PROTOCOL_GCONSOLE: u32 = 0x2548_4743;
+pub const SUB_PROTOCOL_GCONSOLE: [u8; 4] = *b"%HGC";
 /// The only hello version that current programs accept.
 pub const VERSION: u8 = 1;
 /// Sub-version that Client 1.600 sends.
@@ -42,9 +42,9 @@ pub enum HandshakeError {
     /// More bytes are needed before the message can be decoded.
     #[error("need {0} bytes")]
     Incomplete(usize),
-    /// The protocol is not `"%TXP"`.
-    #[error("unknown protocol {0:#010x}")]
-    UnknownProtocol(u32),
+    /// The protocol is not [`PROTOCOL_TXP`].
+    #[error("unknown protocol \"{}\"", .0.escape_ascii())]
+    UnknownProtocol([u8; 4]),
     /// The peer's hello version is older than [`VERSION`].
     #[error("peer protocol too old (version {0})")]
     TooOld(u8),
@@ -69,7 +69,7 @@ pub enum HandshakeError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hello {
     /// Sub-protocol, normally [`SUB_PROTOCOL_KDX`].
-    pub sub_protocol: u32,
+    pub sub_protocol: [u8; 4],
     /// Hello version, normally [`VERSION`].
     pub version: u8,
     /// Sub-version, such as [`CLIENT_SUB_VERSION`] or [`SERVER_SUB_VERSION`].
@@ -109,7 +109,7 @@ impl Hello {
         let name_start = Self::HEADER_LEN - 4 + skip;
         let name = body[name_start..name_start + usize::from(body[11])].to_vec();
         let hello = Self {
-            sub_protocol: be32(&body, 4),
+            sub_protocol: body[4..8].try_into().unwrap(),
             version,
             sub_version: body[9],
             challenge: be16(&body, 0x12),
@@ -127,8 +127,8 @@ impl Hello {
         let len = (Self::HEADER_LEN + self.name.len() + 3) & !3;
         let mut out = Vec::with_capacity(len);
         out.extend_from_slice(&key.to_be_bytes());
-        out.extend_from_slice(&PROTOCOL_TXP.to_be_bytes());
-        out.extend_from_slice(&self.sub_protocol.to_be_bytes());
+        out.extend_from_slice(&PROTOCOL_TXP);
+        out.extend_from_slice(&self.sub_protocol);
         out.extend_from_slice(&[self.version, self.sub_version, 0, self.name.len() as u8]);
         out.extend_from_slice(&[0; 6]);
         out.extend_from_slice(&self.challenge.to_be_bytes());
@@ -147,7 +147,7 @@ impl Hello {
             .try_into()
             .unwrap();
         xor_stream(be32(&header, 0), &mut header[4..]);
-        let protocol = be32(&header, 4);
+        let protocol: [u8; 4] = header[4..8].try_into().unwrap();
         if protocol != PROTOCOL_TXP {
             return Err(HandshakeError::UnknownProtocol(protocol));
         }

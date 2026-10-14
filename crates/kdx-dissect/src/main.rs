@@ -286,7 +286,7 @@ fn dissect(
             out,
             "  [{}] {dir} hello: sub-protocol {} version {} sub-version {:#04x} challenge {} nonce {} name {}",
             stream.frame_at(0),
-            fourcc(hello.sub_protocol),
+            quoted(&hello.sub_protocol),
             hello.version,
             hello.sub_version,
             hello.challenge,
@@ -1506,10 +1506,6 @@ fn time_1900(ms: u64) -> String {
         ms / 1000 % 60,
         ms % 1000
     )
-}
-
-fn fourcc(value: u32) -> String {
-    quoted(&value.to_be_bytes())
 }
 
 fn quoted(bytes: &[u8]) -> String {
