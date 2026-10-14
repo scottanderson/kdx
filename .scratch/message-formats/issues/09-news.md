@@ -36,6 +36,10 @@ Docs: `KDXProtocol.md`, News. Captures: `linux-accounts-news`,
   sends it unpadded (`linux-first-connect` 94, 107, 115;
   `linux-text-encoding` 319). Fixed: the encoder no longer pads, and
   `PostNewsMessage::rest` keeps any bytes after the body.
-- [ ] Audit (01): no codec for 601, 602, 607, 609, and 612, a group ID and
+- [x] Audit (01): no codec for 601, 602, 607, 609, and 612, a group ID and
   sometimes a message ID (`linux-accounts-news` 81, 68, 107;
   `linux-first-connect` 99, 102).
+  Fixed: `NewsgroupId` (601, 602, 607) and `NewsMessageId` (609, 612)
+  re-encode every captured request. Like `ChatId`, they read their `LEN`
+  bytes; bytes after that are the open gap in issue 01, and the audit
+  reports them as a mismatch.

@@ -2,7 +2,7 @@
 
 use kdx_proto::handshake::{compute_auth, Hello, Proof, Status as ProofStatus};
 use kdx_proto::msg::admin::AccountClass;
-use kdx_proto::msg::news::NewsgroupInfo;
+use kdx_proto::msg::news::{NewsgroupId, NewsgroupInfo};
 use kdx_proto::msg::Status;
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
@@ -84,7 +84,8 @@ fn create_set_and_delete_newsgroup() {
     // Frames 65 and 78; 68.
     for kind in [MessageType::GET_NEWS_MESSAGES, MessageType::GET_NEWSGROUP] {
         for (_, wire) in all(&session, kind) {
-            assert_eq!(wire, [0, 0, 0, 2]);
+            assert_eq!(NewsgroupId::decode(wire).unwrap(), NewsgroupId(2));
+            assert_eq!(NewsgroupId(2).encode(), wire);
         }
     }
 
@@ -111,7 +112,8 @@ fn create_set_and_delete_newsgroup() {
 
     // Frames 81 and 84.
     let (request, wire) = one(&session, MessageType::DELETE_NEWSGROUP);
-    assert_eq!(wire, [0, 0, 0, 2]);
+    assert_eq!(NewsgroupId::decode(wire).unwrap(), NewsgroupId(2));
+    assert_eq!(NewsgroupId(2).encode(), wire);
     assert_eq!(status(&session, &request), Status::Success { value: 0x259 });
 }
 

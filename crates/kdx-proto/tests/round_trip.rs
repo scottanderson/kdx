@@ -19,7 +19,8 @@ use kdx_proto::msg::file::{
 };
 use kdx_proto::msg::gconsole::{Draw, DrawRecord};
 use kdx_proto::msg::news::{
-    NewsMessage, NewsMessages, NewsgroupEntry, NewsgroupInfo, PostNewsMessage,
+    NewsMessage, NewsMessageId, NewsMessages, NewsgroupEntry, NewsgroupId, NewsgroupInfo,
+    PostNewsMessage,
 };
 use kdx_proto::msg::server_info::{ServerGreeting, ServerSettings};
 use kdx_proto::msg::tracker::{
@@ -63,6 +64,12 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Vec<u8>> {
         M::NEWS_MESSAGES => NewsMessages::decode(p).unwrap().encode(),
         M::NEWS_MESSAGE => NewsMessage::decode(p).unwrap().0.encode(),
         M::POST_NEWS_MESSAGE => PostNewsMessage::decode(p).unwrap().encode(),
+        M::DELETE_NEWSGROUP | M::GET_NEWSGROUP | M::GET_NEWS_MESSAGES => {
+            Ok(NewsgroupId::decode(p).unwrap().encode().to_vec())
+        }
+        M::GET_NEWS_MESSAGE | M::DELETE_NEWS_MESSAGE => {
+            Ok(NewsMessageId::decode(p).unwrap().encode().to_vec())
+        }
         M::PROCESS_LIST => ProcessList::decode(p).unwrap().encode(),
         M::CREATE_FOLDER_ACCESS | M::FOLDER_ACCESS_INFO => {
             FolderAccess::decode(p).unwrap().encode()
@@ -81,6 +88,7 @@ fn padding_and_unknown_bytes_round_trip() {
         fixture!("kdx-cli-51784"),
         fixture!("kdx-news-40426"),
         fixture!("kdx-news-53204"),
+        fixture!("kdx-news-53224"),
         fixture!("linux-accounts-news-51382"),
         fixture!("linux-catalog-volumes-58160"),
         fixture!("linux-chat-admin-37478"),
@@ -100,7 +108,8 @@ fn padding_and_unknown_bytes_round_trip() {
         }
     }
     let expected = [
-        102, 103, 143, 209, 401, 410, 503, 510, 513, 608, 610, 611, 803, 1100, 1104,
+        102, 103, 143, 209, 401, 410, 503, 510, 513, 601, 602, 607, 608, 609, 610, 611, 612, 803,
+        1100, 1104,
     ];
     assert_eq!(seen.into_iter().collect::<Vec<_>>(), expected);
 }
