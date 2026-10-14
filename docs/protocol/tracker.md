@@ -189,7 +189,7 @@ connection `FUN_08069578` sends 700 as soon as it logs in and handles 1, 107,
 
 The tracker's error Status is 8 bytes: the error code, then the request type
 as a u32, like the first 8 bytes of the server's 24-byte Status
-(`KDXProtocol.md`) **[O frames 61, 164; `kdx-cli-tracker` 39, 53]**:
+(`KDXProtocol.md`; see [encodings.md](encodings.md)) **[O frames 61, 164; `kdx-cli-tracker` 39, 53]**:
 
 ```
 00 01 00 14  00 00 02 c6    0x10014 for 710

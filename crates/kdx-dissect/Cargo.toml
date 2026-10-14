@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+readme = "README.md"
 description = "Decode KDX traffic from packet captures"
 
 [dependencies]

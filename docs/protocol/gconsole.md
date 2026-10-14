@@ -119,7 +119,7 @@ All **[O]**, frames 20–46. Each wheel step sends two identical messages
 The modifier bits are Client 1.600's: Ctrl 0x21, Alt 2, Shift 8, Caps Lock
 4, Windows 0x30 **[S client 1.600 `FUN_00463870`]**. Client 1.600 sends its
 own key codes at 0x0c instead of HID usages; see 905 View Display Keyboard
-in [KDXProtocol.md](KDXProtocol.md#view-display) **[S `FUN_00448830`]**.
+in [KDXProtocol.md](messages/view-display.md) **[S `FUN_00448830`]**.
 
 ## Compared with view display
 
