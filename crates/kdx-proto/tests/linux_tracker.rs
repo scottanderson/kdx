@@ -193,6 +193,9 @@ fn server_list() {
         name: b"Lab Server".to_vec(),
         description: Vec::new(),
         extra: Vec::new(),
+        unknown_08: [0; 6],
+        unknown_12: [0; 6],
+        padding: Vec::new(),
     };
     assert_eq!(servers, std::slice::from_ref(&lab));
 
@@ -245,6 +248,7 @@ fn settings() {
         GeneralSettings {
             tracker_port: 10800,
             name: b"New TrackerServ".to_vec(),
+            padding: general.padding.clone(),
             ..GeneralSettings::default()
         }
     );
@@ -255,11 +259,14 @@ fn settings() {
         .iter()
         .all(|g| g.flags == 0 && g.value_10 == 0 && g.value_12 == 0));
     assert_eq!(info.greeting().unwrap(), None);
+    let section = info.admin().unwrap().unwrap();
     assert_eq!(
-        info.admin().unwrap().unwrap(),
+        section,
         AdminSettings {
             key: None,
-            login: b"admin".to_vec()
+            login: b"admin".to_vec(),
+            padding: section.padding.clone(),
+            ..AdminSettings::default()
         }
     );
 
@@ -307,11 +314,15 @@ fn settings_with_new_group() {
         },
     );
     assert_eq!(groups, expected);
+    let admin =
+        AdminSettings::decode(set.sections[TrackerSettings::ADMIN].as_deref().unwrap()).unwrap();
     assert_eq!(
-        AdminSettings::decode(set.sections[TrackerSettings::ADMIN].as_deref().unwrap()).unwrap(),
+        admin,
         AdminSettings {
             key: None,
-            login: b"admin".to_vec()
+            login: b"admin".to_vec(),
+            padding: admin.padding.clone(),
+            ..AdminSettings::default()
         }
     );
 }
@@ -333,6 +344,7 @@ fn statistics() {
             hours: 0,
             connections: 1,
             servers: 1,
+            ..TrackerStats::default()
         }
     );
 }

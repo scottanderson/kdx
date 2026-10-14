@@ -48,6 +48,7 @@ fn upgrade_server_software() {
             module: 0x46,
             line: 0x198,
             extra: 0,
+            value_14: 0,
         }
     );
 }
@@ -100,6 +101,7 @@ fn shutdown_message_limit() {
     let mut request = ShutdownServer {
         mode: ShutdownServer::EXIT,
         message: vec![b'x'; ShutdownServer::MAX_MESSAGE_LEN],
+        ..ShutdownServer::default()
     };
     assert!(request.encode().is_ok());
     request.message.push(b'x');

@@ -43,6 +43,7 @@ async fn browse() {
     assert_eq!(general.servers, 1);
     let list = GetServerList {
         group: b"General".to_vec(),
+        ..GetServerList::default()
     };
     let servers =
         ServerListEntry::decode_list(&request(&mut conn, 702, &list.encode().unwrap()).await)

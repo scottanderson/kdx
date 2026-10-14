@@ -57,6 +57,7 @@ Other messages:
   server reads them.
 - [ ] Audit (01): 223 Chat DCC Addresses has no codec
   (`linux-dcc-voice-failed` 109, 155).
-- [ ] Audit (01): 209 Set Chat Topic from `probe` 73 has 4 bytes, `ello`,
-  after the topic that `SetChatTopic` drops. Check whether `kdx-probe`
-  sent a short length on purpose.
+- [x] Audit (01): 209 Set Chat Topic from `probe` 73 has 4 bytes, `ello`,
+  after the topic. Fixed: `SetChatTopic::rest` keeps them.
+- [ ] Check whether `kdx-probe` sent the short length on purpose; the doc
+  already says the server reads the topic from 0x0c.

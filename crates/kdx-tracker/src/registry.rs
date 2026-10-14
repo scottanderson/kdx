@@ -58,6 +58,9 @@ impl Record {
             name: self.name.clone(),
             description: self.description.clone(),
             extra: Vec::new(),
+            unknown_08: [0; 6],
+            unknown_12: [0; 6],
+            padding: Vec::new(),
         }
     }
 }

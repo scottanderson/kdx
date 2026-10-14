@@ -189,7 +189,8 @@ fn member_sees_join_and_delete() {
         ChatUserChange {
             chat_id: LAB_CHAT,
             user_id: CLIENT,
-            unknown_08: 0
+            unknown_08: 0,
+            ..ChatUserChange::default()
         }
     );
     assert_eq!(joined.encode(), wire);

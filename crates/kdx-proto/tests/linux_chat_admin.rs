@@ -1,7 +1,7 @@
 //! Checks against `captures/linux-chat-admin.pcapng`: Client 1.620 for Linux as `admin`.
 
 use kdx_proto::msg::admin::{
-    DisconnectMessage, DisconnectUser, HistoryRecord, RcvBroadcast, SendBroadcast,
+    DisconnectMessage, DisconnectUser, HistoryList, RcvBroadcast, SendBroadcast,
 };
 use kdx_proto::msg::chat::{
     ChatInvitation, ChatInvite, ChatUserChange, ChatWindowInfo, PUBLIC_CHAT,
@@ -91,11 +91,13 @@ fn chat_invite() {
                 chat_id: PRIVATE_CHAT,
                 user_ids: vec![PEER],
                 message: Vec::new(),
+                ..ChatInvite::default()
             },
             ChatInvite {
                 chat_id: PRIVATE_CHAT,
                 user_ids: vec![PEER, 4],
                 message: Vec::new(),
+                ..ChatInvite::default()
             },
         ]
     );
@@ -121,6 +123,7 @@ fn chat_invitation() {
         unknown_10: 1,
         message: Vec::new(),
         name: b"Private 1".to_vec(),
+        ..ChatInvitation::default()
     };
     assert_eq!(
         invitations,
@@ -145,7 +148,8 @@ fn chat_user_joined() {
         ChatUserChange {
             chat_id: PUBLIC_CHAT,
             user_id: CLIENT,
-            unknown_08: 0
+            unknown_08: 0,
+            ..ChatUserChange::default()
         }
     );
     assert_eq!(joined.encode(), wire);
@@ -167,7 +171,8 @@ fn user_departed() {
         departed,
         [3, 4].map(|user_id| UserDeparted {
             user_id,
-            value_4: 7
+            value_4: 7,
+            ..UserDeparted::default()
         })
     );
 }
@@ -216,7 +221,8 @@ fn broadcast() {
         RcvBroadcast {
             user_id: CLIENT,
             value_0e: sent.value_2,
-            text: sent.text
+            text: sent.text,
+            ..RcvBroadcast::default()
         }
     );
     assert_eq!(received.encode(), wire);
@@ -234,7 +240,8 @@ fn disconnect_user() {
             user_id: CLIENT,
             ban_seconds: 0,
             options: 0,
-            message: b"test".to_vec()
+            message: b"test".to_vec(),
+            ..DisconnectUser::default()
         }
     );
     assert_eq!(request.encode().unwrap(), wire);
@@ -250,7 +257,8 @@ fn disconnect_user() {
             value_0e: 0,
             value_10: 0,
             message: b"test".to_vec(),
-            name: b"kdx-lab-linux".to_vec()
+            name: b"kdx-lab-linux".to_vec(),
+            ..DisconnectMessage::default()
         }
     );
     assert_eq!(notice.encode().unwrap(), wire);
@@ -261,8 +269,9 @@ fn server_history() {
     // Frame 135: 0x12 records.
     let session = client();
     let (_, wire) = one(&session, MessageType::SERVER_HISTORY_JOIN_REPLY);
-    let records = HistoryRecord::decode_list(wire).unwrap();
+    let list = HistoryList::decode(wire).unwrap();
+    let records = &list.records;
     assert_eq!(records.len(), 0x12);
     assert_eq!(records[0].kind, MessageType::HISTORY_SERVER_STARTED);
-    assert_eq!(HistoryRecord::encode_list(&records).unwrap(), wire);
+    assert_eq!(list.encode().unwrap(), wire);
 }

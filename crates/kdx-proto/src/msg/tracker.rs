@@ -8,7 +8,7 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 
 use super::server_info::ServerGreeting;
 use super::{
-    decode_counted, encode_counted, len_u8, need, pad4, strings, u16_at, u32_at, u64_at,
+    decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
     DecodeError, EncodeError,
 };
 use crate::AccountKey;
@@ -24,6 +24,8 @@ pub struct GroupListEntry {
     pub name: Vec<u8>,
     /// Group description.
     pub description: Vec<u8>,
+    /// Bytes after the description up to the next multiple of 4, as received; empty in a new entry.
+    pub padding: Vec<u8>,
 }
 
 impl GroupListEntry {
@@ -36,13 +38,15 @@ impl GroupListEntry {
             need(entry, Self::HEADER_LEN)?;
             let lens = [usize::from(entry[6]), usize::from(entry[7])];
             let ([name, description], end) = strings(entry, Self::HEADER_LEN, lens)?;
+            let (padding, padded) = padding(entry, end);
             let group = Self {
                 servers: u16_at(entry, 0),
                 value_02: u32_at(entry, 2),
                 name,
                 description,
+                padding,
             };
-            Ok((group, end))
+            Ok((group, padded))
         })
     }
 
@@ -57,6 +61,7 @@ impl GroupListEntry {
             out[7] = len_u8(&group.description, "group description")?;
             out.extend_from_slice(&group.name);
             out.extend_from_slice(&group.description);
+            out.extend_from_slice(&group.padding);
             Ok(out)
         })?;
         Ok(out)
@@ -66,6 +71,10 @@ impl GroupListEntry {
 /// The request of 702 Get Tracker Server List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct GetServerList {
+    /// Bytes 0x00 and 0x01; meaning unknown.
+    pub unknown_00: [u8; 2],
+    /// Byte 0x03; meaning unknown.
+    pub unknown_03: u8,
     /// Group name; an unknown group gives 0x1000c.
     pub group: Vec<u8>,
 }
@@ -78,13 +87,19 @@ impl GetServerList {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let ([group], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[2])])?;
-        Ok(Self { group })
+        Ok(Self {
+            unknown_00: buf[..2].try_into().expect("2 bytes"),
+            unknown_03: buf[3],
+            group,
+        })
     }
 
     /// Encodes the payload, without padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
+        out[..2].copy_from_slice(&self.unknown_00);
         out[2] = len_u8(&self.group, "group name")?;
+        out[3] = self.unknown_03;
         out.extend_from_slice(&self.group);
         Ok(out)
     }
@@ -95,10 +110,14 @@ impl GetServerList {
 pub struct ServerListEntry {
     /// When the tracker first heard from the server, in milliseconds since 1900.
     pub first_seen: u64,
+    /// Bytes 0x08 to 0x0d; meaning unknown.
+    pub unknown_08: [u8; 6],
     /// The registration's flags.
     pub flags: u16,
     /// Users logged in.
     pub users: u16,
+    /// Bytes 0x12 to 0x17; meaning unknown.
+    pub unknown_12: [u8; 6],
     /// The registration's source IP and port field.
     pub address: SocketAddrV4,
     /// Server name.
@@ -107,6 +126,8 @@ pub struct ServerListEntry {
     pub description: Vec<u8>,
     /// Opaque bytes after the description; empty from Tracker 1.110.
     pub extra: Vec<u8>,
+    /// Bytes after `extra` up to the next multiple of 4, as received; empty in a new entry.
+    pub padding: Vec<u8>,
 }
 
 impl ServerListEntry {
@@ -127,10 +148,13 @@ impl ServerListEntry {
             }
             let lens = [6, entry[0x19], entry[0x1a], entry[0x1b]].map(usize::from);
             let ([addr, name, description, extra], end) = strings(entry, Self::HEADER_LEN, lens)?;
+            let (padding, padded) = padding(entry, end);
             let server = Self {
                 first_seen: u64_at(entry, 0),
+                unknown_08: entry[8..0x0e].try_into().expect("6 bytes"),
                 flags: u16_at(entry, 0x0e),
                 users: u16_at(entry, 0x10),
+                unknown_12: entry[0x12..0x18].try_into().expect("6 bytes"),
                 address: SocketAddrV4::new(
                     Ipv4Addr::new(addr[0], addr[1], addr[2], addr[3]),
                     u16_at(&addr, 4),
@@ -138,8 +162,9 @@ impl ServerListEntry {
                 name,
                 description,
                 extra,
+                padding,
             };
-            Ok((server, end))
+            Ok((server, padded))
         })
     }
 
@@ -152,8 +177,10 @@ impl ServerListEntry {
         encode_counted(&mut out, list, |server| {
             let mut out = vec![0; Self::HEADER_LEN];
             out[0..8].copy_from_slice(&server.first_seen.to_be_bytes());
+            out[8..0x0e].copy_from_slice(&server.unknown_08);
             out[0x0e..0x10].copy_from_slice(&server.flags.to_be_bytes());
             out[0x10..0x12].copy_from_slice(&server.users.to_be_bytes());
+            out[0x12..0x18].copy_from_slice(&server.unknown_12);
             out[0x18] = Self::ADDR_LEN;
             out[0x19] = len_u8(&server.name, "server name")?;
             out[0x1a] = len_u8(&server.description, "server description")?;
@@ -163,6 +190,7 @@ impl ServerListEntry {
             out.extend_from_slice(&server.name);
             out.extend_from_slice(&server.description);
             out.extend_from_slice(&server.extra);
+            out.extend_from_slice(&server.padding);
             Ok(out)
         })?;
         Ok(out)
@@ -178,12 +206,16 @@ pub struct TrackerStats {
     pub connections_accepted: u64,
     /// UDP datagrams received.
     pub datagrams_received: u64,
+    /// Bytes 0x18 to 0x1f; meaning unknown.
+    pub unknown_18: [u8; 8],
     /// Hours since start.
     pub hours: u32,
     /// TCP connections open now.
     pub connections: u32,
     /// Servers listed.
     pub servers: u32,
+    /// Bytes 0x2c to 0x37; meaning unknown.
+    pub unknown_2c: [u8; 0x0c],
 }
 
 impl TrackerStats {
@@ -197,9 +229,11 @@ impl TrackerStats {
             start_time: u64_at(buf, 0),
             connections_accepted: u64_at(buf, 8),
             datagrams_received: u64_at(buf, 0x10),
+            unknown_18: buf[0x18..0x20].try_into().expect("8 bytes"),
             hours: u32_at(buf, 0x20),
             connections: u32_at(buf, 0x24),
             servers: u32_at(buf, 0x28),
+            unknown_2c: buf[0x2c..Self::LEN].try_into().expect("12 bytes"),
         })
     }
 
@@ -209,9 +243,11 @@ impl TrackerStats {
         out[0..8].copy_from_slice(&self.start_time.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.connections_accepted.to_be_bytes());
         out[0x10..0x18].copy_from_slice(&self.datagrams_received.to_be_bytes());
+        out[0x18..0x20].copy_from_slice(&self.unknown_18);
         out[0x20..0x24].copy_from_slice(&self.hours.to_be_bytes());
         out[0x24..0x28].copy_from_slice(&self.connections.to_be_bytes());
         out[0x28..0x2c].copy_from_slice(&self.servers.to_be_bytes());
+        out[0x2c..].copy_from_slice(&self.unknown_2c);
         out
     }
 }
@@ -224,6 +260,8 @@ impl TrackerStats {
 pub struct TrackerSettings {
     /// Format; 1 from Tracker 1.110 and Client 1.620 beta 5.
     pub format: u16,
+    /// Bytes 0x0a and 0x0b; meaning unknown.
+    pub unknown_0a: [u8; 2],
     /// The present bytes at 0x6c, one per section; the tracker reads a section only when 1.
     pub present: [u8; Self::SECTIONS],
     /// Each section's bytes, or `None` for offset and size 0.
@@ -234,6 +272,7 @@ impl Default for TrackerSettings {
     fn default() -> Self {
         Self {
             format: Self::FORMAT,
+            unknown_0a: [0; 2],
             present: [0; Self::SECTIONS],
             sections: Default::default(),
         }
@@ -286,6 +325,7 @@ impl TrackerSettings {
         }
         Ok(Self {
             format: u16_at(buf, 8),
+            unknown_0a: buf[0x0a..Self::TABLE_AT].try_into().expect("2 bytes"),
             present: buf[Self::PRESENT_AT..Self::HEADER_LEN]
                 .try_into()
                 .expect("12 bytes"),
@@ -298,6 +338,7 @@ impl TrackerSettings {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..8].copy_from_slice(Self::MAGIC);
         out[8..0x0a].copy_from_slice(&self.format.to_be_bytes());
+        out[0x0a..Self::TABLE_AT].copy_from_slice(&self.unknown_0a);
         out[Self::PRESENT_AT..].copy_from_slice(&self.present);
         for i in Self::LAYOUT {
             let Some(section) = &self.sections[i] else {
@@ -366,16 +407,24 @@ impl TrackerSettings {
 pub struct GeneralSettings {
     /// Four limits at 0x00, taken from the settings file only; 0 in 711.
     pub limits: [u16; 4],
+    /// Bytes 0x08 to 0x1f; meaning unknown.
+    pub unknown_08: [u8; 0x18],
     /// [`Self::REGISTER`] and [`Self::GREETING_ENABLED`].
     pub flags: u32,
     /// Tracker port, for both TCP and UDP; 0 or above 0xfffe means 10800.
     pub tracker_port: u32,
+    /// Bytes 0x28 to 0x2b; meaning unknown.
+    pub unknown_28: [u8; 4],
     /// Server ID for upstream registrations, taken from the settings file only.
     pub server_id: [u8; 12],
+    /// Bytes 0x38 to 0x45; meaning unknown.
+    pub unknown_38: [u8; 0x0e],
     /// Tracker name.
     pub name: Vec<u8>,
     /// Tracker description.
     pub description: Vec<u8>,
+    /// Bytes after the strings, padding to 4 as received; empty in a new section.
+    pub padding: Vec<u8>,
 }
 
 impl GeneralSettings {
@@ -390,30 +439,38 @@ impl GeneralSettings {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [usize::from(buf[0x46]), usize::from(buf[0x47])];
-        let ([name, description], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             limits: std::array::from_fn(|i| u16_at(buf, 2 * i)),
+            unknown_08: buf[8..0x20].try_into().expect("24 bytes"),
             flags: u32_at(buf, 0x20),
             tracker_port: u32_at(buf, 0x24),
+            unknown_28: buf[0x28..0x2c].try_into().expect("4 bytes"),
             server_id: buf[0x2c..0x38].try_into().expect("12 bytes"),
+            unknown_38: buf[0x38..0x46].try_into().expect("14 bytes"),
             name,
             description,
+            padding: buf[end..].to_vec(),
         })
     }
 
-    /// Encodes the section, padded to 4.
+    /// Encodes the section, padded to 4 with zeros past the stored padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         for (i, limit) in self.limits.iter().enumerate() {
             out[2 * i..2 * i + 2].copy_from_slice(&limit.to_be_bytes());
         }
+        out[8..0x20].copy_from_slice(&self.unknown_08);
         out[0x20..0x24].copy_from_slice(&self.flags.to_be_bytes());
         out[0x24..0x28].copy_from_slice(&self.tracker_port.to_be_bytes());
+        out[0x28..0x2c].copy_from_slice(&self.unknown_28);
         out[0x2c..0x38].copy_from_slice(&self.server_id);
+        out[0x38..0x46].copy_from_slice(&self.unknown_38);
         out[0x46] = len_u8(&self.name, "tracker name")?;
         out[0x47] = len_u8(&self.description, "tracker description")?;
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.description);
+        out.extend_from_slice(&self.padding);
         out.resize(pad4(out.len()), 0);
         Ok(out)
     }
@@ -422,16 +479,24 @@ impl GeneralSettings {
 /// A group record of the groups section of [`TrackerSettings`].
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SettingsGroup {
+    /// Bytes 0x00 to 0x0b; meaning unknown.
+    pub unknown_00: [u8; 0x0c],
     /// Set when the name contains `tracker`; such a group lists only trackers. 0 in 711.
     pub flags: u32,
     /// Never set; 0.
     pub value_10: u16,
     /// Never set; 0.
     pub value_12: u16,
+    /// Bytes 0x14 to 0x17; meaning unknown.
+    pub unknown_14: [u8; 4],
+    /// Bytes 0x1a and 0x1b; meaning unknown.
+    pub unknown_1a: [u8; 2],
     /// Group name.
     pub name: Vec<u8>,
     /// Group description.
     pub description: Vec<u8>,
+    /// Bytes after the description up to the next multiple of 4, as received; empty in a new record.
+    pub padding: Vec<u8>,
 }
 
 impl SettingsGroup {
@@ -445,14 +510,19 @@ impl SettingsGroup {
             need(buf, Self::HEADER_LEN)?;
             let lens = [usize::from(buf[0x18]), usize::from(buf[0x19])];
             let ([name, description], end) = strings(buf, Self::HEADER_LEN, lens)?;
+            let (padding, padded) = padding(buf, end);
             list.push(Self {
+                unknown_00: buf[..0x0c].try_into().expect("12 bytes"),
                 flags: u32_at(buf, 0x0c),
                 value_10: u16_at(buf, 0x10),
                 value_12: u16_at(buf, 0x12),
+                unknown_14: buf[0x14..0x18].try_into().expect("4 bytes"),
+                unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
                 name,
                 description,
+                padding,
             });
-            buf = &buf[pad4(end).min(buf.len())..];
+            buf = &buf[padded..];
         }
         Ok(list)
     }
@@ -462,14 +532,18 @@ impl SettingsGroup {
         let mut out = Vec::new();
         for group in list {
             let mut fixed = [0; Self::HEADER_LEN];
+            fixed[..0x0c].copy_from_slice(&group.unknown_00);
             fixed[0x0c..0x10].copy_from_slice(&group.flags.to_be_bytes());
             fixed[0x10..0x12].copy_from_slice(&group.value_10.to_be_bytes());
             fixed[0x12..0x14].copy_from_slice(&group.value_12.to_be_bytes());
+            fixed[0x14..0x18].copy_from_slice(&group.unknown_14);
             fixed[0x18] = len_u8(&group.name, "group name")?;
             fixed[0x19] = len_u8(&group.description, "group description")?;
+            fixed[0x1a..0x1c].copy_from_slice(&group.unknown_1a);
             out.extend_from_slice(&fixed);
             out.extend_from_slice(&group.name);
             out.extend_from_slice(&group.description);
+            out.extend_from_slice(&group.padding);
             out.resize(pad4(out.len()), 0);
         }
         Ok(out)
@@ -477,12 +551,36 @@ impl SettingsGroup {
 }
 
 /// The admin section of [`TrackerSettings`].
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdminSettings {
+    /// Bytes 0x00 to 0x06; meaning unknown.
+    pub unknown_00: [u8; 7],
+    /// The bits of the flags byte at 0x07 other than the key's.
+    pub flags_07: u8,
     /// The admin password's key, when flags bit 0 at 0x07 is set; 711 leaves it out.
     pub key: Option<AccountKey>,
+    /// Bytes 0x28 to 0x8f; meaning unknown.
+    pub unknown_28: [u8; 0x68],
+    /// Bytes 0x91 to 0x93; meaning unknown.
+    pub unknown_91: [u8; 3],
     /// Admin login.
     pub login: Vec<u8>,
+    /// Bytes after the login, padding to 4 as received; empty in a new section.
+    pub padding: Vec<u8>,
+}
+
+impl Default for AdminSettings {
+    fn default() -> Self {
+        Self {
+            unknown_00: [0; 7],
+            flags_07: 0,
+            key: None,
+            unknown_28: [0; 0x68],
+            unknown_91: [0; 3],
+            login: Vec::new(),
+            padding: Vec::new(),
+        }
+    }
 }
 
 impl AdminSettings {
@@ -493,21 +591,34 @@ impl AdminSettings {
     /// Decodes the section.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        let ([login], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x90])])?;
+        let ([login], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x90])])?;
         let key = (buf[7] & Self::KEY_PRESENT != 0)
             .then(|| AccountKey(buf[8..0x28].try_into().expect("32 bytes")));
-        Ok(Self { key, login })
+        Ok(Self {
+            unknown_00: buf[..7].try_into().expect("7 bytes"),
+            flags_07: buf[7] & !Self::KEY_PRESENT,
+            key,
+            unknown_28: buf[0x28..0x90].try_into().expect("104 bytes"),
+            unknown_91: buf[0x91..0x94].try_into().expect("3 bytes"),
+            login,
+            padding: buf[end..].to_vec(),
+        })
     }
 
-    /// Encodes the section, padded to 4.
+    /// Encodes the section, padded to 4 with zeros past the stored padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
+        out[..7].copy_from_slice(&self.unknown_00);
+        out[7] = self.flags_07 & !Self::KEY_PRESENT;
         if let Some(key) = &self.key {
-            out[7] = Self::KEY_PRESENT;
+            out[7] |= Self::KEY_PRESENT;
             out[8..0x28].copy_from_slice(&key.0);
         }
+        out[0x28..0x90].copy_from_slice(&self.unknown_28);
         out[0x90] = len_u8(&self.login, "admin login")?;
+        out[0x91..0x94].copy_from_slice(&self.unknown_91);
         out.extend_from_slice(&self.login);
+        out.extend_from_slice(&self.padding);
         out.resize(pad4(out.len()), 0);
         Ok(out)
     }
@@ -530,6 +641,7 @@ mod tests {
         let admin = AdminSettings {
             key: Some(AccountKey::from_password(b"pw")),
             login: b"admin".to_vec(),
+            ..AdminSettings::default()
         };
         settings.set_section(TrackerSettings::ADMIN, admin.encode().unwrap());
 
@@ -537,7 +649,16 @@ mod tests {
         assert_eq!(wire.len(), 0x78 + 0x50 + 0x9c);
         let decoded = TrackerSettings::decode(&wire).unwrap();
         assert_eq!(decoded, settings);
+        // Decoding keeps the zero padding the encoder added: 3 bytes after each string.
+        let general = GeneralSettings {
+            padding: vec![0; 3],
+            ..general
+        };
         assert_eq!(decoded.general().unwrap(), Some(general));
+        let admin = AdminSettings {
+            padding: vec![0; 3],
+            ..admin
+        };
         assert_eq!(decoded.admin().unwrap(), Some(admin));
         // Present but empty, and absent, are both skipped.
         assert_eq!(decoded.section(TrackerSettings::TRACKERS), None);
@@ -554,6 +675,9 @@ mod tests {
             name: b"S".to_vec(),
             description: Vec::new(),
             extra: Vec::new(),
+            unknown_08: [0; 6],
+            unknown_12: [0; 6],
+            padding: Vec::new(),
         };
         let mut wire = ServerListEntry::encode_list(&[server]).unwrap();
         wire[4 + 0x18] = 18;

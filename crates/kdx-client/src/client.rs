@@ -137,6 +137,7 @@ impl Client {
             chat_id,
             user_id: 0,
             text: text.to_vec(),
+            ..ChatText::default()
         };
         self.send(MessageType::SEND_CHAT_TEXT, &message.encode()?)
             .await
@@ -147,6 +148,7 @@ impl Client {
         let message = PrivateMessage {
             user_id,
             text: text.to_vec(),
+            ..PrivateMessage::default()
         };
         self.send(MessageType::SEND_PRIVATE_MESSAGE, &message.encode())
             .await
@@ -198,6 +200,7 @@ impl Client {
             group_id,
             subject: subject.to_vec(),
             body: body.to_vec(),
+            ..PostNewsMessage::default()
         };
         self.send_checked(MessageType::POST_NEWS_MESSAGE, &request.encode()?)
             .await
@@ -296,6 +299,7 @@ impl Client {
             rsrc_offset: 0,
             options: 0,
             path: path.clone(),
+            ..DownloadFile::default()
         };
         let txid = conn
             .send(MessageType::DOWNLOAD_FILE, &request.encode()?)
@@ -345,6 +349,7 @@ impl Client {
                 ..FileStrings::default()
             },
             folder: folder.clone(),
+            ..UploadFile::default()
         };
         let txid = conn
             .send(MessageType::UPLOAD_FILE, &request.encode()?)

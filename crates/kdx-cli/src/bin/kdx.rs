@@ -457,6 +457,7 @@ async fn tracker_command(action: TrackerAction) -> Result<()> {
                 hours,
                 connections,
                 servers,
+                ..
             } = tracker.stats().await?;
             println!("started:      {}", time_1900(start_time));
             println!("hours:        {hours}");

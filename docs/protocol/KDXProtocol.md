@@ -118,7 +118,9 @@ fixed-size part of the record holds the lengths (usually u8). The strings
 follow that part in a fixed order. Most variable records are then padded to
 a multiple of 4. The padding bytes are uninitialized memory, so ignore them
 (the `86 ab` at the end of the first entry in the 401 File List example)
-**[O]**.
+**[O]**. `kdx-proto` still stores them, with any other bytes it doesn't
+model, and writes them back, so a decoded payload encodes to the same bytes
+(`kdx-dissect --audit` over every capture) **[O]**.
 
 Text is UTF-8 in the 1.6 builds, but the Linux server passes file names
 through as raw bytes:
@@ -699,8 +701,9 @@ front, each padded to 4 **[S `FUN_0804b9b0`]**:
 | 0x66 | 2 | path length | transfer record only: the file path, as in the file messages **[S, O]** |
 | 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
-The padding after the strings is uninitialised **[O]**. Fields marked
-transfer record only are 0 in a connection record.
+The padding after the strings is uninitialised **[O]**; `kdx-proto` keeps
+it on a round trip. Fields marked transfer record only are 0 in a connection
+record.
 
 In `captures/linux-catalog-volumes.pcapng`, the replies from frame 104 to 161
 hold three records: the operator's connection, the `kdx-get` connection
@@ -896,8 +899,9 @@ The path is a file path, as in the file messages: `speed.bin` for 412
 Download File and 188 Finished File Download (frames 108, 190). Saving the
 settings logs 170 Get Server Settings and 172 Set Server Settings (frames
 38, 43). The bytes at 0x44, 0x45, 0x4a, and 0x4b are 0 in every capture.
-`kdx_proto::msg::admin::HistoryRecord` re-encodes every record byte for
-byte.
+`kdx_proto::msg::admin::HistoryList` (181) and `HistoryRecord` (183)
+re-encode every payload byte for byte, the unnamed bytes and padding
+included.
 
 ### Chat
 
@@ -1644,7 +1648,8 @@ padded to 4:
 | 0x36 | 1 | editor login length | set by the server on 504 **[S]** |
 | 0x38 | | name, second string, editor login | |
 
-The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**.
+The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**;
+`kdx-proto` keeps it on a round trip.
 
 **509 Get Account** → **510 Account Info**
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
@@ -1652,7 +1657,7 @@ Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
 The request is the account's login, with no length byte. An unknown login
 gets 1 Status 0x1000c (`captures/kdx-accounts.pcapng` frame 554). The reply
 is the stored account record, with the key replaced by a flag. Its padding is
-uninitialised (frame 590) **[O]**.
+uninitialised (frame 590) **[O]**; `kdx-proto` keeps it on a round trip.
 
 **Account record.** 507 Create Account, 510 Account Info, and 511 Set
 Account share this layout **[S `FUN_08055928`, `FUN_08055ff4`; O]**:
@@ -1890,6 +1895,13 @@ the group's post classes unless the user has privilege 0. **[S
 | 0x0e | 1 | subject length | the server keeps at most 0x80 bytes |
 | 0x0f | 1 | | ignored by the server **[S]** |
 | 0x10 | | subject, body | lines end in CR |
+
+Client 1.620 beta 5 for Linux sends the request unpadded: 39, 18 and 23
+bytes in `captures/linux-first-connect.pcapng` frames 94, 107 and 115, and
+66 bytes in `captures/linux-text-encoding.pcapng` frame 319 **[O]**.
+`kdx-proto` encodes it the same way. The `kdx` CLI's earlier posts in
+`captures/kdx-news.pcapng` frames 32 and 112 were padded to 4 with zeros, and
+the server accepted them with 613 at frames 35 and 115 **[O]**.
 
 There is no reply on success (frames 356–361). The server stores a 610 News
 Message record, with the user's nick and login, under the group's next

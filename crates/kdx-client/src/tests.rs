@@ -163,6 +163,7 @@ async fn login_and_requests() {
             module: 0,
             line: 0,
             extra: 0,
+            value_14: 0,
         };
         send(
             &mut session,
@@ -294,6 +295,7 @@ async fn upload() {
         let reply = UploadReply {
             data_offset: 0x2000,
             rsrc_offset: u64::MAX,
+            ..UploadReply::default()
         };
         let reply = reply.encode().to_vec();
         send(

@@ -17,22 +17,6 @@ fn session() -> Vec<(Header, Vec<u8>)> {
     )
 }
 
-/// The 143 payload with each record's padding zeroed; the server leaves it uninitialised.
-fn zero_padding(wire: &[u8]) -> Vec<u8> {
-    let mut out = wire.to_vec();
-    let mut at = 0;
-    while at < wire.len() {
-        let record = &wire[at..];
-        let strings: usize = record[0x60..0x64].iter().map(|&n| usize::from(n)).sum();
-        let path = usize::from(u16::from_be_bytes([record[0x66], record[0x67]]));
-        let end = at + MonitoredConnection::HEADER_LEN + strings + path;
-        let padded = (end + 3) & !3;
-        out[end..padded].fill(0);
-        at = padded;
-    }
-    out
-}
-
 #[test]
 fn connection_monitor_with_a_transfer() {
     let session = session();
@@ -45,10 +29,8 @@ fn connection_monitor_with_a_transfer() {
     let mut transfers = 0;
     for wire in &replies {
         let list = MonitoredConnection::decode_list(wire).unwrap();
-        assert_eq!(
-            MonitoredConnection::encode_list(&list).unwrap(),
-            zero_padding(wire)
-        );
+        // The server leaves the padding uninitialised; the codec keeps it.
+        assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), *wire);
         for record in list.iter().filter(|r| r.transfer_id != 0) {
             assert_eq!((record.value_38, record.state), (0x5000, 412));
             transfers += 1;
@@ -113,6 +95,7 @@ fn set_account_class() {
                 index: 0,
                 unknown_after_index: [0xff, 0, 0],
                 name: b"Administrator".to_vec(),
+                ..AccountClass::default()
             }
         );
         assert_eq!(class.encode_set().unwrap(), *wire);

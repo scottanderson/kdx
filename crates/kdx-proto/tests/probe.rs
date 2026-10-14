@@ -103,7 +103,6 @@ fn files() {
     for session in [connection!("32980"), connection!("54328")] {
         for wire in payloads(&session, MessageType::FILE_LIST) {
             let list = FileListEntry::decode_list(wire).unwrap();
-            let mut expected = wire.to_vec();
             if let [first, second] = &list[..] {
                 assert_eq!(first.name, b"Admin Dropbox [DB]");
                 assert_eq!(second.name, b"Uploads [UL]");
@@ -112,12 +111,12 @@ fn files() {
                     .all(|e| e.attributes == ATTR_FOLDER && e.is_folder()));
                 assert_eq!((first.access_item, second.access_item), (0x2c, 0x2b));
                 // The server leaves the padding after the first name uninitialised.
-                let pad = 4 + FileListEntry::HEADER_LEN + first.name.len();
-                expected[pad..pad + 2].fill(0);
+                assert_eq!(first.padding.len(), 2);
+                assert_ne!(first.padding, [0, 0]);
             } else {
                 assert!(list.is_empty());
             }
-            assert_eq!(FileListEntry::encode_list(&list).unwrap(), expected);
+            assert_eq!(FileListEntry::encode_list(&list).unwrap(), wire);
         }
     }
 
@@ -269,10 +268,9 @@ fn connection_monitor() {
     assert_eq!(me.login, b"admin");
     assert_eq!(me.account, b"Administrator");
     assert_eq!(me.address, b"127.0.0.1:50984");
-    // The server leaves the padding uninitialised.
-    let mut expected = wire.to_vec();
-    expected[wire.len() - 2..].fill(0);
-    assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), expected);
+    // The server leaves the padding uninitialised; the codec keeps it.
+    assert_eq!(me.padding, wire[wire.len() - 2..]);
+    assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), wire);
 }
 
 #[test]
@@ -299,14 +297,14 @@ fn account_classes() {
             class,
             AccountClass {
                 unknown_25,
+                unknown_28: class.unknown_28,
+                padding: class.padding.clone(),
                 ..list[index].clone()
             }
         );
-        // The server leaves the padding uninitialised.
-        let mut expected = wire.to_vec();
-        let end = 0x38 + class.name.len();
-        expected[end..].fill(0);
-        assert_eq!(class.encode_info().unwrap(), expected);
+        // The server leaves the padding uninitialised; the codec keeps it.
+        assert_eq!(class.padding, wire[0x38 + class.name.len()..]);
+        assert_eq!(class.encode_info().unwrap(), wire);
     }
 }
 

@@ -2,8 +2,9 @@
 
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
-    MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryList,
+    HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer,
+    YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -34,14 +35,14 @@ use kdx_proto::MessageType;
 /// How a payload fared when decoded and encoded again.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Outcome {
-    /// The encoder gave back the payload byte for byte, apart from uninitialised padding.
+    /// The encoder gave back the payload byte for byte.
     Same,
     /// No `kdx-proto` type decodes this message type.
     NoCodec,
     /// The decoder failed; `summary` reports why.
     Undecodable,
-    /// The bytes that came back differ.
-    Lossy(String),
+    /// The bytes that came back differ, which is a codec bug.
+    Mismatch(String),
 }
 
 /// Encoder results of any shape, as bytes.
@@ -72,57 +73,26 @@ pub fn roundtrip(kind: MessageType, payload: &[u8]) -> Outcome {
     match reencode(kind, payload) {
         None => Outcome::NoCodec,
         Some(Err(Fault::Decode)) => Outcome::Undecodable,
-        Some(Err(Fault::Encode(err))) => Outcome::Lossy(format!("encode failed: {err}")),
+        Some(Err(Fault::Encode(err))) => Outcome::Mismatch(format!("encode failed: {err}")),
         Some(Ok(out)) => {
-            let wire = without_padding(kind, payload);
-            if out == wire {
+            if out == payload {
                 Outcome::Same
             } else {
-                Outcome::Lossy(difference(&wire, &out))
+                Outcome::Mismatch(difference(payload, &out))
             }
         }
     }
 }
 
-/// `payload` with the padding `KDXProtocol.md` calls uninitialised set to 0.
-fn without_padding(kind: MessageType, payload: &[u8]) -> Vec<u8> {
-    let mut wire = payload.to_vec();
-    let len = wire.len();
-    if kind == MessageType::FILE_LIST {
-        let mut at = 4;
-        for entry in FileListEntry::decode_list(payload).unwrap_or_default() {
-            let end = at + FileListEntry::HEADER_LEN + entry.name.len() + entry.kind.len();
-            let next = at + (end - at).next_multiple_of(4);
-            wire[end.min(len)..next.min(len)].fill(0);
-            at = next;
-        }
-    } else if kind == MessageType::ACCOUNT_INFO {
-        if let Ok(account) = Account::decode(payload) {
-            let strings = [
-                &account.login,
-                &account.name,
-                &account.third,
-                &account.editor,
-            ];
-            let end = Account::HEADER_LEN + strings.iter().map(|s| s.len()).sum::<usize>();
-            wire[end.min(len)..].fill(0);
-        }
-    }
-    wire
-}
-
-/// Where `out` first departs from `wire`.
+/// Where `out` first departs from `wire`, with a note when the lengths differ.
 fn difference(wire: &[u8], out: &[u8]) -> String {
     let at = wire.iter().zip(out).take_while(|(a, b)| a == b).count();
-    let differ = wire.iter().zip(out).filter(|(a, b)| a != b).count();
     let show = |b: &[u8]| hex::encode(&b[at.min(b.len())..(at + 8).min(b.len())]);
-    format!(
-        "{} bytes in, {} out, {differ} differ, first at {at:#x}: {} became {}",
-        wire.len(),
-        out.len(),
-        show(wire),
-        show(out)
-    )
+    let mut how = format!("first at {at:#x}: {} became {}", show(wire), show(out));
+    if wire.len() != out.len() {
+        how += &format!(" ({} bytes in, {} out)", wire.len(), out.len());
+    }
+    how
 }
 
 /// Why a payload has no re-encoded form.
@@ -219,7 +189,7 @@ fn reencode(kind: MessageType, p: &[u8]) -> Option<Result<Vec<u8>, Fault>> {
         M::SERVER_SETTINGS_INFO | M::SET_SERVER_SETTINGS => one!(ServerSettings),
         M::YOUR_ADDRESS => one!(YourAddress),
         M::CONNECTION_MONITOR_INFO => list!(MonitoredConnection),
-        M::SERVER_HISTORY_JOIN_REPLY => list!(HistoryRecord),
+        M::SERVER_HISTORY_JOIN_REPLY => one!(HistoryList),
         M::SERVER_HISTORY_ADDED => (|| Ok(HistoryRecord::decode_added(p)?.encode_added()?))(),
         M::ACCOUNT_CLASS_INFO => (|| Ok(AccountClass::decode_info(p)?.encode_info()?))(),
         M::SET_ACCOUNT_CLASS => (|| Ok(AccountClass::decode_set(p)?.encode_set()?))(),

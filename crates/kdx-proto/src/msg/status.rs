@@ -23,6 +23,8 @@ pub enum Status {
         line: u32,
         /// A value the raise site passes along.
         extra: u32,
+        /// Bytes 0x14 to 0x17; 0 from the server.
+        value_14: u32,
     },
     /// The request failed; Tracker 1.110's short form.
     TrackerError {
@@ -58,6 +60,7 @@ impl Status {
                 module: u32_at(buf, 8),
                 line: u32_at(buf, 0x0c),
                 extra: u32_at(buf, 0x10),
+                value_14: u32_at(buf, 0x14),
             }),
             _ => Err(DecodeError::Invalid("status length")),
         }
@@ -73,7 +76,8 @@ impl Status {
                 module,
                 line,
                 extra,
-            } => &[code, request.0, module, line, extra, 0],
+                value_14,
+            } => &[code, request.0, module, line, extra, value_14],
             Self::TrackerError { code, request } => &[code, request.0],
         };
         words.iter().flat_map(|w| w.to_be_bytes()).collect()
@@ -114,6 +118,7 @@ mod tests {
                 module: 0x46,
                 line: 0x98,
                 extra: 0,
+                value_14: 0,
             }
         );
     }

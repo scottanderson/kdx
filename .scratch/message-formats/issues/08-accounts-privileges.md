@@ -34,13 +34,18 @@ Overrides Class **[I]**. Check them together with the user record's 0x14
   a sender and handler.
 - [ ] Privilege bit 2 is set in every class and has no name. Bits with no
   client label: confirm no Linux server handler tests them, or name them.
-- [ ] Audit (01): `AccountClass` drops the editor login length at 0x36 and
-  the editor login, so 503 comes back 4 or 8 bytes short
+- [x] Audit (01): `AccountClass` dropped the editor login length at 0x36 and
+  the editor login, so 503 came back 4 or 8 bytes short
   (`linux-accounts-news` 28; `linux-catalog-volumes` 38, 57;
-  `linux-chat-rooms` 143, 181; `linux-accounts-folder-access` 41). Other 503s
-  lose one non-zero byte in their last 3 (`linux-accounts-news` 18 and
-  `probe` 196 at 0x3d, `probe` 193 at 0x45); decide whether it is padding.
-- [ ] Audit (01): 513 Account List drops byte 0x97, ff (`kdx-accounts` 271).
+  `linux-chat-rooms` 143, 181; `linux-accounts-folder-access` 41). Fixed:
+  `AccountClass` decodes the second string and the editor login, and
+  `padding` keeps the bytes after them.
+- [ ] Other 503s have one non-zero byte in their last 3
+  (`linux-accounts-news` 18 and `probe` 196 at 0x3d, `probe` 193 at 0x45),
+  now kept in `AccountClass::padding`; confirm it is uninitialised.
+- [x] Audit (01): 513 Account List dropped byte 0x97, ff (`kdx-accounts`
+  271). Fixed: `AccountListEntry` keeps every header gap and its padding.
+- [ ] Which 513 field holds that byte, and what is it?
 - [ ] Audit (01): no codec for 502 Get Account Class, 508 Delete Account,
   509 Get Account, 515 Account Deleted, and 550 Change Own Password
   (`linux-accounts-news` 17, 52, 46, 53; `kdx-accounts` 323).

@@ -18,8 +18,9 @@ use etherparse::{NetSlice, SlicedPacket, TransportSlice};
 use kdx_proto::handshake::{compute_auth, Hello, Proof, SUB_PROTOCOL_GCONSOLE};
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountListEntry, DisconnectMessage, DisconnectUser,
-    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryRecord,
-    MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer, YourAddress,
+    ExitTerminateProcess, ExtraServerInfo, FolderAccess, FolderAccessItem, HistoryList,
+    HistoryRecord, MonitoredConnection, ProcessList, RcvBroadcast, SendBroadcast, ShutdownServer,
+    YourAddress,
 };
 use kdx_proto::msg::chat::{
     ChatDeleted, ChatId, ChatInvitation, ChatInvite, ChatListEntry, ChatRecord, ChatText,
@@ -417,7 +418,7 @@ fn dissect(
                         audit::Outcome::Same | audit::Outcome::Undecodable => {}
                         audit::Outcome::NoCodec if payload.is_empty() => {}
                         audit::Outcome::NoCodec => writeln!(out, "      ~ no codec")?,
-                        audit::Outcome::Lossy(how) => writeln!(out, "      ~ lossy: {how}")?,
+                        audit::Outcome::Mismatch(how) => writeln!(out, "      ~ mismatch: {how}")?,
                     }
                 }
                 out.push_str(&hexdump(&payload[..payload.len().min(MAX_DUMP)], "      "));
@@ -524,6 +525,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 module,
                 line,
                 extra,
+                ..
             } => format!(
                 "error {code:#x} for {request} at module {module:#x} line {line} extra {extra:#x}"
             ),
@@ -998,7 +1000,8 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             need(payload, 1)?;
             format!("class {}", payload[0])
         }
-        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryRecord::decode_list(payload)?
+        MessageType::SERVER_HISTORY_JOIN_REPLY => HistoryList::decode(payload)?
+            .records
             .iter()
             .map(history)
             .collect::<Vec<_>>()
@@ -1161,7 +1164,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             )
         }
         MessageType::GCONSOLE_DRAW => Draw::decode(payload)?
-            .0
+            .records
             .iter()
             .map(draw_record)
             .collect::<Vec<_>>()

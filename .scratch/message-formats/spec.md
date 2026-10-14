@@ -58,7 +58,8 @@ Issues here are static analysis plus doc work, for an agent alone.
 5. Put each finding in `docs/protocol/`, tagged as `AGENTS.md` says, and add
    new landmarks to `re/README.md`. When a byte gets a name, rename the
    `kdx-proto` field that holds it, and keep its round-trip tests byte for
-   byte.
+   byte. The codecs store every byte they don't model, padding included, so
+   `kdx-dissect --audit` must report no `mismatch`.
 6. Tick the gap off in the issue. When none are left, set `Status: done`
    and add a comment summarising the result.
 

@@ -58,7 +58,7 @@ fn draw() {
     // Frame 14: a record of each kind.
     let wire = of_type(&sent, MessageType::GCONSOLE_DRAW)[0];
     let draw = Draw::decode(wire).unwrap();
-    let kinds: Vec<u16> = draw.0.iter().map(DrawRecord::kind).collect();
+    let kinds: Vec<u16> = draw.records.iter().map(DrawRecord::kind).collect();
     assert_eq!(
         kinds,
         [
@@ -66,9 +66,12 @@ fn draw() {
             100, 3
         ]
     );
-    assert!(!draw.0.iter().any(|r| matches!(r, DrawRecord::Other { .. })));
+    assert!(!draw
+        .records
+        .iter()
+        .any(|r| matches!(r, DrawRecord::Other { .. })));
     assert_eq!(
-        draw.0[9],
+        draw.records[9],
         DrawRecord::Polygon {
             id: 1,
             value_02: 0,
@@ -82,7 +85,7 @@ fn draw() {
         }
     );
     assert_eq!(
-        draw.0[17],
+        draw.records[17],
         DrawRecord::Move {
             id: 2,
             to: Point { x: 0x180, y: 0x120 },
@@ -94,9 +97,9 @@ fn draw() {
         flags,
         object_type,
         ..
-    } = draw.0[0]
+    } = draw.records[0]
     else {
-        panic!("{:?}", draw.0[0]);
+        panic!("{:?}", draw.records[0]);
     };
     assert_eq!(
         rect,

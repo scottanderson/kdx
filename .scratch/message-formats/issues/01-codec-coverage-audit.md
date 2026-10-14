@@ -11,8 +11,7 @@ Write a test (or a `kdx-dissect` mode) that, for every message in every
 capture:
 
 - decodes the payload with the `kdx-proto` type for its message type;
-- re-encodes it and compares with the payload, ignoring padding the docs
-  call uninitialised;
+- re-encodes it and compares with the payload byte for byte;
 - reports the types it has no codec for, and the frames whose bytes don't
   come back.
 
@@ -25,27 +24,30 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
 ## Gaps
 
 - [x] The list of types with no codec, by issue number of this effort.
-- [x] The list of lossy decoders, with the bytes they drop.
+- [x] The list of decoders that dropped bytes, with the bytes they drop.
+- [x] Keep every dropped byte in the decoded type, so each payload comes
+  back byte for byte.
+- [x] Store the header gaps that every other codec wrote as zeros, and the
+  padding of list records, so a nonzero byte there comes back too.
+- [ ] Bytes after the last string or record of a payload are still dropped
+  by most single-message decoders and by the counted lists. Store them, or
+  reject them, once a capture or a handler shows any.
 - [x] Add each finding to the issue for its area as a new gap.
 - [x] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
   Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
   `gconsole.md`.
 
-Done when the test runs in `cargo test` and every lossy decoder or missing
-codec is recorded in an issue here.
+Done when the test runs in `cargo test`, no payload comes back different,
+and every missing codec is recorded in an issue here.
 
 ## Comments
 
-2026-10-14: `kdx-dissect --audit` decodes each payload with its
-`kdx-proto` type, encodes it again, and prints `~ no codec` or `~ lossy`
-with the first differing bytes. Empty payloads with no codec are not
-flagged. `crates/kdx-dissect/tests/captures.rs` runs it over every capture
-and pins the findings in `EXPECTED_AUDIT`, so a fixed or new gap fails the
-test until the list changes. `audit::without_padding` zeroes the padding
-`KDXProtocol.md` calls uninitialised before comparing: after each 401 File
-List entry and at the end of 510 Account Info. With it, 401 and 510 come
-back byte for byte. Other findings below may be padding too, which the
-Strings section says is uninitialised; each issue's gap asks for that.
+2026-10-14: `kdx-dissect --audit` decodes each payload with its `kdx-proto`
+type, encodes it again, and prints `~ no codec`, or `~ mismatch` with the first
+differing offset and a note when the lengths differ. Empty payloads with no
+codec are not flagged. `crates/kdx-dissect/tests/captures.rs` runs it over every
+capture and pins the findings in `EXPECTED_AUDIT`, so a fixed or new gap fails
+the test until the list changes.
 
 No codec, by issue:
 
@@ -59,7 +61,8 @@ No codec, by issue:
 | 12 | 902, 903, 904, 905 |
 | 14 | 1001, 1002 |
 
-Lossy, by issue (each issue gives the frames):
+Mismatches found on 2026-10-14, by issue (each issue gives the frames), all
+fixed the same day:
 
 | Issue | Type | Bytes |
 |---|---|---|
@@ -78,3 +81,20 @@ Lossy, by issue (each issue gives the frames):
 The spec's never-captured list had 117, 1000 to 1002, and 108/109 from a
 GUI client, all in `linux-dcc-voice-failed`, and said 223 was captured only
 empty, but frames 109 and 155 there hold addresses. The list is fixed.
+
+2026-10-14: Data must round trip losslessly, so a difference is a codec bug,
+never an accepted category, and the audit no longer masks padding before
+comparing. Each type in the table above now stores its padding and unknown bytes
+and writes them back, `EXPECTED_AUDIT` lists only `no codec` types, and
+`crates/kdx-proto/tests/round_trip.rs` re-encodes the fixtures' payloads of
+those types. 401 and 510, whose padding the audit used to mask, keep it too.
+What the stored bytes mean stays open in each issue.
+
+2026-10-14: The audit only sees the bytes the captures hold, so it missed
+header gaps that happen to be zero. Every codec in `kdx-proto/src/msg` now
+stores those gaps as `unknown_*` fields and each list record's padding, with
+zero defaults so new messages encode as before. 181 has a `HistoryList` type
+for its leading u32. A 4001 Draw record whose length isn't its kind's decodes
+as `Other`, and `Draw::padding` keeps each record's padding. 105's u16 at
+0x2a and 0x46 are stored as read. `round_trip.rs` sets every gap of each
+codec to nonzero bytes in a synthetic payload and checks it comes back.

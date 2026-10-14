@@ -4,7 +4,7 @@
 use super::{len_u8, need, strings, u16_at, u32_at, DecodeError, EncodeError};
 
 /// What the server tells a client right after it logs in.
-#[derive(Clone, Default, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct ServerInfo {
     /// Account key for transfer connections; see `Connection::attach` in kdx-client.
     pub session_key: [u8; 32],
@@ -14,14 +14,38 @@ pub struct ServerInfo {
     pub user_id: u32,
     /// Server version, 1620 for 1.620.
     pub version: u16,
-    /// Whether the user may change the server settings.
-    pub can_modify_settings: bool,
+    /// 1 if the user may change the server settings, else 0.
+    pub can_modify_settings: u16,
+    /// Bytes 0x2c to 0x45; meaning unknown.
+    pub unknown_2c: [u8; 0x1a],
+    /// The u16 at 0x46; Server 1.620 always sends 2, which stops the client's version warning.
+    pub value_46: u16,
+    /// Byte 0x4b; meaning unknown.
+    pub unknown_4b: u8,
     /// Server name.
     pub name: Vec<u8>,
     /// Server description.
     pub description: Vec<u8>,
     /// A third string of unknown meaning.
     pub third: Vec<u8>,
+}
+
+impl Default for ServerInfo {
+    fn default() -> Self {
+        Self {
+            session_key: [0; 32],
+            server_value: 0,
+            user_id: 0,
+            version: 0,
+            can_modify_settings: 0,
+            unknown_2c: [0; 0x1a],
+            value_46: 2,
+            unknown_4b: 0,
+            name: Vec::new(),
+            description: Vec::new(),
+            third: Vec::new(),
+        }
+    }
 }
 
 impl ServerInfo {
@@ -38,7 +62,10 @@ impl ServerInfo {
             server_value: u32_at(buf, 0x20),
             user_id: u32_at(buf, 0x24),
             version: u16_at(buf, 0x28),
-            can_modify_settings: u16_at(buf, 0x2a) != 0,
+            can_modify_settings: u16_at(buf, 0x2a),
+            unknown_2c: buf[0x2c..0x46].try_into().expect("26 bytes"),
+            value_46: u16_at(buf, 0x46),
+            unknown_4b: buf[0x4b],
             name,
             description,
             third,
@@ -52,11 +79,13 @@ impl ServerInfo {
         out[0x20..0x24].copy_from_slice(&self.server_value.to_be_bytes());
         out[0x24..0x28].copy_from_slice(&self.user_id.to_be_bytes());
         out[0x28..0x2a].copy_from_slice(&self.version.to_be_bytes());
-        out[0x2b] = self.can_modify_settings.into();
-        out[0x47] = 2;
+        out[0x2a..0x2c].copy_from_slice(&self.can_modify_settings.to_be_bytes());
+        out[0x2c..0x46].copy_from_slice(&self.unknown_2c);
+        out[0x46..0x48].copy_from_slice(&self.value_46.to_be_bytes());
         out[0x48] = len_u8(&self.name, "server name")?;
         out[0x49] = len_u8(&self.description, "server description")?;
         out[0x4a] = len_u8(&self.third, "third string")?;
+        out[0x4b] = self.unknown_4b;
         for part in [&self.name, &self.description, &self.third] {
             out.extend_from_slice(part);
         }
@@ -72,6 +101,9 @@ impl std::fmt::Debug for ServerInfo {
             .field("user_id", &self.user_id)
             .field("version", &self.version)
             .field("can_modify_settings", &self.can_modify_settings)
+            .field("unknown_2c", &self.unknown_2c)
+            .field("value_46", &self.value_46)
+            .field("unknown_4b", &self.unknown_4b)
             .field("name", &String::from_utf8_lossy(&self.name))
             .field("description", &String::from_utf8_lossy(&self.description))
             .field("third", &String::from_utf8_lossy(&self.third))
@@ -98,6 +130,8 @@ impl ServerIcon {
 /// 107 Server Greeting, also the layout of the settings greeting section.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ServerGreeting {
+    /// Bytes 0x00 to 0x03; 0 from the server.
+    pub unknown_00: [u8; 4],
     /// Greeting text, to the end of the payload, with no terminator.
     pub text: Vec<u8>,
 }
@@ -110,13 +144,14 @@ impl ServerGreeting {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         Ok(Self {
+            unknown_00: buf[..Self::HEADER_LEN].try_into().expect("4 bytes"),
             text: buf[Self::HEADER_LEN..].to_vec(),
         })
     }
 
     /// Encodes the payload.
     pub fn encode(&self) -> Vec<u8> {
-        let mut out = vec![0; Self::HEADER_LEN];
+        let mut out = self.unknown_00.to_vec();
         out.extend_from_slice(&self.text);
         out
     }
@@ -139,6 +174,8 @@ pub struct SettingsSection {
 pub struct ServerSettings {
     /// Format version; 1 in the lab.
     pub version: u16,
+    /// Bytes 0x0a and 0x0b; meaning unknown.
+    pub unknown_0a: [u8; 2],
     /// The section table at 0x0c.
     pub sections: [SettingsSection; Self::SECTIONS],
     /// The 12 bytes after the table, at 0x64; meaning unknown.
@@ -182,6 +219,7 @@ impl ServerSettings {
         });
         let settings = Self {
             version: u16_at(buf, 8),
+            unknown_0a: buf[0x0a..Self::TABLE_AT].try_into().expect("2 bytes"),
             sections,
             value_64: buf[0x64..Self::HEADER_LEN].try_into().expect("12 bytes"),
             body: buf[Self::HEADER_LEN..].to_vec(),
@@ -197,6 +235,7 @@ impl ServerSettings {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..8].copy_from_slice(Self::MAGIC);
         out[8..0x0a].copy_from_slice(&self.version.to_be_bytes());
+        out[0x0a..Self::TABLE_AT].copy_from_slice(&self.unknown_0a);
         for (i, section) in self.sections.iter().enumerate() {
             let at = Self::TABLE_AT + 8 * i;
             out[at..at + 4].copy_from_slice(&section.offset.to_be_bytes());

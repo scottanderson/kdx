@@ -169,10 +169,12 @@ impl Settings {
             server_id: if secrets { self.server_id } else { [0; 12] },
             name: self.name.clone(),
             description: self.description.clone(),
+            ..GeneralSettings::default()
         };
         let admin = AdminSettings {
             key: secrets.then(|| self.admin_key.clone()),
             login: self.admin_login.clone(),
+            ..AdminSettings::default()
         };
         let mut blob = TrackerSettings::default();
         blob.set_section(

@@ -27,13 +27,15 @@ Docs: `KDXProtocol.md`, News. Captures: `linux-accounts-news`,
 - [ ] 610 News Message record: 0x10 (8 bytes of 0), 0x1a (2 bytes), 0x1f.
 - [ ] 611 Post News Message: 0x04 (8 bytes) and 0x0f are ignored by the
   server **[S]**. Read what the client writes there.
-- [ ] Audit (01): 608 News Messages and 610 News Message lose non-zero
+- [x] Audit (01): 608 News Messages and 610 News Message had non-zero
   bytes after strings (608: `kdx-news` 204 at 0x866, 384 at 0x8b3;
   `linux-first-connect` 127 at 0x8a1. 610: `linux-first-connect` 100 at
-  0x4a, 113 at 0x35, 121 at 0x3a). Decide whether they are uninitialised.
-- [ ] Audit (01): `PostNewsMessage::encode` pads 611 to 4, but the client
+  0x4a, 113 at 0x35, 121 at 0x3a). Fixed: `NewsMessage::padding` keeps them.
+- [ ] Are those bytes uninitialised padding?
+- [x] Audit (01): `PostNewsMessage::encode` padded 611 to 4, but the client
   sends it unpadded (`linux-first-connect` 94, 107, 115;
-  `linux-text-encoding` 319).
+  `linux-text-encoding` 319). Fixed: the encoder no longer pads, and
+  `PostNewsMessage::rest` keeps any bytes after the body.
 - [ ] Audit (01): no codec for 601, 602, 607, 609, and 612, a group ID and
   sometimes a message ID (`linux-accounts-news` 81, 68, 107;
   `linux-first-connect` 99, 102).

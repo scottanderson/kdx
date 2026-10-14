@@ -1,7 +1,7 @@
 //! The user record of 100 Set Identity, 101 User List, 102 User Changed and
 //! 103 User Joined, and the small user messages 104, 110, 111 and 118.
 
-use super::{len_u8, need, pad4, strings, u16_at, u32_at, DecodeError, EncodeError};
+use super::{len_u8, need, pad4, padding, strings, u16_at, u32_at, DecodeError, EncodeError};
 
 /// One user, as the client describes itself and as the server lists it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -10,6 +10,8 @@ pub struct UserRecord {
     pub user_id: u32,
     /// Status value, also set by 110 Set Mini User Icon.
     pub status: u8,
+    /// Bytes 0x05 to 0x09; meaning unknown.
+    pub unknown_05: [u8; 5],
     /// TCP port of the client's client-to-client (DCC) listener; 0 if it has none.
     pub client_port: u16,
     /// Six bytes the client chooses, probably two RGB colours.
@@ -22,6 +24,8 @@ pub struct UserRecord {
     pub server_16: u8,
     /// Flag bits: bit 2 comes from the client, bit 1 is the server's hidden-marker flag.
     pub flags: u8,
+    /// Byte 0x1b; meaning unknown.
+    pub unknown_1b: u8,
     /// Icon bitmap; empty when the server leaves it out.
     pub icon: Vec<u8>,
     /// Extra data, skipped by the server.
@@ -30,6 +34,8 @@ pub struct UserRecord {
     pub nick: Vec<u8>,
     /// Info text.
     pub info: Vec<u8>,
+    /// Bytes after the info text up to the next multiple of 4, as received; empty in a new record.
+    pub padding: Vec<u8>,
 }
 
 impl UserRecord {
@@ -38,7 +44,7 @@ impl UserRecord {
     /// Longest icon the server accepts.
     pub const MAX_ICON_LEN: usize = 0x708;
 
-    /// Decodes one record and returns it with its unpadded length.
+    /// Decodes one record with its padding to 4 and returns it with its length.
     pub fn decode(buf: &[u8]) -> Result<(Self, usize), DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [
@@ -48,21 +54,25 @@ impl UserRecord {
             usize::from(buf[0x1a]),
         ];
         let ([icon, extra, nick, info], end) = strings(buf, Self::HEADER_LEN, lens)?;
+        let (padding, padded) = padding(buf, end);
         let record = Self {
             user_id: u32_at(buf, 0),
             status: buf[4],
+            unknown_05: buf[5..0x0a].try_into().expect("5 bytes"),
             client_port: u16_at(buf, 0x0a),
             colors: buf[0x0e..0x14].try_into().expect("6 bytes"),
             server_14: buf[0x14],
             server_15: buf[0x15],
             server_16: buf[0x16],
             flags: buf[0x17],
+            unknown_1b: buf[0x1b],
             icon,
             extra,
             nick,
             info,
+            padding,
         };
-        Ok((record, end))
+        Ok((record, padded))
     }
 
     /// Decodes the records of 101 User List, each padded to 4 bytes.
@@ -76,7 +86,7 @@ impl UserRecord {
         Ok(list)
     }
 
-    /// Encodes the record without padding, as the client sends it.
+    /// Encodes the record with its stored padding; without any, as the client sends it.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         if self.icon.len() > Self::MAX_ICON_LEN {
             return Err(EncodeError::TooLong("icon"));
@@ -84,6 +94,7 @@ impl UserRecord {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
         out[4] = self.status;
+        out[5..0x0a].copy_from_slice(&self.unknown_05);
         out[0x0a..0x0c].copy_from_slice(&self.client_port.to_be_bytes());
         out[0x0c..0x0e].copy_from_slice(&(self.icon.len() as u16).to_be_bytes());
         out[0x0e..0x14].copy_from_slice(&self.colors);
@@ -94,7 +105,14 @@ impl UserRecord {
         out[0x18] = len_u8(&self.extra, "extra data")?;
         out[0x19] = len_u8(&self.nick, "nick")?;
         out[0x1a] = len_u8(&self.info, "info text")?;
-        for part in [&self.icon, &self.extra, &self.nick, &self.info] {
+        out[0x1b] = self.unknown_1b;
+        for part in [
+            &self.icon,
+            &self.extra,
+            &self.nick,
+            &self.info,
+            &self.padding,
+        ] {
             out.extend_from_slice(part);
         }
         Ok(out)
@@ -118,6 +136,8 @@ pub struct UserDeparted {
     pub user_id: u32,
     /// Meaning unknown; 7 in every capture.
     pub value_4: u8,
+    /// Bytes 0x05 to 0x07; meaning unknown.
+    pub unknown_05: [u8; 3],
 }
 
 impl UserDeparted {
@@ -130,6 +150,7 @@ impl UserDeparted {
         Ok(Self {
             user_id: u32_at(buf, 0),
             value_4: buf[4],
+            unknown_05: buf[5..8].try_into().expect("3 bytes"),
         })
     }
 
@@ -138,6 +159,7 @@ impl UserDeparted {
         let mut out = [0; Self::LEN];
         out[..4].copy_from_slice(&self.user_id.to_be_bytes());
         out[4] = self.value_4;
+        out[5..].copy_from_slice(&self.unknown_05);
         out
     }
 }
@@ -147,6 +169,8 @@ impl UserDeparted {
 pub struct MiniUserIcon {
     /// Status: 1 after `/away`, 0 after `/back`.
     pub status: u8,
+    /// Bytes 0x01 to 0x03; meaning unknown.
+    pub unknown_01: [u8; 3],
 }
 
 impl MiniUserIcon {
@@ -156,12 +180,16 @@ impl MiniUserIcon {
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::LEN)?;
-        Ok(Self { status: buf[0] })
+        Ok(Self {
+            status: buf[0],
+            unknown_01: buf[1..4].try_into().expect("3 bytes"),
+        })
     }
 
     /// Encodes the payload.
     pub const fn encode(&self) -> [u8; Self::LEN] {
-        [self.status, 0, 0, 0]
+        let [a, b, c] = self.unknown_01;
+        [self.status, a, b, c]
     }
 }
 
