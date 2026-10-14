@@ -36,6 +36,9 @@ still verifies and unpacks the archive.
 | KDXTrackerServ1110-Mac.sit | Tracker 1.110, Mac PEF | 20051014065559 | 4ccf77333baf50d9f9e66dc59797d0c716451aaef2ee58bb5beefc47ab369d09 |
 | KDXTrackerServ1110-MacUnix.zip | Tracker 1.110, Mach-O ppc | 20051014070016 | 06437455a9b33ff4e0891380855c3552d6d562bb05c49b74c47ac9c44e81afa7 |
 | old/KDXServer1600-Lnx.zip | Server 1.600, Linux i386 (installed by 175 in the lab's downgrade test) | 20060515145257 | 75cfe75a26b625ec6ff767491b2e863fc74b0cc5f5a186c483e9d3d22d47b937 |
+| KDX0921.sit.bin | Client and Server 0.921, Mac PEF (2001 handshake, see handshake.md) | 20010810111341 | 3bf2570c208ee0e82f35c2c23aebfea028c68cf4adc57b222fdd58d0b75226f1 |
+| KDXTrackerServ0902.sit.bin | Tracker 0.902, Mac PEF (2001 handshake) | 20010810112345 | cc627c5c2be519e9d317d0befdd849cd0c68e96649f82ee3d7ee55bf44ab1283 |
+| NetFone1400-Mac.sit | NetFone 1.400, Mac PEF (`%NFO` over the 2001 handshake) | 20030403191716 | 1cffb26f1b49d8fcd1ef927e1f509acdc9a35d382946a31ad6111d8c2d7da57c |
 
 URL pattern:
 `https://web.archive.org/web/<timestamp>id_/http://www.haxial.com:80/download/<archive>`
