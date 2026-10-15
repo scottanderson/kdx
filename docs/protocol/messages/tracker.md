@@ -115,31 +115,20 @@ No payload.
 
 The reply, [711 TrackerServ Settings Info](#m711), is the tracker's settings in
 its file format without the secrets. That format, which
-[712 Set TrackerServ Settings](#m712) also uses, is a header and then the
-sections:
+[712 Set TrackerServ Settings](#m712) also uses, is a header and then up to
+twelve sections. Entry n of `sections` and byte n of `present` describe
+section n.
 
 Struct `TrackerSettings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 8 | char[8] | magic | not stored. `"%KDXTSTG"` |
-| 0x08 | 2 | u16 | format | 1 |
-| 0x0a | 2 | u8[2] | ignored |  |
-| 0x0c | 8 | TrackerSettingsSection | section_0 | Rust `sections`. offset (0x78) and size: general settings |
-| 0x14 | 8 | TrackerSettingsSection | section_1 | Rust `sections`. offset and size: upstream trackers |
-| 0x1c | 8 | TrackerSettingsSection | section_2 | Rust `sections`. offset and size: groups |
-| 0x24 | 8 | TrackerSettingsSection | section_3 | Rust `sections`. 0 |
-| 0x2c | 8 | TrackerSettingsSection | section_4 | Rust `sections`. offset and size: the greeting (tracker +0x224) |
-| 0x34 | 8 | TrackerSettingsSection | section_5 | Rust `sections`. offset and size: admin |
-| 0x3c | 48 | TrackerSettingsSection[6] | sections_6_11 | Rust `sections`. 0 |
-| 0x6c | 1 | u8 | present_0 | Rust `present`. general section |
-| 0x6d | 1 | u8 | present_1 | Rust `present`. upstream trackers |
-| 0x6e | 1 | u8 | present_2 | Rust `present`. groups |
-| 0x6f | 1 | u8 | present_3 | Rust `present`. section 3; 0 |
-| 0x70 | 1 | u8 | present_4 | Rust `present`. greeting |
-| 0x71 | 1 | u8 | present_5 | Rust `present`. admin |
-| 0x72 | 6 | u8[6] | present_6_11 | Rust `present`. sections 6-11; 0 |
-| 0x78 | rest | u8[] | sections | the sections the offsets point to, back to back |
+| 0x08 | 2 | u16 | format | must be 1 **[S `FUN_0804d63c`]** |
+| 0x0a | 2 | u8[2] | ignored | the parser never reads them **[S `FUN_0804d63c`]** |
+| 0x0c | 96 | TrackerSettingsSection[12] | sections | where each section is. Rust `sections` holds the bytes each entry points at |
+| 0x6c | 12 | u8[12] | present | the parser reads a section only when its byte is exactly 1 **[S `FUN_0804d63c`]** |
+| 0x78 | rest | u8[] | section_data | Rust `sections`. the sections the entries point to, back to back, in the order below |
 
 Struct `TrackerSettingsSection` (8 bytes):
 
@@ -148,60 +137,34 @@ Struct `TrackerSettingsSection` (8 bytes):
 | 0x00 | 4 | u32 | offset | from the start of the settings; 0 for an absent section |
 | 0x04 | 4 | u32 | size | 0 for an absent section |
 
-An absent section has offset and size 0. The others follow the header back to
-back in the order general, upstream trackers, groups, admin, greeting; a
-present but empty section has size 0 and the offset where it would start
-**[O frames 80, 82, 237, 240]**. Verified: `kdx-proto` re-encodes all four
-byte for byte, and each general, groups, and admin section from its fields
-**[O]**.
+An absent section has offset and size 0. A present but empty section has size 0
+and the offset where it would start **[O frames 80, 82, 237, 240]**.
 
-The parser reads a section only when its present byte is exactly 1 **[S
-`FUN_0804d63c`]**. Beyond that:
+### Sections
 
-- general: the size must be at least 0x4c and hold the strings;
-- upstream trackers: the section replaces the whole list, even when empty;
-- groups: the size must not be 0; the section replaces the whole list and
-  drops every registration (`FUN_0804ab2c`);
-- admin: the size must be at least 0x94 and hold the login; an empty login
-  keeps the old one;
-- greeting: a section that isn't present, or is shorter than 5 bytes, clears
-  the greeting; a longer one is kept up to 0xffff bytes.
+Sections 0 to 2, 4 and 5 are in use. Sections 3 and 6 to 11 have offset 0, size
+0 and a present byte of 0 **[O frames 80, 82, 237, 240]**, and the parser reads
+neither their table entries nor their present bytes **[S `FUN_0804d63c`]**.
+The parser rejects a blob shorter than 0x78 bytes or without the magic and
+format 1 **[S `FUN_0804d63c`]**. The client builds the sections in the order
+general, upstream trackers, groups, admin, then greeting, so admin (5) comes
+before greeting (4) in the file **[S `FUN_0806b68c`; O frames 80, 82, 237,
+240]**. Verified: `kdx-proto` re-encodes the blobs of those frames byte for
+byte, and each general, groups, and admin section from its fields **[O]**.
 
-General settings at 0x78: four u16 limits at 0x78..0x7f (file only), flags
-at 0x98, the port at 0x9c (a u32), the server ID at 0xa4 (file only; 12
-bytes as in the registration **[I]**), and the name and description lengths
-at 0xbe and 0xbf with the strings from 0xc4, padded to 4. Flags
-bit 0 is Register with Trackers (tracker +0x1a4) and bit 1 Enable Greeting
-(tracker +0x22c) **[S `FUN_0804d63c`]**. The flags are a u32: Enable Greeting
-alone is `00 00 00 02` **[O frame 82]**. The tracker clears bit 0 when the
-name is empty, or no upstream tracker has an address, which includes an
-upstream section that isn't present. It keeps 63 bytes of the name and 255
-of the description. A port of 0 or above 0xfffe means 10800.
+| Index | Section | Layout | What the tracker does with it |
+|---|---|---|---|
+| 0 | general | [GeneralSettings](#general-settings) | the size must be at least 0x4c and hold the strings |
+| 1 | upstream trackers | [UpstreamTracker](#upstream-trackers) | replaces the whole list, even when empty |
+| 2 | groups | [SettingsGroup](#groups) | the size must not be 0; replaces the whole list and drops every registration (`FUN_0804ab2c`) |
+| 3 | unused | | |
+| 4 | greeting | [ServerGreeting](session.md#m107) | a section that isn't present, or is shorter than 5 bytes, clears the greeting; a longer one is kept up to 0xffff bytes |
+| 5 | admin | [AdminSettings](#admin) | the size must be at least 0x94 and hold the login; an empty login keeps the old one |
+| 6 to 11 | unused | | |
 
-The greeting section is a u32 0 and then the text. The tracker sends it as
-[107 Server Greeting](session.md#m107) after login when Enable Greeting is on
-and the section is longer than 4 bytes **[S `FUN_0804bbf8`]**.
+Offsets in the layouts below are from the start of the section.
 
-An upstream tracker entry has 12 raw bytes at +0x08, 12 string lengths at +0x14,
-and the strings from +0x20 (name, comments, address, login, key, unused, groups
-0-5, as in the server's tracker entry). A group has two u16 values at +0x10 and
-+0x12, which nothing sets, so they are always 0; the name and description
-lengths at +0x18 and +0x19; and the strings from +0x1c. A group record is 0x1c
-bytes and the strings, padded to a multiple of 4 **[O frame 80]**; the parser
-steps over records by the four lengths at +0x18..+0x1b **[S]**. A group's flag
-(+0x0c in memory) is set when its name contains `tracker` in any case
-(`FUN_0804aa30` calls the substring search `FUN_0808274c` with its case flag
-set) **[S]**, so `Trackers` takes only trackers. The tracker keeps its groups
-sorted by name, byte for byte, so a new group `Lab` lands between General and
-Macintosh (frame 247) **[S; O]**. After parsing, the tracker adds the groups
-`General` and `Trackers` back if they are missing. The admin section has a flags
-byte at +0x07 (bit 0: a key follows), the 32-byte admin key at +0x08, the admin
-login length at +0x90, and the login from +0x94, padded to 4. The key is the
-`AccountKey` of the password, as for a server account: frame 82 carries the key
-of `lab-tracker-pw!2`, verified **[O]**.
-
-The sections have these layouts. Offsets are from the start of the section.
-The general section:
+### General settings
 
 Struct `GeneralSettings` (dynamic):
 
@@ -221,8 +184,18 @@ Struct `GeneralSettings` (dynamic):
 |  | description_len | str | description |  |
 |  | pad4 | u8[] | padding |  |
 
-The upstream trackers section is a run of entries. Whether each is padded to 4
-is not verified **[I]**:
+Flags bit 0 is Register with Trackers (tracker +0x1a4) and bit 1 Enable
+Greeting (tracker +0x22c) **[S `FUN_0804d63c`]**. The flags are a u32: Enable
+Greeting alone is `00 00 00 02` **[O frame 82]**. The tracker clears bit 0 when
+the name is empty, or no upstream tracker has an address, which includes an
+upstream section that isn't present. It keeps 63 bytes of the name and 255 of
+the description. A port of 0 or above 0xfffe means 10800. The limits and the
+server ID are read from the file only.
+
+### Upstream trackers
+
+The section is a run of entries. Whether each is padded to 4 is not verified
+**[I]**. The strings are as in the server's tracker entry.
 
 Struct `UpstreamTracker` (dynamic):
 
@@ -255,7 +228,11 @@ Struct `UpstreamTracker` (dynamic):
 |  | group_4_len | str | group_4 |  |
 |  | group_5_len | str | group_5 |  |
 
-The groups section is a run of group records:
+### Groups
+
+The section is a run of group records. A record is 0x1c bytes and the strings,
+padded to a multiple of 4 **[O frame 80]**; the parser steps over records by
+the four lengths at 0x18 to 0x1b **[S]**.
 
 Struct `SettingsGroup` (dynamic):
 
@@ -273,7 +250,14 @@ Struct `SettingsGroup` (dynamic):
 |  | description_len | str | description |  |
 |  | pad4 | u8[] | padding |  |
 
-The admin section:
+A group's flag (0x0c in memory) is set when its name contains `tracker` in any
+case (`FUN_0804aa30` calls the substring search `FUN_0808274c` with its case
+flag set) **[S]**, so `Trackers` takes only trackers. The tracker keeps its
+groups sorted by name, byte for byte, so a new group `Lab` lands between
+General and Macintosh (frame 247) **[S; O]**. After parsing, the tracker adds
+the groups `General` and `Trackers` back if they are missing.
+
+### Admin
 
 Struct `AdminSettings` (dynamic):
 
@@ -288,8 +272,14 @@ Struct `AdminSettings` (dynamic):
 | 0x94 | login_len | str | login |  |
 |  | pad4 | u8[] | padding |  |
 
-The greeting section is a [107 Server Greeting](session.md#m107) payload
-(`ServerGreeting`).
+The key is the `AccountKey` of the password, as for a server account: frame 82
+carries the key of `lab-tracker-pw!2`, verified **[O]**.
+
+### Greeting
+
+The section is a [107 Server Greeting](session.md#m107) payload: a u32 0 and
+then the text. The tracker sends it as 107 after login when Enable Greeting is
+on and the section is longer than 4 bytes **[S `FUN_0804bbf8`]**.
 
 The client's settings window shows Tracker Name, Description, Port Number,
 Admin Login, Change Admin Password (Password, Confirm), a Groups panel
@@ -312,6 +302,13 @@ there. [711 TrackerServ Settings Info](#m711) sets every present byte **[O frame
 is named `New TrackerServ` **[O frame 80]**. 711 doesn't send a group's flag:
 the `Trackers` group has 0 there **[O frame 80]**. It leaves the admin key out.
 
+The client reads it in `FUN_0806b1b0` with the same checks as the tracker's
+parser: a blob under 0x78 bytes, or without the magic and format 1, is an error,
+and a section is read only when its present byte is 1 and it fits. From the
+general section it takes the two flag bits, the name, the description, and the
+port, and from admin only the login. It ignores the limits and the server ID
+**[S `FUN_0806b1b0`]**.
+
 ## <a id="m712"></a>712 Set TrackerServ Settings
 
 Initiator: Client.
@@ -328,19 +325,30 @@ limits and server ID are taken from the file only. A port of 0 or above 0xfffe
 means 10800; a new port is applied at once (`FUN_0804ca60`).
 
 Client 1.620 beta 5 builds [712 Set TrackerServ Settings](#m712) in
-`FUN_0806b68c` and sets the present bytes for general, trackers, groups, and
-greeting, but not admin (0x71). It still writes the admin section, with flags
+`FUN_0806b68c`. It sets the present bytes for general, trackers, groups, and
+greeting, but not admin (0x71) **[S `FUN_0806b68c`]**. It lays the sections out
+as general, trackers, groups, admin, greeting, and takes the general flags from
+the Register with Trackers and Enable Greeting checkboxes **[S
+`FUN_0806b68c`]**. It writes the groups section only when the group list has
+been edited (bit 12 at list +0x24); otherwise the section has offset and size
+0, and the tracker keeps its groups **[S `FUN_0806b68c`; O frames 82, 240]**. It
+always writes the greeting section, as a u32 0 and the text, so an empty
+greeting is 4 bytes and the tracker clears its greeting **[S `FUN_0806b68c`,
+`FUN_0804d63c`]**.
+
+It also writes the admin section: 0x94 zero bytes and then the login, which
+the client allows up to 0xff bytes and the tracker keeps up to 0x3f, with flags
 bit 0 and the new key when the password field is filled. The tracker ignores
-that section, so the admin login and password can't be changed remotely with
-this client, and the new password is then refused (frame 104) **[S; O frames 82,
-104]**. The client fills the groups section only when the group list has been
-edited (bit 12 at list +0x24); otherwise the section has offset and size 0, and
-the tracker keeps its groups **[S; O frames 82, 240]**. The tracker saves
-`KDXTrackerServ.stg`, replies [713 Set TrackerServ Settings Done](#m713),
-restarts its upstream registration, and logs `TrackerServ settings changed
-remotely` (also in the tracker log) **[S `FUN_0804cc10`; O frame 83]**. The file
-is XOR'd with a second LCG (seed 0xacb8fa74, multiplier 0x41a609fd, increment
-0x1379); that is storage, not protocol.
+that section, because the present byte is 0, so the admin login and password
+can't be changed remotely with this client, and the new password is then
+refused (frame 104) **[S `FUN_0806b68c`, `FUN_0804d63c`; O frames 82, 104]**.
+
+The tracker saves `KDXTrackerServ.stg`, replies
+[713 Set TrackerServ Settings Done](#m713), restarts its upstream registration,
+and logs `TrackerServ settings changed remotely` (also in the tracker log)
+**[S `FUN_0804cc10`; O frame 83]**. The file is XOR'd with a second LCG (seed
+0xacb8fa74, multiplier 0x41a609fd, increment 0x1379); that is storage, not
+protocol.
 
 ## <a id="m713"></a>713 Set TrackerServ Settings Done
 
