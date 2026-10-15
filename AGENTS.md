@@ -55,8 +55,8 @@ Put details in those files. Keep this file to rules.
   crates.io renders.
 - Give each message its own heading in `docs/protocol/messages/` with an
   anchor such as `<a id="m100"></a>`, in ascending type order on its page, and
-  list it in `messages/README.md`. `ci/check-docs.py` checks the anchors and
-  the links.
+  list it in `docs/protocol/messages/README.md`. `ci/check-docs.py` checks the
+  anchors and the links.
 - Link a message by number and name to its heading, such as
   [412 Download File](docs/protocol/messages/files.md#m412), the first time it
   appears in each section of a page.
@@ -87,7 +87,7 @@ Put details in those files. Keep this file to rules.
 cargo fmt --all
 cargo clippy --workspace --all-targets   # no warnings
 cargo test --workspace
-python3 -I ci/check-docs.py              # links, anchors, message type anchors
+python3 -I ci/check-docs.py              # CI checks over the Markdown docs
 cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
 cargo run -p kdx-dissect -- captures/linux-tracker.pcapng \
   --password 'lab-only-pw!1' --password 'lab-tracker-pw!1'
@@ -129,14 +129,9 @@ approved.
 ### Issue tracker
 
 Issues live as local markdown under `.scratch/<feature>/`. See
-`docs/agents/issue-tracker.md`.
+[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ### Triage labels
 
 The five default roles, each label equal to its name. See
-`docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See
-`docs/agents/domain.md`.
+[docs/agents/triage-labels.md](docs/agents/triage-labels.md).

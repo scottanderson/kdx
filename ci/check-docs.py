@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks the Markdown docs: links, anchors, and the message type anchors."""
+"""Runs CI checks over the Markdown docs."""
 import collections
 import glob
 import os
@@ -9,6 +9,7 @@ import sys
 SKIP = ("vendor/", "target/", "re/out/", "re/projects/", ".git/")
 ID = re.compile(r'<a id="([^"]+)"></a>')
 errors = []
+edges = collections.defaultdict(set)
 
 
 def slug(heading):
@@ -55,10 +56,70 @@ def check_links():
                 if path.startswith("crates/") and not target:
                     continue
                 dest = os.path.normpath(os.path.join(os.path.dirname(path), target)) if target else path
+                if dest != path:
+                    edges[path].add(dest)
                 if not os.path.exists(dest):
                     errors.append(f"{path}:{n}: missing file {m.group(1)}")
                 elif frag and dest.endswith(".md") and frag not in anchors(dest):
                     errors.append(f"{path}:{n}: missing anchor {m.group(1)}")
+
+
+PATH = re.compile(r"`([\w./-]+)`")
+KNOWN = (".md", ".rs", ".py", ".toml", ".yml", ".sh", ".json", ".pcapng", ".pcap", ".lock")
+# Ignored, generated, or in the lab guest.
+EXEMPT = ("vendor/haxial/", "vendor/refs/", "target/", "re/out/", "re/projects/", ".git/", "lab/run/", "Bases/", "lab-files/")
+
+
+def check_orphans():
+    # Every page must be reachable from README.md by following links.
+    seen = {"README.md"}
+    todo = ["README.md"]
+    while todo:
+        for dest in edges[todo.pop()]:
+            if dest not in seen:
+                seen.add(dest)
+                todo.append(dest)
+    for path in markdown_files():
+        if path not in seen:
+            errors.append(f"{path}: not reachable from README.md")
+
+
+def check_paths():
+    # Backticked repo paths must exist.
+    tops = {d for d in os.listdir(".") if os.path.isdir(d) and not d.startswith(".")}
+    for path in tracked_markdown():
+        fence = False
+        for n, line in enumerate(open(path, encoding="utf-8"), 1):
+            if line.startswith("```"):
+                fence = not fence
+            if fence:
+                continue
+            for ref in PATH.findall(line):
+                if ref.startswith(("/", "./", "../")) or ref.startswith(EXEMPT):
+                    continue
+                if "/" not in ref:
+                    # A bare file name is in the repository root or re/scripts/.
+                    found = not ref.endswith(KNOWN) or os.path.exists(ref) or os.path.exists("re/scripts/" + ref)
+                elif ref.endswith(KNOWN) or ref.endswith("/") or ref.split("/")[0] in tops:
+                    found = exists_near(path, ref)
+                else:
+                    found = True
+                if not found:
+                    errors.append(f"{path}:{n}: no such path `{ref}`")
+
+
+def exists_near(page, ref):
+    # Resolve from the page's directory and each parent, then the repository root.
+    where = os.path.dirname(page)
+    while where:
+        if os.path.exists(os.path.join(where, ref)):
+            return True
+        where = os.path.dirname(where)
+    return os.path.exists(ref)
+
+
+def tracked_markdown():
+    return [p for p in markdown_files() if not p.startswith("captures/") or p == "captures/README.md"]
 
 
 def check_message_anchors():
@@ -90,6 +151,8 @@ def check_message_anchors():
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
     check_links()
+    check_orphans()
+    check_paths()
     check_message_anchors()
     for error in errors:
         print(error)

@@ -1,8 +1,8 @@
 # kdx-dissect, a capture decoder
 
-`kdx-dissect` reads a pcap or pcapng capture and prints every KDX connection in
-it: the handshake, then each message as a hex dump, with a `=` summary line for
-payloads that [kdx-proto](../libraries/kdx-proto.md) decodes.
+`kdx-dissect` is described in its
+[crate README](../../crates/kdx-dissect/README.md). It marks a payload that
+[kdx-proto](../../crates/kdx-proto/README.md) decodes with a `=` summary line.
 
 ```sh
 cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'

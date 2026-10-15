@@ -1,7 +1,7 @@
 # Contributing
 
-`AGENTS.md` has the full rules. They apply to people as much as to coding
-agents. This file covers the ones a newcomer needs first.
+[AGENTS.md](AGENTS.md) has the full rules. They apply to people as much as to
+coding agents. This file covers the ones a newcomer needs first.
 
 ## Setup
 
@@ -47,8 +47,9 @@ multi-byte fields as big-endian.
 
 - `kdx-proto` does no I/O and has no async.
 - Test wire code against the capture fixtures in
-  `crates/kdx-proto/tests/fixtures/`. Prove an encoder by re-encoding a decoded
-  capture byte for byte.
+  `crates/kdx-proto/tests/fixtures/` (see
+  [its README](crates/kdx-proto/tests/fixtures/README.md)). Prove an encoder by
+  re-encoding a decoded capture byte for byte.
 
 ## Commits
 

@@ -3,10 +3,10 @@
 Everything on this page is TCP. The tracker's registration datagrams are UDP, a
 separate protocol with its own cipher and checksum; see [udp.md](udp.md).
 
-Evidence tags as in `handshake.md`. Captures: `captures/first-connect.pcapng`
-(session data starts at C→S frame 22 and S→C frame 23). The whole session
-was decrypted and parsed with nothing left over (824 bytes C→S and 3120
-bytes S→C, handshakes included) **[O]**.
+Evidence tags as in [handshake.md](handshake.md). Captures:
+`captures/first-connect.pcapng` (session data starts at C→S frame 22 and S→C
+frame 23). The whole session was decrypted and parsed with nothing left over
+(824 bytes C→S and 3120 bytes S→C, handshakes included) **[O]**.
 
 ## Encryption
 

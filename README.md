@@ -10,22 +10,34 @@ for each claim.
 
 ## Tools
 
+| Tool | Crate | What it does | Docs |
+|---|---|---|---|
+| `kdx` | `kdx-cli` | Command-line client: browse, download, upload, chat, news, accounts | [docs/cli/kdx.md](docs/cli/kdx.md) |
+| `kdx-probe` | `kdx-cli` | Send raw requests to a server and dump the replies | [docs/cli/kdx-probe.md](docs/cli/kdx-probe.md) |
+| `kdx-tracker` | `kdx-tracker` | A tracker: servers register over UDP, clients browse over TCP | [docs/tracker/kdx-tracker.md](docs/tracker/kdx-tracker.md) |
+| `kdx-dissect` | `kdx-dissect` | Decode KDX connections in a pcap or pcapng capture | [docs/dissect/kdx-dissect.md](docs/dissect/kdx-dissect.md) |
+
+## Development tools
+
 | Tool | What it does | Docs |
 |---|---|---|
-| `kdx` | Command-line client: browse, download, upload, chat, news, accounts | [docs/cli/kdx.md](docs/cli/kdx.md) |
-| `kdx-probe` | Send raw requests to a server and dump the replies | [docs/cli/kdx-probe.md](docs/cli/kdx-probe.md) |
-| `kdx-tracker` | A tracker: servers register over UDP, clients browse over TCP | [docs/tracker/kdx-tracker.md](docs/tracker/kdx-tracker.md) |
-| `kdx-dissect` | Decode KDX connections in a pcap or pcapng capture | [docs/dissect/kdx-dissect.md](docs/dissect/kdx-dissect.md) |
+| `lab/kdx-lab` | Run the original Haxial programs in a sandbox and capture their traffic | [lab/README.md](lab/README.md) |
+| `vendor/fetch` | Download the Haxial archives listed in the manifest, verify and extract them | [vendor/MANIFEST.md](vendor/MANIFEST.md) |
+| `re/ghidra`, `re/ghidra-native` | Headless Ghidra for reading the original binaries | [re/README.md](re/README.md) |
 
-## Libraries
+## Crates
 
-| Crate | What it is | Docs |
+| Crate | What it is | README |
 |---|---|---|
-| `kdx-proto` | Wire format: handshake, encryption, framing, typed payloads. No I/O | [docs/libraries/kdx-proto.md](docs/libraries/kdx-proto.md) |
-| `kdx-codec` | `tokio_util::codec` framing for connections | [docs/libraries/kdx-codec.md](docs/libraries/kdx-codec.md) |
-| `kdx-client` | Async library for writing KDX clients | [docs/libraries/kdx-client.md](docs/libraries/kdx-client.md) |
-| `kdx-test-tables` | Gives the tests the challenge tables | [docs/setup/challenge-tables.md](docs/setup/challenge-tables.md) |
-| `kdx-server`, `kdx-daemon` | Empty placeholders for the server | [docs/libraries/placeholders.md](docs/libraries/placeholders.md) |
+| `kdx-proto` | Wire format: handshake, encryption, framing, typed payloads. No I/O | [crates/kdx-proto/README.md](crates/kdx-proto/README.md) |
+| `kdx-codec` | `tokio_util::codec` framing for connections | [crates/kdx-codec/README.md](crates/kdx-codec/README.md) |
+| `kdx-client` | Async library for writing KDX clients | [crates/kdx-client/README.md](crates/kdx-client/README.md) |
+| `kdx-cli` | The `kdx` and `kdx-probe` programs | [crates/kdx-cli/README.md](crates/kdx-cli/README.md) |
+| `kdx-tracker` | The tracker program and library | [crates/kdx-tracker/README.md](crates/kdx-tracker/README.md) |
+| `kdx-dissect` | The capture dissector | [crates/kdx-dissect/README.md](crates/kdx-dissect/README.md) |
+| `kdx-test-tables` | Gives the tests the challenge tables | [crates/kdx-test-tables/README.md](crates/kdx-test-tables/README.md) |
+| `kdx-server` | Empty placeholder for the server library | [crates/kdx-server/README.md](crates/kdx-server/README.md) |
+| `kdx-daemon` | Empty placeholder for the server program | [crates/kdx-daemon/README.md](crates/kdx-daemon/README.md) |
 
 ## Documentation
 
@@ -40,6 +52,7 @@ for each claim.
   legal rules.
 - [Lab](lab/README.md): run the original programs in a sandbox and capture their
   traffic.
+- [Captures](captures/README.md): an index of the capture logs.
 - [Static analysis](re/README.md): the headless Ghidra tooling and address
   landmarks.
 - [Vendor manifest](vendor/MANIFEST.md): where the Haxial archives come from.

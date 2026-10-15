@@ -1,8 +1,7 @@
 # kdx, the command-line client
 
-`kdx` is a KDX client for the terminal, built on
-[kdx-client](../libraries/kdx-client.md). It works against Server 1.620 and
-Tracker 1.110.
+`kdx` is described in the [kdx-cli crate README](../../crates/kdx-cli/README.md)
+and built on [kdx-client](../../crates/kdx-client/README.md).
 
 ```sh
 cargo run -p kdx-cli --bin kdx -- table fetch    # once, see below

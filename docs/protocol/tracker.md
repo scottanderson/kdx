@@ -5,8 +5,8 @@ browse over TCP. `captures/linux-tracker.pcapng` has Server 1.620
 registering with Tracker 1.110 and Client 1.620 beta 5 browsing and
 administering it, all Linux; **[O]** tags below cite its frames.
 
-Evidence tags as in `handshake.md`. Static sources, by Ghidra project
-(`re/README.md`):
+Evidence tags as in [handshake.md](handshake.md). Static sources, by Ghidra
+project (`re/README.md`):
 
 - `kdxtracker`: `KDXTrackerServ.lexe`, Tracker 1.110 Linux.
 - `kdx`: `KDXServer.lexe`, Server 1.620 Linux.
@@ -34,12 +34,12 @@ from the TCP connections, described in [udp.md](udp.md).
 
 ### Connection
 
-The handshake and framing are the same as for a server (`handshake.md`,
-`framing.md`), with the same challenge table **[S tracker `FUN_0804bd9c`]**.
-The tracker sends sub-version 0x30. Like the server, it accepts only
-sub-protocol `%KDX` with sub-version exactly 0x10 (0x40071 for another
-sub-protocol, 0x40072 / 0x40073 for a lower / higher sub-version)
-**[S `FUN_0804bb4c`]**.
+The handshake and framing are the same as for a server
+([handshake.md](handshake.md), [framing.md](framing.md)), with the same
+challenge table **[S tracker `FUN_0804bd9c`]**. The tracker sends sub-version
+0x30. Like the server, it accepts only sub-protocol `%KDX` with sub-version
+exactly 0x10 (0x40071 for another sub-protocol, 0x40072 / 0x40073 for a lower /
+higher sub-version) **[S `FUN_0804bb4c`]**.
 
 Login **[S `FUN_0804bb78`]**:
 
@@ -52,7 +52,7 @@ Login **[S `FUN_0804bb78`]**:
   [720 Get TrackerServ Statistics](messages/tracker.md#m720) require (else
   0x10014; **[O]** frames 61 and 164 for a guest's 710 and 720). A wrong
   password fails the proof with status 1 (frame 104) **[O]**, in the error form
-  of `handshake.md`: `auth` is zero but for its key word.
+  of [handshake.md](handshake.md): `auth` is zero but for its key word.
 
 After login the tracker sends [107 Server Greeting](messages/session.md#m107),
 if it has one set **[S `FUN_0804bbf8`; O frame 117, before the client's 700]**.

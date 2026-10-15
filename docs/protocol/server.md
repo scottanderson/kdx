@@ -10,7 +10,7 @@ over it, and so do file transfers, on extra connections.
    sub-version 0x10. The server answers with sub-version 0x20 and a nonce, and
    both sides prove knowledge of the account key and the challenge table
    ([handshake.md](handshake.md)).
-   **[O `linux-first-connect.pcapng` frames 8, 10]**
+   **[O `captures/linux-first-connect.pcapng` frames 8, 10]**
 2. The login name picks the account. An empty name is the `guest` account. A
    name of `0x00` and a 4-byte user ID attaches a transfer connection to a
    logged-in user ([transfers.md](transfers.md)).
@@ -19,8 +19,8 @@ over it, and so do file transfers, on extra connections.
    account key ([framing.md](framing.md)). **[S, O]**
 4. The client sends [100 Set Identity](messages/session.md#m100), and the server
    answers with the user list and server info. The full exchange is in
-   [sequences.md](sequences.md#login). **[O `linux-first-connect.pcapng` frames
-   23, 24]**
+   [sequences.md](sequences.md#login).
+   **[O `captures/linux-first-connect.pcapng` frames 23, 24]**
 
 ## Requests and replies
 
