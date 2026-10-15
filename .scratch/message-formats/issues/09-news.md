@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 603 (600/604), 606, 608, 610, 611
 
-Docs: `KDXProtocol.md`, News. Captures: `linux-accounts-news`,
+Docs: `messages/news.md`. Captures: `linux-accounts-news`,
 `linux-first-connect`, `kdx-news`, `linux-text-encoding`.
 
 ## Gaps

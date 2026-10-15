@@ -234,7 +234,7 @@ halves of the code, and the module tag is three ASCII bytes passed as an
 integer (`0x54524e` is `TRN`, the transport module). So
 `ID 4/113 @ TRN941` means code 0x40071 at TRN line 941 (unknown protocol).
 
-The full code table is in [KDXProtocol.md](errors.md).
+The full code table is in [Error codes](messages/status.md#error-codes).
 These are the codes the handshake raises:
 
 | Code | Meaning (from log strings and call sites) |
@@ -249,8 +249,8 @@ These are the codes the handshake raises:
 ## Open questions
 
 - Resolved: the `0x00`+ID login opens a transfer connection. See
-  [KDXProtocol.md](messages/transfers.md).
-- Everything after the handshake is covered in `session.md`.
+  [transfers.md](transfers.md).
+- Everything after the handshake is covered in `framing.md`.
 - Resolved: the version-acceptance callback (`+0x88`) is `0x080526e0` in the
   server. See the version field above.
 - Resolved: guest logins use the empty-password constant (see

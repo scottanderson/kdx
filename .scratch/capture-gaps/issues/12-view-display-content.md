@@ -7,7 +7,7 @@ the server's screen
 
 `captures/win-view-display` (issue 06) only exercised 903 run codes: Wine
 gave Server 1.600 a black screen that never changed. The rest of View display
-in `docs/protocol/KDXProtocol.md` is **[S]**:
+in `docs/protocol/messages/view-display.md` is **[S]**:
 
 - the two-colour codes (inline mask, 4-12 pixels) and the bitmap code (13 or
   more pixels);

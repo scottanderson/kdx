@@ -14,9 +14,9 @@ The handshake needs Haxial's challenge tables, which are not distributed with
 this crate; see [challenge
 tables](https://github.com/scottanderson/kdx/blob/main/docs/setup/challenge-tables.md).
 
-See the [protocol
-reference](https://github.com/scottanderson/kdx/blob/main/docs/protocol/KDXProtocol.md)
-for the protocol, and [docs.rs](https://docs.rs/kdx-codec) for the API.
+See the [handshake](https://github.com/scottanderson/kdx/blob/main/docs/protocol/handshake.md)
+and [framing](https://github.com/scottanderson/kdx/blob/main/docs/protocol/framing.md)
+pages for the protocol, and [docs.rs](https://docs.rs/kdx-codec) for the API.
 
 ## License
 

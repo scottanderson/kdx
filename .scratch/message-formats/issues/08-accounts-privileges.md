@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 503/504/506, 507/510/511, 513, 514, the privilege bits
 
-Docs: `KDXProtocol.md`, Accounts and Access Privileges.
+Docs: `messages/accounts.md` and `privileges.md`.
 
 Several unnamed bytes may be colours: 506 offset 0x29 is `ff 00 00` for
 Administrator and `00 00 ff` for User, and privilege bit 3 is Color

@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 104, 105, 107, 108/109, 110/111, 112, 113/114, 118
 
-Docs: `KDXProtocol.md`, Session. 100–103 and the icon are in issue 02, 117
+Docs: `messages/session.md`. 100-103 and the icon are in issue 02, 117
 in issue 14.
 
 ## Gaps

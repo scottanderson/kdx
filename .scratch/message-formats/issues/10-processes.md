@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 803 Process List, 804 Exit/Terminate Process
 
-Docs: `KDXProtocol.md`, Processes. The Linux server fills 803 from `/bin/ps
+Docs: `messages/processes.md`. The Linux server fills 803 from `/bin/ps
 auxwww` (`FUN_0805b454`), so each field should map to a `ps` column.
 
 ## Gaps

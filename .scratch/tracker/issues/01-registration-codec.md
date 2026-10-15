@@ -3,7 +3,7 @@
 Status: done
 Blocked by: capture-gaps 05
 
-Add the UDP registration datagram to `kdx-proto` (`docs/protocol/tracker.md`,
+Add the UDP registration datagram to `kdx-proto` (`docs/protocol/udp.md`,
 "Registration (UDP)"): the LCG XOR, the CRC-32 (poly 0x04c11db7, MSB first,
 init 0xdeadbeef, checksum field set to 0xcc1ed3ca while hashing), and the
 64-byte header with its strings.

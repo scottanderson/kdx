@@ -4,7 +4,7 @@ A KDX server daemon, built on [kdx-server](https://crates.io/crates/kdx-server).
 It is an empty placeholder: it prints that it is not implemented and exits.
 
 The work is planned in the
-[plan](https://github.com/scottanderson/kdx/blob/main/docs/protocol/PLAN.md).
+[plan](https://github.com/scottanderson/kdx/blob/main/docs/PLAN.md).
 
 ## License
 

@@ -38,9 +38,9 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
   `The network protocol is unknown. (ID 4/113 @ TRN941)`.
 - An unregistered client reports itself with 118, and the server then sends
   it a licence reminder every 15 minutes or so during its first two hours
-  (`KDXProtocol.md`, 118). No other limit has been found.
+  (`protocol/messages/session.md`, 118). No other limit has been found.
 
-### Phase 1: Transport and crypto (done; see `handshake.md`, `session.md`)
+### Phase 1: Transport and crypto (done; see `protocol/handshake.md`, `protocol/framing.md`)
 1. Confirm the framing and XOR stream against real captures.
    Decide whether the 4-byte key is random per packet, and whether the key
    stream continues across the header and payload.
@@ -65,7 +65,7 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
   from `send`/`recv`/`sendto` to the framing and then to the message dispatch.
 - Recover the dispatch table that maps message type to handler. Done: the
   dispatcher is `FUN_0804fdac`, and the name table at `FUN_08049d14` names
-  every type. Both are listed in `KDXProtocol.md`.
+  every type. Both are described in `protocol/README.md`.
 - Use the length-prefixed UI and error strings to name handlers ("Get Tracker
   Server List", "protocol breach", "limit in the net protocol was exceeded").
 - Keep the analysis scripts and a table of function addresses
@@ -102,20 +102,24 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | 2. Users | user record, 101 to 107, 110, 111, 118, 152, 153; the icon bitmap format not yet | yes | user list |
 | 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 with one entry | yes | join, say, listen, msg |
 | 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |
-| 5. Files | yes; 420, 422, 423, 450–453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
+| 5. Files | yes; 420, 422, 423, 450-453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
 | 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 174, 175, and 804 captured (`linux-shutdown`); a successful 175 in `linux-upgrade` | yes | account list, show, add, set, rm; passwd |
-| 7. Tracker | yes; registration, 700–703, 710–713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | groups, servers, stats |
-| 8. Voice, view display | yes; view display 900–905 captured from a Windows server (`win-view-display`); voice statically only (`dcc.md`) | no | no |
+| 7. Tracker | yes; registration, 700-703, 710-713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | groups, servers, stats |
+| 8. Voice, view display | yes; view display 900-905 captured from a Windows server (`win-view-display`); voice statically only (`protocol/dcc.md`) | no | no |
 
 ### Phase 4: Spec format
-- `KDXProtocol.md` is the entry point: the shape of a connection, the header,
-  the message catalog, and a map of the other pages. Each area of messages has
-  its own page under `messages/`, and `encodings.md`, `errors.md`,
-  `privileges.md`, and `sequences.md` hold the shared reference. Each kind of
-  connection has a page: `server.md`, `tracker.md`, `dcc.md`, `gconsole.md`.
-- `handshake.md` and `session.md` hold the long write-ups of connection setup
-  and framing. Add a page when an area outgrows its current one, and link it
-  from the map in `KDXProtocol.md`.
+- `protocol/README.md` is the entry point: the shape of a connection, the
+  header, and a map of the other pages. `protocol/messages/README.md` indexes
+  every message type, and each range of messages has its own page under
+  `protocol/messages/`. `protocol/encodings.md`,
+  `protocol/privileges.md`, and `protocol/sequences.md` hold the shared
+  reference. Each kind of connection has a page: `protocol/server.md`,
+  `protocol/tracker.md`, `protocol/dcc.md`, `protocol/gconsole.md`, and
+  `protocol/transfers.md` for file transfers.
+- `protocol/handshake.md` and `protocol/framing.md` hold the long write-ups of
+  connection setup and TCP framing, and `protocol/udp.md` the tracker's
+  datagram. Add a page when an area outgrows its current one, and link it from
+  the map in `protocol/README.md`.
 - Each field or message gets an evidence tag, written in bold. **Observed**
   means a capture file and frame number. **Static** means a binary, build,
   and address. **Inferred** means a guess not yet verified. The goal is to

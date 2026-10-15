@@ -8,4 +8,4 @@ An async library on tokio for writing KDX clients.
 - `Tracker` does the same for a tracker.
 
 The [kdx](../cli/kdx.md) command-line client is built on it. The messages it
-sends are in [the protocol reference](../protocol/KDXProtocol.md).
+sends are in [the protocol reference](../protocol/README.md).

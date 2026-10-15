@@ -37,4 +37,4 @@ capture and lists the types with no codec in `NO_CODEC`.
 
 The captures themselves, and how they are made, are in
 [lab/README.md](../../lab/README.md). The message layouts are in [the protocol
-reference](../protocol/KDXProtocol.md).
+reference](../protocol/README.md).

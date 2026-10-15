@@ -54,7 +54,7 @@ drove the client with `xdotool`; the GConsole window's content starts at
 - 4000 (10): width 0x200, height 0x180, colour 0x00336699. The window
   opened at that size, filled with that colour.
 - 4001 (14): 21 records, 456 bytes. All drew as the table in
-  `docs/protocol/gconsole.md` describes.
+  `docs/protocol/messages/gconsole.md` describes.
 - 4201 is the mouse and 4200 the keyboard, the reverse of the guess from
   the event kinds. Each is 16 bytes; mouse moves send nothing.
 - 4201 x and y are in window content coordinates (20: (100, 50)). Right

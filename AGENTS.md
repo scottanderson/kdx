@@ -4,7 +4,7 @@ A Rust client, and later a server and a tracker, for the Haxial KDX protocol,
 compatible with the original KDX Server 1.620, Client 1.600, and Tracker 1.110.
 
 - `README.md`: the repository layout
-- `docs/protocol/PLAN.md`: phases, licensing, and open work
+- `docs/PLAN.md`: phases, licensing, and open work
 - `docs/protocol/*.md`: the protocol spec
 - `lab/README.md`: how to run the original programs and capture traffic
 - `re/README.md`: the Ghidra tooling and a table of server address landmarks
@@ -51,6 +51,14 @@ Put details in those files. Keep this file to rules.
   landmarks to the table in `re/README.md`.
 - Mark a fact as verified only after a test or a capture confirms it.
 - Wrap Markdown prose at 80 columns. Leave tables and code blocks unwrapped.
+- Use relative links in Markdown, except in `crates/*/README.md`, which
+  crates.io renders.
+- Give each message its own heading in `docs/protocol/messages/` with an
+  anchor such as `<a id="m100"></a>`, in ascending type order on its page, and
+  list it in `messages/README.md`.
+- Link a message by number and name to its heading, such as
+  [412 Download File](docs/protocol/messages/files.md#m412), the first time it
+  appears in each section of a page.
 
 ## Code
 

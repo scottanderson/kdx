@@ -58,5 +58,5 @@ update in the same commit as the work it describes.
 ## Backlog
 
 Open work is tracked as markdown under `.scratch/`; see
-`docs/agents/issue-tracker.md`. `docs/protocol/PLAN.md` lists the protocol
+`docs/agents/issue-tracker.md`. `docs/PLAN.md` lists the protocol
 areas still to document.

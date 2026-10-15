@@ -1,6 +1,6 @@
 //! The servers that registered over UDP, and how groups list them.
 //!
-//! The rules are Tracker 1.110's (`docs/protocol/tracker.md`, "Tracker side").
+//! The rules are Tracker 1.110's (`docs/protocol/udp.md`, "Tracker side").
 
 use std::net::{Ipv4Addr, SocketAddrV4};
 use std::time::{Duration, Instant};

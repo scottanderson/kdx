@@ -4,7 +4,7 @@ Status: done
 Blocked by: capture-gaps 05
 
 Add payload codecs to `kdx-proto::msg` for 701, 702, 703, 711, and 721, and
-the empty requests 700, 710, 720, and 713 (`docs/protocol/tracker.md`).
+the empty requests 700, 710, 720, and 713 (`docs/protocol/messages/tracker.md`).
 
 - 703 records carry an `addr_len`; accept only 6 (IPv4 and port) and keep
   `extra_len` bytes as opaque.

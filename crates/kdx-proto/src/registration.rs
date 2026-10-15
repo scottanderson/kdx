@@ -1,7 +1,6 @@
 //! The UDP datagram a server sends to register with a tracker.
 //!
-//! The layout, cipher, and checksum are in `docs/protocol/tracker.md`,
-//! "Registration (UDP)".
+//! The layout, cipher, and checksum are in `docs/protocol/udp.md`.
 
 use crate::msg::{len_u8, need, pad4, u16_at, u32_at, DecodeError, EncodeError};
 

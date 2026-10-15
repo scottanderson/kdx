@@ -2,7 +2,7 @@
 //!
 //! Each payload type decodes from and encodes to the bytes that follow a
 //! session [`Header`](crate::session::Header). Layouts are documented in
-//! `docs/protocol/KDXProtocol.md`.
+//! `docs/protocol/messages/README.md`.
 
 pub mod admin;
 pub mod chat;

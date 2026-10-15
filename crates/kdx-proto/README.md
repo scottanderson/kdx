@@ -18,8 +18,8 @@ The handshake needs Haxial's challenge tables, which are not distributed with
 this crate; see [challenge
 tables](https://github.com/scottanderson/kdx/blob/main/docs/setup/challenge-tables.md).
 
-For the layout of each message, see the [protocol
-reference](https://github.com/scottanderson/kdx/blob/main/docs/protocol/KDXProtocol.md).
+For the layout of each message, see the [message
+index](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/README.md).
 Types and functions are documented on [docs.rs](https://docs.rs/kdx-proto).
 
 ## License
