@@ -10,7 +10,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`.
   `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a
   single combined tickets file
 - Triage state is recorded as a `Status:` line near the top of each issue file
-  (see `triage-labels.md` for the role strings)
+  (see [triage-labels.md](triage-labels.md) for the role strings)
 - Comments and conversation history append to the bottom of the file under a
   `## Comments` heading
 
@@ -40,4 +40,4 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
 - **Claim**: set `Status: claimed` and save before any work.
 - **Resolve**: append the answer under an `## Answer` heading, set
   `Status: resolved`, then append a context pointer (gist + link) to the map's
-  Decisions-so-far in `map.md`.
+  Decisions-so-far in `.scratch/<effort>/map.md`.

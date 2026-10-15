@@ -100,6 +100,9 @@ re/ghidra-native /work/projects kdx -import /work/bin/KDXServer1620-Lnx/extracte
 Projects made by 12.1.4 may not open in 12.1.2, so import the binaries again.
 The addresses are the same.
 
+Message types the protocol reference does not cover yet are listed in
+[message-types.md](message-types.md).
+
 ## Server 1.620 landmarks
 
 | Address | What |

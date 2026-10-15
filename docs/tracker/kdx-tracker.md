@@ -1,8 +1,8 @@
 # kdx-tracker, a tracker
 
-`kdx-tracker` is a drop-in for Tracker 1.110. Servers register with it over UDP
-and clients browse it over TCP, both on one port (10800 by default). It does not
-register with other trackers.
+`kdx-tracker` is described in its
+[crate README](../../crates/kdx-tracker/README.md). It does not register with
+other trackers.
 
 ```sh
 cargo run -p kdx-tracker -- --admin-login admin --admin-password secret

@@ -158,7 +158,9 @@ fn problems(capture: &str, output: &str) -> Vec<String> {
 #[test]
 fn every_capture_has_notes() {
     let captures = stems(&root().join("captures"), "pcapng");
-    let notes = stems(&root().join("captures"), "md");
+    let mut notes = stems(&root().join("captures"), "md");
+    // The index page is not a capture's notes.
+    notes.remove("README");
     assert!(!captures.is_empty());
     assert_eq!(captures, notes);
 }

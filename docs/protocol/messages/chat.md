@@ -73,9 +73,9 @@ deleted. `ChatId` in `kdx_proto::msg::chat` re-encodes 204 byte for byte
 Initiator: Server. Sent to the other members after
 [202 Join Chat](#m202).
 
-The payload is {u32 chat ID, u32 user ID, u32 0}
-(`captures/kdx-cli.pcapng` frame 417; `linux-chat-rooms.pcapng` frames 117,
-177; `linux-chat-admin.pcapng` frame 68) **[O]**.
+The payload is {u32 chat ID, u32 user ID, u32 0} (`captures/kdx-cli.pcapng`
+frame 417; `captures/linux-chat-rooms.pcapng` frames 117, 177;
+`captures/linux-chat-admin.pcapng` frame 68) **[O]**.
 `kdx_proto::msg::chat::ChatUserChange` re-encodes it byte for byte.
 
 ## <a id="m206"></a>206 Chat User Departed
