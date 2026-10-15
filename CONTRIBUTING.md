@@ -25,6 +25,7 @@ same checks, with `--check` for rustfmt and `-D warnings` for clippy.
 cargo fmt --all
 cargo clippy --workspace --all-targets
 cargo test --workspace
+python3 -I ci/check-docs.py
 cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
 ```
 
