@@ -47,6 +47,18 @@ replies [413 Download File (R)](messages/files.md#m413), sends one
 [414 Download File (D)](messages/files.md#m414) per fork, and writes a
 [188 Finished File Download](messages/administration.md#m188) history record.
 
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 412 Download File
+    S->>C: 413 Download File (R)
+    S-->>C: 414 Download File (D), data fork
+    S-->>C: 414 Download File (D), resource fork
+    Note over S: 188 history record
+```
+
 ## Upload
 
 An upload is [415 Upload File](messages/files.md#m415): the server replies
@@ -54,6 +66,19 @@ An upload is [415 Upload File](messages/files.md#m415): the server replies
 [417 Upload File (D)](messages/files.md#m417) per fork, and the server writes a
 [189 Finished File Upload](messages/administration.md#m189) history record and
 sends [418 Upload File (C)](messages/files.md#m418).
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 415 Upload File
+    S->>C: 416 Upload File (R)
+    C-->>S: 417 Upload File (D), data fork
+    C-->>S: 417 Upload File (D), resource fork
+    Note over S: 189 history record
+    S-->>C: 418 Upload File (C)
+```
 
 ## Encryption
 

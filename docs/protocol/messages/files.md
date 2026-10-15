@@ -36,6 +36,17 @@ When the folder access check (`FUN_08057e5c`) fails or the folder can't be
 read, the server also replies with an empty 401 File List, and logs a
 history record of kind [400 Get File List](#m400).
 
+A folder listing is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 400 Get File List
+    S->>C: 401 File List
+```
+
 ### <a id="m401"></a>401 File List
 Initiator: Server. Reply to [400 Get File List](#m400).
 
@@ -603,6 +614,17 @@ Without a catalog the reply is
 [1 Status](status.md#m1) 0x640001, as in `captures/linux-files.pcapng` **[O]**.
 Otherwise the server writes history record 0x1c4 and replies with
 [453 File Search (R)](#m453).
+
+A search is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 452 File Search
+    S->>C: 453 File Search (R)
+```
 
 ### <a id="m453"></a>453 File Search (R)
 Initiator: Server. Reply to [452 File Search](#m452).

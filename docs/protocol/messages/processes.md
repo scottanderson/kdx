@@ -30,6 +30,17 @@ No payload.
 The server runs `/bin/ps auxwww` (its own child shows
 up in the list) and replies with [803 Process List](#m803).
 
+The process list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 802 Get Process List
+    S->>C: 803 Process List
+```
+
 ## <a id="m803"></a>803 Process List
 Initiator: Server. Reply to [802 Get Process List](#m802).
 

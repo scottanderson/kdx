@@ -65,6 +65,21 @@ once, but counts it in 720's connection counter. A connection idle for more than
 1200 (0x4b0, probably seconds **[I]**) is closed **[S `FUN_0804bd9c`,
 `FUN_0804bbf8`]**. The receive cap is 0x10000 bytes **[S `FUN_0804bd9c`]**.
 
+A browse after the login, as the client's tracker window runs it:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    Note over C,T: handshake and login
+    T-->>C: 107 Server Greeting, if set
+    C->>T: 700 Get Tracker Group List
+    T->>C: 701 Tracker Group List
+    C->>T: 702 Get Tracker Server List
+    T->>C: 703 Tracker Server List
+```
+
 The tracker's dispatcher `FUN_0804b378` handles
 [115 Get My Address](messages/session.md#m115),
 [700 Get Tracker Group List](messages/tracker.md#m700),

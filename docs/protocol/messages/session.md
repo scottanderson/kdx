@@ -154,6 +154,17 @@ No payload.
 
 Ping does not reset the idle timer.
 
+[108 Ping](#m108) gets [109 Pong](#m109):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 108 Ping
+    S->>C: 109 Pong
+```
+
 ## <a id="m109"></a>109 Pong
 Initiator: Server. **[S]**
 
@@ -172,6 +183,19 @@ Struct `MiniUserIcon` (4 bytes):
 | 0x01 | 3 | u8[3] | ignored | 0 as sent. the payload must be at least 4 bytes |
 
 There is no reply.
+
+The change reaches everyone, the sender included:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 110 Set Mini User Icon
+    S-->>C: 111 Mini User Icon Changed
+    S-->>O: 111 Mini User Icon Changed
+```
 
 ## <a id="m111"></a>111 Mini User Icon Changed
 Initiator: Server.
@@ -205,6 +229,17 @@ Initiator: Client. **[S `FUN_080619d8`; O]**
 
 No payload.
 
+[113 Get Extra Server Info](#m113) gets [114 Extra Server Info](#m114):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 113 Get Extra Server Info
+    S->>C: 114 Extra Server Info
+```
+
 ## <a id="m114"></a>114 Extra Server Info
 Initiator: Server. **[S `FUN_080619d8`; O]**
 
@@ -229,6 +264,17 @@ Initiator: Client. **[S; O]**
 Handled inline in the dispatcher **[S]**.
 
 No payload.
+
+[115 Get My Address](#m115) gets [116 Your Address](#m116):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 115 Get My Address
+    S->>C: 116 Your Address
+```
 
 ## <a id="m116"></a>116 Your Address
 Initiator: Server. **[S; O]**

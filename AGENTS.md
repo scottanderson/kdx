@@ -53,6 +53,12 @@ Put details in those files. Keep this file to rules.
 - Wrap Markdown prose at 80 columns. Leave tables and code blocks unwrapped.
 - Use relative links in Markdown, except in `crates/*/README.md`, which
   use absolute GitHub URLs so the links work on crates.io and GitHub.
+- Draw a Mermaid diagram only for an exchange of messages, as a
+  `sequenceDiagram` with `mirrorActors` off. The text beside it must say
+  everything the diagram shows. Name actors Client, Server, Tracker; label
+  arrows with the message, as in `412 Download File`. Use a solid arrow for a
+  request or its reply and a dashed arrow for a notification or file data.
+  Keep labels short enough to read at phone width, and add no styling.
 - Describe each message payload with struct tables in the one shape set out
   under Structs in the
   [protocol conventions](docs/protocol/README.md#conventions).

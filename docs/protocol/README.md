@@ -204,6 +204,9 @@ A message section is a heading `## <a id="mNNN"></a>NNN Name` with exactly
 one message anchor. Headings with several anchors and other headings are
 exempt from the payload check.
 
+**Diagrams.** Sequence diagrams are for an exchange of messages. A solid arrow
+is a request or its reply, and a dashed arrow is a notification or file data.
+
 ## Protocol overview
 
 KDX is a client/server system for chat, private messages, file sharing,
@@ -256,6 +259,18 @@ length gives the real size. The full `Header` struct is in
 the [Length limits table](framing.md#length-limits).
 
 ### Requests, replies, and notifications
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: request: type N, txid 7
+    S->>C: reply: type N+1 or 1 Status, txid 7
+    Note over C,S: the reply repeats the request's txid<br/>and has the reply bit set
+    S-->>C: notification: type M, txid 31
+    Note over C,S: a notification has its own txid<br/>and the reply bit clear
+```
 
 - A **request** carries the sender's next txid, with the reply bit (bit 0 of
   the flags byte) clear.

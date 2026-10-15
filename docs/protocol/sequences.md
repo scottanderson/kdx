@@ -6,6 +6,20 @@ Complete exchanges, in order.
 
 ## Login
 
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    Note over C,S: hello and proof
+    C->>S: 100 Set Identity
+    S-->>C: 101 User List
+    S-->>C: 105 Server Info
+    S-->>C: 107 Server Greeting, if shown
+    S-->>C: 106 Server Icon, if set
+    S-->>C: 213 Must Join Chat, if set
+```
+
 1. Client and server exchange hellos and proofs
    ([handshake.md](handshake.md)).
 2. The client sends **[100 Set Identity](messages/session.md#m100)**.
@@ -75,6 +89,21 @@ resets the count and starts a new window. Otherwise:
   reason "Auto-banned this bastard for flooding.", and closes the
   connection with 0x640004 (`FUN_0804a8c0`).
 
+The observed case, with 115 as the repeated request:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 115 Get My Address
+    S-->>C: 155 Rcv Broadcast Message (WARNING)
+    S->>C: 116 Your Address
+    S-->>C: 155 Rcv Broadcast Message (Final warning)
+    S->>C: 116 Your Address
+    Note over C,S: the server closes the connection
+```
+
 With Very Strict (0x14), a client that logged in and then sent
 [115 Get My Address](messages/session.md#m115) every 300 ms got the WARNING
 before the reply to its 19th request, the Final warning before the reply to its
@@ -96,9 +125,33 @@ connection's requests in order, so an error for the post arrives before
 [116 Your Address](messages/session.md#m116) **[O `captures/kdx-news.pcapng`
 frames 356 to 361]**.
 
+A failed post, with the client's confirmation request after it:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 611 Post News Message
+    C->>S: 115 Get My Address
+    S->>C: 1 Status (only if the post fails)
+    S->>C: 116 Your Address
+```
+
 ## Logout
 
 When a connection closes, the other users receive
 **[104 User Departed](messages/session.md#m104)**, and the server writes a
 [185 Disconnected](messages/administration.md#m185) history record.
 
+A closing connection, and the notice to the others:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    Note over C,S: the connection closes
+    S-->>O: 104 User Departed
+```

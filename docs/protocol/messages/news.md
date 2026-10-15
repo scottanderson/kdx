@@ -53,6 +53,19 @@ When a group's stored messages reach 1.5 times the archive size, the server
 moves the oldest ones into a file under `News Archives` named after the
 group **[S `FUN_0805ed88`]**.
 
+A group is created or changed, and the client then reloads the list:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 600 Create Newsgroup
+    S->>C: 1 Status (success 0x258)
+    C->>S: 605 Get Newsgroup List
+    S->>C: 606 Newsgroup List
+```
+
 ## <a id="m601"></a>601 Delete Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
 `FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81 to 84]**
@@ -65,6 +78,17 @@ Struct `DeleteNewsgroup` (4 bytes):
 
  An unknown group gets 0x1000c. Success is [1 Status](status.md#m1)
 0x259 (frame 84). [602 Get Newsgroup](#m602) also writes history record 0x25a.
+
+On success [601 Delete Newsgroup](#m601) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 601 Delete Newsgroup
+    S->>C: 1 Status (success 0x259)
+```
 
 ## <a id="m602"></a>602 Get Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). Observed size: 76
@@ -79,6 +103,17 @@ Struct `GetNewsgroup` (4 bytes):
 
 An unknown group gets
 [1 Status](status.md#m1) 0x1000c.
+
+[602 Get Newsgroup](#m602) gets [603 Newsgroup Info](#m603):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 602 Get Newsgroup
+    S->>C: 603 Newsgroup Info
+```
 
 ## <a id="m603"></a>603 Newsgroup Info
 Initiator: Server. Reply to [602 Get Newsgroup](#m602).
@@ -120,6 +155,17 @@ No payload.
 
 The request is empty **[O `captures/linux-accounts-news.pcapng` frame 55]**.
 
+The newsgroup list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 605 Get Newsgroup List
+    S->>C: 606 Newsgroup List
+```
+
 ## <a id="m606"></a>606 Newsgroup List
 Initiator: Server. Reply to [605 Get Newsgroup List](#m605).
 
@@ -155,6 +201,17 @@ Struct `GetNewsMessages` (4 bytes):
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | group_id | `NewsgroupId` encodes it (`captures/kdx-news.pcapng` frame 76, `captures/linux-accounts-news.pcapng` frames 65, 78, and 107) **[O]** |
+
+A group's messages are one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 607 Get News Messages
+    S->>C: 608 News Messages
+```
 
 ## <a id="m608"></a>608 News Messages
 Initiator: Server. Reply to [607 Get News Messages](#m607).
@@ -214,6 +271,17 @@ Struct `GetNewsMessage` (8 bytes):
 [609 Get News Message](#m609) does not reset the
 idle timer.
 
+One message is read with 609 Get News Message and [610 News Message](#m610):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 609 Get News Message
+    S->>C: 610 News Message
+```
+
 ## <a id="m610"></a>610 News Message
 Initiator: Server. Reply to [609 Get News Message](#m609).
 
@@ -261,6 +329,20 @@ group's next message ID, then sends 613 News Message Posted to every
 user whose class may read the group, the poster included. Errors **[O]**:
 0x1000c for an unknown group (frame 160) and 0x10014 for a guest (frame 182).
 
+A post has no reply. Every user whose class may read the group, the poster
+included, gets 613 News Message Posted:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 611 Post News Message
+    S-->>C: 613 News Message Posted
+    S-->>O: 613 News Message Posted
+```
+
 ## <a id="m612"></a>612 Delete News Message
 Initiator: Client. **[S `FUN_0805db44`; O]**
 
@@ -283,6 +365,19 @@ frame 226, a guest).
 There is no reply on success. The server broadcasts
 [614 News Message Deleted](#m614) to every user (frames 409-411). An unknown
 group or message gets no reply and no 614 (frame 435).
+
+A delete has no reply. Every user gets 614 News Message Deleted:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 612 Delete News Message
+    S-->>C: 614 News Message Deleted
+    S-->>O: 614 News Message Deleted
+```
 
 ## <a id="m613"></a>613 News Message Posted
 Initiator: Server. **[S; O]** Sent after a successful

@@ -20,6 +20,17 @@ No payload.
 
 The reply is [701 Tracker Group List](#m701).
 
+The group list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    C->>T: 700 Get Tracker Group List
+    T->>C: 701 Tracker Group List
+```
+
 ## <a id="m701"></a>701 Tracker Group List
 
 Initiator: Tracker. **[S `FUN_0804abf4`; O frame 34]**
@@ -65,6 +76,17 @@ Struct `GetServerList` (dynamic):
 A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown group
 0x1000c **[O `captures/kdx-cli-tracker.pcapng` frame 39]**; group names match
 byte for byte **[S]**. The reply is [703 Tracker Server List](#m703).
+
+A group's server list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    C->>T: 702 Get Tracker Server List
+    T->>C: 703 Tracker Server List
+```
 
 ## <a id="m703"></a>703 Tracker Server List
 
@@ -286,6 +308,20 @@ Admin Login, Change Admin Password (Password, Confirm), a Groups panel
 (Group Name, Description), a Trackers panel with Register with Trackers,
 and a Greeting panel with Enable Greeting **[S client `FUN_0806b1b0`]**.
 
+[710 Get TrackerServ Settings](#m710) gets 711 TrackerServ Settings Info, and
+712 Set TrackerServ Settings gets [713 Set TrackerServ Settings Done](#m713):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    C->>T: 710 Get TrackerServ Settings
+    T->>C: 711 TrackerServ Settings Info
+    C->>T: 712 Set TrackerServ Settings
+    T->>C: 713 Set TrackerServ Settings Done
+```
+
 ## <a id="m711"></a>711 TrackerServ Settings Info
 
 Initiator: Tracker. **[S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80]**
@@ -366,6 +402,17 @@ Initiator: Client. **[S `FUN_0804b180`]**
 No payload.
 
 The reply is [721 TrackerServ Statistics](#m721).
+
+[720 Get TrackerServ Statistics](#m720) gets 721 TrackerServ Statistics:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    C->>T: 720 Get TrackerServ Statistics
+    T->>C: 721 TrackerServ Statistics
+```
 
 ## <a id="m721"></a>721 TrackerServ Statistics
 

@@ -20,6 +20,17 @@ sends the same datagram to its own upstream trackers, with flags bit 0 set **[S
 tracker `FUN_0804df70`]**. Neither waits for a reply, and the tracker sends
 none.
 
+A registration is one datagram and no reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant S as Server
+    participant T as Tracker
+    S-->>T: registration datagram
+    Note over S,T: no reply, repeated every 400 s
+```
+
 ## Encryption
 
 The whole datagram is XOR'd word by word with an LCG stream **[S server

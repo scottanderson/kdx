@@ -10,6 +10,21 @@ Handled inline in the dispatcher **[S]**.
 
 No payload.
 
+The monitor is one open, any number of polls, and one close:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 140 Open Connection Monitor
+    loop while the monitor is open
+        C->>S: 142 Get Connection Monitor Info
+        S->>C: 143 Connection Monitor Info
+    end
+    C->>S: 141 Close Connection Monitor
+```
+
 [140 Open Connection Monitor](#m140) and [141 Close Connection Monitor](#m141)
 need Get User Info (bit 40) and turn a per-user flag on or off. There is no
 reply.

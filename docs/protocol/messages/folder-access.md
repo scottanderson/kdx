@@ -73,6 +73,17 @@ An invalid name gets 0x1001e, an existing
 one 0x1000d. Success is [1 Status](status.md#m1) 0x44c. Frame 231 creates `test`
 with every other field 0, and frame 234 is the success.
 
+On success [1100 Create Folder Access](#m1100) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1100 Create Folder Access
+    S->>C: 1 Status (success 0x44c)
+```
+
 ## <a id="m1101"></a>1101 Delete Folder Access
 Initiator: Client. Privilege: Modify Folder Access (28). **[S `FUN_08057460`; O
 `captures/linux-accounts-folder-access.pcapng` frames 70 to 71]**
@@ -89,6 +100,17 @@ An unknown name gets 0x1000c. There is no Status reply: the server sends
 [1102 Folder Access Deleted](#m1102) to the requester and writes history record
 0x44d. `kdx_proto::msg::admin::FolderAccessName` re-encodes frames 70 and 71
 (`lab-item`, 8 bytes, unpadded) **[O]**.
+
+A delete has no Status reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1101 Delete Folder Access
+    S-->>C: 1102 Folder Access Deleted
+```
 
 ## <a id="m1102"></a>1102 Folder Access Deleted
 Initiator: Server. Sent on a successful
@@ -122,6 +144,17 @@ The request is unpadded: 2 bytes and 9 bytes in
 `captures/linux-files.pcapng` frames 225 and 228 **[O]**.
 `kdx_proto::msg::admin::FolderAccessName` re-encodes it (also
 `captures/linux-accounts-folder-access.pcapng` frame 60) **[O]**.
+
+[1103 Get Folder Access](#m1103) gets [1104 Folder Access Info](#m1104):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1103 Get Folder Access
+    S->>C: 1104 Folder Access Info
+```
 
 ## <a id="m1104"></a>1104 Folder Access Info
 Initiator: Server. Reply to [1103 Get Folder Access](#m1103).
@@ -158,6 +191,17 @@ byte 0x14 to 0x80, bit 0 (Can See Folder) of the Guest rule **[O]**. Ticking Can
 See Folder for Guest alone and then for User alone sets 0x14 and then 0x10
 (`captures/linux-folder-access-guest.pcapng` frames 30, 40) **[O]**.
 
+On success [1105 Set Folder Access](#m1105) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1105 Set Folder Access
+    S->>C: 1 Status (success 0x451)
+```
+
 ## <a id="m1106"></a>1106 Get Folder Access List
 Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`; O]**
 
@@ -179,6 +223,17 @@ empty request after [1100 Create Folder Access](#m1100)
 it, or all of a payload under 4 bytes. It re-encodes frames 23 and 232 and the
 three empty requests of `captures/linux-accounts-folder-access.pcapng` (frames
 50, 54, 64) **[O]**.
+
+The folder access list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1106 Get Folder Access List
+    S->>C: 1107 Folder Access List
+```
 
 ## <a id="m1107"></a>1107 Folder Access List
 Initiator: Server. Reply to [1106 Get Folder Access List](#m1106).

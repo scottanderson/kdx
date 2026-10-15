@@ -28,6 +28,19 @@ screen has changed.
 
 A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
 
+The viewer opens the display and then receives screen updates:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 900 Open View Display
+    S->>C: 902 View Display Params
+    S-->>C: 903 View Display Update (full frame)
+    S-->>C: 903 View Display Update (each change)
+```
+
 ## <a id="m901"></a>901 Close View Display
 Initiator: Client. It has no handler: the client closes the connection, and
 sends no [901 Close View Display](#m901) (frame 420) **[O]**.
@@ -130,6 +143,18 @@ become events 9, 10, 13, 14) **[S `FUN_0805c344`, `FUN_00418fc0`]**. Server
 absolute range 0-0xffff by its screen size **[S `FUN_00420270`]**. Modifier
 bit 0x10 turns any button into the right one. It ignores kind 4, the
 wheel. The Linux server ignores all of it.
+
+After a click the server sends the next update within 100 ms:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 904 View Display Mouse (kind 1)
+    C->>S: 904 View Display Mouse (kind 2)
+    S-->>C: 903 View Display Update
+```
 
 ## <a id="m905"></a>905 View Display Keyboard
 Initiator: Client, on the view display connection. Privilege: Control
