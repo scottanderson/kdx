@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 901, 902, 903, 904, 905
 
-Docs: `KDXProtocol.md`, View display. Capture: `win-view-display` (Server
+Docs: `messages/view-display.md`. Capture: `win-view-display` (Server
 1.600 for Windows under Wine, Client 1.620 beta 5). Server 1.620 for Linux
 can't capture its screen, so this area may use the Windows server for
 captures.
@@ -40,7 +40,7 @@ screen.
 
 ## Comments
 
-2026-10-13: Read statically in the Windows server; see `KDXProtocol.md`,
-904 and 905. The 903 encoder is read too, but its two-colour and bitmap
-codes still need a screen that changes
+2026-10-13: Read statically in the Windows server; see
+`messages/view-display.md`, 904 and 905. The 903 encoder is read too, but its
+two-colour and bitmap codes still need a screen that changes
 (`.scratch/capture-gaps/issues/12-view-display-content.md`).

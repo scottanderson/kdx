@@ -5,7 +5,8 @@ Type: research
 Targets: 203/216, 205/206, 207/208, 209/210, 211/212, 215, the chat record
 (217–220), 223, 300/301
 
-Docs: `KDXProtocol.md`, Chat record, Chat, and Private messages.
+Docs: `encodings.md` (chat record), `messages/chat.md`, and
+`messages/private-messages.md`.
 
 ## Gaps
 

@@ -34,7 +34,7 @@ no speed limit (`00 00` at 0xaa).
 
 ## Comments
 
-2026-10-11: Read statically; see `docs/protocol/KDXProtocol.md` (Files and
+2026-10-11: Read statically; see `docs/protocol/messages/files.md` (Files and
 142). 404 and 406 have no handler in Server 1.620 and no sender in Client
 1.620 beta 5; the client renames with 411 and deletes with 405, both already
 in `captures/linux-files.pcapng`. So they are dropped from the targets. 422

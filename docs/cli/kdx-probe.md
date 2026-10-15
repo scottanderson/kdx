@@ -22,4 +22,4 @@ each one it waits for more messages (`--wait`, 700 ms by default).
 
 Run it only against servers you control, ideally the lab
 ([lab/README.md](../../lab/README.md)). Message types are listed in [the
-protocol reference](../protocol/KDXProtocol.md).
+protocol reference](../protocol/README.md).

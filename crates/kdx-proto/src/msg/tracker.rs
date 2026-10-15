@@ -2,7 +2,7 @@
 //! 703 Tracker Server List, 711 and 712 TrackerServ Settings, and 721 TrackerServ Statistics.
 //!
 //! The requests 700, 710, and 720 and the reply 713 have no payload. Layouts are in
-//! `docs/protocol/tracker.md`.
+//! `docs/protocol/messages/tracker.md`.
 
 use std::net::{Ipv4Addr, SocketAddrV4};
 

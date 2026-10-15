@@ -22,7 +22,7 @@ Setup (agent): server detached; account `peer` (class Users) created with
 
 ## Comments
 
-2026-10-11: Read statically; see `docs/protocol/KDXProtocol.md` (504,
+2026-10-11: Read statically; see `docs/protocol/messages/` (504,
 folder access, Flood ban). 514 Account Changed is never sent by the server
 and not handled by the client, so it is dropped. 1101 gets no Status: the
 server sends 1102 with the name. 1105 picks the item by the current name at

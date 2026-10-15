@@ -81,8 +81,9 @@ A capture needs the operator, so it goes to `.scratch/capture-gaps/`:
 
 ## Gap inventory
 
-Collected on 2026-10-13 from `docs/protocol/KDXProtocol.md`, `tracker.md`,
-`dcc.md`, `handshake.md`, and `session.md`, and from `kdx-dissect` runs
+Collected on 2026-10-13 from `docs/protocol/README.md`, `tracker.md`,
+`dcc.md`, `handshake.md`, and `session.md` (now split into the pages under
+`messages/` and `framing.md`), and from `kdx-dissect` runs
 over all 22 captures. Every type in the catalog has a section; each issue
 lists its gaps one by one.
 

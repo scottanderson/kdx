@@ -5,7 +5,7 @@ Type: research
 Targets: 401, 402, 404/406/408, 409/410, 411, 412–418, 420, 422/423, 450,
 452/453
 
-Docs: `KDXProtocol.md`, Files and Transfer connections.
+Docs: `messages/files.md` and `transfers.md`.
 
 ## Gaps
 

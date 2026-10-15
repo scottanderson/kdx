@@ -1,15 +1,17 @@
 # Common encodings
 
-Strings, times, paths, and the user and chat records that many messages share. Evidence tags and byte order are explained in [the protocol reference](KDXProtocol.md).
+Strings, times, paths, and the user and chat records that many messages share.
+Evidence tags and byte order are explained in [the protocol
+reference](README.md).
 
 ## Strings
 
 Strings have no terminator, and their lengths are not stored with them. A
-fixed-size part of the record holds the lengths (usually u8). The strings
-follow that part in a fixed order. Most variable records are then padded to
-a multiple of 4. The padding bytes are uninitialized memory, so ignore them
-(the `86 ab` at the end of the first entry in the 401 File List example)
-**[O]**. `kdx-proto` still stores them, with any other bytes it doesn't
+fixed-size part of the record holds the lengths (usually u8). The strings follow
+that part in a fixed order. Most variable records are then padded to a multiple
+of 4. The padding bytes are uninitialized memory, so ignore them (the `86 ab` at
+the end of the first entry in the [401 File List](messages/files.md#m401)
+example) **[O]**. `kdx-proto` still stores them, with any other bytes it doesn't
 model, and writes them back, so a decoded payload encodes to the same bytes
 (`kdx-dissect --audit` over every capture) **[O]**.
 
@@ -48,18 +50,27 @@ through as raw bytes:
   Roman, such as `Erik’s` with byte 0xd5 (user report). The Mach-O and Linux
   trackers read their folders with raw `readdir` too **[S]**.
 
-Chat, nicks, and news follow from this: every client builds text from UTF-16
-or UTF-8 input and has no other codec, so it sends UTF-8 **[I]**. Servers
-relay chat bytes without decoding them; 207 Send Chat Text copies the text
-into 208 after capping the message at 0x1000 bytes, which can split a
-multi-byte character (`FUN_08058d74`) **[S]**.
+Chat, nicks, and news follow from this: every client builds text from UTF-16 or
+UTF-8 input and has no other codec, so it sends UTF-8 **[I]**. Servers relay
+chat bytes without decoding them; [207 Send Chat Text](messages/chat.md#m207)
+copies the text into [208 Receive Chat Text](messages/chat.md#m208) after
+capping the message at 0x1000 bytes, which can split a multi-byte character
+(`FUN_08058d74`) **[S]**.
 
-The Linux pair bears this out. Client 1.620 beta 5 sends UTF-8 in 207, 300,
-611, 100, 402, and 415, and Server 1.620 stores and relays the bytes
-unchanged in 208, 301, 610, and 102 and on disk **[O `linux-text-encoding`
-90, 103, 118–121, 249–250, 319–325, 327–330]**. String lengths count bytes.
-A name matches only its own bytes: with `caf\xc3\xa9.txt` and `caf\x8e.txt`
-in one folder, 401 lists both and 412 fetches each by its own spelling
+The Linux pair bears this out. Client 1.620 beta 5 sends UTF-8 in 207,
+[300 Send Private Message](messages/private-messages.md#m300),
+[611 Post News Message](messages/news.md#m611),
+[100 Set Identity](messages/session.md#m100),
+[402 Create Folder](messages/files.md#m402), and
+[415 Upload File](messages/files.md#m415), and Server 1.620 stores and relays
+the bytes unchanged in 208,
+[301 Incoming Private Message](messages/private-messages.md#m301),
+[610 News Message](messages/news.md#m610), and
+[102 User Changed](messages/session.md#m102) and on disk **[O
+`linux-text-encoding` 90, 103, 118-121, 249-250, 319-325, 327-330]**. String
+lengths count bytes. A name matches only its own bytes: with `caf\xc3\xa9.txt`
+and `caf\x8e.txt` in one folder, 401 lists both and
+[412 Download File](messages/files.md#m412) fetches each by its own spelling
 **[O 41, 52, 71]**.
 
 The decoders never fail. Each invalid sequence becomes one U+FFFD: a stray
@@ -114,23 +125,26 @@ base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
 | n | name, per name |
 
 The root is an empty payload, not a count of 0. A path with names must be at
-least 6 bytes. Otherwise the server raises 0x1000a: a 400 Get File List of
-`00 00` gets it in frames 106-107 of `captures/probe.pcapng` **[O]**, so
-`kdx-dissect` flags that request as invalid. The server joins the
-names with `/` and checks each one with `FUN_08094084` **[S]**. For example,
-`00 01 00 00 0c "Uploads [UL]"` is the root folder `Uploads [UL]` **[O]**.
+least 6 bytes. Otherwise the server raises 0x1000a: a
+[400 Get File List](messages/files.md#m400) of `00 00` gets it in frames 106-107
+of `captures/probe.pcapng` **[O]**, so `kdx-dissect` flags that request as
+invalid. The server joins the names with `/` and checks each one with
+`FUN_08094084` **[S]**. For example, `00 01 00 00 0c "Uploads [UL]"` is the root
+folder `Uploads [UL]` **[O]**.
 
 ## User record
 
 **[S `FUN_0804af04`, `FUN_0804b304`; O `captures/first-connect.pcapng`]**
 
-This record is used in 100 Set Identity (client to server, user ID 0) and in
-101 User List, 102 User Changed, and 103 User Joined.
+This record is used in [100 Set Identity](messages/session.md#m100) (client to
+server, user ID 0) and in [101 User List](messages/session.md#m101),
+[102 User Changed](messages/session.md#m102), and
+[103 User Joined](messages/session.md#m103).
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | user ID | assigned by the server; 0 in 100 Set Identity |
-| 0x04 | 1 | status | the value set by 110 Set Mini User Icon |
+| 0x04 | 1 | status | the value set by [110 Set Mini User Icon](messages/session.md#m110) |
 | 0x05 | 5 | 0 | |
 | 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture **[O]**; **[S client `FUN_0804d654`]**) |
 | 0x0c | 2 | icon length | < 0x709 |
@@ -160,7 +174,9 @@ This record is used in 100 Set Identity (client to server, user ID 0) and in
 
 **[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O 219 Chat Info]**
 
-This record is used in 217 Create Chat, 219 Chat Info, and 220.
+This record is used in [217 Create Chat](messages/chat.md#m217),
+[219 Chat Info](messages/chat.md#m219), and
+[220 Set Chat](messages/chat.md#m220).
 
 | Off | Size | Field | Notes |
 |---|---|---|---|

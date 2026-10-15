@@ -15,7 +15,8 @@ tracker in another program.
 See the [kdx-tracker
 guide](https://github.com/scottanderson/kdx/blob/main/docs/tracker/kdx-tracker.md)
 and the [tracker
-protocol](https://github.com/scottanderson/kdx/blob/main/docs/protocol/tracker.md).
+protocol](https://github.com/scottanderson/kdx/blob/main/docs/protocol/tracker.md) and
+[registration datagram](https://github.com/scottanderson/kdx/blob/main/docs/protocol/udp.md).
 The handshake needs Haxial's challenge tables, which are not distributed with
 this crate; see [challenge
 tables](https://github.com/scottanderson/kdx/blob/main/docs/setup/challenge-tables.md).

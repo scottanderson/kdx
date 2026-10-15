@@ -4,8 +4,8 @@ Status: ready-for-agent
 Type: research
 Targets: 140–143, 150–155, 174, 175, 180–183 and the history record
 
-Docs: `KDXProtocol.md`, Monitoring and administration. The settings blob
-(170–173) is issue 05.
+Docs: `messages/monitoring.md` and `messages/administration.md`. The settings
+blob (170-173) is issue 05.
 
 ## Gaps
 
@@ -46,5 +46,5 @@ Docs: `KDXProtocol.md`, Monitoring and administration. The settings blob
   81), 0x12a..0x12b is `20 43` (`linux-chat-admin` 143, 146, 149), 0x8e..0x8f
   is `6e 88` (`probe` 239). Fixed: `MonitoredConnection::padding` keeps
   them.
-- [ ] Are those bytes uninitialised padding? `KDXProtocol.md` says so from
-  the captures **[O]**; confirm in the builder.
+- [ ] Are those bytes uninitialised padding? `messages/monitoring.md` says so
+  from the captures **[O]**; confirm in the builder.

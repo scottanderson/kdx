@@ -5,7 +5,7 @@ Type: research
 Targets: 1 Status, the user record (100–103), the icon bitmap (100–103,
 106), the hello and proof, the session framing
 
-Docs: `KDXProtocol.md` (1 Status, User record), `handshake.md`,
+Docs: `messages/status.md`, `encodings.md` (user record), `handshake.md`,
 `session.md`.
 
 ## Gaps
@@ -35,7 +35,7 @@ Icon bitmap (also 106 Server Icon and the settings icon section):
 
 - [ ] The format is "2 bits per pixel" with a header such as `01 20 20 04
   00 01 00 00 00 ff cc 00` (`linux-server-settings` frame 83). Name each
-  header field from the client's icon decoder. `PLAN.md` area 2 lists the
+  header field from the client's icon decoder. `docs/PLAN.md` area 2 lists the
   icon format as not yet done.
 
 Handshake (`handshake.md`):
@@ -45,7 +45,7 @@ Handshake (`handshake.md`):
 - [ ] The nonce "looks time-based" **[O]**: read how each side makes it.
 - [ ] "Login names": the `00`+ID login is "probably used for file-transfer
   connections" **[I]**. Transfer connections and view display confirm it
-  (`KDXProtocol.md`, Transfer connections; `win-view-display` frame 99).
+  (`transfers.md`; `win-view-display` frame 99).
   Update the doc.
 
 Session (`session.md`):

@@ -12,7 +12,7 @@ session encryption, message framing, and typed payloads.
 - `handshake` has the hello and proof.
 
 Every layout is documented in [the protocol
-reference](../protocol/KDXProtocol.md) and tested against capture fixtures in
+reference](../protocol/README.md) and tested against capture fixtures in
 `crates/kdx-proto/tests/fixtures/` (see its README).
 [kdx-dissect](../dissect/kdx-dissect.md)'s `--audit` checks the codecs against
 every capture.

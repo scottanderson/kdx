@@ -18,7 +18,8 @@ session last.
 
 ## Comments
 
-2026-10-11: Read statically; see `docs/protocol/KDXProtocol.md`. Expected:
+2026-10-11: Read statically; see `docs/protocol/messages/administration.md` and
+`processes.md`. Expected:
 175 gets 1 Status 0x1000c in the lab (no KDXUpgradeHelper). 804 has no
 reply; flags bit 0 sends SIGKILL and bit 1 SIGTERM, so note which the GUI's
 Exit Process sends. 174 broadcasts 151 to everyone and the server exits

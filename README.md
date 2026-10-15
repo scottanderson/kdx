@@ -4,7 +4,7 @@ A Rust implementation of the Haxial KDX protocol: a client, a tracker, and later
 a server, all compatible with the original KDX programs (Server 1.620, Client
 1.600, Tracker 1.110).
 
-**New here? Read [the protocol reference](docs/protocol/KDXProtocol.md).** It
+**New here? Read [the protocol reference](docs/protocol/README.md).** It
 describes how KDX connections work and every message on them, with the evidence
 for each claim.
 
@@ -29,13 +29,13 @@ for each claim.
 
 ## Documentation
 
-- [Protocol reference](docs/protocol/KDXProtocol.md): the entry point, with a
+- [Protocol reference](docs/protocol/README.md): the entry point, with a
   map of every protocol page.
 - [Client to server](docs/protocol/server.md),
   [tracker](docs/protocol/tracker.md), [client to client](docs/protocol/dcc.md),
   and [GConsole](docs/protocol/gconsole.md): one page for each kind of
   connection.
-- [Plan](docs/protocol/PLAN.md): the phases and what is open.
+- [Plan](docs/PLAN.md): the phases and what is open.
 - [Contributing](CONTRIBUTING.md): the checks, doc conventions, commits, and
   legal rules.
 - [Lab](lab/README.md): run the original programs in a sandbox and capture their

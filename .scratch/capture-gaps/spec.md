@@ -1,6 +1,6 @@
 # Capture gaps
 
-Goal: every message type in the catalog of `docs/protocol/KDXProtocol.md` has
+Goal: every message type in the index `docs/protocol/messages/README.md` has
 at least one capture, made with Client 1.620 beta 5 (Linux). No Wine, except
 for View Display, which only a Windows server can serve (issue 06).
 

@@ -2,11 +2,12 @@
 
 Goal: the Rust code speaks the tracker protocol in all three directions. A
 Rust server registers with Tracker 1.110, the `kdx` CLI browses Tracker
-1.110, and Client 1.620 beta 5 browses `kdx-tracker` (`PLAN.md`, area 7).
+1.110, and Client 1.620 beta 5 browses `kdx-tracker` (`docs/PLAN.md`, area 7).
 
 ## Where it stands
 
-`docs/protocol/tracker.md` covers UDP registration and the TCP messages
+`docs/protocol/udp.md` covers UDP registration and
+`docs/protocol/messages/tracker.md` the TCP messages
 115, 700–703, 710–713, and 720/721 from the binaries, checked against
 `captures/linux-tracker.pcapng` (capture-gaps 05) for everything but 115.
 

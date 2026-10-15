@@ -2,7 +2,7 @@
 
 Message types that the protocol reference does not yet cover: types a program
 handles or sends that have no handler or layout in
-`docs/protocol/KDXProtocol.md`. Static findings only, tagged as in the docs;
+`docs/protocol/messages/README.md`. Static findings only, tagged as in the docs;
 move each one into `docs/protocol/` once a capture or test confirms it.
 
 ## Server 1.620: session dispatcher
@@ -20,7 +20,7 @@ the Handler column of the catalog exactly. Inline cases:
 
 Named types with no case, so the server ignores them on a session **[S]**:
 117 SKPK, 404 Delete File/Folder, 406 Rename File/Folder, 408 Copy File/Folder,
-900–905, and 1000–1003.
+900-905, and 1000-1003.
 
 ## Server 1.620: transfer dispatcher
 
@@ -74,7 +74,7 @@ The tracker's name table has the same names (entry for 100 at 0x080c5b1c)
 | 720 Get TrackerServ Statistics | `FUN_0804b180` |
 
 Servers register with the tracker over UDP, not through this dispatcher
-**[S `FUN_0804c048`]**. See `docs/protocol/tracker.md`.
+**[S `FUN_0804c048`]**. See `docs/protocol/udp.md`.
 
 ## Client 1.620 beta 5 (Linux): dispatcher
 
@@ -96,7 +96,7 @@ connection handles 1000-1003. See `docs/protocol/dcc.md`.
 - The connection flood ban seen in `captures/kdx-accounts.pcapng` (30
   connections a minute); the per-request flood check is read.
 - GConsole: the unknown fields of 4001's records and of 4200 (see the open
-  questions in `docs/protocol/dcc.md`).
+  questions in `docs/protocol/gconsole.md`).
 
 ## Other behaviour found in the sweep
 

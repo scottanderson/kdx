@@ -55,4 +55,4 @@ login. To run a tracker, see [kdx-tracker](../tracker/kdx-tracker.md).
 - [kdx-probe](kdx-probe.md) sends raw requests when a command for them does not
   exist.
 - The messages the commands send are in [the protocol
-  reference](../protocol/KDXProtocol.md).
+  reference](../protocol/README.md).

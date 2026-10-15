@@ -1,5 +1,5 @@
 //! GConsole messages: a peer draws in a window of the client, which reports
-//! the keys and clicks in it (`docs/protocol/gconsole.md`).
+//! the keys and clicks in it (`docs/protocol/messages/gconsole.md`).
 
 use super::{need, u16_at, u32_at, DecodeError, EncodeError};
 

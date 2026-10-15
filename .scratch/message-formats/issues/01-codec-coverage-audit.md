@@ -37,9 +37,9 @@ have a codec in `kdx-proto` that `kdx-dissect` doesn't call.
   keep their padding pad the result to 4, and 401, 453, and 703 encode no
   records as an empty payload, so a bare zero count comes back empty.
 - [x] Add each finding to the issue for its area as a new gap.
-- [x] The type catalog in `KDXProtocol.md` has no rows for 4000 Open
+- [x] The type catalog (now `messages/README.md`) has no rows for 4000 Open
   Window, 4001 Draw, 4200 Key, and 4201 Mouse. Their layouts are in
-  `gconsole.md`.
+  `messages/gconsole.md`.
 
 Done when the test runs in `cargo test`, no payload comes back different,
 and every missing codec is recorded in an issue here.

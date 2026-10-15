@@ -1,8 +1,9 @@
 # Session messages
 
-Setup, identity, user list, server information, greeting, ping, and the generic Status reply.
+Message types 100 to 118: setup, identity, user list, server information,
+greeting, ping, and the key exchange between clients.
 
-**100 Set Identity**
+## <a id="m100"></a>100 Set Identity
 Initiator: Client. **[S `FUN_0804b304`; O]**
 
 The client's first message after the handshake. It is also sent again
@@ -13,33 +14,40 @@ with user ID 0.
   account name is used. Changes are logged as `Set Name: <…> (…)`.
 - No direct reply. On the first 100 Set Identity, the server sends, in
   order:
-  - 101 User List;
-  - 105 Server Info;
-  - 107 Server Greeting, unless the account has Don't Show Greeting;
-  - 106 Server Icon, if one is set;
-  - 213 Must Join Chat, when Join Chat On Connect and Join Chat are both
-    set.
+  - [101 User List](#m101);
+  - [105 Server Info](#m105);
+  - [107 Server Greeting](#m107), unless the account has Don't Show Greeting;
+  - [106 Server Icon](#m106), if one is set;
+  - [213 Must Join Chat](chat.md#m213), when Join Chat On Connect and Join Chat
+    are both set.
 
-  It also sends 103 User Joined to everyone else and writes a 184 Login history
-  record. **[O]**: 105, 107, 106 in that order
-  (`captures/linux-server-settings.pcapng` frames 80, 82, 83), and 213
-  after 106 (`captures/linux-chat-rooms.pcapng` frame 167).
-- A later 100 Set Identity broadcasts 102 User Changed to everyone, the
-  sender included (`captures/linux-server-settings.pcapng` frames 196, 199,
-  201) **[O]**.
+  It also sends [103 User Joined](#m103) to everyone else and writes a
+  [184 Login](administration.md#m184) history record. **[O]**: 105, 107, 106 in
+  that order (`captures/linux-server-settings.pcapng` frames 80, 82, 83), and
+  213 after 106 (`captures/linux-chat-rooms.pcapng` frame 167).
+- A later 100 Set Identity broadcasts [102 User Changed](#m102) to everyone, the
+  sender included (`captures/linux-server-settings.pcapng` frames 196, 199, 201)
+  **[O]**.
 
-**101 User List**
+## <a id="m101"></a>101 User List
 Initiator: Server. **[S `FUN_0804af04`; O]**
 
 A sequence of user records, one per user who is logged in (all of them on
 login).
 
-**102 User Changed** / **103 User Joined**
+## <a id="m102"></a>102 User Changed
 Initiator: Server. **[S; O]**
 
-One user record.
+Sent to everyone when a user sends a later
+[100 Set Identity](#m100). One user record.
 
-**104 User Departed**
+## <a id="m103"></a>103 User Joined
+Initiator: Server. **[S; O]**
+
+Sent to everyone else after a user's first
+[100 Set Identity](#m100). One user record.
+
+## <a id="m104"></a>104 User Departed
 Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
 `captures/linux-chat-admin.pcapng` frames 59, 116]**
 
@@ -52,7 +60,7 @@ Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
 `kdx_proto::msg::user::UserDeparted` re-encodes it byte for byte (test
 `linux_chat_admin`).
 
-**105 Server Info**
+## <a id="m105"></a>105 Server Info
 Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 
 | Off | Size | Field | Notes |
@@ -70,17 +78,17 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 
 The whole message is at most 0x400 bytes.
 
-**106 Server Icon**
+## <a id="m106"></a>106 Server Icon
 Initiator: Server. **[O]**
 
 The server's icon bitmap, the same bytes as the icon section of the settings
-blob (see 171 Server Settings Info). **[O]**: 524 bytes for a 32×32 icon pasted
-from the user icon, starting `01 20 20 04 00 01 00 00 00 ff cc 00`
-(`captures/linux-server-settings.pcapng` frame 83), equal to the icon
-section of the 171 at frame 221. `kdx_proto::msg::server_info::ServerIcon`
-holds the bytes.
+blob (see [171 Server Settings Info](administration.md#m171)). **[O]**: 524
+bytes for a 32×32 icon pasted from the user icon, starting
+`01 20 20 04 00 01 00 00 00 ff cc 00` (`captures/linux-server-settings.pcapng`
+frame 83), equal to the icon section of the 171 at frame 221.
+`kdx_proto::msg::server_info::ServerIcon` holds the bytes.
 
-**107 Server Greeting**
+## <a id="m107"></a>107 Server Greeting
 Initiator: Server. **[S `FUN_0804b738`; O]**
 
 | Off | Size | Field |
@@ -96,13 +104,18 @@ option is bit 1 of byte 0x93 of the settings blob.
 `kdx_proto::msg::server_info::ServerGreeting` re-encodes frames 46, 62, and
 82 byte for byte (test `linux_server_settings`).
 
-**108 Ping** → **109 Pong**
+## <a id="m108"></a>108 Ping
 Initiator: Client. **[S]**
+Handled inline in the dispatcher **[S]**.
 
-The request is empty, and so is the reply (109 Pong). Ping does not reset
-the idle timer.
+The request is empty. Ping does not reset the idle timer.
 
-**110 Set Mini User Icon**
+## <a id="m109"></a>109 Pong
+Initiator: Server. **[S]**
+
+Reply to [108 Ping](#m108). The reply is empty.
+
+## <a id="m110"></a>110 Set Mini User Icon
 Initiator: Client. **[S `FUN_0804b6d4`; O]**
 
 | Off | Size | Field | Notes |
@@ -110,8 +123,13 @@ Initiator: Client. **[S `FUN_0804b6d4`; O]**
 | 0x00 | 1 | status | 1 after `/away`, 0 after `/back` **[O]** |
 | 0x01 | 3 | 0 | the payload must be at least 4 bytes |
 
-There is no reply. If the value changed, the server broadcasts **111 Mini
-User Icon Changed** to everyone, the sender included:
+There is no reply.
+
+## <a id="m111"></a>111 Mini User Icon Changed
+Initiator: Server.
+
+Sent when a [110 Set Mini User Icon](#m110) changed the value: the server
+broadcasts it to everyone, the sender included:
 
 | Off | Size | Field |
 |---|---|---|
@@ -123,17 +141,22 @@ User Icon Changed** to everyone, the sender included:
 213). `kdx_proto::msg::user::MiniUserIcon` and `MiniUserIconChanged`
 re-encode frames 210 to 218 byte for byte.
 
-**112 (unnamed)**
+## <a id="m112"></a>112 (unnamed)
 Initiator: Client. **[S `FUN_0804b738`; O]**
 
-The request is empty. The server answers with 107 Server Greeting as a new
-message (its own txid), not as a reply. The client uses this to re-read the
+The request is empty. The server answers with [107 Server Greeting](#m107) as a
+new message (its own txid), not as a reply. The client uses this to re-read the
 greeting.
 
-**113 Get Extra Server Info** → **114 Extra Server Info**
+## <a id="m113"></a>113 Get Extra Server Info
 Initiator: Client. **[S `FUN_080619d8`; O]**
 
-The request is empty. Reply:
+The request is empty.
+
+## <a id="m114"></a>114 Extra Server Info
+Initiator: Server. **[S `FUN_080619d8`; O]**
+
+Reply to [113 Get Extra Server Info](#m113):
 
 | Off | Size | Field |
 |---|---|---|
@@ -146,15 +169,41 @@ The request is empty. Reply:
 | 0x2c | 1 | OS string length |
 | 0x30 | | OS string |
 
-**115 Get My Address** → **116 Your Address**
+## <a id="m115"></a>115 Get My Address
 Initiator: Client. **[S; O]**
+Handled inline in the dispatcher **[S]**.
 
-The request is empty. The reply is a u8 length followed by `"a.b.c.d:port"`:
-the client's address as the server sees it.
+The request is empty.
 
-**118 (unnamed)**
+## <a id="m116"></a>116 Your Address
+Initiator: Server. **[S; O]**
+
+Reply to [115 Get My Address](#m115). The reply is a u8 length followed by
+`"a.b.c.d:port"`: the client's address as the server sees it.
+
+## <a id="m117"></a>117 SKPK
+
+Initiator: Client (to client). **[S `FUN_0808eefc`, `FUN_0808ff64`]**
+
+0x30 bytes:
+
+| Off | Size | Field | Notes |
+|---|---|---|---|
+| 0x00 | 0x20 | key K | the sender's key for secondary connections to it |
+| 0x20 | 4 | DCC port | the sender's listener |
+| 0x24 | 4 | connection ID | the sender's ID for this primary connection; each client numbers its own |
+| 0x28 | 2 | client version | 0x0654 (1620); the receiver warns if it is older or newer |
+| 0x2a | 2 | 0 | |
+| 0x2c | 4 | 0 | |
+
+Frames 22, 25, 119, and 122 match this layout, with ports 0x2968 and 0x2969 and
+connection IDs 2 and 4 **[O]**. `kdx_proto::msg::dcc::Skpk` re-encodes frames
+22 and 25 byte for byte.
+
+## <a id="m118"></a>118 (unnamed)
 Initiator: Client. **[S `FUN_0804fdac`; O `captures/probe.pcapng` frame
 165]**
+Handled inline in the dispatcher **[S]**.
 
 | Off | Size | Field |
 |---|---|---|
@@ -171,10 +220,10 @@ client `FUN_08107e04`]**. So it reports whether the client is registered
 **[I]**.
 
 The server acts on it **[S `FUN_0804b7c8`]**: every 900000 ms plus a random
-0..0x8ffff ms, it sends 155 Rcv Broadcast Message "Please help fund the further
-development of KDX by purchasing a license." to each user whose stored value is
-2 and who has been connected less than 2 hours (7200000 ms). The first round
-runs 217500000 ms (about 60 hours) after the server starts **[S
-`FUN_080531f0`]**, so a short lab run never shows it. The text is obfuscated in
-the binary at 0x080adc00 (each byte is ~b + 0xbe). The 155 payload is 16 zero
-bytes then the text.
+0..0x8ffff ms, it sends [155 Rcv Broadcast Message](administration.md#m155)
+"Please help fund the further development of KDX by purchasing a license." to
+each user whose stored value is 2 and who has been connected less than 2 hours
+(7200000 ms). The first round runs 217500000 ms (about 60 hours) after the
+server starts **[S `FUN_080531f0`]**, so a short lab run never shows it. The
+text is obfuscated in the binary at 0x080adc00 (each byte is ~b + 0xbe). The 155
+payload is 16 zero bytes then the text.

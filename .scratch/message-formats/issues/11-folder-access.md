@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 1106/1107, the folder access record (1100, 1104, 1105)
 
-Docs: `KDXProtocol.md`, Folder access. Captures: `linux-files`,
+Docs: `messages/folder-access.md`. Captures: `linux-files`,
 `linux-accounts-folder-access`, `linux-folder-access-guest`.
 
 ## Gaps

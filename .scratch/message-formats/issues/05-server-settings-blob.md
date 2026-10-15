@@ -4,7 +4,7 @@ Status: ready-for-agent
 Type: research
 Targets: 171 Server Settings Info and 172 Set Server Settings
 
-Docs: `KDXProtocol.md`, 170 Get Server Settings. Captures:
+Docs: `messages/administration.md`, 170 Get Server Settings. Captures:
 `linux-server-settings`, `linux-catalog-volumes`, `linux-tracker`, `probe`.
 
 The blob is the server's settings file (`%KDXSSTG`). Only a few fields of

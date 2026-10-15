@@ -6,7 +6,7 @@ implemented yet.
 The server side of the protocol is described in the [client to server
 page](https://github.com/scottanderson/kdx/blob/main/docs/protocol/server.md),
 and the work is planned in the
-[plan](https://github.com/scottanderson/kdx/blob/main/docs/protocol/PLAN.md).
+[plan](https://github.com/scottanderson/kdx/blob/main/docs/PLAN.md).
 
 ## License
 

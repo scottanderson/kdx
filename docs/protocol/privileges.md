@@ -2,67 +2,70 @@
 
 The privilege bits of account classes and accounts.
 
-An account's privileges are a bit string of at least 11 bytes. It is stored
-at user +0x44 and sent in the class records (506 Account Class List). Bit n
-is byte n/8, mask 0x80 >> (n % 8) **[S]**.
+An account's privileges are a bit string of at least 11 bytes. It is stored at
+user +0x44 and sent in the class records
+([506 Account Class List](messages/accounts.md#m506)). Bit n is byte n/8, mask
+0x80 >> (n % 8) **[S]**.
 
 Bits that server handlers test, found by scanning every handler for tests of
 user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
-105 Server Info, 107 Server Greeting, and 213.
+[105 Server Info](messages/session.md#m105),
+[107 Server Greeting](messages/session.md#m107), and
+[213 Must Join Chat](messages/chat.md#m213).
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
-| 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | 202 Join Chat, 207 Send Chat Text, 209 Set Chat Topic, 400 Get File List, 508 Delete Account, 511 Set Account, 607 Get News Messages, 609 Get News Message, 611 Post News Message, 612 Delete News Message |
+| 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
 | 3 | Color Overrides Class | `FUN_08054900` account lookup |
 | 4 | Can Login | set in every lab class |
-| 10 | Download | 412 Download File |
-| 11 | Upload | 402 Create Folder, 415 Upload File |
-| 13 | Empty Trash | 421 Empty Trash |
-| 15 | Create Aliases | 403 Create Alias |
-| 16 | Move | 407 Move File/Folder |
-| 17 | Rename | 409 Get File/Folder Info, 411 Set File/Folder Info |
-| 18 | Delete | 405 Move To Trash |
+| 10 | Download | [412 Download File](messages/files.md#m412) |
+| 11 | Upload | [402 Create Folder](messages/files.md#m402), [415 Upload File](messages/files.md#m415) |
+| 13 | Empty Trash | [421 Empty Trash](messages/files.md#m421) |
+| 15 | Create Aliases | [403 Create Alias](messages/files.md#m403) |
+| 16 | Move | [407 Move File/Folder](messages/files.md#m407) |
+| 17 | Rename | [409 Get File/Folder Info](messages/files.md#m409), [411 Set File/Folder Info](messages/files.md#m411) |
+| 18 | Delete | [405 Move To Trash](messages/files.md#m405) |
 | 20 | Set File/Folder Attributes | 409 Get File/Folder Info, 411 Set File/Folder Info |
-| 22 | See All Volumes | 400 Get File List, 423 Set Volume Info |
+| 22 | See All Volumes | 400 Get File List, [423 Set Volume Info](messages/files.md#m423) |
 | 23 | Has Custom Base Folder | |
 | 24 | See All Bases | |
 | 25 | Allow Simultaneous Downloads | 412 Download File (large files) |
 | 26 | Ignore Speed Limits | |
-| 27 | View Folder Access | 505 Get Account Class List, 1103 Get Folder Access, 1106 Get Folder Access List |
-| 28 | Modify Folder Access | 402 Create Folder, 403 Create Alias, 411 Set File/Folder Info, 1100 Create Folder Access, 1101 Delete Folder Access, 1105 Set Folder Access |
-| 30 | Join Chat | 202 Join Chat, 214 Get Chat List, login |
+| 27 | View Folder Access | [505 Get Account Class List](messages/accounts.md#m505), [1103 Get Folder Access](messages/folder-access.md#m1103), [1106 Get Folder Access List](messages/folder-access.md#m1106) |
+| 28 | Modify Folder Access | 402 Create Folder, 403 Create Alias, 411 Set File/Folder Info, [1100 Create Folder Access](messages/folder-access.md#m1100), [1101 Delete Folder Access](messages/folder-access.md#m1101), [1105 Set Folder Access](messages/folder-access.md#m1105) |
+| 30 | Join Chat | 202 Join Chat, [214 Get Chat List](messages/chat.md#m214), login |
 | 31 | Send Chat | 207 Send Chat Text |
-| 32 | Send Messages | 300 Send Private Message |
-| 33 | Broadcast | 154 Send Broadcast Message |
-| 34 | Create Private Chat | 200 Create Private Chat |
+| 32 | Send Messages | [300 Send Private Message](messages/private-messages.md#m300) |
+| 33 | Broadcast | [154 Send Broadcast Message](messages/administration.md#m154) |
+| 34 | Create Private Chat | [200 Create Private Chat](messages/chat.md#m200) |
 | 35 | Set Chat Topic | 209 Set Chat Topic |
 | 36 | Join Chat On Connect | login |
-| 37 | Create/Modify Chats | 201 Delete Chat, 217 Create Chat, 218 Get Chat, 220 Set Chat, 505 Get Account Class List |
-| 40 | Get User Info | 140 Open Connection Monitor, 141 Close Connection Monitor, 142 Get Connection Monitor Info, 152 Get User Info |
-| 41 | Disconnect Users | 150 Disconnect User |
+| 37 | Create/Modify Chats | [201 Delete Chat](messages/chat.md#m201), [217 Create Chat](messages/chat.md#m217), [218 Get Chat](messages/chat.md#m218), [220 Set Chat](messages/chat.md#m220), 505 Get Account Class List |
+| 40 | Get User Info | [140 Open Connection Monitor](messages/monitoring.md#m140), [141 Close Connection Monitor](messages/monitoring.md#m141), [142 Get Connection Monitor Info](messages/monitoring.md#m142), [152 Get User Info](messages/administration.md#m152) |
+| 41 | Disconnect Users | [150 Disconnect User](messages/administration.md#m150) |
 | 42 | Cannot Be Disconnected | 150 (target) |
 | 43 | Ban Users | 150 Disconnect User |
-| 50 | View Accounts | 502 Get Account Class, 505 Get Account Class List, 509 Get Account, 512 Get Account List |
-| 51 | Create Accounts | 507 Create Account |
-| 52 | Modify Accounts | 504 Set Account Class, 508 Delete Account, 511 Set Account |
-| 53 | Change Own Password | 550 Change Own Password |
+| 50 | View Accounts | [502 Get Account Class](messages/accounts.md#m502), 505 Get Account Class List, [509 Get Account](messages/accounts.md#m509), [512 Get Account List](messages/accounts.md#m512) |
+| 51 | Create Accounts | [507 Create Account](messages/accounts.md#m507) |
+| 52 | Modify Accounts | [504 Set Account Class](messages/accounts.md#m504), 508 Delete Account, 511 Set Account |
+| 53 | Change Own Password | [550 Change Own Password](messages/accounts.md#m550) |
 | 54 | Protected Account | 508 Delete Account, 511 Set Account (target) |
-| 60 | Use Any Name | 100 Set Identity, login |
-| 61 | Modify Server Settings | 113 Get Extra Server Info, 170 Get Server Settings, 172 Set Server Settings, 450 Generate Catalog, login (105 Server Info) |
+| 60 | Use Any Name | [100 Set Identity](messages/session.md#m100), login |
+| 61 | Modify Server Settings | [113 Get Extra Server Info](messages/session.md#m113), [170 Get Server Settings](messages/administration.md#m170), [172 Set Server Settings](messages/administration.md#m172), [450 Generate Catalog](messages/files.md#m450), login (105 Server Info) |
 | 62 | Don't Show Greeting | login |
-| 63 | View Server History | 180 Server History Join |
-| 64 | Shutdown Server | 174 Shutdown Server, 175 Upgrade Server Software |
+| 63 | View Server History | [180 Server History Join](messages/administration.md#m180) |
+| 64 | Shutdown Server | [174 Shutdown Server](messages/administration.md#m174), [175 Upgrade Server Software](messages/administration.md#m175) |
 | 65 | Disable Encryption |
-| 66 | View Display | 900 Open View Display |
-| 67 | Control Display | 902 View Display Params, 904, 905 | 412 Download File, 415 Upload File (plain mode) |
-| 70 | View News | 605 Get Newsgroup List, 607 Get News Messages, 609 Get News Message |
+| 66 | View Display | [900 Open View Display](messages/view-display.md#m900) |
+| 67 | Control Display | [902 View Display Params](messages/view-display.md#m902), [904 View Display Mouse](messages/view-display.md#m904), [905 View Display Keyboard](messages/view-display.md#m905) | 412 Download File, 415 Upload File (plain mode) |
+| 70 | View News | [605 Get Newsgroup List](messages/news.md#m605), 607 Get News Messages, 609 Get News Message |
 | 71 | Post News | 607 Get News Messages, 611 Post News Message |
 | 72 | Delete News Messages | 607 Get News Messages, 612 Delete News Message |
-| 73 | Create/Modify Newsgroups | 505 Get Account Class List, 600 Create Newsgroup, 601 Delete Newsgroup, 602 Get Newsgroup, 604 Set Newsgroup |
+| 73 | Create/Modify Newsgroups | 505 Get Account Class List, [600 Create Newsgroup](messages/news.md#m600), [601 Delete Newsgroup](messages/news.md#m601), [602 Get Newsgroup](messages/news.md#m602), [604 Set Newsgroup](messages/news.md#m604) |
 | 74 | See Logins In News | 609 Get News Message |
-| 80 | View Processes | 800 Open Process Monitor, 802 Get Process List |
-| 81 | Terminate Processes | 804 Exit/Terminate Process |
-| 82 | Launch Programs | 175 Upgrade Server Software, 420 Launch File |
+| 80 | View Processes | [800 Open Process Monitor](messages/processes.md#m800), [802 Get Process List](messages/processes.md#m802) |
+| 81 | Terminate Processes | [804 Exit/Terminate Process](messages/processes.md#m804) |
+| 82 | Launch Programs | 175 Upgrade Server Software, [420 Launch File](messages/files.md#m420) |
 
 Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can
 Login; bit 2 has no name in the client's table **[S]**. Answering no to

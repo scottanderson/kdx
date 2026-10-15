@@ -1,16 +1,21 @@
 # Process messages
 
-Listing and ending the processes of the server host.
+Message types 800 to 804: listing and ending the processes of the server host.
 
-**800 Open Process Monitor** / **801 Close Process Monitor**
-Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b394`,
-`FUN_0805b418`]**
+## <a id="m800"></a>800 Open Process Monitor
+Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b394`]**
 
-**802 Get Process List** → **803 Process List**
+## <a id="m801"></a>801 Close Process Monitor
+Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b418`]**
+
+## <a id="m802"></a>802 Get Process List
 Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b454`; O]**
 
 The request is empty. The server runs `/bin/ps auxwww` (its own child shows
-up in the list) and replies:
+up in the list) and replies with [803 Process List](#m803).
+
+## <a id="m803"></a>803 Process List
+Initiator: Server. Reply to [802 Get Process List](#m802).
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -32,7 +37,7 @@ Each process entry is padded to 4:
 | 0x3a | 1 | command length | at most 0xff; longer commands are cut |
 | 0x3c | | command, user | |
 
-**804 Exit/Terminate Process**
+## <a id="m804"></a>804 Exit/Terminate Process
 Initiator: Client. Privilege: Terminate Processes (81). **[S
 `FUN_0805b8f4`, `FUN_08090c6c`]**
 

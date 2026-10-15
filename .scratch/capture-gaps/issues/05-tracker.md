@@ -25,7 +25,8 @@ UDP 10800 by default.
 4. Commands → the tracker → Statistics (720/721).
 5. Optional: set a tracker greeting and reconnect (107 after login).
 
-What the capture should confirm, from `docs/protocol/tracker.md`:
+What the capture should confirm, from `docs/protocol/udp.md` and
+`messages/tracker.md`:
 
 - the UDP datagram decrypts with the LCG and passes the CRC check;
 - the 701, 703, 711, and 721 layouts;
@@ -47,11 +48,9 @@ Unknowns the capture or a static read should settle, each recorded in
 `kdx-dissect` does not decode the tracker yet (`.scratch/tracker/` issue 03),
 so check frames by hand or with a quick script until it does.
 
-## Comments
-
-2026-10-10: Read statically first; see `docs/protocol/tracker.md`. The steps
-above now name the admin login, the guest refusal, and the distinct field
-values that the static read calls for.
+## Comments  2026-10-10: Read statically first; see `docs/protocol/udp.md` and
+`messages/tracker.md`. The steps above now name the admin login, the guest
+refusal, and the distinct field values that the static read calls for.
 
 2026-10-11: The static unknowns are settled in `tracker.md`: offset 0x34 is
 the tracker entry's Login, the server registers every 400000 ms, flags bit 1
