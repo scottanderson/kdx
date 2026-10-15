@@ -11,7 +11,8 @@ cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-p
 ## What it handles
 
 - Server connections, and the transfer connections that attach to them, using
-  the session keys from the capture's 105 Server Info messages.
+  the session keys from the capture's
+  [105 Server Info](../protocol/messages/session.md#m105) messages.
 - Tracker sessions and the UDP registrations sent to a tracker.
 - Client to client (DCC) connections and GConsole.
 

@@ -1,5 +1,7 @@
 # Client to server
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 The main connection: a client talks to a KDX server on TCP 10700. Every message
 in the [index](messages/README.md) except the tracker and GConsole ones goes
 over it, and so do file transfers, on extra connections.
@@ -16,11 +18,11 @@ over it, and so do file transfers, on extra connections.
    logged-in user ([transfers.md](transfers.md)).
    **[S `FUN_0805270c`]**
 3. Messages follow, each a 16-byte header and a payload encrypted under the
-   account key ([framing.md](framing.md)). **[S, O]**
+   account key ([framing.md](framing.md)). **[S; O]**
 4. The client sends [100 Set Identity](messages/session.md#m100), and the server
    answers with the user list and server info. The full exchange is in
-   [sequences.md](sequences.md#login).
-   **[O `captures/linux-first-connect.pcapng` frames 23, 24]**
+   [sequences.md](sequences.md#login). **[O
+   `captures/linux-first-connect.pcapng` frames 23, 24]**
 
 ## Requests and replies
 

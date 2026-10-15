@@ -1,16 +1,17 @@
 # View display messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 900 to 905: remote viewing of the server host screen.
 
-View display shares the server's screen. It runs on a transfer connection
-(see [transfers.md](../transfers.md)), not on the session
-**[S `FUN_08052194`]**.
-Server 1.620 for Linux can't capture its screen (`FUN_080996d8` raises
-0x10004), so [900 Open View Display](#m900) there only gets an error, and its
-input injectors are empty. The layouts below are read from the server's code and
-the client's decoder **[S]**. Server 1.600 for Windows has the same code at
-other addresses (`FUN_00418dc0` for 900, `FUN_00418850` for the grab) and grabs
-the primary screen with `BitBlt` from the desktop window into a 24-bit DIB **[S
+View display shares the server's screen. It runs on a transfer connection (see
+[transfers.md](../transfers.md)), not on the session **[S `FUN_08052194`]**.
+Server 1.620 for Linux can't capture its screen (`FUN_080996d8` raises 0x10004),
+so [900 Open View Display](#m900) there only gets an error, and its input
+injectors are empty. The layouts below are read from the server's code and the
+client's decoder **[S]**. Server 1.600 for Windows has the same code at other
+addresses (`FUN_00418dc0` for 900, `FUN_00418850` for the grab) and grabs the
+primary screen with `BitBlt` from the desktop window into a 24-bit DIB **[S
 `FUN_0041ffd0`]**. It serves Client 1.620 beta 5 under Wine in
 `captures/win-view-display.pcapng` **[O]**.
 
@@ -27,7 +28,7 @@ A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
 
 ## <a id="m901"></a>901 Close View Display
 Initiator: Client. It has no handler: the client closes the connection, and
-sends no 901 (frame 420) **[O]**.
+sends no [901 Close View Display](#m901) (frame 420) **[O]**.
 
 ## <a id="m902"></a>902 View Display Params
 Initiator: Server. Reply to [900 Open View Display](#m900).
@@ -54,13 +55,14 @@ channel **[S `FUN_0805bb54`]**. The value 0x6c59 means unchanged; a real
 0x6c59 is sent as 0x6c5a. A frame after the first marks every unchanged
 pixel this way, but still covers the whole screen; the rectangle is the
 bounding box of the changed pixels, and the client only uses it to redraw
-**[S client `FUN_0806f864`]**. No change sends no 903. A new screen size
-starts a fresh full frame, and its bottom is 0xffff rather than the height
-**[S `FUN_0805bb54`, `FUN_00418850`]**. The client reallocates its frame
-buffer when the size changes.
+**[S client `FUN_0806f864`]**. No change sends no
+[903 View Display Update](#m903). A new screen size starts a fresh full frame,
+and its bottom is 0xffff rather than the height **[S `FUN_0805bb54`,
+`FUN_00418850`]**. The client reallocates its frame buffer when the size
+changes.
 
-The stream is a sequence of codes, read as u16 words **[S server
-`FUN_0805ba44`, `FUN_0805c5bc`; client `FUN_0806f36c`]**:
+The stream is a sequence of codes, read as u16 words **[S server `FUN_0805ba44`,
+`FUN_0805c5bc`, client `FUN_0806f36c`]**:
 
 - A word with bit 15 clear is one pixel.
 - A word with bit 15 set gives colour A = word & 0x7fff, and the next word
@@ -119,7 +121,7 @@ Display (67). **[S `FUN_0805c498`, client `FUN_0806f1f4`]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
-| 0x00 | 4 | modifiers | from Client 1.600: Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 **[S client 1.600 `FUN_00463870`]**; Client 1.620 beta 5's bits are unknown **[I]** |
+| 0x00 | 4 | modifiers | from Client 1.600 (`FUN_00463870`): Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 **[S client `FUN_00463870`]**; Client 1.620 beta 5's bits are unknown **[I]** |
 | 0x04 | 2 | character | **[O]** |
 | 0x06 | 2 | key code | **[O]**; `a` = 4, `b` = 5, `c` = 6 from Client 1.620 |
 | 0x08 | 3 | 0 | |
@@ -132,9 +134,9 @@ followed by a kind 2 that is zero apart from the kind (frames 312-322)
 
 The server turns kinds 1-3 back into events 5, 6, 7 **[S `FUN_0805c498`,
 `FUN_00419110`]**. Server 1.600 for Windows ignores the character and the
-modifiers. It looks the key code's low byte up in a 256-entry table of
-virtual keys and calls `keybd_event`, with key up for kind 2 and key down
-otherwise **[S `FUN_00420380`, table at `0x0047fe98`]**.
+modifiers. It looks the key code's low byte up in a 256-entry table of virtual
+keys and calls `keybd_event`, with key up for kind 2 and key down otherwise
+(`FUN_00420380`, with the table at 0x0047fe98) **[S `FUN_00420380`]**.
 
 The two clients send different key codes **[S]**:
 

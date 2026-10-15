@@ -1,5 +1,7 @@
 # Transaction sequences
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 Complete exchanges, in order.
 
 ## Login
@@ -31,14 +33,15 @@ before sending its hello (`captures/kdx-accounts.pcapng`, the connections
 after frame 467) **[O]**. The ban lasted at least five minutes and ended
 when the server restarted.
 
-That limit is in the network layer that Server, Tracker, and Client share
-(the client applies it to its DCC listener) **[S server `FUN_08071c90`,
-called from accept `FUN_08097e80`; tracker `FUN_0806bbac`; client
-`FUN_080ca7cc`]**. Per source address it counts accepted connections in a
-window of 300 seconds. The 31st within a window adds the address to a block
-list for 3600 seconds and logs 0x40077; while blocked, each new connection
-is closed at once. The limits (30 and 300) are defaults that nothing
-changes. Unlike the server's own ban list, this one also blocks 127.0.0.1.
+That limit is in the network layer that Server, Tracker, and Client share (the
+client applies it to its DCC listener). The server's copy, `FUN_08071c90`, is
+called from accept `FUN_08097e80` **[S server `FUN_08071c90`, server
+`FUN_08097e80`, tracker `FUN_0806bbac`, client `FUN_080ca7cc`]**. Per
+source address it counts accepted connections in a window of 300 seconds. The
+31st within a window adds the address to a block list for 3600 seconds and logs
+0x40077; while blocked, each new connection is closed at once. The limits (30
+and 300) are defaults that nothing changes. Unlike the server's own ban list,
+this one also blocks 127.0.0.1.
 
 Two more limits apply at accept **[S `FUN_08052ad0`]**. An address with 6
 connections already open gets its new one closed without a word. And an address
@@ -47,13 +50,13 @@ on the server's ban list (bans from
 below) is rejected and logged, except 127.0.0.1, which the ban list never
 matches **[S `FUN_08061398`]**.
 
-The server also counts each connection's requests **[S `FUN_0804fc40`,
-called per message from the session loop]**. The limit L is the account
+The server also counts each connection's requests, calling `FUN_0804fc40` per
+message from the session loop **[S `FUN_0804fc40`]**. The limit L is the account
 class's flood protection byte
 ([503 Account Class Info](messages/accounts.md#m503) offset 0x25); a connection
-with no class yet gets 40. The client's menu names the values **[S client
-resources at file offset 0xf6cd8]**: Very Strict 20, Strict 40, Average 60,
-Relaxed 80, Very Relaxed 120, Total Slacker 200, Off 0. With 0 there is no
+with no class yet gets 40. The client's menu names the values, at file offset
+0xf6cd8 of the client's resources **[S]**: Very Strict 20, Strict 40, Average
+60, Relaxed 80, Very Relaxed 120, Total Slacker 200, Off 0. With 0 there is no
 check.
 
 Each request adds 1 to the count, starting with the login's
@@ -91,7 +94,7 @@ A client confirms a request that has no success reply, such as
 [115 Get My Address](messages/session.md#m115) after it. The server handles one
 connection's requests in order, so an error for the post arrives before
 [116 Your Address](messages/session.md#m116) **[O `captures/kdx-news.pcapng`
-frames 356-361]**.
+frames 356 to 361]**.
 
 ## Logout
 

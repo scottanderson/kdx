@@ -1,5 +1,7 @@
 # Private messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 300 to 301: a private message to one user. A client also sends
 [300 Send Private Message](#m300) to another client on a DCC connection; see
 [dcc.md](../dcc.md#primary-connection).

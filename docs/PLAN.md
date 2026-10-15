@@ -36,7 +36,8 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
 - Verified: the server listens on TCP 10700 only (no UDP listener) and waits
   for the client to send first. On a bad first packet it logs
   `The network protocol is unknown. (ID 4/113 @ TRN941)`.
-- An unregistered client reports itself with 118, and the server then sends
+- An unregistered client reports itself with
+  [118 (unnamed)](protocol/messages/session.md#m118), and the server then sends
   it a licence reminder every 15 minutes or so during its first two hours
   (`protocol/messages/session.md`, 118). No other limit has been found.
 
@@ -99,12 +100,12 @@ Status (2026-10-12). "Client works" means the `kdx` CLI did it against Server
 | Area | Documented | Codec tested on a capture | Client works |
 |---|---|---|---|
 | 1. Login | yes, including guest | yes | yes (admin and guest) |
-| 2. Users | user record, 101 to 107, 110, 111, 118, 152, 153; the icon bitmap format not yet | yes | user list |
-| 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); 223 with one entry | yes | join, say, listen, msg |
-| 4. News | yes; 600, 601, 604 captured (`linux-accounts-news`) | yes | read, post, delete |
-| 5. Files | yes; 420, 422, 423, 450-453 captured (`linux-catalog-volumes`) | yes | ls, get, put |
-| 6. Accounts, admin | yes, with every privilege bit named; 1101, 1102, 1105, and flood warnings captured (`linux-accounts-folder-access`); 174, 175, and 804 captured (`linux-shutdown`); a successful 175 in `linux-upgrade` | yes | account list, show, add, set, rm; passwd |
-| 7. Tracker | yes; registration, 700-703, 710-713, 720/721 captured (`linux-tracker`) | yes; 115/116 not captured | groups, servers, stats |
+| 2. Users | user record, [101 User List](protocol/messages/session.md#m101) to [107 Server Greeting](protocol/messages/session.md#m107), [110 Set Mini User Icon](protocol/messages/session.md#m110), [111 Mini User Icon Changed](protocol/messages/session.md#m111), [118 (unnamed)](protocol/messages/session.md#m118), [152 Get User Info](protocol/messages/administration.md#m152), [153 User Info](protocol/messages/administration.md#m153); the icon bitmap format not yet | yes | user list |
+| 3. Chat, private messages | yes; 200-223 captured (`linux-chat-admin`, `linux-chat-rooms`, `kdx-cli`); [223 Chat DCC Addresses](protocol/messages/chat.md#m223) with one entry | yes | join, say, listen, msg |
+| 4. News | yes; [600 Create Newsgroup](protocol/messages/news.md#m600), [601 Delete Newsgroup](protocol/messages/news.md#m601), [604 Set Newsgroup](protocol/messages/news.md#m604) captured (`linux-accounts-news`) | yes | read, post, delete |
+| 5. Files | yes; [420 Launch File](protocol/messages/files.md#m420), [422 Volume Info](protocol/messages/files.md#m422), [423 Set Volume Info](protocol/messages/files.md#m423), [450 Generate Catalog](protocol/messages/files.md#m450)-[453 File Search (R)](protocol/messages/files.md#m453) captured (`linux-catalog-volumes`) | yes | ls, get, put |
+| 6. Accounts, admin | yes, with every privilege bit named; [1101 Delete Folder Access](protocol/messages/folder-access.md#m1101), [1102 Folder Access Deleted](protocol/messages/folder-access.md#m1102), [1105 Set Folder Access](protocol/messages/folder-access.md#m1105), and flood warnings captured (`linux-accounts-folder-access`); [174 Shutdown Server](protocol/messages/administration.md#m174), [175 Upgrade Server Software](protocol/messages/administration.md#m175), and [804 Exit/Terminate Process](protocol/messages/processes.md#m804) captured (`linux-shutdown`); a successful 175 in `linux-upgrade` | yes | account list, show, add, set, rm; passwd |
+| 7. Tracker | yes; registration, [700 Get Tracker Group List](protocol/messages/tracker.md#m700)-[703 Tracker Server List](protocol/messages/tracker.md#m703), [710 Get TrackerServ Settings](protocol/messages/tracker.md#m710)-[713 Set TrackerServ Settings Done](protocol/messages/tracker.md#m713), [720 Get TrackerServ Statistics](protocol/messages/tracker.md#m720)/[721 TrackerServ Statistics](protocol/messages/tracker.md#m721) captured (`linux-tracker`) | yes; [115 Get My Address](protocol/messages/session.md#m115)/[116 Your Address](protocol/messages/session.md#m116) not captured | groups, servers, stats |
 | 8. Voice, view display | yes; view display 900-905 captured from a Windows server (`win-view-display`); voice statically only (`protocol/dcc.md`) | no | no |
 
 ### Phase 4: Spec format
@@ -152,9 +153,27 @@ it does async I/O.
 | `kdx-dissect` | program | pcap to text |
 
 `kdx-proto::msg` has codecs for the payloads in areas 1 to 5, and in area 6
-for the account messages, 114, 116, 143, 150 to 152, 154, 155, 171 and 172
-(the named fields, with the rest kept as raw bytes), 174, 181, 183, 803, 804,
-1107, and the folder access record of 1100, 1104, and 1105.
+for the account messages,
+[114 Extra Server Info](protocol/messages/session.md#m114),
+[116 Your Address](protocol/messages/session.md#m116),
+[143 Connection Monitor Info](protocol/messages/monitoring.md#m143),
+[150 Disconnect User](protocol/messages/administration.md#m150) to
+[152 Get User Info](protocol/messages/administration.md#m152),
+[154 Send Broadcast Message](protocol/messages/administration.md#m154),
+[155 Rcv Broadcast Message](protocol/messages/administration.md#m155),
+[171 Server Settings Info](protocol/messages/administration.md#m171) and
+[172 Set Server Settings](protocol/messages/administration.md#m172) (the named
+fields, with the rest kept as raw bytes),
+[174 Shutdown Server](protocol/messages/administration.md#m174),
+[181 Server History Join (R)](protocol/messages/administration.md#m181),
+[183 Server History Added](protocol/messages/administration.md#m183),
+[803 Process List](protocol/messages/processes.md#m803),
+[804 Exit/Terminate Process](protocol/messages/processes.md#m804),
+[1107 Folder Access List](protocol/messages/folder-access.md#m1107), and the
+folder access record of
+[1100 Create Folder Access](protocol/messages/folder-access.md#m1100),
+[1104 Folder Access Info](protocol/messages/folder-access.md#m1104), and
+[1105 Set Folder Access](protocol/messages/folder-access.md#m1105).
 
 ## Open decisions
 - None currently.

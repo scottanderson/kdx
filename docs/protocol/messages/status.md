@@ -1,5 +1,7 @@
 # Status
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message type 1: the reply that carries a result code, for an error or for a
 success. The codes are in [Error codes](#error-codes).
 
@@ -9,7 +11,7 @@ Initiator: Server. A tracker and a DCC peer send it too. Sent as a reply. **[S
 `FUN_08086640`, `FUN_080865c0`; O]**
 
 The dispatcher (`FUN_0804fdac`) runs each handler inside a C++ `try`. The
-catch at 0x0805090c turns the exception into a 1 Status reply to the
+catch at 0x0805090c turns the exception into a [1 Status](#m1) reply to the
 request's txid. Some handlers also send 1 Status on success.
 
 Error form, 24 bytes:
@@ -46,7 +48,8 @@ code's class and number, the module, and the line **[S]**.
 
 The tracker's error Status is 8 bytes: the error code, then the request type as
 a u32, like the first 8 bytes of the server's 24-byte error form above **[O
-`captures/linux-tracker.pcapng` frames 61, 164; `kdx-cli-tracker` 39, 53]**:
+`captures/linux-tracker.pcapng` frames 61, 164; O
+`captures/kdx-cli-tracker.pcapng` frames 39, 53]**:
 
 ```
 00 01 00 14  00 00 02 c6    0x10014 for 710

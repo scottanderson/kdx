@@ -1,5 +1,7 @@
 # Transfer connections
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 How a download or upload runs on its own connection. The messages it carries
 are [412 Download File](messages/files.md#m412) to
 [418 Upload File (C)](messages/files.md#m418) and
@@ -9,10 +11,10 @@ are [412 Download File](messages/files.md#m412) to
 ## Connecting
 
 Files move on a second connection to the same port, attached to a user who is
-already logged in. **[S `FUN_0805270c`, `FUN_080528c8`, `FUN_08052194`; O
-kdx-probe `--attach`]** When [105 Server Info](messages/session.md#m105) names a
-file transfer port, the client connects there instead **[S client
-`FUN_08052cc0`]**.
+already logged in (seen with `kdx-probe --attach`). **[S `FUN_0805270c`,
+`FUN_080528c8`, `FUN_08052194`; O]** When
+[105 Server Info](messages/session.md#m105) names a file transfer port, the
+client connects there instead **[S client `FUN_08052cc0`]**.
 
 1. The client connects and runs the normal handshake with a special login:
    - the login name is 5 bytes: `00`, then the u32 user ID from 105 Server
@@ -32,7 +34,7 @@ file transfer port, the client connects there instead **[S client
    [900 Open View Display](messages/view-display.md#m900),
    [904 View Display Mouse](messages/view-display.md#m904),
    [905 View Display Keyboard](messages/view-display.md#m905) (view display). It
-   ignores everything else, including [108 Ping](messages/session.md#m108) **[S,
+   ignores everything else, including [108 Ping](messages/session.md#m108) **[S;
    O]**.
 4. One transfer runs at a time per connection. A second 412 Download File or 415
    Upload File during a transfer gets [1 Status](messages/status.md#m1) 0x10003.

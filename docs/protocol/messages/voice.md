@@ -1,5 +1,7 @@
 # Voice messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 1000 to 1003: voice between two clients on a DCC connection. The
 sequence that uses them is in [dcc.md](../dcc.md#voice).
 
@@ -19,9 +21,9 @@ Reply to [1000 Start Voice](#m1000), a u32:
 - 0x00640007 if the peer's Voice Controls window is not open;
 - 0, followed by the peer's own [1002 Set Voice Format](#m1002), if it is.
 
-On 1001 the caller sends its 1002 if the value is 0. Otherwise it shows "The
-remote user does not have his/her Voice Controls window open." and closes
-the connection **[S `FUN_08094218`]**.
+On [1001 Start Voice (R)](#m1001) the caller sends its 1002 if the value is 0.
+Otherwise it shows "The remote user does not have his/her Voice Controls window
+open." and closes the connection **[S `FUN_08094218`]**.
 
 ## <a id="m1002"></a>1002 Set Voice Format
 

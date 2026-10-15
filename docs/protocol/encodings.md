@@ -1,8 +1,10 @@
 # Common encodings
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 Strings, times, paths, and the user and chat records that many messages share.
-Evidence tags and byte order are explained in [the protocol
-reference](README.md).
+Evidence tags and byte order are explained in
+[the protocol reference](README.md).
 
 ## Strings
 
@@ -67,22 +69,22 @@ the bytes unchanged in 208,
 [301 Incoming Private Message](messages/private-messages.md#m301),
 [610 News Message](messages/news.md#m610), and
 [102 User Changed](messages/session.md#m102) and on disk **[O
-`linux-text-encoding` 90, 103, 118-121, 249-250, 319-325, 327-330]**. String
-lengths count bytes. A name matches only its own bytes: with `caf\xc3\xa9.txt`
-and `caf\x8e.txt` in one folder, 401 lists both and
-[412 Download File](messages/files.md#m412) fetches each by its own spelling
-**[O 41, 52, 71]**.
+`captures/linux-text-encoding.pcapng` frames 90, 103, 118 to 121, 249 to 250,
+319 to 325, 327 to 330]**. String lengths count bytes. A name matches only its
+own bytes: with `caf\xc3\xa9.txt` and `caf\x8e.txt` in one folder, 401 lists
+both and [412 Download File](messages/files.md#m412) fetches each by its own
+spelling **[O frames 41, 52, 71]**.
 
 The decoders never fail. Each invalid sequence becomes one U+FFFD: a stray
-continuation byte (0x80 to 0xbf) or a 0xf8+ lead uses up 1 byte, but a lead
-byte with bad continuations or an overlong form uses up the whole length it
-claims, and a sequence cut off at the end uses up the rest. So `Erik\xd5s`
-shows as `Erik�`, losing the `s` (Windows client 0x00457190, Windows server
+continuation byte (0x80 to 0xbf) or a 0xf8+ lead uses up 1 byte, but a lead byte
+with bad continuations or an overlong form uses up the whole length it claims,
+and a sequence cut off at the end uses up the rest. So `Erik\xd5s` shows as
+`Erik�`, losing the `s` (Windows client 0x00457190, Windows server
 `FUN_00428490`, Linux client `FUN_080e75d8`) **[S]**. The Linux client shows
-`caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses up the space after
-it, so the client draws three boxes **[O `linux-text-encoding` 195, 302]**.
-Encoding the other way, a lone UTF-16 surrogate becomes U+FFFD
-(`FUN_00428640`) **[S]**.
+`caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses up the space after it,
+so the client draws three boxes **[O `captures/linux-text-encoding.pcapng`
+frames 195, 302]**. Encoding the other way, a lone UTF-16 surrogate becomes
+U+FFFD (`FUN_00428640`) **[S]**.
 
 KDX switched to Unicode in 1.2. Each client and server archive in
 `vendor/MANIFEST.md` ships Haxial's release notes as `UPGRADE WARNINGS.html`
@@ -148,9 +150,9 @@ server, user ID 0) and in [101 User List](messages/session.md#m101),
 | 0x05 | 5 | 0 | |
 | 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture **[O]**; **[S client `FUN_0804d654`]**) |
 | 0x0c | 2 | icon length | < 0x709 |
-| 0x0e | 6 | | from the client: two 3-byte RGB colours **[S client `FUN_0804d654`]**; `00 00 00 ff cc 00` in the capture |
-| 0x14 | 1 | | set by the server; 0 from the client, 0xff for admin **[O]** |
-| 0x15 | 2 | | set by the server |
+| 0x0e | 6 | colours | from the client: two 3-byte RGB colours **[S client `FUN_0804d654`]**; `00 00 00 ff cc 00` in the capture |
+| 0x14 | 1 | server byte | set by the server; 0 from the client, 0xff for admin **[O]** |
+| 0x15 | 2 | server word | set by the server |
 | 0x17 | 1 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
 | 0x18 | 1 | extra length | skipped by the server |
 | 0x19 | 1 | nick length | |
@@ -172,7 +174,8 @@ server, user ID 0) and in [101 User List](messages/session.md#m101),
 
 ## Chat record
 
-**[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O 219 Chat Info]**
+The record of [219 Chat Info](messages/chat.md#m219)
+**[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O]**
 
 This record is used in [217 Create Chat](messages/chat.md#m217),
 [219 Chat Info](messages/chat.md#m219), and
@@ -191,19 +194,19 @@ This record is used in [217 Create Chat](messages/chat.md#m217),
 | 0x2a | 1 | name length | ≤ 0x3f |
 | 0x2b | 1 | description length | ≤ 0x7f |
 | 0x2c | 1 | IRC server length | ≤ 0x7f; `host:port`, the client adds `:6667` if there is no port **[S client `FUN_080823a0`]** |
-| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix **[S client]** |
+| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix **[S]** |
 | 0x30 | | strings | |
 
-The two IRC strings make the chat an IRC gateway (the client's chat editor
-calls them Make IRC Gateway: IRC Server, Channel). The server only stores
-them. Each client that joins the chat opens its own connection to the IRC
-server, joins the channel, and uses a nick made from the user's nick (at most
-9 characters). The client's IRC sender treats a line starting with `/` as an
-IRC command and one starting with `\` as raw IRC; how a chat window splits
-text between KDX and IRC is not traced **[I]**. The client
-answers CTCP VERSION with "Unholy Haxial KDX/IRC Client" **[S client
-`FUN_08082b90`, `FUN_0809767c`, `FUN_08097c30`, `FUN_08097f78`]**. So the
-"IRC bridge" is client-side; Server 1.620 has no IRC code.
+The two IRC strings make the chat an IRC gateway (the client's chat editor calls
+them Make IRC Gateway: IRC Server, Channel). The server only stores them. Each
+client that joins the chat opens its own connection to the IRC server, joins the
+channel, and uses a nick made from the user's nick (at most 9 characters). The
+client's IRC sender treats a line starting with `/` as an IRC command and one
+starting with `\` as raw IRC; how a chat window splits text between KDX and IRC
+is not traced **[I]**. The client answers CTCP VERSION with "Unholy Haxial
+KDX/IRC Client" **[S client `FUN_08082b90`, `FUN_0809767c`, `FUN_08097c30`,
+`FUN_08097f78`]**. So the "IRC bridge" is client-side; Server 1.620 has no IRC
+code.
 
 A new server starts with three chats **[S `FUN_08058140`]**: 1 Public Chat
 ("For all users"), 2 Voice Chat (voice flag), and 3 Admin Lounge ("For the

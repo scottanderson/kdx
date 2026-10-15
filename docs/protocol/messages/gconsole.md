@@ -1,5 +1,7 @@
 # GConsole messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 4000 to 4201, on the connection described in
 [gconsole.md](../gconsole.md).
 
@@ -16,10 +18,10 @@ The peer sends [4000 Open Window](#m4000) and [4001 Draw](#m4001) **[S
 Initiator: GConsole peer. **[S `FUN_08094be8`]**
 
 At least 0x18 bytes: u16 width (0x40..0x1000), u16 height (0x10..0x1000),
-then a u32 colour the window is filled with. A second 4000 fails with
-0x10003. Frame 10 opened a 0x200 × 0x180 window filled with 0x00336699
-**[O]**. The colour goes through `FUN_08114bc8` first; colours are described
-under [4001 Draw](#m4001).
+then a u32 colour the window is filled with. A second [4000 Open Window](#m4000)
+fails with 0x10003. Frame 10 opened a 0x200 × 0x180 window filled with
+0x00336699 **[O]**. The colour goes through `FUN_08114bc8` first; colours are
+described under [4001 Draw](#m4001).
 
 ## <a id="m4001"></a>4001 Draw
 
@@ -92,7 +94,7 @@ Initiator: Client (to GConsole peer). Sent by `FUN_08096188` **[S]**:
 All **[O]**, frames 20-46. Each wheel step sends two identical messages
 (40, 42).
 
-The modifier bits are Client 1.600's: Ctrl 0x21, Alt 2, Shift 8, Caps Lock
-4, Windows 0x30 **[S client 1.600 `FUN_00463870`]**. Client 1.600 sends its
-own key codes at 0x0c instead of HID usages; see
+The modifier bits are Client 1.600's (`FUN_00463870`): Ctrl 0x21, Alt 2, Shift
+8, Caps Lock 4, Windows 0x30 **[S client `FUN_00463870`]**. Client 1.600 sends
+its own key codes at 0x0c instead of HID usages; see
 [905 View Display Keyboard](view-display.md#m905) **[S `FUN_00448830`]**.

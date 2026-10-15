@@ -1,5 +1,7 @@
 # Messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Every message type, in order, grouped by the page that describes it. Each page
 covers one contiguous range of type numbers, so a type's page can be found from
 its number alone.

@@ -1,5 +1,7 @@
 # Session messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 100 to 118: setup, identity, user list, server information,
 greeting, ping, and the key exchange between clients.
 
@@ -12,7 +14,7 @@ with user ID 0.
 
 - The nick takes effect only with the Use Any Name privilege; otherwise the
   account name is used. Changes are logged as `Set Name: <…> (…)`.
-- No direct reply. On the first 100 Set Identity, the server sends, in
+- No direct reply. On the first [100 Set Identity](#m100), the server sends, in
   order:
   - [101 User List](#m101);
   - [105 Server Info](#m105);
@@ -48,7 +50,7 @@ Sent to everyone else after a user's first
 [100 Set Identity](#m100). One user record.
 
 ## <a id="m104"></a>104 User Departed
-Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
+Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429; O
 `captures/linux-chat-admin.pcapng` frames 59, 116]**
 
 | Off | Size | Field | Notes |
@@ -61,7 +63,7 @@ Initiator: Server. **[O `captures/kdx-cli.pcapng` frames 398, 429;
 `linux_chat_admin`).
 
 ## <a id="m105"></a>105 Server Info
-Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
+Initiator: Server. Observed size: 86 bytes. **[S `FUN_0804b304`; O]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -70,7 +72,7 @@ Initiator: Server. **[S `FUN_0804b304`; O 86 bytes]**
 | 0x24 | 4 | your user ID | **[O]** 7 and 8 in successive probes |
 | 0x28 | 2 | server version | 0x0654 = 1620 |
 | 0x2a | 2 | can modify settings | 1 with Modify Server Settings |
-| 0x46 | 2 | | 2. Unless it is 2, the client compares the version and warns about an older or newer server **[S client]**; Server 1.620 always sends 2, so the warning never shows |
+| 0x46 | 2 | | 2. Unless it is 2, the client compares the version and warns about an older or newer server **[S]**; Server 1.620 always sends 2, so the warning never shows |
 | 0x48 | 1 | name length | ≤ 0x3f |
 | 0x49 | 1 | description length | ≤ 0xff |
 | 0x4a | 1 | third string length | ≤ 0x7f |
@@ -201,8 +203,7 @@ connection IDs 2 and 4 **[O]**. `kdx_proto::msg::dcc::Skpk` re-encodes frames
 22 and 25 byte for byte.
 
 ## <a id="m118"></a>118 (unnamed)
-Initiator: Client. **[S `FUN_0804fdac`; O `captures/probe.pcapng` frame
-165]**
+Initiator: Client. **[S `FUN_0804fdac`; O `captures/probe.pcapng` frame 165]**
 Handled inline in the dispatcher **[S]**.
 
 | Off | Size | Field |
@@ -213,11 +214,10 @@ No reply. The server stores 1 if the value is nonzero and 2 if it is zero
 (user +0x3b). The probe sent `00 00 00 01` and got no reply **[O]**.
 `kdx_proto::msg::user::RegistrationNotice` re-encodes it.
 
-The client sends it on a timer, 9000000 ms plus a random 0..0x4fffff ms
-after login **[S client `FUN_0804c01c`]**. The value comes from the
-client's stored purchase certificate (its length; 0 without one) **[S
-client `FUN_08107e04`]**. So it reports whether the client is registered
-**[I]**.
+The client sends it on a timer, 9000000 ms plus a random 0..0x4fffff ms after
+login **[S client `FUN_0804c01c`]**. The value comes from the client's stored
+purchase certificate (its length; 0 without one) **[S client `FUN_08107e04`]**.
+So it reports whether the client is registered **[I]**.
 
 The server acts on it **[S `FUN_0804b7c8`]**: every 900000 ms plus a random
 0..0x8ffff ms, it sends [155 Rcv Broadcast Message](administration.md#m155)

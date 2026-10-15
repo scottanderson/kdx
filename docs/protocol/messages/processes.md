@@ -1,5 +1,7 @@
 # Process messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 800 to 804: listing and ending the processes of the server host.
 
 ## <a id="m800"></a>800 Open Process Monitor
@@ -38,8 +40,8 @@ Each process entry is padded to 4:
 | 0x3c | | command, user | |
 
 ## <a id="m804"></a>804 Exit/Terminate Process
-Initiator: Client. Privilege: Terminate Processes (81). **[S
-`FUN_0805b8f4`, `FUN_08090c6c`]**
+Initiator: Client. Privilege: Terminate Processes (81). **[S `FUN_0805b8f4`,
+`FUN_08090c6c`]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|

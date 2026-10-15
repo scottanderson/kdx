@@ -1,13 +1,16 @@
 # Connection monitor messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 140 to 143: watching the list of connections to the server.
 
 ## <a id="m140"></a>140 Open Connection Monitor
 Initiator: Client. **[S]**
 Handled inline in the dispatcher **[S]**.
 
-140 and [141 Close Connection Monitor](#m141) need Get User Info (bit 40)
-and turn a per-user flag on or off. There is no reply.
+[140 Open Connection Monitor](#m140) and [141 Close Connection Monitor](#m141)
+need Get User Info (bit 40) and turn a per-user flag on or off. There is no
+reply.
 
 ## <a id="m141"></a>141 Close Connection Monitor
 Initiator: Client. **[S]**
@@ -42,14 +45,14 @@ count in front, each padded to 4 **[S `FUN_0804b9b0`]**:
 | 0x30 | 4 | rate | transfer record only: bytes per second since the start, not counting a resumed offset **[S]**; 0x51a1 under a 0x5000 limit **[O]** |
 | 0x34 | 4 | seconds left | transfer record only: (total − done) / rate **[S]** |
 | 0x38 | 4 | | transfer record only; a per-transfer value **[S]**; 0x5000, the server's speed limit, in every record **[O]** |
-| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 **[S]**; 0x19c (412) for a download **[O]** |
+| 0x3c | 4 | state | transfer record only; 0x90 while data is queued and the state is 0 **[S]**; 0x19c ([412 Download File](files.md#m412)) for a download **[O]** |
 | 0x40 | 2 | 0 | |
 | 0x42 | 1 | account class index | **[S]** |
 | 0x60 | 1 | nick length | |
 | 0x61 | 1 | login length | |
 | 0x62 | 1 | account class name length | `?` if the class is gone **[S]** |
 | 0x63 | 1 | address length | the connection's peer address; the transfer connection's in a transfer record **[S]** |
-| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages **[S, O]** |
+| 0x66 | 2 | path length | transfer record only: the file path, as in the file messages **[S; O]** |
 | 0x68 | | nick, login, account class name, address, then the path | `probe`, `admin`, `Administrator`, `127.0.0.1:50984` |
 
 The padding after the strings is uninitialised **[O]**; `kdx-proto` keeps

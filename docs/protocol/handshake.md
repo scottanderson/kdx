@@ -1,5 +1,7 @@
 # Connection handshake and login
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 Every KDX TCP connection starts with a symmetric two-message handshake. It
 also serves as login: the client proves it knows the account's
 password-derived key, and the server proves it knows the same key. The
@@ -50,15 +52,15 @@ Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
 | Off | Size | Field | Notes |
 |---|---|---|---|
 | 0x00 | 4 | key | random XOR key, sent in the clear |
-| 0x04 | 4 | protocol | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 **[S, O: lab probe]** |
-| 0x08 | 4 | sub-protocol | `"%KDX"` (0x254b4458) for client/server **[S, O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`, O]** |
+| 0x04 | 4 | protocol | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 (lab probe) **[S; O]** |
+| 0x08 | 4 | sub-protocol | `"%KDX"` (0x254b4458) for client/server **[S; O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`; O]** |
 | 0x0c | 1 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | sub-version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O; `captures/linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S, O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
-| 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S, O]** |
+| 0x0d | 1 | sub-version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O `captures/linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S; O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) in the version callback at +0x88 **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
+| 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S; O]** |
 | 0x0f | 1 | name_len | 0..31 |
 | 0x10 | 4 | reserved | 0 **[O]** |
-| 0x14 | 2 | ext_len | more bytes skipped before the name, sent as 0 **[S, O]** |
-| 0x16 | 2 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S, O]** |
+| 0x14 | 2 | ext_len | more bytes skipped before the name, sent as 0 **[S; O]** |
+| 0x16 | 2 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S; O]** |
 | 0x18 | 12 | nonce | per-connection value. It looks time-based (both sides' nonces share bytes) **[O]**. A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) **[S]** |
 | 0x24 | name_len | name | login name (client) or empty (server 1.620) **[O]**. See "Login names" |
 | … | | padding | zeros up to a 4-byte boundary |
@@ -84,7 +86,7 @@ Bytes 0x04..0x2b are XORed with the stream keyed by bytes 0..3.
 When the status isn't OK, `auth` is all zeros except the key word, which is
 `peer_nonce[4..8] XOR 0x201f7790` **[S `FUN_0808751c`]**.
 
-Verified on both proofs in the capture **[O, reproduced exactly]**:
+Verified on both proofs in the capture, reproduced exactly **[O]**:
 
 ```
 secret = account_key(password)                 # 32 bytes, below
@@ -95,8 +97,8 @@ auth   = Twofish-256(key = secret).encrypt(d[0:16]) || d[16:20]
 ```
 
 The receiver recomputes `auth` with its own nonce and compares all 20 bytes,
-then compares the 20 challenge bytes with its own table **[S
-`FUN_08085a04`, `FUN_0808584c`]**. A failure is error 0x40070.
+then compares the 20 challenge bytes with its own table **[S `FUN_08085a04`,
+`FUN_0808584c`]**. A failure is error 0x40070.
 
 ### account_key(password) **[S `FUN_080669cc`; O]**
 
@@ -108,11 +110,11 @@ fnv1(h, b) = (h * 0x01000193) ^ b   for each byte, starting at h = 1
 ```
 
 The empty-password constant isn't what the formula gives for an empty input.
-Words 0, 2, 4, 6 and 7 are the five words of SHA-1(""), and words 1, 3 and 5
-are other values. Use the bytes exactly as written above. Guest logins use
-it on both sides **[O `captures/kdx-news.pcapng` port 40434, the `kdx` CLI;
-`captures/linux-accounts-news.pcapng` frames 94 to 100, Client 1.620 beta
-5]**.
+Words 0, 2, 4, 6 and 7 are the five words of SHA-1(""), and words 1, 3 and 5 are
+other values. Use the bytes exactly as written above. Guest logins use it on
+both sides (the `kdx` CLI on port 40434 in `kdx-news`, and Client 1.620 beta 5
+in `linux-accounts-news`) **[O `captures/kdx-news.pcapng`; O
+`captures/linux-accounts-news.pcapng` frames 94 to 100]**.
 
 The server stores this 32-byte key per account, so the password can't be
 recovered from `Accounts.dat` alone **[I]**.
@@ -144,16 +146,17 @@ The peer's hello decides what kind of connection it is
 - Empty: the server substitutes `guest`.
 - `0x00` followed by a big-endian 32-bit ID (name_len 5): this attaches to the
   existing session with that ID, using that session's key and requiring the
-  same peer IP. Probably used for file-transfer connections **[I]**.
+  same peer IP. It opens a file-transfer connection; see
+  [transfers.md](transfers.md) **[S `FUN_0805270c`; O]**.
 - Anything else: an account login. The account's stored key is used to check
   the proof.
 
 ## Challenge tables
 
-Each connection object holds a pointer to its table at +0xa4 and the
-table's length, a u16, at +0xa0 **[S client `FUN_080ea000`, server
-`FUN_0808529c`]**. Everything that touches the table reads those two
-fields, so every table works the same way **[S client]**:
+Each connection object holds a pointer to its table at +0xa4 and the table's
+length, a u16, at +0xa0 **[S client `FUN_080ea000`, server `FUN_0808529c`]**.
+Everything that touches the table reads those two fields, so every table works
+the same way in the client **[S]**:
 
 - `FUN_080ec058` picks the challenge for our hello: a random offset modulo
   `len - 0x13`.
@@ -171,7 +174,7 @@ There are three tables:
 | Table | Length | Used by |
 |---|---:|---|
 | the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create **[S]** |
-| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 **[S `FUN_0804b824`, O]** |
+| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 **[S `FUN_0804b824`; O]** |
 | `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that **[S `FUN_0808529c`]** |
 
 Every connection starts with the KDX story, passed to the constructor
@@ -246,12 +249,3 @@ These are the codes the handshake raises:
 | 0x40074 | invalid protocol data; the handshake raises it for a nonce echo (a connection to ourselves) |
 | 0x40075 | protocol limit exceeded; the handshake raises it for a hello over 0x800 bytes |
 
-## Open questions
-
-- Resolved: the `0x00`+ID login opens a transfer connection. See
-  [transfers.md](transfers.md).
-- Everything after the handshake is covered in [framing.md](framing.md).
-- Resolved: the version-acceptance callback (`+0x88`) is `0x080526e0` in the
-  server. See the version field above.
-- Resolved: guest logins use the empty-password constant (see
-  account_key above).

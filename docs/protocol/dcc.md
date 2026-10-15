@@ -1,5 +1,7 @@
 # Client-to-client (DCC) and voice
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 KDX Client 1.620 beta 5 for Linux runs its own listener for direct
 client-to-client connections, which the client calls DCC. Private chat and voice
 use it. Most of this is read from the client's code **[S]**.

@@ -1,5 +1,7 @@
 # File messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 400 to 453: listings, folders, deletion, file info, downloads
 and uploads, launching, the trash, volumes, the catalog, and search.
 
@@ -27,7 +29,7 @@ The request is a file path (empty for the root). The server answers with
 
 When the folder access check (`FUN_08057e5c`) fails or the folder can't be
 read, the server also replies with an empty 401 File List, and logs a
-history record of kind 400 Get File List.
+history record of kind [400 Get File List](#m400).
 
 ### <a id="m401"></a>401 File List
 Initiator: Server. Reply to [400 Get File List](#m400).
@@ -58,7 +60,7 @@ decodes both kinds of entry.
 
 ### <a id="m402"></a>402 Create Folder
 Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
-`captures/linux-files.pcapng` frames 26-29]**
+`captures/linux-files.pcapng` frames 26 to 29]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -78,7 +80,7 @@ Name, a Folder Access popup, and Owner Login. Frame 26 is 51 bytes: the name
 
 ### <a id="m403"></a>403 Create Alias
 Initiator: Client. Privilege: Create Aliases (15). **[S `FUN_0804e4ec`; O
-`captures/linux-files.pcapng` frames 95-98]**
+`captures/linux-files.pcapng` frames 95 to 98]**
 
 The request is the destination folder path, the source folder path, then a name
 list of items in the source folder (frame 95: `Uploads [UL]`, `Uploads [UL]`,
@@ -97,7 +99,7 @@ Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
 
 ### <a id="m405"></a>405 Move To Trash
 Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O
-`captures/linux-files.pcapng` frames 241-244]**
+`captures/linux-files.pcapng` frames 241 to 244]**
 
 The request is a folder path, then a name list (frame 241: the root, then
 `lab-folder`). Each item gets a history record. Success is
@@ -148,8 +150,8 @@ Reply (82 bytes for `Uploads [UL]`):
 | 0x40 | | name, kind | kind = `folder` |
 
 ### <a id="m411"></a>411 Set File/Folder Info
-Initiator: Client. **[S `FUN_0804f684`; O `captures/linux-files.pcapng`
-frame 89]**
+Initiator: Client. **[S `FUN_0804f684`; O `captures/linux-files.pcapng` frame
+89]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -188,16 +190,15 @@ multiple of 0x1000. An offset at or past the end still gets its
 offset 70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng`
 frames 271-281, 383-389, and 348-351; test `downloads`).
 
-Offsets and sizes are 64-bit throughout. The server rounds the offset
-down within its 64-bit value, reads with `lseek64` to it, and sends the
-remaining length as a 48-bit header length **[S `FUN_08050984`,
-`FUN_080945e0`]**. Server 1.600 for Windows seeks with the high half too
-**[S `FUN_0042c600`]**. So the data should start exactly at the rounded
-offset past 4 GiB as well. Once, though, a download from `kdx.erb.pw` with
-an offset above 4 GiB began 0xF000 bytes past the rounded offset **[O, not
-captured]**; the server's build is unknown, and the cause is open. A
-client should take the start as the data fork size less the 414 length,
-not as the rounded offset **[I]**.
+Offsets and sizes are 64-bit throughout. The server rounds the offset down
+within its 64-bit value, reads with `lseek64` to it, and sends the remaining
+length as a 48-bit header length **[S `FUN_08050984`, `FUN_080945e0`]**. Server
+1.600 for Windows seeks with the high half too **[S `FUN_0042c600`]**. So the
+data should start exactly at the rounded offset past 4 GiB as well. Once,
+though, a download from `kdx.erb.pw` with an offset above 4 GiB began 0xF000
+bytes past the rounded offset (not captured) **[O]**; the server's build is
+unknown, and the cause is open. A client should take the start as the data fork
+size less the 414 length, not as the rounded offset **[I]**.
 
 A file over 0x40000 bytes is refused with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25
@@ -241,9 +242,9 @@ extension, since Linux files have no type code **[I]**.
 Initiator: Server. Data for [412 Download File](#m412), sent after
 [413 Download File (R)](#m413), once per fork.
 
-One 414 header covers the whole fork, even past the limits on normal
-payloads: a 600000-byte file came as a single 414 of length 600000, byte for
-byte, and a resume from 300000 as one of 300992 from 299008
+One [414 Download File (D)](#m414) header covers the whole fork, even past the
+limits on normal payloads: a 600000-byte file came as a single 414 of length
+600000, byte for byte, and a resume from 300000 as one of 300992 from 299008
 (`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**.
 `kdx_proto::msg::file::FileData` holds the payload of 414 and
 [417 Upload File (D)](#m417) unchanged. Data is read in chunks starting at
@@ -302,9 +303,10 @@ Initiator: Server. Reply to [415 Upload File](#m415).
 Initiator: Client. Data for [415 Upload File](#m415), sent after
 [416 Upload File (R)](#m416), once per fork.
 
-**[O]**: 300000 bytes sent under one 417 header arrived byte for byte
-(`captures/kdx-cli.pcapng` frame 244). `kdx_proto::msg::file::FileData` holds
-the payload unchanged, as for [414 Download File (D)](#m414).
+**[O]**: 300000 bytes sent under one [417 Upload File (D)](#m417) header arrived
+byte for byte (`captures/kdx-cli.pcapng` frame 244).
+`kdx_proto::msg::file::FileData` holds the payload unchanged, as for
+[414 Download File (D)](#m414).
 
 ### <a id="m418"></a>418 Upload File (C)
 Initiator: Server. Completes [415 Upload File](#m415).
@@ -329,9 +331,8 @@ started under the total outgoing speed limit. **[O]**: `00 00 50 00`, the
 ## 420 to 429: Launch, trash and volumes
 
 ### <a id="m420"></a>420 Launch File
-Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`,
-client `FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames
-31-32]**
+Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`, client
+`FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames 31 to 32]**
 
 The request is 8 zero bytes, then the file path (at least 9 bytes in all).
 Success is [1 Status](status.md#m1) 0x1a4, and the server runs the file. Frames
@@ -343,10 +344,10 @@ Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 [1 Status](status.md#m1) 0x1a5 **[S]**.
 
 ### <a id="m422"></a>422 Volume Info
-Initiator: Server. Reply to [409 Get File/Folder Info](#m409) when the path is
-a single name that is a volume (the user can see all volumes) **[S
-`FUN_0804ef00`, client `FUN_080758dc`; O
-`captures/linux-catalog-volumes.pcapng` frames 50-51]**.
+Initiator: Server. Reply to [409 Get File/Folder Info](#m409) when the path is a
+single name that is a volume (the user can see all volumes) **[S `FUN_0804ef00`,
+client `FUN_080758dc`; O `captures/linux-catalog-volumes.pcapng` frames 50 to
+51]**.
 
 A reply is not padded (93 bytes at 51):
 
@@ -380,9 +381,8 @@ editable and the comments never are **[S `FUN_0804ef00`]**. Both words are
 also ends with the format, `tmpfs` **[O]**.
 
 ### <a id="m423"></a>423 Set Volume Info
-Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`,
-client `FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames
-53-54]**
+Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`, client
+`FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames 53 to 54]**
 
 The request has the [422 Volume Info](#m422) layout, but its strings differ. At
 0x54 come the volume's current name (length at 0x4e), the new name (length at
@@ -395,31 +395,31 @@ history record 0x1a7 **[S]**.
 In Server 1.620 for Linux both setters are stubs **[S]**. Renaming
 (`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the history
 record is written, and the client gets a [1 Status](status.md#m1) error with it.
-In frame 53 of `captures/linux-catalog-volumes.pcapng`, 423 has flags
-`00000001`, the name `/tmp`, and the new name `/tmp-renamed`; frame 54 is the
-error, at module 0x46, line 2175 **[O]**. Setting the comments (`FUN_08094e6c`)
-does nothing. Frame 53 is 100 bytes, unpadded, with every field but the flags
-and string lengths 0 **[O]**. `kdx_proto::msg::file::SetVolumeInfo` re-encodes
-it byte for byte (test `linux_catalog_volumes`).
+In frame 53 of `captures/linux-catalog-volumes.pcapng`,
+[423 Set Volume Info](#m423) has flags `00000001`, the name `/tmp`, and the new
+name `/tmp-renamed`; frame 54 is the error, at module 0x46, line 2175 **[O]**.
+Setting the comments (`FUN_08094e6c`) does nothing. Frame 53 is 100 bytes,
+unpadded, with every field but the flags and string lengths 0 **[O]**.
+`kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
+`linux_catalog_volumes`).
 
 ## 450 to 459: Catalog and search
 
 ### <a id="m450"></a>450 Generate Catalog
-Initiator: Client. Privilege: Modify Server Settings (61). **[S
-`FUN_0805a728`, `FUN_0805a878`; O `captures/linux-catalog-volumes.pcapng`
-frames 23-26]**
+Initiator: Client. Privilege: Modify Server Settings (61). **[S `FUN_0805a728`,
+`FUN_0805a878`; O `captures/linux-catalog-volumes.pcapng` frames 23 to 26]**
 
 The request is empty or a u32 of flags; bit 0 cancels a running catalog (only
 its starter may). A second start while one runs gets [1 Status](status.md#m1)
 0x30075. The server writes history record 0x1c2 and builds an index of all
-files. 450 itself gets no reply. The server sends
+files. [450 Generate Catalog](#m450) itself gets no reply. The server sends
 [451 Generate Catalog (S)](#m451) progress to the starter.
 
 ### <a id="m451"></a>451 Generate Catalog (S)
 Initiator: Server. Progress for [450 Generate Catalog](#m450).
 
-The server sends 451 to the starter at most every 2000 ms, and a final one
-when done:
+The server sends [451 Generate Catalog (S)](#m451) to the starter at most every
+2000 ms, and a final one when done:
 
 | Off | Size | Field |
 |---|---|---|
@@ -431,7 +431,7 @@ In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
 
 ### <a id="m452"></a>452 File Search
 Initiator: Client. **[S `FUN_0805abc0`; O
-`captures/linux-catalog-volumes.pcapng` frames 28-29]**
+`captures/linux-catalog-volumes.pcapng` frames 28 to 29]**
 
 The request is at least 0x58 bytes. Byte 0x54 is the query length (at least 3;
 the client checks this too), and the query starts at 0x58. The client sends the
@@ -458,11 +458,11 @@ A u32 count and at most 100 entries, each padded to 4:
 | 0x38 | | name, then the item's full file path (root first) |
 
 Items the user can't see through folder access are left out. No hit gives
-an empty 453.
+an empty [453 File Search (R)](#m453).
 
 Frame 29 of `captures/linux-catalog-volumes.pcapng` has one hit for `a.txt`:
 size 6, attributes 1, name length 0, and a path length of 0x16 for the
 path `lab-files`, `a.txt` **[O]**. So the name can be empty, with the item's
 name only in its path. `kdx_proto::msg::file` re-encodes
-[420 Launch File](#m420) and 450 to 453 byte for byte (test
-`linux_catalog_volumes`).
+[420 Launch File](#m420) and [450 Generate Catalog](#m450) to 453 byte for byte
+(test `linux_catalog_volumes`).

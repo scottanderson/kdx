@@ -1,17 +1,19 @@
 # News messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 600 to 614: newsgroups and their messages.
 
 ## <a id="m600"></a>600 Create Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805c8f8`, client `FUN_08089034`; O
-`captures/linux-accounts-news.pcapng` frames 58-63]**
+`FUN_0805c8f8`, client `FUN_08089034`; O `captures/linux-accounts-news.pcapng`
+frames 58 to 63]**
 
 The request is a [603 Newsgroup Info](#m603) record. The server ignores the ID
 at 0x00 and picks one. The name must be 1..0x3f bytes and the description at
 most 0x7f. Success is [1 Status](status.md#m1) 0x258, and a history record. The
 client's editor has Name, Description, Archive Size, and the class access list;
-it sends 600 or [604 Set Newsgroup](#m604), then
+it sends [600 Create Newsgroup](#m600) or [604 Set Newsgroup](#m604), then
 [605 Get Newsgroup List](#m605).
 
 Frame 58 creates `test newsgroup` (description `desc`, archive size 0x1a4,
@@ -26,16 +28,16 @@ group **[S `FUN_0805ed88`]**.
 
 ## <a id="m601"></a>601 Delete Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81-84]**
+`FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81 to 84]**
 
 The request is a u32 group ID, 4 bytes, as `NewsgroupId` encodes it (frame 81)
 **[O]**. An unknown group gets 0x1000c. Success is [1 Status](status.md#m1)
 0x259 (frame 84). [602 Get Newsgroup](#m602) also writes history record 0x25a.
 
 ## <a id="m602"></a>602 Get Newsgroup
-Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805cc24`; O 76 bytes; O `captures/linux-accounts-news.pcapng` frames
-68-69]**
+Initiator: Client. Privilege: Create/Modify Newsgroups (73). Observed size: 76
+bytes. **[S `FUN_0805cc24`; O `captures/linux-accounts-news.pcapng` frames 68 to
+69]**
 
 The request is a u32 group ID, 4 bytes and unpadded, which `NewsgroupId` encodes
 (`captures/linux-accounts-news.pcapng` frame 68,
@@ -71,7 +73,7 @@ The read and post class bitmaps are the ones [607 Get News Messages](#m607) and
 
 ## <a id="m604"></a>604 Set Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
-`FUN_0805ce60`; O `captures/linux-accounts-news.pcapng` frames 71-74]**
+`FUN_0805ce60`; O `captures/linux-accounts-news.pcapng` frames 71 to 74]**
 
 The request is a [603 Newsgroup Info](#m603) record with the group ID at 0x00.
 Success is [1 Status](status.md#m1) 0x25c (frame 74). Frame 71 renames group 2
@@ -115,18 +117,18 @@ Initiator: Server. Reply to [607 Get News Messages](#m607).
 | 0x0c | 4 | count | |
 | 0x10 | | news message records | same as [610 News Message](#m610) |
 
-The server computes the permissions from the user's privileges and the
-group's class bitmaps **[S `FUN_0805d2e8`; O `captures/kdx-news.pcapng`
-frames 77 and 204]**. Without read access but with post access, the reply is
-just the 16-byte header with permissions 1 and count 0 **[S]**.
+The server computes the permissions from the user's privileges and the group's
+class bitmaps **[S `FUN_0805d2e8`; O `captures/kdx-news.pcapng` frames 77,
+204]**. Without read access but with post access, the reply is just the 16-byte
+header with permissions 1 and count 0 **[S]**.
 
 ## <a id="m609"></a>609 Get News Message
 Initiator: Client. **[S `FUN_0805d54c`; O]**
 
 Request: {u32 group ID, u32 message ID}, 8 bytes, as `NewsMessageId` encodes
 it (`captures/kdx-news.pcapng` frame 137, `captures/linux-first-connect.pcapng`
-frames 99 and 112) **[O]**. 609 Get News Message does not reset the idle
-timer.
+frames 99 and 112) **[O]**. [609 Get News Message](#m609) does not reset the
+idle timer.
 
 ## <a id="m610"></a>610 News Message
 Initiator: Server. Reply to [609 Get News Message](#m609).
@@ -149,8 +151,8 @@ One news message record, padded to 4:
 
 ## <a id="m611"></a>611 Post News Message
 Initiator: Client. Privilege: Post News (71), and the user's class must be in
-the group's post classes unless the user has privilege 0. **[S
-`FUN_0805d758`; O `captures/kdx-news.pcapng`]**
+the group's post classes unless the user has privilege 0. **[S `FUN_0805d758`; O
+`captures/kdx-news.pcapng`]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
