@@ -1,5 +1,7 @@
 # Account messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 502 to 551: accounts, user classes, privileges, and passwords.
 
 ## <a id="m502"></a>502 Get Account Class
@@ -54,7 +56,7 @@ Initiator: Server. Reply to [505 Get Account Class List](#m505).
 
 A u32 count (12 classes in the lab), then one record per class, padded to 4 with
 zeros. A record is the [503 Account Class Info](#m503) record without the 8
-bytes at 0x28 **[O probe.pcapng, port 50770]**:
+bytes at 0x28 (port 50770 in the probe) **[O `captures/probe.pcapng`]**:
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -119,7 +121,7 @@ Initiator: Server. Reply to [509 Get Account](#m509).
 The stored account record, with the key replaced by a flag. Its padding is
 uninitialised (frame 590) **[O]**; `kdx-proto` keeps it on a round trip.
 
-**Account record.** [507 Create Account](#m507), 510 Account Info, and
+**Account record.** [507 Create Account](#m507), [510 Account Info](#m510), and
 [511 Set Account](#m511) share this layout **[S `FUN_08055928`, `FUN_08055ff4`;
 O]**:
 

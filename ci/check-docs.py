@@ -148,12 +148,89 @@ def check_message_anchors():
             errors.append(f"message type {value} has no #m{value} anchor in docs/protocol")
 
 
+def check_conventions_link():
+    # Every protocol page except the README links to the conventions in its first 5 lines.
+    pages = glob.glob("docs/protocol/*.md") + glob.glob("docs/protocol/messages/*.md")
+    for path in sorted(pages):
+        head = open(path, encoding="utf-8").read().split("\n")[:5]
+        if path != "docs/protocol/README.md" and not any("README.md#conventions)" in line for line in head):
+            errors.append(f"{path}: no link to the protocol README conventions in the first 5 lines")
+
+
+def check_one_h1():
+    for path in tracked_markdown():
+        fence = False
+        count = 0
+        for line in open(path, encoding="utf-8"):
+            if line.startswith("```"):
+                fence = not fence
+            elif not fence and line.startswith("# "):
+                count += 1
+        if count != 1:
+            errors.append(f"{path}: {count} H1 headings, expected 1")
+
+
+TAG = re.compile(r"\*\*\[[OSI][^\]]*\]\*\*")
+TAG_O = r"O(?: `captures/[\w-]+\.pcapng`)?(?: frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*)?"
+
+TAG_S = r"S(?: (?:(?:client|server|tracker) )?`[^`]+`(?:, (?:(?:client|server|tracker) )?`[^`]+`)*)?"
+
+
+def check_tags():
+    # Evidence tags: S, I, O in that order, joined by "; ", no remarks.
+    for path in tracked_markdown():
+        if not path.startswith("docs/"):
+            continue
+        text = open(path, encoding="utf-8").read()
+        for m in TAG.finditer(text):
+            inner = " ".join(m.group(0)[3:-3].split())
+            parts = re.split(r"\s*;\s*", inner)
+            kinds = [p[:1] for p in parts]
+            good = (
+                "; ".join(parts) == inner
+                and kinds == sorted(kinds, key=lambda k: "SIO".find(k))
+                and kinds.count("S") <= 1
+                and kinds.count("I") <= 1
+            )
+            for part in parts:
+                kind = part[:1]
+                if kind == "O" and not re.fullmatch(TAG_O, part):
+                    good = False
+                if kind == "S" and not re.fullmatch(TAG_S, part):
+                    good = False
+                if kind == "I" and part != "I":
+                    good = False
+            if not good:
+                line = text.count("\n", 0, m.start()) + 1
+                errors.append(f"{path}:{line}: evidence tag does not follow the grammar: {m.group(0)!r}")
+
+
+def check_open_questions():
+    # An Open questions section lists only open items.
+    for path in tracked_markdown():
+        inside = False
+        fence = False
+        for n, line in enumerate(open(path, encoding="utf-8"), 1):
+            if line.startswith("```"):
+                fence = not fence
+            if fence:
+                continue
+            if re.match(r"^#+ ", line):
+                inside = "open questions" in line.lower()
+            elif inside and re.match(r"\s*[-*] Resolved\b", line):
+                errors.append(f"{path}:{n}: resolved item in an Open questions section")
+
+
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
     check_links()
     check_orphans()
     check_paths()
     check_message_anchors()
+    check_conventions_link()
+    check_one_h1()
+    check_tags()
+    check_open_questions()
     for error in errors:
         print(error)
     if errors:

@@ -1,5 +1,7 @@
 # Tracker
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 A tracker lists servers in named groups. Servers register over UDP; clients
 browse over TCP. `captures/linux-tracker.pcapng` has Server 1.620
 registering with Tracker 1.110 and Client 1.620 beta 5 browsing and
@@ -16,8 +18,9 @@ All multi-byte integers are big-endian.
 
 ## Ports
 
-The tracker opens TCP and UDP on the same port, 10800 (0x2a30) by default
-**[S tracker `FUN_0804c540`, default in `FUN_0804c7a8`]**.
+The tracker opens TCP and UDP on the same port, 10800 (0x2a30) by default,
+set in `FUN_0804c540` with the default in `FUN_0804c7a8` **[S tracker
+`FUN_0804c540`, tracker `FUN_0804c7a8`]**.
 
 When a tracker address has no `:port`, the server appends `:10800` before
 sending a registration **[S server `FUN_08060e4c`]**. The client picks the
@@ -55,11 +58,12 @@ Login **[S `FUN_0804bb78`]**:
   of [handshake.md](handshake.md): `auth` is zero but for its key word.
 
 After login the tracker sends [107 Server Greeting](messages/session.md#m107),
-if it has one set **[S `FUN_0804bbf8`; O frame 117, before the client's 700]**.
-Each IP may hold 5 connections; the tracker closes a sixth at once, but counts
-it in 720's connection counter. A connection idle for more than 1200 (0x4b0,
-probably seconds **[I]**) is closed **[S `FUN_0804bd9c`, `FUN_0804bbf8`]**. The
-receive cap is 0x10000 bytes **[S `FUN_0804bd9c`]**.
+if it has one set, before the client's
+[700 Get Tracker Group List](messages/tracker.md#m700) **[S `FUN_0804bbf8`; O
+frame 117]**. Each IP may hold 5 connections; the tracker closes a sixth at
+once, but counts it in 720's connection counter. A connection idle for more than
+1200 (0x4b0, probably seconds **[I]**) is closed **[S `FUN_0804bd9c`,
+`FUN_0804bbf8`]**. The receive cap is 0x10000 bytes **[S `FUN_0804bd9c`]**.
 
 The tracker's dispatcher `FUN_0804b378` handles
 [115 Get My Address](messages/session.md#m115),
@@ -73,8 +77,7 @@ ignores any other type without a reply **[S]**. The client's tracker connection
 [703 Tracker Server List](messages/tracker.md#m703),
 [711 TrackerServ Settings Info](messages/tracker.md#m711),
 [713 Set TrackerServ Settings Done](messages/tracker.md#m713), and
-[721 TrackerServ Statistics](messages/tracker.md#m721) **[S client; O frames 33,
-75]**.
+[721 TrackerServ Statistics](messages/tracker.md#m721) **[S; O frames 33, 75]**.
 
 Verified: `kdx-tracker` replays the requests of the `linux-tracker` capture and
 its replies match Tracker 1.110's byte for byte, but for the first-seen times:
@@ -89,10 +92,4 @@ The messages are described in [messages/tracker.md](messages/tracker.md).
 
 ## Open questions
 
-- Resolved: captured in `linux-tracker` (issue 05).
-- Resolved: registration offset 0x34 is the tracker entry's Login.
-- Resolved: [711 TrackerServ Settings Info](messages/tracker.md#m711) flags bit
-  1 is Enable Greeting, section 4 is the greeting, and
-  [712 Set TrackerServ Settings](messages/tracker.md#m712) uses the 711 format.
-- Resolved: connection type 4 is GConsole ([gconsole.md](gconsole.md)).
 - The units of the 850 and 600 sweep values and the 1200 idle limit.

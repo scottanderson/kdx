@@ -75,10 +75,11 @@ access answer (`yes`/`no`). The lab convention is login `admin`, password
 
 `kdx-lab server` copies `KDXUpgradeHelper.lexe` next to the server, and the
 sandbox stays up after the server exits until the helper has exited too, so
-175 Upgrade Server Software can relaunch the server. The new server goes in
-`lab/run/server/Bases/KDXServer.lexe` (Haxial's `Documentation.pdf`,
-"Upgrade Server Software"); the helper moves it over the server's program.
-The next `kdx-lab server` puts back 1.620.
+[175 Upgrade Server Software](../docs/protocol/messages/administration.md#m175)
+can relaunch the server. The new server goes in
+`lab/run/server/Bases/KDXServer.lexe` (Haxial's `Documentation.pdf`, "Upgrade
+Server Software"); the helper moves it over the server's program. The next
+`kdx-lab server` puts back 1.620.
 
 ## Windows server
 
@@ -97,8 +98,9 @@ Enter, then give the admin login and the password twice. There is no guest
 question; guests can always browse. The lab convention is login `admin`,
 password `lab-tracker-pw!1`. The state persists in
 `lab/run/tracker/KDXTrackerServ.stg`. Client 1.620 beta 5 can't change the
-admin password remotely (`docs/protocol/messages/tracker.md`, 712), so use
-`kdx-lab reset tracker` to change it.
+admin password remotely (`docs/protocol/messages/tracker.md`,
+[712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712)), so
+use `kdx-lab reset tracker` to change it.
 
 ## Things to know
 

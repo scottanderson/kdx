@@ -52,7 +52,7 @@ Put details in those files. Keep this file to rules.
 - Mark a fact as verified only after a test or a capture confirms it.
 - Wrap Markdown prose at 80 columns. Leave tables and code blocks unwrapped.
 - Use relative links in Markdown, except in `crates/*/README.md`, which
-  crates.io renders.
+  use absolute GitHub URLs so the links work on crates.io and GitHub.
 - Give each message its own heading in `docs/protocol/messages/` with an
   anchor such as `<a id="m100"></a>`, in ascending type order on its page, and
   list it in `docs/protocol/messages/README.md`. `ci/check-docs.py` checks the

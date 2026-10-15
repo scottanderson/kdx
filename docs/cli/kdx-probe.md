@@ -15,7 +15,7 @@ each one it waits for more messages (`--wait`, 700 ms by default).
 | `--addr` | Server address, 127.0.0.1:10700 by default |
 | `--login`, `--password` | The account; guest if the login is empty |
 | `--nick` | The nickname sent in the login message |
-| `--no-login` | Skip the login message (type 100) |
+| `--no-login` | Skip the login message (type [100 Set Identity](../protocol/messages/session.md#m100)) |
 | `--attach` | Send the requests on a second, attached connection, as file transfers do |
 | `--table` | The challenge table, or any KDX program file or archive that holds it; defaults to the cache |
 | `--listen ADDR` | Wait for a client and play a GConsole peer, with GConsole's table |

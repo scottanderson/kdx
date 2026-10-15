@@ -1,5 +1,7 @@
 # Access privileges
 
+Tags, hex, and field notation: see [Conventions](README.md#conventions).
+
 The privilege bits of account classes and accounts.
 
 An account's privileges are a bit string of at least 11 bytes. It is stored at
@@ -67,16 +69,15 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 81 | Terminate Processes | [804 Exit/Terminate Process](messages/processes.md#m804) |
 | 82 | Launch Programs | 175 Upgrade Server Software, [420 Launch File](messages/files.md#m420) |
 
-Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can
-Login; bit 2 has no name in the client's table **[S]**. Answering no to
-guest access at the server's first-run setup clears Can Login on the
-`guest` account and sets it in that account's mask **[S `FUN_08054394`]**.
-The client never appends the 0x17-byte info trailer that sets user flag bit
-1 (see User record), so whatever sends it is not Client 1.620 beta 5 **[S
-client `FUN_0804d654`]**.
+Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can Login;
+bit 2 has no name in the client's table **[S]**. Answering no to guest access at
+the server's first-run setup clears Can Login on the `guest` account and sets it
+in that account's mask **[S `FUN_08054394`]**. The client never appends the
+0x17-byte info trailer that sets user flag bit 1 (see User record), so whatever
+sends it is not Client 1.620 beta 5 **[S client `FUN_0804d654`]**.
 
-The client's account editor lists 50 privileges in this order **[S
-KDXClient.exe resources]**:
+The client's account editor lists 50 privileges in this order, from the
+resources of KDXClient.exe **[S]**:
 
 1. Download, Upload, Create Aliases, Move, Rename, Delete, Empty Trash, Set
    Attributes, Has Custom Base Folder, See All Bases, See All Volumes, Allow

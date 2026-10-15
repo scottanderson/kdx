@@ -1,5 +1,7 @@
 # Tracker messages
 
+Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+
 Message types 700 to 721: what a client and a tracker exchange over TCP after
 the login described in [tracker.md](../tracker.md#browsing-tcp). The tracker
 also sends [1 Status](status.md#tracker-form) in its short form, and answers
@@ -41,8 +43,9 @@ Group record, padded to a multiple of 4:
 
 ## <a id="m702"></a>702 Get Tracker Server List
 
-Initiator: Client. **[S `FUN_0804adcc`; sender in client `FUN_08069ac4`; O
-frames 36/37]**
+Initiator: Client, where the sender is client `FUN_08069ac4` and the handler
+is `FUN_0804adcc`. **[S `FUN_0804adcc`, client `FUN_08069ac4`; O frames 36,
+37]**
 
 | Off | Size | Field | Notes |
 |---|---|---|---|
@@ -51,9 +54,9 @@ frames 36/37]**
 | 0x03 | 1 | 0 | |
 | 0x04 | | group name | |
 
-A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown
-group 0x1000c **[O `kdx-cli-tracker` frame 39]**; group names match byte for
-byte **[S]**. The reply is [703 Tracker Server List](#m703).
+A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown group
+0x1000c **[O `captures/kdx-cli-tracker.pcapng` frame 39]**; group names match
+byte for byte **[S]**. The reply is [703 Tracker Server List](#m703).
 
 ## <a id="m703"></a>703 Tracker Server List
 
@@ -84,8 +87,9 @@ Server record, padded to a multiple of 4 **[S tracker `FUN_0804adcc`, client
 | 0x1c | | address | IPv4 address (4 bytes) and TCP port (2 bytes) |
 | | | name, description, extra | |
 
-Verified: `kdx-proto` re-encodes [701 Tracker Group List](#m701), 702, and 703
-from frames 34, 36, 37, 57, 58, 247, and 257 byte for byte **[O]**.
+Verified: `kdx-proto` re-encodes [701 Tracker Group List](#m701), 702, and
+[703 Tracker Server List](#m703) from frames 34, 36, 37, 57, 58, 247, and 257
+byte for byte **[O]**.
 
 ## <a id="m710"></a>710 Get TrackerServ Settings
 
@@ -148,24 +152,23 @@ The greeting section is a u32 0 and then the text. The tracker sends it as
 [107 Server Greeting](session.md#m107) after login when Enable Greeting is on
 and the section is longer than 4 bytes **[S `FUN_0804bbf8`]**.
 
-An upstream tracker entry has 12 raw bytes at +0x08, 12 string lengths at
-+0x14, and the strings from +0x20 (name, comments, address, login, key,
-unused, groups 0-5, as in the server's tracker entry). A group has two u16
-values at +0x10 and +0x12, which nothing sets, so they are always 0; the
-name and description lengths at +0x18 and +0x19; and the strings from +0x1c.
-A group record is 0x1c bytes and the strings, padded to a multiple of 4 **[O
-frame 80]**; the parser steps over records by the four lengths at +0x18..+0x1b
-**[S]**. A group's flag (+0x0c in memory) is set when its name contains
-`tracker` in any case (`FUN_0804aa30` calls the substring search
-`FUN_0808274c` with its case flag set) **[S]**, so `Trackers` takes only
-trackers. The tracker keeps its groups sorted by name, byte for byte, so a
-new group `Lab` lands between General and Macintosh (frame 247) **[S; O]**.
-After parsing, the tracker adds the groups `General` and `Trackers` back if
-they are missing. The admin section has a flags byte at +0x07 (bit 0: a key
-follows), the 32-byte admin key at +0x08, the admin login length at +0x90,
-and the login from +0x94, padded to 4. The key is the
-`AccountKey` of the password, as for a server account: frame 82 carries the
-key of `lab-tracker-pw!2` **[O, verified]**.
+An upstream tracker entry has 12 raw bytes at +0x08, 12 string lengths at +0x14,
+and the strings from +0x20 (name, comments, address, login, key, unused, groups
+0-5, as in the server's tracker entry). A group has two u16 values at +0x10 and
++0x12, which nothing sets, so they are always 0; the name and description
+lengths at +0x18 and +0x19; and the strings from +0x1c. A group record is 0x1c
+bytes and the strings, padded to a multiple of 4 **[O frame 80]**; the parser
+steps over records by the four lengths at +0x18..+0x1b **[S]**. A group's flag
+(+0x0c in memory) is set when its name contains `tracker` in any case
+(`FUN_0804aa30` calls the substring search `FUN_0808274c` with its case flag
+set) **[S]**, so `Trackers` takes only trackers. The tracker keeps its groups
+sorted by name, byte for byte, so a new group `Lab` lands between General and
+Macintosh (frame 247) **[S; O]**. After parsing, the tracker adds the groups
+`General` and `Trackers` back if they are missing. The admin section has a flags
+byte at +0x07 (bit 0: a key follows), the 32-byte admin key at +0x08, the admin
+login length at +0x90, and the login from +0x94, padded to 4. The key is the
+`AccountKey` of the password, as for a server account: frame 82 carries the key
+of `lab-tracker-pw!2`, verified **[O]**.
 
 The client's settings window shows Tracker Name, Description, Port Number,
 Admin Login, Change Admin Password (Password, Confirm), a Groups panel
@@ -177,10 +180,10 @@ and a Greeting panel with Enable Greeting **[S client `FUN_0806b1b0`]**.
 Initiator: Tracker. **[S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80]**
 
 Reply to [710 Get TrackerServ Settings](#m710), in the format described
-there. 711 sets every present byte **[O frame 80]**. It sends the limits and
-server ID as 0 **[O frame 80]**. A fresh tracker is named `New TrackerServ`
-**[O frame 80]**. 711 doesn't send a group's flag: the `Trackers` group has
-0 there **[O frame 80]**. It leaves the admin key out.
+there. [711 TrackerServ Settings Info](#m711) sets every present byte **[O frame
+80]**. It sends the limits and server ID as 0 **[O frame 80]**. A fresh tracker
+is named `New TrackerServ` **[O frame 80]**. 711 doesn't send a group's flag:
+the `Trackers` group has 0 there **[O frame 80]**. It leaves the admin key out.
 
 ## <a id="m712"></a>712 Set TrackerServ Settings
 
@@ -191,19 +194,20 @@ The payload is the [711 TrackerServ Settings Info](#m711) format (see
 limits and server ID are taken from the file only. A port of 0 or above 0xfffe
 means 10800; a new port is applied at once (`FUN_0804ca60`).
 
-Client 1.620 beta 5 builds 712 in `FUN_0806b68c` and sets the present bytes for
-general, trackers, groups, and greeting, but not admin (0x71). It still
-writes the admin section, with flags bit 0 and the new key when the password
-field is filled. The tracker ignores that section, so the admin login and
-password can't be changed remotely with this client **[S; O frame 82, and
-the new password is refused at 104]**. The client fills the groups section
-only when the group list has been edited (bit 12 at list +0x24); otherwise
-the section has offset and size 0, and the tracker keeps its groups **[S; O
-frames 82 and 240]**. The tracker saves `KDXTrackerServ.stg`, replies
-[713 Set TrackerServ Settings Done](#m713), restarts its upstream registration,
-and logs `TrackerServ settings changed remotely` **[S `FUN_0804cc10`; O frame 83
-and the tracker log]**. The file is XOR'd with a second LCG (seed 0xacb8fa74,
-multiplier 0x41a609fd, increment 0x1379); that is storage, not protocol.
+Client 1.620 beta 5 builds [712 Set TrackerServ Settings](#m712) in
+`FUN_0806b68c` and sets the present bytes for general, trackers, groups, and
+greeting, but not admin (0x71). It still writes the admin section, with flags
+bit 0 and the new key when the password field is filled. The tracker ignores
+that section, so the admin login and password can't be changed remotely with
+this client, and the new password is then refused (frame 104) **[S; O frames 82,
+104]**. The client fills the groups section only when the group list has been
+edited (bit 12 at list +0x24); otherwise the section has offset and size 0, and
+the tracker keeps its groups **[S; O frames 82, 240]**. The tracker saves
+`KDXTrackerServ.stg`, replies [713 Set TrackerServ Settings Done](#m713),
+restarts its upstream registration, and logs `TrackerServ settings changed
+remotely` (also in the tracker log) **[S `FUN_0804cc10`; O frame 83]**. The file
+is XOR'd with a second LCG (seed 0xacb8fa74, multiplier 0x41a609fd, increment
+0x1379); that is storage, not protocol.
 
 ## <a id="m713"></a>713 Set TrackerServ Settings Done
 
@@ -220,8 +224,8 @@ No payload. The reply is [721 TrackerServ Statistics](#m721).
 
 ## <a id="m721"></a>721 TrackerServ Statistics
 
-Initiator: Tracker. **[S `FUN_0804b180`; O frame 86, matching the client's
-Tracker Stats window]**
+Initiator: Tracker. It matches the client's Tracker Stats window.
+**[S `FUN_0804b180`; O frame 86]**
 
 Reply to [720 Get TrackerServ Statistics](#m720), 0x38 bytes:
 
