@@ -1,7 +1,7 @@
 //! Checks against `captures/linux-tracker.pcapng`: Server 1.620 registering with Tracker 1.110,
 //! and Client 1.620 beta 5 browsing and administering it.
 
-use std::net::{Ipv4Addr, SocketAddrV4};
+use std::net::Ipv4Addr;
 
 use kdx_proto::msg::tracker::{
     AdminSettings, GeneralSettings, GetServerList, GroupListEntry, ServerListEntry, SettingsGroup,
@@ -189,12 +189,13 @@ fn server_list() {
         first_seen: 0x0000_03a3_80f5_a144,
         flags: 0,
         users: 1,
-        address: SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0x29cc),
+        address: Ipv4Addr::LOCALHOST,
+        port: 0x29cc,
         name: b"Lab Server".to_vec(),
         description: Vec::new(),
         extra: Vec::new(),
-        unknown_08: [0; 6],
-        unknown_12: [0; 6],
+        ignored_08: [0; 6],
+        ignored_12: [0; 6],
         padding: Vec::new(),
     };
     assert_eq!(servers, std::slice::from_ref(&lab));

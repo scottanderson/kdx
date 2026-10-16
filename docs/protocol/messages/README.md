@@ -1,6 +1,8 @@
 # Messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+Tags, hex, and struct tables: see [Conventions](../README.md#conventions).
+Field names are the `kdx-proto` field names, and the other bytes are named as
+in the [special field names](../README.md#special-field-names).
 
 Every message type, in order, grouped by the page that describes it. Each page
 covers one contiguous range of type numbers, so a type's page can be found from
@@ -8,16 +10,19 @@ its number alone.
 
 A KDX connection is one of four kinds, set by the sub-version of the sender's
 hello (see [handshake.md](../handshake.md#connection-types)): client to client
-(DCC), client to server, client to tracker, and client to GConsole. The
-DCC, Server, Tracker and GConsole columns show which kinds use each message.
-A dot means the kind handles or sends the message **[S]**; a blank means it has
-no handler there, or nothing shows one. Most messages belong to the server.
+(DCC), client to server, client to tracker, and client to GConsole. Each kind
+has a column. A cell names who sends the message on that kind of connection:
+Client, Server, Tracker or GConsole. On a DCC connection it is Caller or Callee
+for the two ends of a voice call, or Either when both sides send it. A blank
+cell means the kind has no handler for the message, or nothing shows one
+**[S]**. Most messages belong to the server. A server tells a tracker it
+exists by a UDP datagram, which has no message type; see [udp.md](../udp.md).
 
 Each message has a stable link made of the page that describes it and its
-type number: [chat.md#m200](chat.md#m200) is 200 Create Private Chat. The last
-column links to it. The header and the rules for requests and replies are in
-[the protocol overview](../README.md#messages), and where the names come from is
-in [its message types section](../README.md#message-types).
+type number: [chat.md#m200](chat.md#m200) is 200 Create Private Chat. The
+Message column links to it. The header and the rules for requests and replies
+are in [the protocol overview](../README.md#messages), and where the names come
+from is in [its message types section](../README.md#message-types).
 
 ## How to read the tables
 
@@ -28,244 +33,245 @@ in [its message types section](../README.md#message-types).
 - **Notification:** sent on its own, without a request from the receiver. It
   may follow some other message, as the Role column says.
 - **Data:** the bytes of a transfer or a stream, sent after a request.
-- **Sent by** is the end of the connection that sends the message.
+- A reply has a `↳` before its name, and the Role column links the request
+  and the reply to each other.
 
 ## Messages by page
 
 ### [Status](status.md), 1
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 1 | Status | Server, tracker, or client | Reply that carries a result code | ● | ● | ● |  | [Status](status.md#m1) |
+| 1 | [Status](status.md#m1) | Reply that carries a result code | Either | Server | Tracker |  |
 
 ### [Session](session.md), 100 to 118
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 100 | Set Identity | Client | Request | ● | ● |  |  | [Session](session.md#m100) |
-| 101 | User List | Server | Notification after login |  | ● |  |  | [Session](session.md#m101) |
-| 102 | User Changed | Server | Notification: a user changed their identity |  | ● |  |  | [Session](session.md#m102) |
-| 103 | User Joined | Server | Notification: a user logged in |  | ● |  |  | [Session](session.md#m103) |
-| 104 | User Departed | Server | Notification: a user left |  | ● |  |  | [Session](session.md#m104) |
-| 105 | Server Info | Server | Notification after login |  | ● |  |  | [Session](session.md#m105) |
-| 106 | Server Icon | Server | Notification after login |  | ● |  |  | [Session](session.md#m106) |
-| 107 | Server Greeting | Server or tracker | Notification after login |  | ● | ● |  | [Session](session.md#m107) |
-| 108 | Ping | Client | Request, reply 109 |  | ● |  |  | [Session](session.md#m108) |
-| 109 | Pong | Server | Reply to 108 |  | ● |  |  | [Session](session.md#m109) |
-| 110 | Set Mini User Icon | Client | Request |  | ● |  |  | [Session](session.md#m110) |
-| 111 | Mini User Icon Changed | Server | Notification: a user changed their mini icon |  | ● |  |  | [Session](session.md#m111) |
-| 112 | (unnamed; requests the greeting) | Client | Request |  | ● |  |  | [Session](session.md#m112) |
-| 113 | Get Extra Server Info | Client | Request, reply 114 |  | ● |  |  | [Session](session.md#m113) |
-| 114 | Extra Server Info | Server | Reply to 113 |  | ● |  |  | [Session](session.md#m114) |
-| 115 | Get My Address | Client | Request, reply 116 |  | ● | ● |  | [Session](session.md#m115) |
-| 116 | Your Address | Server or tracker | Reply to 115 |  | ● | ● |  | [Session](session.md#m116) |
-| 117 | SKPK | Either client | Sent first, after the login | ● |  |  |  | [Session](session.md#m117) |
-| 118 | (unnamed; licence report) | Client | Request |  | ● |  |  | [Session](session.md#m118) |
+| 100 | [Set Identity](session.md#m100) | Request | Either | Client |  |  |
+| 101 | [User List](session.md#m101) | Notification after login |  | Server |  |  |
+| 102 | [User Changed](session.md#m102) | Notification: a user changed their identity |  | Server |  |  |
+| 103 | [User Joined](session.md#m103) | Notification: a user logged in |  | Server |  |  |
+| 104 | [User Departed](session.md#m104) | Notification: a user left |  | Server |  |  |
+| 105 | [Server Info](session.md#m105) | Notification after login |  | Server |  |  |
+| 106 | [Server Icon](session.md#m106) | Notification after login |  | Server |  |  |
+| 107 | [Server Greeting](session.md#m107) | Notification after login |  | Server | Tracker |  |
+| 108 | [Ping](session.md#m108) | Request, reply [109](session.md#m109) |  | Client |  |  |
+| 109 | ↳ [Pong](session.md#m109) | Reply to [108](session.md#m108) |  | Server |  |  |
+| 110 | [Set Mini User Icon](session.md#m110) | Request |  | Client |  |  |
+| 111 | [Mini User Icon Changed](session.md#m111) | Notification: a user changed their mini icon |  | Server |  |  |
+| 112 | [(unnamed; requests the greeting)](session.md#m112) | Request |  | Client |  |  |
+| 113 | [Get Extra Server Info](session.md#m113) | Request, reply [114](session.md#m114) |  | Client |  |  |
+| 114 | ↳ [Extra Server Info](session.md#m114) | Reply to [113](session.md#m113) |  | Server |  |  |
+| 115 | [Get My Address](session.md#m115) | Request, reply [116](session.md#m116) |  | Client | Client |  |
+| 116 | ↳ [Your Address](session.md#m116) | Reply to [115](session.md#m115) |  | Server | Tracker |  |
+| 117 | [SKPK](session.md#m117) | Sent first, after the login | Either |  |  |  |
+| 118 | [(unnamed; licence report)](session.md#m118) | Request |  | Client |  |  |
 
 ### [Connection monitor](monitoring.md), 140 to 143
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 140 | Open Connection Monitor | Client | Request |  | ● |  |  | [Monitoring](monitoring.md#m140) |
-| 141 | Close Connection Monitor | Client | Request |  | ● |  |  | [Monitoring](monitoring.md#m141) |
-| 142 | Get Connection Monitor Info | Client | Request, reply 143 |  | ● |  |  | [Monitoring](monitoring.md#m142) |
-| 143 | Connection Monitor Info | Server | Reply to 142 |  | ● |  |  | [Monitoring](monitoring.md#m143) |
+| 140 | [Open Connection Monitor](monitoring.md#m140) | Request |  | Client |  |  |
+| 141 | [Close Connection Monitor](monitoring.md#m141) | Request |  | Client |  |  |
+| 142 | [Get Connection Monitor Info](monitoring.md#m142) | Request, reply [143](monitoring.md#m143) |  | Client |  |  |
+| 143 | ↳ [Connection Monitor Info](monitoring.md#m143) | Reply to [142](monitoring.md#m142) |  | Server |  |  |
 
 ### [Administration](administration.md), 150 to 191
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 150 | Disconnect User | Client | Request |  | ● |  |  | [Administration](administration.md#m150) |
-| 151 | Disconnect Message | Server | Notification to the target of 150, and broadcast by 174 and 175 |  | ● |  |  | [Administration](administration.md#m151) |
-| 152 | Get User Info | Client | Request, reply 153 |  | ● |  |  | [Administration](administration.md#m152) |
-| 153 | User Info | Server | Reply to 152 |  | ● |  |  | [Administration](administration.md#m153) |
-| 154 | Send Broadcast Message | Client | Request |  | ● |  |  | [Administration](administration.md#m154) |
-| 155 | Rcv Broadcast Message | Server | Notification: a broadcast from 154 |  | ● |  |  | [Administration](administration.md#m155) |
-| 170 | Get Server Settings | Client | Request, reply 171 |  | ● |  |  | [Administration](administration.md#m170) |
-| 171 | Server Settings Info | Server | Reply to 170 |  | ● |  |  | [Administration](administration.md#m171) |
-| 172 | Set Server Settings | Client | Request, reply 173 |  | ● |  |  | [Administration](administration.md#m172) |
-| 173 | Set Server Settings Done | Server | Reply to 172 |  | ● |  |  | [Administration](administration.md#m173) |
-| 174 | Shutdown Server | Client | Request |  | ● |  |  | [Administration](administration.md#m174) |
-| 175 | Upgrade Server Software | Client | Request |  | ● |  |  | [Administration](administration.md#m175) |
-| 180 | Server History Join | Client | Request, reply 181 |  | ● |  |  | [Administration](administration.md#m180) |
-| 181 | Server History Join (R) | Server | Reply to 180 |  | ● |  |  | [Administration](administration.md#m181) |
-| 182 | Server History Leave | Client | Request |  | ● |  |  | [Administration](administration.md#m182) |
-| 183 | Server History Added | Server | Notification while joined with 180 |  | ● |  |  | [Administration](administration.md#m183) |
+| 150 | [Disconnect User](administration.md#m150) | Request |  | Client |  |  |
+| 151 | [Disconnect Message](administration.md#m151) | Notification to the target of [150](administration.md#m150), and broadcast by [174](administration.md#m174) and [175](administration.md#m175) |  | Server |  |  |
+| 152 | [Get User Info](administration.md#m152) | Request, reply [153](administration.md#m153) |  | Client |  |  |
+| 153 | ↳ [User Info](administration.md#m153) | Reply to [152](administration.md#m152) |  | Server |  |  |
+| 154 | [Send Broadcast Message](administration.md#m154) | Request |  | Client |  |  |
+| 155 | [Rcv Broadcast Message](administration.md#m155) | Notification: a broadcast from [154](administration.md#m154) |  | Server |  |  |
+| 170 | [Get Server Settings](administration.md#m170) | Request, reply [171](administration.md#m171) |  | Client |  |  |
+| 171 | ↳ [Server Settings Info](administration.md#m171) | Reply to [170](administration.md#m170) |  | Server |  |  |
+| 172 | [Set Server Settings](administration.md#m172) | Request, reply [173](administration.md#m173) |  | Client |  |  |
+| 173 | ↳ [Set Server Settings Done](administration.md#m173) | Reply to [172](administration.md#m172) |  | Server |  |  |
+| 174 | [Shutdown Server](administration.md#m174) | Request |  | Client |  |  |
+| 175 | [Upgrade Server Software](administration.md#m175) | Request |  | Client |  |  |
+| 180 | [Server History Join](administration.md#m180) | Request, reply [181](administration.md#m181) |  | Client |  |  |
+| 181 | ↳ [Server History Join (R)](administration.md#m181) | Reply to [180](administration.md#m180) |  | Server |  |  |
+| 182 | [Server History Leave](administration.md#m182) | Request |  | Client |  |  |
+| 183 | [Server History Added](administration.md#m183) | Notification while joined with [180](administration.md#m180) |  | Server |  |  |
 | 184 to 191 | History record kinds | Server | Kinds of record in 181 and 183 | | ● | | | [Administration](administration.md#m184) |
 
 ### [Chat](chat.md), 200 to 223
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 200 | Create Private Chat | Client | Request, reply 216 |  | ● |  |  | [Chat](chat.md#m200) |
-| 201 | Delete Chat | Client | Request |  | ● |  |  | [Chat](chat.md#m201) |
-| 202 | Join Chat | Client | Request, reply 203 |  | ● |  |  | [Chat](chat.md#m202) |
-| 203 | Chat Window Info | Server | Reply to 202 |  | ● |  |  | [Chat](chat.md#m203) |
-| 204 | Leave Chat | Client | Request |  | ● |  |  | [Chat](chat.md#m204) |
-| 205 | Chat User Joined | Server | Notification: a member joined (after 202) |  | ● |  |  | [Chat](chat.md#m205) |
-| 206 | Chat User Departed | Server | Notification: a member left (after 204) |  | ● |  |  | [Chat](chat.md#m206) |
-| 207 | Send Chat Text | Client | Request |  | ● |  |  | [Chat](chat.md#m207) |
-| 208 | Receive Chat Text | Server | Notification: chat text from 207 |  | ● |  |  | [Chat](chat.md#m208) |
-| 209 | Set Chat Topic | Client | Request |  | ● |  |  | [Chat](chat.md#m209) |
-| 210 | Chat Topic Changed | Server | Notification: a new topic (after 209) |  | ● |  |  | [Chat](chat.md#m210) |
-| 211 | Chat Invite | Client | Request |  | ● |  |  | [Chat](chat.md#m211) |
-| 212 | Chat Invitation | Server | Notification: an invitation (after 211) |  | ● |  |  | [Chat](chat.md#m212) |
-| 213 | Must Join Chat | Server | Notification after login |  | ● |  |  | [Chat](chat.md#m213) |
-| 214 | Get Chat List | Client | Request, reply 215 |  | ● |  |  | [Chat](chat.md#m214) |
-| 215 | Chat List | Server | Reply to 214 |  | ● |  |  | [Chat](chat.md#m215) |
-| 216 | Create Private Chat (R) | Server | Reply to 200 |  | ● |  |  | [Chat](chat.md#m216) |
-| 217 | Create Chat | Client | Request |  | ● |  |  | [Chat](chat.md#m217) |
-| 218 | Get Chat | Client | Request, reply 219 |  | ● |  |  | [Chat](chat.md#m218) |
-| 219 | Chat Info | Server | Reply to 218 |  | ● |  |  | [Chat](chat.md#m219) |
-| 220 | Set Chat | Client | Request |  | ● |  |  | [Chat](chat.md#m220) |
-| 221 | Chat Deleted | Server | Notification: a chat was deleted (after 201) |  | ● |  |  | [Chat](chat.md#m221) |
-| 222 | Get Chat DCC Addresses | Client | Request, reply 223 |  | ● |  |  | [Chat](chat.md#m222) |
-| 223 | Chat DCC Addresses | Server | Reply to 222 |  | ● |  |  | [Chat](chat.md#m223) |
+| 200 | [Create Private Chat](chat.md#m200) | Request, reply [216](chat.md#m216) |  | Client |  |  |
+| 201 | [Delete Chat](chat.md#m201) | Request |  | Client |  |  |
+| 202 | [Join Chat](chat.md#m202) | Request, reply [203](chat.md#m203) |  | Client |  |  |
+| 203 | ↳ [Chat Window Info](chat.md#m203) | Reply to [202](chat.md#m202) |  | Server |  |  |
+| 204 | [Leave Chat](chat.md#m204) | Request |  | Client |  |  |
+| 205 | [Chat User Joined](chat.md#m205) | Notification: a member joined (after [202](chat.md#m202)) |  | Server |  |  |
+| 206 | [Chat User Departed](chat.md#m206) | Notification: a member left (after [204](chat.md#m204)) |  | Server |  |  |
+| 207 | [Send Chat Text](chat.md#m207) | Request |  | Client |  |  |
+| 208 | [Receive Chat Text](chat.md#m208) | Notification: chat text from [207](chat.md#m207) |  | Server |  |  |
+| 209 | [Set Chat Topic](chat.md#m209) | Request |  | Client |  |  |
+| 210 | [Chat Topic Changed](chat.md#m210) | Notification: a new topic (after [209](chat.md#m209)) |  | Server |  |  |
+| 211 | [Chat Invite](chat.md#m211) | Request |  | Client |  |  |
+| 212 | [Chat Invitation](chat.md#m212) | Notification: an invitation (after [211](chat.md#m211)) |  | Server |  |  |
+| 213 | [Must Join Chat](chat.md#m213) | Notification after login |  | Server |  |  |
+| 214 | [Get Chat List](chat.md#m214) | Request, reply [215](chat.md#m215) |  | Client |  |  |
+| 215 | ↳ [Chat List](chat.md#m215) | Reply to [214](chat.md#m214) |  | Server |  |  |
+| 216 | ↳ [Create Private Chat (R)](chat.md#m216) | Reply to [200](chat.md#m200) |  | Server |  |  |
+| 217 | [Create Chat](chat.md#m217) | Request |  | Client |  |  |
+| 218 | [Get Chat](chat.md#m218) | Request, reply [219](chat.md#m219) |  | Client |  |  |
+| 219 | ↳ [Chat Info](chat.md#m219) | Reply to [218](chat.md#m218) |  | Server |  |  |
+| 220 | [Set Chat](chat.md#m220) | Request |  | Client |  |  |
+| 221 | [Chat Deleted](chat.md#m221) | Notification: a chat was deleted (after [201](chat.md#m201)) |  | Server |  |  |
+| 222 | [Get Chat DCC Addresses](chat.md#m222) | Request, reply [223](chat.md#m223) |  | Client |  |  |
+| 223 | ↳ [Chat DCC Addresses](chat.md#m223) | Reply to [222](chat.md#m222) |  | Server |  |  |
 
 ### [Private messages](private-messages.md), 300 to 301
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 300 | Send Private Message | Client | Request | ● | ● |  |  | [Private messages](private-messages.md#m300) |
-| 301 | Incoming Private Message | Server | Notification: a message from 300 |  | ● |  |  | [Private messages](private-messages.md#m301) |
+| 300 | [Send Private Message](private-messages.md#m300) | Request | Either | Client |  |  |
+| 301 | [Incoming Private Message](private-messages.md#m301) | Notification: a message from [300](private-messages.md#m300) |  | Server |  |  |
 
 ### [Files, transfers, volumes and search](files.md), 400 to 453
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 400 | Get File List | Client | Request, reply 401 |  | ● |  |  | [Files](files.md#m400) |
-| 401 | File List | Server | Reply to 400 |  | ● |  |  | [Files](files.md#m401) |
-| 402 | Create Folder | Client | Request |  | ● |  |  | [Files](files.md#m402) |
-| 403 | Create Alias | Client | Request |  | ● |  |  | [Files](files.md#m403) |
-| 404 | Delete File/Folder | Client | Request |  | ● |  |  | [Files](files.md#m404) |
-| 405 | Move To Trash | Client | Request |  | ● |  |  | [Files](files.md#m405) |
-| 406 | Rename File/Folder | Client | Request |  | ● |  |  | [Files](files.md#m406) |
-| 407 | Move File/Folder | Client | Request |  | ● |  |  | [Files](files.md#m407) |
-| 408 | Copy File/Folder | Client | Request |  | ● |  |  | [Files](files.md#m408) |
-| 409 | Get File/Folder Info | Client | Request, reply 410, 422 |  | ● |  |  | [Files](files.md#m409) |
-| 410 | File/Folder Info | Server | Reply to 409 |  | ● |  |  | [Files](files.md#m410) |
-| 411 | Set File/Folder Info | Client | Request |  | ● |  |  | [Files](files.md#m411) |
-| 412 | Download File | Client | Request, reply 413 |  | ● |  |  | [Files](files.md#m412) |
-| 413 | Download File (R) | Server | Reply to 412 |  | ● |  |  | [Files](files.md#m413) |
-| 414 | Download File (D) | Server | Data for 412, one message per fork |  | ● |  |  | [Files](files.md#m414) |
-| 415 | Upload File | Client | Request, reply 416 |  | ● |  |  | [Files](files.md#m415) |
-| 416 | Upload File (R) | Server | Reply to 415 |  | ● |  |  | [Files](files.md#m416) |
-| 417 | Upload File (D) | Client | Data for 415, sent by the client |  | ● |  |  | [Files](files.md#m417) |
-| 418 | Upload File (C) | Server | Completes 415 |  | ● |  |  | [Files](files.md#m418) |
-| 419 | Notify Speed Limit | Server | Notification |  | ● |  |  | [Files](files.md#m419) |
-| 420 | Launch File | Client | Request |  | ● |  |  | [Files](files.md#m420) |
-| 421 | Empty Trash | Client | Request |  | ● |  |  | [Files](files.md#m421) |
-| 422 | Volume Info | Server | Reply to 409 |  | ● |  |  | [Files](files.md#m422) |
-| 423 | Set Volume Info | Client | Request |  | ● |  |  | [Files](files.md#m423) |
-| 450 | Generate Catalog | Client | Request |  | ● |  |  | [Files](files.md#m450) |
-| 451 | Generate Catalog (S) | Server | Progress of 450 |  | ● |  |  | [Files](files.md#m451) |
-| 452 | File Search | Client | Request, reply 453 |  | ● |  |  | [Files](files.md#m452) |
-| 453 | File Search (R) | Server | Reply to 452 |  | ● |  |  | [Files](files.md#m453) |
+| 400 | [Get File List](files.md#m400) | Request, reply [401](files.md#m401) |  | Client |  |  |
+| 401 | ↳ [File List](files.md#m401) | Reply to [400](files.md#m400) |  | Server |  |  |
+| 402 | [Create Folder](files.md#m402) | Request |  | Client |  |  |
+| 403 | [Create Alias](files.md#m403) | Request |  | Client |  |  |
+| 404 | [Delete File/Folder](files.md#m404) | Request |  | Client |  |  |
+| 405 | [Move To Trash](files.md#m405) | Request |  | Client |  |  |
+| 406 | [Rename File/Folder](files.md#m406) | Request |  | Client |  |  |
+| 407 | [Move File/Folder](files.md#m407) | Request |  | Client |  |  |
+| 408 | [Copy File/Folder](files.md#m408) | Request |  | Client |  |  |
+| 409 | [Get File/Folder Info](files.md#m409) | Request, reply [410](files.md#m410), [422](files.md#m422) |  | Client |  |  |
+| 410 | ↳ [File/Folder Info](files.md#m410) | Reply to [409](files.md#m409) |  | Server |  |  |
+| 411 | [Set File/Folder Info](files.md#m411) | Request |  | Client |  |  |
+| 412 | [Download File](files.md#m412) | Request, reply [413](files.md#m413) |  | Client |  |  |
+| 413 | ↳ [Download File (R)](files.md#m413) | Reply to [412](files.md#m412) |  | Server |  |  |
+| 414 | [Download File (D)](files.md#m414) | Data for [412](files.md#m412), one message per fork |  | Server |  |  |
+| 415 | [Upload File](files.md#m415) | Request, reply [416](files.md#m416) |  | Client |  |  |
+| 416 | ↳ [Upload File (R)](files.md#m416) | Reply to [415](files.md#m415) |  | Server |  |  |
+| 417 | [Upload File (D)](files.md#m417) | Data for [415](files.md#m415), sent by the client |  | Client |  |  |
+| 418 | [Upload File (C)](files.md#m418) | Completes [415](files.md#m415) |  | Server |  |  |
+| 419 | [Notify Speed Limit](files.md#m419) | Notification |  | Server |  |  |
+| 420 | [Launch File](files.md#m420) | Request |  | Client |  |  |
+| 421 | [Empty Trash](files.md#m421) | Request |  | Client |  |  |
+| 422 | ↳ [Volume Info](files.md#m422) | Reply to [409](files.md#m409) |  | Server |  |  |
+| 423 | [Set Volume Info](files.md#m423) | Request |  | Client |  |  |
+| 450 | [Generate Catalog](files.md#m450) | Request |  | Client |  |  |
+| 451 | [Generate Catalog (S)](files.md#m451) | Progress of [450](files.md#m450) |  | Server |  |  |
+| 452 | [File Search](files.md#m452) | Request, reply [453](files.md#m453) |  | Client |  |  |
+| 453 | ↳ [File Search (R)](files.md#m453) | Reply to [452](files.md#m452) |  | Server |  |  |
 
 ### [Accounts](accounts.md), 502 to 551
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 502 | Get Account Class | Client | Request, reply 503 |  | ● |  |  | [Accounts](accounts.md#m502) |
-| 503 | Account Class Info | Server | Reply to 502 |  | ● |  |  | [Accounts](accounts.md#m503) |
-| 504 | Set Account Class | Client | Request |  | ● |  |  | [Accounts](accounts.md#m504) |
-| 505 | Get Account Class List | Client | Request, reply 506 |  | ● |  |  | [Accounts](accounts.md#m505) |
-| 506 | Account Class List | Server | Reply to 505 |  | ● |  |  | [Accounts](accounts.md#m506) |
-| 507 | Create Account | Client | Request |  | ● |  |  | [Accounts](accounts.md#m507) |
-| 508 | Delete Account | Client | Request |  | ● |  |  | [Accounts](accounts.md#m508) |
-| 509 | Get Account | Client | Request, reply 510 |  | ● |  |  | [Accounts](accounts.md#m509) |
-| 510 | Account Info | Server | Reply to 509 |  | ● |  |  | [Accounts](accounts.md#m510) |
-| 511 | Set Account | Client | Request |  | ● |  |  | [Accounts](accounts.md#m511) |
-| 512 | Get Account List | Client | Request, reply 513 |  | ● |  |  | [Accounts](accounts.md#m512) |
-| 513 | Account List | Server | Reply to 512 |  | ● |  |  | [Accounts](accounts.md#m513) |
-| 514 | Account Changed | Server | Notification, never sent by Server 1.620 |  | ● |  |  | [Accounts](accounts.md#m514) |
-| 515 | Account Deleted | Server | Notification after 508 |  | ● |  |  | [Accounts](accounts.md#m515) |
-| 550 | Change Own Password | Client | Request, reply 551 |  | ● |  |  | [Accounts](accounts.md#m550) |
-| 551 | Change Own Password Done | Server | Reply to 550 |  | ● |  |  | [Accounts](accounts.md#m551) |
+| 502 | [Get Account Class](accounts.md#m502) | Request, reply [503](accounts.md#m503) |  | Client |  |  |
+| 503 | ↳ [Account Class Info](accounts.md#m503) | Reply to [502](accounts.md#m502) |  | Server |  |  |
+| 504 | [Set Account Class](accounts.md#m504) | Request |  | Client |  |  |
+| 505 | [Get Account Class List](accounts.md#m505) | Request, reply [506](accounts.md#m506) |  | Client |  |  |
+| 506 | ↳ [Account Class List](accounts.md#m506) | Reply to [505](accounts.md#m505) |  | Server |  |  |
+| 507 | [Create Account](accounts.md#m507) | Request |  | Client |  |  |
+| 508 | [Delete Account](accounts.md#m508) | Request |  | Client |  |  |
+| 509 | [Get Account](accounts.md#m509) | Request, reply [510](accounts.md#m510) |  | Client |  |  |
+| 510 | ↳ [Account Info](accounts.md#m510) | Reply to [509](accounts.md#m509) |  | Server |  |  |
+| 511 | [Set Account](accounts.md#m511) | Request |  | Client |  |  |
+| 512 | [Get Account List](accounts.md#m512) | Request, reply [513](accounts.md#m513) |  | Client |  |  |
+| 513 | ↳ [Account List](accounts.md#m513) | Reply to [512](accounts.md#m512) |  | Server |  |  |
+| 514 | [Account Changed](accounts.md#m514) | Notification, never sent by Server 1.620 |  | Server |  |  |
+| 515 | [Account Deleted](accounts.md#m515) | Notification after [508](accounts.md#m508) |  | Server |  |  |
+| 550 | [Change Own Password](accounts.md#m550) | Request, reply [551](accounts.md#m551) |  | Client |  |  |
+| 551 | ↳ [Change Own Password Done](accounts.md#m551) | Reply to [550](accounts.md#m550) |  | Server |  |  |
 
 ### [News](news.md), 600 to 614
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 600 | Create Newsgroup | Client | Request |  | ● |  |  | [News](news.md#m600) |
-| 601 | Delete Newsgroup | Client | Request |  | ● |  |  | [News](news.md#m601) |
-| 602 | Get Newsgroup | Client | Request, reply 603 |  | ● |  |  | [News](news.md#m602) |
-| 603 | Newsgroup Info | Server | Reply to 602 |  | ● |  |  | [News](news.md#m603) |
-| 604 | Set Newsgroup | Client | Request |  | ● |  |  | [News](news.md#m604) |
-| 605 | Get Newsgroup List | Client | Request, reply 606 |  | ● |  |  | [News](news.md#m605) |
-| 606 | Newsgroup List | Server | Reply to 605 |  | ● |  |  | [News](news.md#m606) |
-| 607 | Get News Messages | Client | Request, reply 608 |  | ● |  |  | [News](news.md#m607) |
-| 608 | News Messages | Server | Reply to 607 |  | ● |  |  | [News](news.md#m608) |
-| 609 | Get News Message | Client | Request, reply 610 |  | ● |  |  | [News](news.md#m609) |
-| 610 | News Message | Server | Reply to 609 |  | ● |  |  | [News](news.md#m610) |
-| 611 | Post News Message | Client | Request |  | ● |  |  | [News](news.md#m611) |
-| 612 | Delete News Message | Client | Request |  | ● |  |  | [News](news.md#m612) |
-| 613 | News Message Posted | Server | Notification after 611 |  | ● |  |  | [News](news.md#m613) |
-| 614 | News Message Deleted | Server | Notification after 612 |  | ● |  |  | [News](news.md#m614) |
+| 600 | [Create Newsgroup](news.md#m600) | Request |  | Client |  |  |
+| 601 | [Delete Newsgroup](news.md#m601) | Request |  | Client |  |  |
+| 602 | [Get Newsgroup](news.md#m602) | Request, reply [603](news.md#m603) |  | Client |  |  |
+| 603 | ↳ [Newsgroup Info](news.md#m603) | Reply to [602](news.md#m602) |  | Server |  |  |
+| 604 | [Set Newsgroup](news.md#m604) | Request |  | Client |  |  |
+| 605 | [Get Newsgroup List](news.md#m605) | Request, reply [606](news.md#m606) |  | Client |  |  |
+| 606 | ↳ [Newsgroup List](news.md#m606) | Reply to [605](news.md#m605) |  | Server |  |  |
+| 607 | [Get News Messages](news.md#m607) | Request, reply [608](news.md#m608) |  | Client |  |  |
+| 608 | ↳ [News Messages](news.md#m608) | Reply to [607](news.md#m607) |  | Server |  |  |
+| 609 | [Get News Message](news.md#m609) | Request, reply [610](news.md#m610) |  | Client |  |  |
+| 610 | ↳ [News Message](news.md#m610) | Reply to [609](news.md#m609) |  | Server |  |  |
+| 611 | [Post News Message](news.md#m611) | Request |  | Client |  |  |
+| 612 | [Delete News Message](news.md#m612) | Request |  | Client |  |  |
+| 613 | [News Message Posted](news.md#m613) | Notification after [611](news.md#m611) |  | Server |  |  |
+| 614 | [News Message Deleted](news.md#m614) | Notification after [612](news.md#m612) |  | Server |  |  |
 
 ### [Tracker](tracker.md), 700 to 721
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 700 | Get Tracker Group List | Client | Request, reply 701 |  |  | ● |  | [Tracker](tracker.md#m700) |
-| 701 | Tracker Group List | Tracker | Reply to 700 |  |  | ● |  | [Tracker](tracker.md#m701) |
-| 702 | Get Tracker Server List | Client | Request, reply 703 |  |  | ● |  | [Tracker](tracker.md#m702) |
-| 703 | Tracker Server List | Tracker | Reply to 702 |  |  | ● |  | [Tracker](tracker.md#m703) |
-| 710 | Get TrackerServ Settings | Client | Request, reply 711 |  |  | ● |  | [Tracker](tracker.md#m710) |
-| 711 | TrackerServ Settings Info | Tracker | Reply to 710 |  |  | ● |  | [Tracker](tracker.md#m711) |
-| 712 | Set TrackerServ Settings | Client | Request, reply 713 |  |  | ● |  | [Tracker](tracker.md#m712) |
-| 713 | Set TrackerServ Settings Done | Tracker | Reply to 712 |  |  | ● |  | [Tracker](tracker.md#m713) |
-| 720 | Get TrackerServ Statistics | Client | Request, reply 721 |  |  | ● |  | [Tracker](tracker.md#m720) |
-| 721 | TrackerServ Statistics | Tracker | Reply to 720 |  |  | ● |  | [Tracker](tracker.md#m721) |
+| 700 | [Get Tracker Group List](tracker.md#m700) | Request, reply [701](tracker.md#m701) |  |  | Client |  |
+| 701 | ↳ [Tracker Group List](tracker.md#m701) | Reply to [700](tracker.md#m700) |  |  | Tracker |  |
+| 702 | [Get Tracker Server List](tracker.md#m702) | Request, reply [703](tracker.md#m703) |  |  | Client |  |
+| 703 | ↳ [Tracker Server List](tracker.md#m703) | Reply to [702](tracker.md#m702) |  |  | Tracker |  |
+| 710 | [Get TrackerServ Settings](tracker.md#m710) | Request, reply [711](tracker.md#m711) |  |  | Client |  |
+| 711 | ↳ [TrackerServ Settings Info](tracker.md#m711) | Reply to [710](tracker.md#m710) |  |  | Tracker |  |
+| 712 | [Set TrackerServ Settings](tracker.md#m712) | Request, reply [713](tracker.md#m713) |  |  | Client |  |
+| 713 | ↳ [Set TrackerServ Settings Done](tracker.md#m713) | Reply to [712](tracker.md#m712) |  |  | Tracker |  |
+| 720 | [Get TrackerServ Statistics](tracker.md#m720) | Request, reply [721](tracker.md#m721) |  |  | Client |  |
+| 721 | ↳ [TrackerServ Statistics](tracker.md#m721) | Reply to [720](tracker.md#m720) |  |  | Tracker |  |
 
 ### [Processes](processes.md), 800 to 804
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 800 | Open Process Monitor | Client | Request |  | ● |  |  | [Processes](processes.md#m800) |
-| 801 | Close Process Monitor | Client | Request |  | ● |  |  | [Processes](processes.md#m801) |
-| 802 | Get Process List | Client | Request, reply 803 |  | ● |  |  | [Processes](processes.md#m802) |
-| 803 | Process List | Server | Reply to 802 |  | ● |  |  | [Processes](processes.md#m803) |
-| 804 | Exit/Terminate Process | Client | Request |  | ● |  |  | [Processes](processes.md#m804) |
+| 800 | [Open Process Monitor](processes.md#m800) | Request |  | Client |  |  |
+| 801 | [Close Process Monitor](processes.md#m801) | Request |  | Client |  |  |
+| 802 | [Get Process List](processes.md#m802) | Request, reply [803](processes.md#m803) |  | Client |  |  |
+| 803 | ↳ [Process List](processes.md#m803) | Reply to [802](processes.md#m802) |  | Server |  |  |
+| 804 | [Exit/Terminate Process](processes.md#m804) | Request |  | Client |  |  |
 
 ### [View display](view-display.md), 900 to 905
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 900 | Open View Display | Client | Request, reply 902 |  | ● |  |  | [View display](view-display.md#m900) |
-| 901 | Close View Display | Client | Request |  | ● |  |  | [View display](view-display.md#m901) |
-| 902 | View Display Params | Server | Reply to 900 |  | ● |  |  | [View display](view-display.md#m902) |
-| 903 | View Display Update | Server | Screen updates after 902 |  | ● |  |  | [View display](view-display.md#m903) |
-| 904 | View Display Mouse | Client | Request |  | ● |  |  | [View display](view-display.md#m904) |
-| 905 | View Display Keyboard | Client | Request |  | ● |  |  | [View display](view-display.md#m905) |
+| 900 | [Open View Display](view-display.md#m900) | Request, reply [902](view-display.md#m902) |  | Client |  |  |
+| 901 | [Close View Display](view-display.md#m901) | Request |  | Client |  |  |
+| 902 | ↳ [View Display Params](view-display.md#m902) | Reply to [900](view-display.md#m900) |  | Server |  |  |
+| 903 | [View Display Update](view-display.md#m903) | Screen updates after [902](view-display.md#m902) |  | Server |  |  |
+| 904 | [View Display Mouse](view-display.md#m904) | Request |  | Client |  |  |
+| 905 | [View Display Keyboard](view-display.md#m905) | Request |  | Client |  |  |
 
 ### [Voice](voice.md), 1000 to 1003
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 1000 | Start Voice | Caller | Request, reply 1001 | ● |  |  |  | [Voice](voice.md#m1000) |
-| 1001 | Start Voice (R) | Callee | Reply to 1000 | ● |  |  |  | [Voice](voice.md#m1001) |
-| 1002 | Set Voice Format | Either client | Sent by either side | ● |  |  |  | [Voice](voice.md#m1002) |
-| 1003 | Voice Data | Either client | Voice data, sent by either side | ● |  |  |  | [Voice](voice.md#m1003) |
+| 1000 | [Start Voice](voice.md#m1000) | Request, reply [1001](voice.md#m1001) | Caller |  |  |  |
+| 1001 | ↳ [Start Voice (R)](voice.md#m1001) | Reply to [1000](voice.md#m1000) | Callee |  |  |  |
+| 1002 | [Set Voice Format](voice.md#m1002) | Sent by either side | Either |  |  |  |
+| 1003 | [Voice Data](voice.md#m1003) | Voice data, sent by either side | Either |  |  |  |
 
 ### [Folder access](folder-access.md), 1100 to 1107
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 1100 | Create Folder Access | Client | Request |  | ● |  |  | [Folder access](folder-access.md#m1100) |
-| 1101 | Delete Folder Access | Client | Request |  | ● |  |  | [Folder access](folder-access.md#m1101) |
-| 1102 | Folder Access Deleted | Server | Notification after 1101 |  | ● |  |  | [Folder access](folder-access.md#m1102) |
-| 1103 | Get Folder Access | Client | Request, reply 1104 |  | ● |  |  | [Folder access](folder-access.md#m1103) |
-| 1104 | Folder Access Info | Server | Reply to 1103 |  | ● |  |  | [Folder access](folder-access.md#m1104) |
-| 1105 | Set Folder Access | Client | Request |  | ● |  |  | [Folder access](folder-access.md#m1105) |
-| 1106 | Get Folder Access List | Client | Request, reply 1107 |  | ● |  |  | [Folder access](folder-access.md#m1106) |
-| 1107 | Folder Access List | Server | Reply to 1106 |  | ● |  |  | [Folder access](folder-access.md#m1107) |
+| 1100 | [Create Folder Access](folder-access.md#m1100) | Request |  | Client |  |  |
+| 1101 | [Delete Folder Access](folder-access.md#m1101) | Request |  | Client |  |  |
+| 1102 | [Folder Access Deleted](folder-access.md#m1102) | Notification after [1101](folder-access.md#m1101) |  | Server |  |  |
+| 1103 | [Get Folder Access](folder-access.md#m1103) | Request, reply [1104](folder-access.md#m1104) |  | Client |  |  |
+| 1104 | ↳ [Folder Access Info](folder-access.md#m1104) | Reply to [1103](folder-access.md#m1103) |  | Server |  |  |
+| 1105 | [Set Folder Access](folder-access.md#m1105) | Request |  | Client |  |  |
+| 1106 | [Get Folder Access List](folder-access.md#m1106) | Request, reply [1107](folder-access.md#m1107) |  | Client |  |  |
+| 1107 | ↳ [Folder Access List](folder-access.md#m1107) | Reply to [1106](folder-access.md#m1106) |  | Server |  |  |
 
 ### [GConsole](gconsole.md), 4000 to 4201
 
-| Type | Message | Sent by | Role | DCC | Server | Tracker | GConsole | Details |
+| Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|---|:---:|:---:|:---:|:---:|---|
-| 4000 | Open Window | GConsole | Opens a window |  |  |  | ● | [GConsole](gconsole.md#m4000) |
-| 4001 | Draw | GConsole | Draws in the window |  |  |  | ● | [GConsole](gconsole.md#m4001) |
-| 4200 | Key | Client | A key event |  |  |  | ● | [GConsole](gconsole.md#m4200) |
-| 4201 | Mouse | Client | A mouse event |  |  |  | ● | [GConsole](gconsole.md#m4201) |
+| 4000 | [Open Window](gconsole.md#m4000) | Opens a window |  |  |  | GConsole |
+| 4001 | [Draw](gconsole.md#m4001) | Draws in the window |  |  |  | GConsole |
+| 4200 | [Key](gconsole.md#m4200) | A key event |  |  |  | Client |
+| 4201 | [Mouse](gconsole.md#m4201) | A mouse event |  |  |  | Client |

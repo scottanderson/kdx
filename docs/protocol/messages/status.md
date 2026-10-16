@@ -14,16 +14,28 @@ The dispatcher (`FUN_0804fdac`) runs each handler inside a C++ `try`. The
 catch at 0x0805090c turns the exception into a [1 Status](#m1) reply to the
 request's txid. Some handlers also send 1 Status on success.
 
-Error form, 24 bytes:
+Every form starts with two u32 words, and the server's error form adds 16
+more bytes, so the payload is 8 or 24 bytes.
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | code | an error code (see [Error codes](#error-codes)) |
-| 0x04 | 4 | request type | e.g. 0x98 for a failed [152 Get User Info](administration.md#m152) **[O]** |
-| 0x08 | 4 | module | source module tag of the raise site, ASCII packed into an integer (`0x54524e` = `TRN`; 0x46 for the path code) |
-| 0x0c | 4 | line | source line of the raise site |
-| 0x10 | 4 | extra | a value the raise site passes along |
-| 0x14 | 4 | 0 | |
+Struct `Status` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | code | 0 in the success form; otherwise an error code (see [Error codes](#error-codes)) |
+| 0x04 | 4 | u32 | request_type_or_value | the request type in an error, e.g. 0x98 for a failed [152 Get User Info](administration.md#m152) **[O]**; the value in the success form |
+| 0x08 | rest | StatusDetail[] | detail | the server's 24-byte error form only; absent from the success form and the tracker form. `rest` holds at most one `StatusDetail`, never more |
+
+Struct `StatusDetail` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | module | source module tag of the raise site, ASCII packed into an integer (`0x54524e` = `TRN`; 0x46 for the path code) |
+| 0x04 | 4 | u32 | line | source line of the raise site |
+| 0x08 | 4 | u32 | extra | a value the raise site passes along |
+| 0x0c | 4 | u32 | ignored | 0 as sent. |
+
+The error form is 24 bytes: the `code` and `request type or value` rows, and
+one `StatusDetail` in `detail`.
 
 **[O]** examples:
 
@@ -33,21 +45,22 @@ Error form, 24 bytes:
   00 00 00 98…`, which is 0x1000a corrupt, raised in module 0x46 at line
   0x98 of `FUN_080969f8`.
 
-Success form, 8 bytes: `u32 0`, then `u32 value`, often the request type **[S
-`FUN_080865c0`]**. [507 Create Account](accounts.md#m507) gets value 0x1fb and
-[511 Set Account](accounts.md#m511) 0x1ff **[O `captures/kdx-accounts.pcapng`
-frames 235, 413]**. [201 Delete Chat](chat.md#m201) gets 0xc9,
-[217 Create Chat](chat.md#m217) 0xd9, [220 Set Chat](chat.md#m220) 0xdc, and
-[504 Set Account Class](accounts.md#m504) 0x1f8 **[O
-`captures/linux-chat-rooms.pcapng` frames 81, 45, 55, 148]**.
+Success form, 8 bytes: the `code` row is 0 and the `request type or value` row
+is the value, often the request type **[S `FUN_080865c0`]**.
+[507 Create Account](accounts.md#m507) gets value 0x1fb and
+[511 Set Account](accounts.md#m511) 0x1ff
+**[O `captures/kdx-accounts.pcapng` frames 235, 413]**.
+[201 Delete Chat](chat.md#m201) gets 0xc9, [217 Create Chat](chat.md#m217) 0xd9,
+[220 Set Chat](chat.md#m220) 0xdc, and [504 Set Account Class](accounts.md#m504)
+0x1f8 **[O `captures/linux-chat-rooms.pcapng` frames 81, 45, 55, 148]**.
 
 The client renders an error as `ID ^0/^1 [^2] @ ^3 #^4`, filling in the
 code's class and number, the module, and the line **[S]**.
 
 ### Tracker form
 
-The tracker's error Status is 8 bytes: the error code, then the request type as
-a u32, like the first 8 bytes of the server's 24-byte error form above **[O
+The tracker's error Status is 8 bytes: the `code` and `request type or value`
+rows only, like the first 8 bytes of the server's 24-byte error form above **[O
 `captures/linux-tracker.pcapng` frames 61, 164; O
 `captures/kdx-cli-tracker.pcapng` frames 39, 53]**:
 

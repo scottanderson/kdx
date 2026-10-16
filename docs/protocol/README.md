@@ -10,7 +10,7 @@ detail on the page for its area, linked below.
 
 ## Read in this order
 
-1. [Conventions](#conventions), below: tags, hex, and field notation.
+1. [Conventions](#conventions), below: tags, hex, and structs.
 2. [handshake.md](handshake.md): how a connection starts, then
    [framing.md](framing.md): the encryption and the message header.
 3. [sequences.md](sequences.md): whole exchanges, such as login.
@@ -91,25 +91,118 @@ whole capture shows the fact. Start a second O part for a second capture.
 Write no commas between the letters and no remark inside a tag; put a remark
 such as "not captured" in the text before the tag.
 
-**Hex.** A number written with a `0x` prefix is hex, as in 0x40071. Offsets and
-lengths in layout tables are hex too. Ports, counts, and the message type
-numbers are decimal. A run of bytes is written as hex pairs in a code span, as
-in `00 00`. A message is named by its type and title, as in
+**Hex.** A number written with a `0x` prefix is hex, as in 0x40071. Offsets in
+struct tables are hex, and sizes are decimal. Ports, counts, and the message
+type numbers are decimal. A run of bytes is written as hex pairs in a code span,
+as in `00 00`. A message is named by its type and title, as in
 [412 Download File](messages/files.md#m412).
 
 **Endianness.** All multi-byte numbers are big-endian unless the page says
 otherwise. The one exception is a placeholder in the UDP datagram, which
 [udp.md](udp.md) says is stored little-endian.
 
-**Fields.** A layout table lists each field's offset (Off), size in bytes
-(Size), name, and notes. A blank size means the field's length varies. Integer
-widths are written `u8`, `u16`, `u32`, and `u64`, for 1, 2, 4, and 8 bytes. An
-integer with a value is written `u32 0`.
+**Structs.** Every message payload, and every record used inside one, is
+described by a struct table. A message section that has a payload holds one or
+more struct tables; one with none holds the line `No payload.` instead. The
+shape is enforced by `ci/check-docs.py`.
 
-**Blank and 0.** In a layout table's Field column, `0` means the bytes are zero
-as sent, and a blank means the field has no name yet, so its use is unknown or
-it is padding. Every field with a known use has a name. In the dot tables of
-[messages/README.md](messages/README.md), a blank means no handler there.
+Put a caption line, then a blank line, then the table. The caption is
+``Struct `Name` (N bytes):`` for a fixed size, with N in decimal, or
+``Struct `Name` (dynamic):`` otherwise. Name is CamelCase and unique across
+`docs/protocol/*.md` and `docs/protocol/messages/*.md`. Use the Rust type name
+from `crates/kdx-proto/src/msg/` when there is one. Define a record that other
+structs use as a type in the section where it first appears.
+
+The header row is exactly `| Off | Size | Type | Field | Notes |`, and the
+separator is `|---|---|---|---|---|`. Each row is one field:
+
+- Off: the offset from the start of the struct, in lowercase `0x` hex. It is
+  empty on every row after the first dynamic row.
+- Size: the field's size in decimal bytes, or for a field of variable size
+  `rest`, for everything to the end of the payload; `pad4`, for zero to three
+  bytes that reach a multiple of 4, counted from the start of the struct; or
+  the Field name of an earlier row that holds its length. A variable size
+  makes the row dynamic. A `str`, a `u8[]` and a single struct have a
+  `<field>_len` that counts bytes. Any other array has a `<field>_count` that
+  counts elements. The rows with variable size follow the order of the bytes
+  on the wire, which can differ from the order of their length rows, as in
+  [203 Chat Window Info](messages/chat.md#m203).
+- Type: a primitive, or the Name of a struct defined elsewhere, followed by
+  `[N]` for a fixed array of N elements, as in `u8[12]`, or `[]` for an array
+  of variable size, as in `u8[]`. A string of variable size is the type `str`,
+  and `str[N]` is N of them whose lengths are the N elements of one `u8[N]` row,
+  as in `groups_len`.
+- Field: the field's name in snake_case. When `kdx-proto` has a type of the
+  same Name, a field it stores has the Rust field's name. The
+  [special names](#special-field-names) below are for the other bytes.
+- Notes: anything else, with evidence tags. It may be empty. An unmarked row
+  shares the tag in the message's heading line. For a Rust type, a row that
+  is not a Rust field says "Rust `field`" for the Rust field it holds part of,
+  as in `address`, or "not stored." for a constant that `kdx-proto` checks
+  and does not keep.
+
+The primitives are `u8`, `u16`, `u32`, `u48`, `u64`, `i8`, `i16`, `i32`,
+`i64`, and `char`, which is one byte of ASCII, as in a magic. `u48` is a 6
+byte number that is big-endian, like all other numbers. Type two adjacent length fields that
+together form one 48 bit length as one `u48` row, and say in Notes that it is
+split.
+
+A fixed array holds elements that mean the same thing, such as the six group
+names of `groups`. Elements with different meanings are one row each, named
+for what they are.
+
+`str` is text of variable size. Its Size is `rest`, `pad4` or the Field name
+of a length, counted in bytes, and `kdx-proto` keeps it as bytes. The text is
+UTF-8 in Client 1.2 and later and in the servers of that age **[S]**. Before
+1.2 it was in a charset that the archives do not give, probably Mac OS Roman
+from a Mac and a Windows code page from a PC **[I]**. Nothing in the protocol
+says which one a peer uses. [encodings.md](encodings.md#strings) has the evidence.
+
+### Special field names
+
+Bytes that `kdx-proto` does not store as a field have one of these names:
+
+| Name | Meaning |
+|---|---|
+| `ignored_NN` | The receiver never reads these bytes, so any value is accepted. NN is the hex offset. Notes say what is known of them, such as "0 as sent". A struct with only one such row calls it `ignored`. |
+| `reserved_NN` | The receiver requires these bytes to be zero. A struct with only one such row calls it `reserved`. |
+| `padding` | Zero to three bytes up to a multiple of 4. |
+| `<field>_len` | The length in bytes of the later row `<field>`, which names it in its Size. It is a row of its own at its wire offset, even when several lengths run together, so a table is in offset order. |
+| `<field>_count` | The number of elements of the later array row `<field>`. |
+
+The checker enforces these rules:
+
+- The first Off is 0x00, and each Off is the previous Off plus the previous
+  Size, until the first dynamic row.
+- A fixed row's Size is the primitive's size, or the fixed struct's size,
+  times the integer in `[N]`.
+- A `[]` row has a Size of `rest`, `pad4` or an earlier Field name, and no
+  row follows a `rest` row. A row that is not an array has an empty Size only
+  when its Type is a dynamic struct.
+- A fixed struct's last Off plus Size equals N in its caption. A struct with
+  a dynamic row says `(dynamic)`, and a struct that says `(dynamic)` has one.
+- Every Name used as a Type has a caption.
+- Every Field is unique within its table, and the Field names of a struct
+  that `kdx-proto` also defines match its fields: each Rust field is a Field
+  or named in a Notes cell, and each Field is a Rust field, a length,
+  `ignored_NN`, `reserved_NN`, `padding`, or says why in Notes.
+
+Here is a small example, a record with ignored and reserved bytes, a name and padding:
+
+Struct `ExampleRecord` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | user_id |  |
+| 0x04 | 2 | u8[2] | ignored |  |
+| 0x06 | 2 | u8[2] | reserved |  |
+| 0x08 | 1 | u8 | name_len |  |
+| 0x09 | name_len | str | name |  |
+|  | pad4 | u8[] | padding |  |
+
+A message section is a heading `## <a id="mNNN"></a>NNN Name` with exactly
+one message anchor. Headings with several anchors and other headings are
+exempt from the payload check.
 
 ## Protocol overview
 
@@ -156,11 +249,11 @@ A connection has two phases, and the second carries every message:
 
 Every message starts with a 16-byte header: the txid (4 bytes, nonzero, counted
 up by each side from its own random start), the message type (4), a zero byte,
-a flags byte (bit 0 set on a reply), 2 bytes of high length bits that only
-transfer data headers use, and the payload length (4). The payload is padded to
-a multiple of 16 before encryption, and the length gives the real size. The
-full table, the limits and the 48-bit length are in
-[framing.md](framing.md#header).
+a flags byte (bit 0 set on a reply), and the payload length, one 48 bit number
+(`u48`). The payload is padded to a multiple of 16 before encryption, and the
+length gives the real size. The full `Header` struct is in
+[framing.md](framing.md#header), and the limits for each connection type are in
+the [Length limits table](framing.md#length-limits).
 
 ### Requests, replies, and notifications
 

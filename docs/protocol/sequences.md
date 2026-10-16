@@ -101,3 +101,4 @@ frames 356 to 361]**.
 When a connection closes, the other users receive
 **[104 User Departed](messages/session.md#m104)**, and the server writes a
 [185 Disconnected](messages/administration.md#m185) history record.
+

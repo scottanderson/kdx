@@ -53,14 +53,33 @@ capture and gets the captured bytes back exactly, including the padding
 
 ## Header
 
-| Off | Size | Field | Notes |
+Struct `Header` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | txid | nonzero. Each side counts up from a random start, per connection. A reply reuses the request's txid **[S; O]** |
+| 0x04 | 4 | u32 | kind | nonzero, see [messages/README.md](messages/README.md) |
+| 0x08 | 1 | u8 | reserved | 0 as sent. The original server does not check it, but `kdx-proto` rejects a nonzero byte **[S `FUN_08086108`]** |
+| 0x09 | 1 | u8 | flags | bit 0 = this is a reply **[S; O]** |
+| 0x0a | 6 | u48 | len | payload length in bytes, before padding. See [Length limits](#length-limits) **[S `FUN_080868b4`, `FUN_08086108`]** |
+
+The wire field is one 48 bit number, a `u48`. Every limit on it is enforced in
+software, and the limits differ by connection type; none is part of the wire
+format **[S `FUN_080868b4`, `FUN_08086108`]**.
+
+### Length limits
+
+| Situation | Limit | Failure | Source |
 |---|---|---|---|
-| 0x00 | 4 | txid | nonzero. Each side counts up from a random start, per connection. A reply reuses the request's txid **[S; O]** |
-| 0x04 | 4 | type | nonzero, see [messages/README.md](messages/README.md) |
-| 0x08 | 1 | 0 | the server does not check it **[S `FUN_08086108`]** |
-| 0x09 | 1 | flags | bit 0 = this is a reply **[S; O]** |
-| 0x0a | 2 | len high | bits 32-47 of the length, so the length is 48 bits. The sender writes them from a 64-bit length and fails with 0x40075 past 48 bits **[S `FUN_080868b4`]**. The receive path fails with 0x40075 when they are nonzero, as for any length past the cap **[S `FUN_08086108`]**. Only a transfer data header carries them: a [414 Download File (D)](messages/files.md#m414) with more than 4 GiB left came with byte 0x0b = 0x01 from `kdx.erb.pw` (not captured) **[O]** |
-| 0x0c | 4 | len | payload length. Each side caps what it receives and fails with 0x40075 past the cap. Server 1.620 caps messages from a client at 0x20000 (`FUN_080856cc` called from `FUN_08052ad0`) **[S `FUN_080856cc`, `FUN_08052ad0`]**. Client 1.600 caps messages from a server at 0x100000 (`FUN_0046d430` called from `FUN_00402310`, checked in `FUN_0046e860`) **[S client `FUN_0046d430`, client `FUN_00402310`, client `FUN_0046e860`]** |
+| Sender, any connection | 48 bits, so at most 0xffffffffffff, written from a 64-bit length | fails with 0x40075 past 48 bits | **[S `FUN_080868b4`]** |
+| Server 1.620 receiving from a client | 0x20000 | fails with 0x40075 past the cap | **[S `FUN_080856cc`, `FUN_08052ad0`]** |
+| Client 1.600 receiving from a server | 0x100000 | fails with 0x40075 past the cap | **[S client `FUN_0046d430`, client `FUN_00402310`, client `FUN_0046e860`]** |
+| Tracker receiving on a TCP browse connection | 0x10000 | not stated | **[S `FUN_0804bd9c`]**, see [tracker.md](tracker.md#connection) |
+| Receive path, bits 32 to 47 of the length | must be zero | fails with 0x40075, as for any length past the cap | **[S `FUN_08086108`]** |
+| Transfer data header, bits 32 to 47 of the length | carried when a fork has more than 4 GiB left: a [414 Download File (D)](messages/files.md#m414) came with byte 0x0b = 0x01 from `kdx.erb.pw` (not captured) | not stated | **[O]** |
+| Transfer data (414, 417) | one header covers the whole fork, past the normal caps | none seen | **[O `captures/kdx-cli.pcapng` frames 133, 190]**, see [files.md](messages/files.md#m414) |
+| Hello in the handshake | 0x800 | fails with 0x40075 | **[S `FUN_080876e8`]**, see [handshake.md](handshake.md#hello) |
+| Chat text in 207 Send Chat Text | 0x1000 | the server caps the message, which can split a multi-byte character | **[S `FUN_08058d74`]**, see [encodings.md](encodings.md#strings) |
 
 The sender also has a header-only path (`FUN_080868b4`) followed by
 separately encrypted chunks (`FUN_08086a9c`). The server sends each 414

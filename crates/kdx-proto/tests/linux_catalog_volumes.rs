@@ -91,9 +91,9 @@ fn set_account_class() {
             AccountClass {
                 privileges,
                 time: 0,
-                unknown_25: 0x50,
+                ignored_25: 0x50,
                 index: 0,
-                unknown_after_index: [0xff, 0, 0],
+                ignored_after_index: [0xff, 0, 0],
                 name: b"Administrator".to_vec(),
                 ..AccountClass::default()
             }
@@ -183,7 +183,7 @@ fn file_search() {
     assert_eq!(hit.size, 6);
     assert_eq!(hit.attributes, ATTR_FILE);
     assert_eq!(hit.created, hit.modified);
-    assert_eq!(hit.unknown_34, 0x10);
+    assert_eq!(hit.ignored_34, 0x10);
     assert!(hit.name.is_empty());
     assert_eq!(hit.path, FilePath::new(["lab-files", "a.txt"]));
     assert_eq!(FileSearchEntry::encode_list(&hits).unwrap(), wire);

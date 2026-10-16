@@ -30,7 +30,7 @@ fn chat_user_joined_and_departed() {
         ChatUserChange {
             chat_id: PUBLIC_CHAT,
             user_id: 0x14,
-            unknown_08: 0,
+            ignored_08: 0,
             ..ChatUserChange::default()
         }
     );
@@ -42,7 +42,7 @@ fn chat_user_joined_and_departed() {
     assert_eq!(
         departed,
         ChatUserChange {
-            unknown_08: 1,
+            ignored_08: 1,
             ..joined
         }
     );

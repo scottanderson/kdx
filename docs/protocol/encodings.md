@@ -119,12 +119,20 @@ them as (tv_sec + 2208988800) × 1000 + ms **[S `FUN_08090eb0`]**, so
 A path is a list of names. Each name gives one folder level below the user's
 base folder. **[S `FUN_08069880`, `FUN_08096b4c`; O]**
 
-| Size | Field |
-|---|---|
-| 2 | count of names (1..0x400) |
-| 2 | 0, per name |
-| 1 | name length, per name (nonzero) |
-| n | name, per name |
+Struct `FilePath` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | names_count |  |
+| 0x02 | names_count | PathName[] | names | 1 to 0x400 |
+
+Struct `PathName` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | ignored | 0 as sent. |
+| 0x02 | 1 | u8 | name_len |  |
+| 0x03 | name_len | str | name | nonzero |
 
 The root is an empty payload, not a count of 0. A path with names must be at
 least 6 bytes. Otherwise the server raises 0x1000a: a
@@ -134,31 +142,50 @@ invalid. The server joins the names with `/` and checks each one with
 `FUN_08094084` **[S]**. For example, `00 01 00 00 0c "Uploads [UL]"` is the root
 folder `Uploads [UL]` **[O]**.
 
+Struct `DelimitedFilePath` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | names_count |  |
+| 0x02 | names_count | PathName[] | names | 0 for the root, otherwise 1 to 0x400 |
+
+A `DelimitedFilePath` is a `FilePath` that is followed by more fields in the
+same payload, so it must say where it ends. The root is `00 00`, not an empty
+payload. `kdx_proto::msg::FilePath::decode_delimited` reads it.
+
 ## User record
 
-**[S `FUN_0804af04`, `FUN_0804b304`; O `captures/first-connect.pcapng`]**
+Evidence: **[S `FUN_0804af04`, `FUN_0804b304`; O
+`captures/first-connect.pcapng`]**
 
 This record is used in [100 Set Identity](messages/session.md#m100) (client to
 server, user ID 0) and in [101 User List](messages/session.md#m101),
 [102 User Changed](messages/session.md#m102), and
 [103 User Joined](messages/session.md#m103).
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | user ID | assigned by the server; 0 in 100 Set Identity |
-| 0x04 | 1 | status | the value set by [110 Set Mini User Icon](messages/session.md#m110) |
-| 0x05 | 5 | 0 | |
-| 0x0a | 2 | DCC TCP port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture **[O]**; **[S client `FUN_0804d654`]**) |
-| 0x0c | 2 | icon length | < 0x709 |
-| 0x0e | 6 | colours | from the client: two 3-byte RGB colours **[S client `FUN_0804d654`]**; `00 00 00 ff cc 00` in the capture |
-| 0x14 | 1 | server byte | set by the server; 0 from the client, 0xff for admin **[O]** |
-| 0x15 | 2 | server word | set by the server |
-| 0x17 | 1 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
-| 0x18 | 1 | extra length | skipped by the server |
-| 0x19 | 1 | nick length | |
-| 0x1a | 1 | info length | ≤ 0x7f |
-| 0x1b | 1 | 0 | |
-| 0x1c | | icon, extra, nick, info | in that order |
+Struct `UserRecord` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | user_id | assigned by the server; 0 in 100 Set Identity |
+| 0x04 | 1 | u8 | status | the value set by [110 Set Mini User Icon](messages/session.md#m110) |
+| 0x05 | 5 | u8[5] | ignored_05 | 0 as sent. |
+| 0x0a | 2 | u16 | client_port | the client's client-to-client listener, 10600 by default; 0 if it has none (10600 in the capture **[O]**; **[S client `FUN_0804d654`]**) |
+| 0x0c | 2 | u16 | icon_len |  |
+| 0x0e | 6 | u8[6] | colors | from the client: two 3-byte RGB colours **[S client `FUN_0804d654`]**; `00 00 00 ff cc 00` in the capture |
+| 0x14 | 1 | u8 | server_14 | set by the server; 0 from the client, 0xff for admin **[O]** |
+| 0x15 | 1 | u8 | server_15 | set by the server |
+| 0x16 | 1 | u8 | server_16 | set by the server |
+| 0x17 | 1 | u8 | flags | bit 2 is from the client; bit 1 is set by the server (see below) |
+| 0x18 | 1 | u8 | extra_len |  |
+| 0x19 | 1 | u8 | nick_len |  |
+| 0x1a | 1 | u8 | info_len |  |
+| 0x1b | 1 | u8 | ignored_1b | 0 as sent. |
+| 0x1c | icon_len | u8[] | icon | Length < 0x709 |
+|  | extra_len | u8[] | extra | skipped by the server |
+|  | nick_len | str | nick |  |
+|  | info_len | str | info | Length at most 0x7f |
+|  | pad4 | u8[] | padding | the server adds it in 101 User List; the client sends none |
 
 - The client sends 100 Set Identity unpadded (565 bytes in the capture). The
   server pads each record of 101 User List with zeros to a multiple of 4
@@ -174,28 +201,34 @@ server, user ID 0) and in [101 User List](messages/session.md#m101),
 
 ## Chat record
 
-The record of [219 Chat Info](messages/chat.md#m219)
-**[S `FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O]**
+The record of [219 Chat Info](messages/chat.md#m219). Evidence: **[S
+`FUN_08059944`, `FUN_08059be8`, `FUN_08059e24`; O]**
 
 This record is used in [217 Create Chat](messages/chat.md#m217),
 [219 Chat Info](messages/chat.md#m219), and
 [220 Set Chat](messages/chat.md#m220).
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | chat ID | |
-| 0x04 | 4 | key | |
-| 0x08 | 0xc | | |
-| 0x14 | 4 | join classes | bitmap of account classes, MSB = class 0 |
-| 0x18 | 4 | send classes | |
-| 0x1c | 4 | topic classes | |
-| 0x20 | 8 | | |
-| 0x28 | 2 | flags | bit 0 private, bit 1 voice |
-| 0x2a | 1 | name length | ≤ 0x3f |
-| 0x2b | 1 | description length | ≤ 0x7f |
-| 0x2c | 1 | IRC server length | ≤ 0x7f; `host:port`, the client adds `:6667` if there is no port **[S client `FUN_080823a0`]** |
-| 0x2d | 1 | IRC channel length | ≤ 0x3f; the client adds `#` if the name has no channel prefix **[S]** |
-| 0x30 | | strings | |
+Struct `ChatRecord` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | chat_id |  |
+| 0x04 | 4 | u32 | key |  |
+| 0x08 | 12 | u8[12] | ignored_08 |  |
+| 0x14 | 4 | u32 | join_classes | bitmap of account classes, MSB = class 0 |
+| 0x18 | 4 | u32 | send_classes |  |
+| 0x1c | 4 | u32 | topic_classes |  |
+| 0x20 | 8 | u8[8] | ignored_20 |  |
+| 0x28 | 2 | u16 | flags | bit 0 private, bit 1 voice |
+| 0x2a | 1 | u8 | name_len |  |
+| 0x2b | 1 | u8 | description_len |  |
+| 0x2c | 1 | u8 | irc_server_len |  |
+| 0x2d | 1 | u8 | irc_channel_len |  |
+| 0x2e | 2 | u8[2] | ignored_2e |  |
+| 0x30 | name_len | str | name | Length at most 0x3f |
+|  | description_len | str | description | Length at most 0x7f |
+|  | irc_server_len | str | irc_server | Length at most 0x7f; `host:port`, the client adds `:6667` if there is no port **[S client `FUN_080823a0`]** |
+|  | irc_channel_len | str | irc_channel | Length at most 0x3f; the client adds `#` if the name has no channel prefix **[S]** |
 
 The two IRC strings make the chat an IRC gateway (the client's chat editor calls
 them Make IRC Gateway: IRC Server, Channel). The server only stores them. Each

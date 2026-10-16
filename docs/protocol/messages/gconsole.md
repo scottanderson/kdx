@@ -17,8 +17,19 @@ The peer sends [4000 Open Window](#m4000) and [4001 Draw](#m4001) **[S
 
 Initiator: GConsole peer. **[S `FUN_08094be8`]**
 
-At least 0x18 bytes: u16 width (0x40..0x1000), u16 height (0x10..0x1000),
-then a u32 colour the window is filled with. A second [4000 Open Window](#m4000)
+At least 0x18 bytes, so the payload is longer than the struct when the peer
+sends more.
+
+Struct `OpenWindow` (24 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | width | 0x40 to 0x1000 |
+| 0x02 | 2 | u16 | height | 0x10 to 0x1000 |
+| 0x04 | 4 | u32 | color | the window is filled with it |
+| 0x08 | 16 | u8[16] | rest | the client does not read them |
+
+A second [4000 Open Window](#m4000)
 fails with 0x10003. Frame 10 opened a 0x200 × 0x180 window filled with
 0x00336699 **[O]**. The colour goes through `FUN_08114bc8` first; colours are
 described under [4001 Draw](#m4001).
@@ -30,6 +41,20 @@ Initiator: GConsole peer. **[S `FUN_08095ac4`]**
 A stream of draw records. Each starts with a u32 whose top 10 bits give the
 kind and low 22 bits the body length; the next record starts at the length
 plus 4, rounded up to 4. Frame 14 holds 21 records **[O]**.
+
+Struct `Draw` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | rest | DrawRecord[] | records | Rust `padding`: the padding after each record. |
+
+Struct `DrawRecord` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | body_len |  |
+| 0x04 | body_len | u8[] | body | the length is the low 22 bits; layouts by kind below top 10 bits the kind, low 22 bits the body length |
+|  | pad4 | u8[] | padding | padding to a multiple of 4; keep it as received |
 
 A colour is a u32: a transparency byte, then red, green, and blue
 (0x00RRGGBB is opaque). 0 is opaque, 0x01-0xfe blend, and 0xff draws
@@ -61,16 +86,18 @@ key or button event in the window. Mouse moves send nothing **[O]** (frames
 
 ## <a id="m4200"></a>4200 Key
 
-Initiator: Client (to GConsole peer). Sent by `FUN_0809607c` **[S]**:
+Initiator: Client (to GConsole peer). Sent by `FUN_0809607c` **[S]**.
 
-| Offset | Size | Field |
-|---:|---:|---|
-| 0x00 | 4 | the client's clock, in ms |
-| 0x04 | 4 | modifiers held before the event: 8 Shift (frame 54), 2 Alt (18) |
-| 0x08 | 4 | the character: `a` 0x61, `A` 0x41, Return 0x0a, BackSpace 0x08; 0 for keys with none and on release |
-| 0x0c | 2 | the key's USB HID usage: `a` 4, Return 0x28, Left 0x50, Left Shift 0xe1; 0 on most releases |
-| 0x0e | 1 | 1 pressed, 2 released, 3 for window event 7 (never seen) |
-| 0x0f | 1 | 0 |
+Struct `Key` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | time | the client's clock, in ms |
+| 0x04 | 4 | u32 | modifiers | held before the event: 8 Shift (frame 54), 2 Alt (18) |
+| 0x08 | 4 | u32 | character | `a` 0x61, `A` 0x41, Return 0x0a, BackSpace 0x08; 0 for keys with none and on release |
+| 0x0c | 2 | u16 | usage | the key's USB HID usage: `a` 4, Return 0x28, Left 0x50, Left Shift 0xe1; 0 on most releases |
+| 0x0e | 1 | u8 | kind | 1 pressed, 2 released, 3 for window event 7 (never seen) |
+| 0x0f | 1 | u8 | value_0f |  |
 
 All **[O]** but kind 3. A held key repeats as a release and a press
 together, every 40 ms after 661 ms (frames 78-154). Ctrl+B sent Ctrl's
@@ -79,17 +106,19 @@ B (68-72). F1 opened the client's window menu instead of reaching the peer.
 
 ## <a id="m4201"></a>4201 Mouse
 
-Initiator: Client (to GConsole peer). Sent by `FUN_08096188` **[S]**:
+Initiator: Client (to GConsole peer). Sent by `FUN_08096188` **[S]**.
 
-| Offset | Size | Field |
-|---:|---:|---|
-| 0x00 | 4 | the client's clock, in ms |
-| 0x04 | 4 | 0x00040000 on a right button press (frame 32), else 0 |
-| 0x08 | 2 | x in the window |
-| 0x0a | 2 | y in the window |
-| 0x0c | 1 | button: 1 left, 2 right, 3 middle, 4 wheel up, 5 wheel down |
-| 0x0d | 1 | 5 pressed, 6 released, 10 wheel |
-| 0x0e | 2 | i16 wheel movement: 0x78 up, −0x78 down; 0 for buttons |
+Struct `Mouse` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | time | the client's clock, in ms |
+| 0x04 | 4 | u32 | value_04 | 0x00040000 on a right button press (frame 32), else 0 |
+| 0x08 | 2 | u16 | x | in the window |
+| 0x0a | 2 | u16 | y | in the window |
+| 0x0c | 1 | u8 | button | 1 left, 2 right, 3 middle, 4 wheel up, 5 wheel down |
+| 0x0d | 1 | u8 | kind | 5 pressed, 6 released, 10 wheel |
+| 0x0e | 2 | i16 | wheel | 0x78 up, −0x78 down; 0 for buttons |
 
 All **[O]**, frames 20-46. Each wheel step sends two identical messages
 (40, 42).

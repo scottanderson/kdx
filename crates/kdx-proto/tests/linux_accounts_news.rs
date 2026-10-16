@@ -76,7 +76,7 @@ fn create_set_and_delete_newsgroup() {
         (create.read_classes, create.post_classes),
         (1 << 31, 1 << 31)
     );
-    assert_eq!(create.unknown_20, [0; 4]);
+    assert_eq!(create.ignored_20, [0; 4]);
     assert_eq!(create.encode().unwrap(), wire);
     // Frame 61.
     assert_eq!(status(&session, &request), Status::Success { value: 0x258 });

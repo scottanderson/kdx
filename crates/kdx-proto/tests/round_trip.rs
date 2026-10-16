@@ -1,7 +1,7 @@
 //! Re-encodes the fixture payloads whose padding or unknown bytes the codecs must keep, and
 //! synthetic payloads with every unmodelled byte set.
 
-use std::net::{Ipv4Addr, SocketAddrV4};
+use std::net::Ipv4Addr;
 
 use kdx_proto::msg::admin::{
     Account, AccountClass, AccountClassIndex, AccountListEntry, AccountLogin, ChangeOwnPassword,
@@ -256,7 +256,7 @@ fn nonzero_gaps_round_trip() {
         dcc_port: 0,
         connection_id: 0,
         client_version: 0,
-        unknown_2a: [0; 6],
+        ignored: [0; 6],
     };
     gaps("117", skpk.encode(), &[0x2a..0x30], |p| {
         Skpk::decode(p).unwrap().encode()
@@ -323,9 +323,9 @@ fn nonzero_gaps_round_trip() {
         time: 0,
         kind: MessageType(184),
         user_id: 0,
-        unknown_10: [0; 0x32],
-        unknown_44: [0; 2],
-        unknown_4a: [0; 2],
+        ignored_10: [0; 0x32],
+        ignored_44: [0; 2],
+        ignored_4a: [0; 2],
         address: a(),
         nick: Vec::new(),
         login: Vec::new(),
@@ -416,7 +416,7 @@ fn nonzero_gaps_round_trip() {
         }],
         ..ProcessList::default()
     };
-    let process_gaps = at(0x20, &[4..8, 0x10..0x39, 0x3b..0x3c, 0x3d..0x40]);
+    let process_gaps = at(0x20, &[4..8, 0x10..0x39, 0x3d..0x40]);
     gaps(
         "803",
         processes.encode().unwrap(),
@@ -676,11 +676,12 @@ fn nonzero_gaps_round_trip() {
     );
     let server = ServerListEntry {
         first_seen: 0,
-        unknown_08: [0; 6],
+        ignored_08: [0; 6],
         flags: 0,
         users: 0,
-        unknown_12: [0; 6],
-        address: SocketAddrV4::new(Ipv4Addr::LOCALHOST, 10700),
+        ignored_12: [0; 6],
+        address: Ipv4Addr::LOCALHOST,
+        port: 10700,
         name: a(),
         description: Vec::new(),
         extra: Vec::new(),

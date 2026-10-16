@@ -2,7 +2,7 @@
 //!
 //! The rules are Tracker 1.110's (`docs/protocol/udp.md`, "Tracker side").
 
-use std::net::{Ipv4Addr, SocketAddrV4};
+use std::net::Ipv4Addr;
 use std::time::{Duration, Instant};
 
 use kdx_proto::msg::tracker::ServerListEntry;
@@ -54,12 +54,13 @@ impl Record {
             first_seen: self.first_seen,
             flags: self.flags,
             users: self.users,
-            address: SocketAddrV4::new(self.ip, self.server_port as u16),
+            address: self.ip,
+            port: self.server_port as u16,
             name: self.name.clone(),
             description: self.description.clone(),
             extra: Vec::new(),
-            unknown_08: [0; 6],
-            unknown_12: [0; 6],
+            ignored_08: [0; 6],
+            ignored_12: [0; 6],
             padding: Vec::new(),
         }
     }

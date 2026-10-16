@@ -363,7 +363,7 @@ async fn main() -> Result<()> {
         Command::Msg { user, text } => client.send_private_message(user, text.as_bytes()).await?,
         Command::Listen { chat } => {
             let window = client.join_chat(chat, 0).await?;
-            println!("joined {}", text(window.name()));
+            println!("joined {}", text(&window.name));
             loop {
                 let (header, payload) = client.next_event().await?;
                 print_event(header.kind, &payload)?;
@@ -442,7 +442,7 @@ async fn tracker_command(action: TrackerAction) -> Result<()> {
             for server in tracker.servers(group.as_bytes()).await? {
                 println!(
                     "{:<21}  {:>4} users  {}{}",
-                    server.address,
+                    server.socket_addr(),
                     server.users,
                     text(&server.name),
                     described(&server.description)
