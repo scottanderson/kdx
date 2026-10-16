@@ -147,7 +147,8 @@ the voice connection handles 1000-1003. See `docs/protocol/dcc.md`.
 ## Still to read
 
 - [404 Delete File/Folder](../docs/protocol/messages/files.md#m404)/[406 Rename File/Folder](../docs/protocol/messages/files.md#m406)/[408 Copy File/Folder](../docs/protocol/messages/files.md#m408):
-  no handler in the server or tracker, and no sender found in Client 1.620 beta 5.
+  no handler in the server or tracker, and no sender found in Client 1.620
+  beta 5.
 - The connection flood ban seen in `captures/kdx-accounts.pcapng` (30
   connections a minute); the per-request flood check is read.
 - GConsole: the unknown fields of

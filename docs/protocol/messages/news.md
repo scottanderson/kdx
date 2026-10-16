@@ -83,6 +83,8 @@ It is 91 bytes, unpadded **[O]**.
 ## <a id="m605"></a>605 Get Newsgroup List
 Initiator: Client. Privilege: View News (70). **[S `FUN_0805d038`; O]**
 
+The request is empty **[O `captures/linux-accounts-news.pcapng` frame 55]**.
+
 ## <a id="m606"></a>606 Newsgroup List
 Initiator: Server. Reply to [605 Get Newsgroup List](#m605).
 

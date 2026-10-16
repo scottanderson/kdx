@@ -158,6 +158,9 @@ Initiator: Server.
 
 Reply to [172 Set Server Settings](#m172) **[O]**.
 
+The reply is empty **[O `captures/linux-server-settings.pcapng` frames 41,
+57]**.
+
 ## <a id="m174"></a>174 Shutdown Server
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 
@@ -206,6 +209,9 @@ back about 5 s after the 151; the next login's
 Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
 `FUN_080627f8`, `FUN_08061d80`]**
 
+The request is empty **[O `captures/linux-server-settings.pcapng` frames 32,
+88; O `captures/linux-chat-admin.pcapng` frame 134]**.
+
 The reply is [181 Server History Join (R)](#m181). While joined, the client
 receives [183 Server History Added](#m183) for each new record. A record's kind
 is one of 184 to 191 (Login, Disconnected, Abort File Download, …), or the type
@@ -246,6 +252,8 @@ records}, each padded to 4.
 ## <a id="m182"></a>182 Server History Leave
 Initiator: Client. Privilege: View Server History (63).
 Handler: **[S `FUN_080627f8`]**.
+
+The request is empty **[O `captures/linux-chat-admin.pcapng` frame 137]**.
 
 Leaves the history joined with [180 Server History Join](#m180).
 

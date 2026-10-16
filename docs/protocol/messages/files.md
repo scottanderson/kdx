@@ -312,7 +312,8 @@ byte for byte (`captures/kdx-cli.pcapng` frame 244).
 Initiator: Server. Completes [415 Upload File](#m415).
 
 An empty message with the server's own txid, sent when both forks are
-complete **[O]**. **[O]**: 100 bytes uploaded to `Uploads [UL]` arrived byte
+complete. The payload is empty **[O `captures/linux-files.pcapng` frame 51]**.
+**[O]**: 100 bytes uploaded to `Uploads [UL]` arrived byte
 for byte.
 
 ### <a id="m419"></a>419 Notify Speed Limit
@@ -342,6 +343,8 @@ this way **[O]**.
 ### <a id="m421"></a>421 Empty Trash
 Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
 [1 Status](status.md#m1) 0x1a5 **[S]**.
+
+The request is empty **[O `captures/linux-files.pcapng` frame 260]**.
 
 ### <a id="m422"></a>422 Volume Info
 Initiator: Server. Reply to [409 Get File/Folder Info](#m409) when the path is a
