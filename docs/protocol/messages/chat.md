@@ -186,7 +186,8 @@ although [216 Create Private Chat (R)](#m216) gave the chat flags 0.
 Initiator: Server. **[S `FUN_0804b114`; O]**
 
 Sent after login when the account has Join Chat (30) and Join Chat On Connect
-(36). The payload is empty, so it names no chat. The client always joins chat 1,
+(36). The payload is empty **[O `captures/linux-chat-rooms.pcapng` frame 167]**,
+so it names no chat. The client always joins chat 1,
 Public Chat: its [213 Must Join Chat](#m213) handler ignores the payload and
 calls the join helper with chat ID 1 and key 0, which opens the chat window and
 sends [202 Join Chat](#m202) {1, 0}, in Client 1.620 beta 5 **[S `FUN_08084020`,
