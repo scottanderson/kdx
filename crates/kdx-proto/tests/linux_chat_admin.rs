@@ -68,7 +68,7 @@ fn create_private_chat() {
     assert_eq!(chat.key, KEY);
     assert_eq!(chat.flags, 0);
     assert_eq!(chat.members, [CLIENT]);
-    assert_eq!(chat.name(), b"Private 1");
+    assert_eq!(chat.name, b"Private 1");
     assert_eq!(chat.encode().unwrap(), wire);
 }
 
@@ -119,8 +119,8 @@ fn chat_invitation() {
         chat_id: PRIVATE_CHAT,
         key: KEY,
         user_id: CLIENT,
-        unknown_0c: 1,
-        unknown_10: 1,
+        ignored_0c: 1,
+        ignored_10: 1,
         message: Vec::new(),
         name: b"Private 1".to_vec(),
         ..ChatInvitation::default()
@@ -130,7 +130,7 @@ fn chat_invitation() {
         [
             first.clone(),
             ChatInvitation {
-                unknown_0c: 2,
+                ignored_0c: 2,
                 ..first
             }
         ]
@@ -148,7 +148,7 @@ fn chat_user_joined() {
         ChatUserChange {
             chat_id: PUBLIC_CHAT,
             user_id: CLIENT,
-            unknown_08: 0,
+            ignored_08: 0,
             ..ChatUserChange::default()
         }
     );

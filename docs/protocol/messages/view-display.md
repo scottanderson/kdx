@@ -19,7 +19,9 @@ primary screen with `BitBlt` from the desktop window into a 24-bit DIB **[S
 Initiator: Client, on a transfer connection. Privilege: View Display (66).
 **[S `FUN_0805c0f0`, client `FUN_0806f9d8`]**
 
-The request is empty. A connection already busy gets 0x10003. The reply is
+No payload.
+
+A connection already busy gets 0x10003. The reply is
 [902 View Display Params](#m902), then a full [903 View Display Update](#m903)
 frame. After that the server sends a 903 to every viewer every 1500 ms when the
 screen has changed.
@@ -30,25 +32,37 @@ A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
 Initiator: Client. It has no handler: the client closes the connection, and
 sends no [901 Close View Display](#m901) (frame 420) **[O]**.
 
+Struct `CloseViewDisplay` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | rest | u8[] | ignored | unknown: nothing sends or handles it |
+
 ## <a id="m902"></a>902 View Display Params
 Initiator: Server. Reply to [900 Open View Display](#m900).
 
-0x10 bytes: u32 flags, bit 0 = the viewer may control the display (Control
-Display, 67). The rest is 0. Admin gets 1 (frame 107) **[O]**.
+Struct `ViewDisplayParams` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | flags | bit 0 = the viewer may control the display (Control Display, 67); admin gets 1 (frame 107) **[O]** |
+| 0x04 | 12 | u8[12] | ignored | 0 as sent. |
 
 ## <a id="m903"></a>903 View Display Update
 Initiator: Server. Sent after [902 View Display Params](#m902) in reply to
 [900 Open View Display](#m900), then whenever the screen changes.
 
-| Off | Size | Field |
-|---|---|---|
-| 0x00 | 2 | screen width |
-| 0x02 | 2 | screen height |
-| 0x04 | 2 | left of the changed rectangle |
-| 0x06 | 2 | top |
-| 0x08 | 2 | right (exclusive) |
-| 0x0a | 2 | bottom (exclusive) |
-| 0x0c | | pixel stream for the whole screen, row by row |
+Struct `ViewDisplayUpdate` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | screen_width |  |
+| 0x02 | 2 | u16 | screen_height |  |
+| 0x04 | 2 | u16 | left | of the changed rectangle |
+| 0x06 | 2 | u16 | top |  |
+| 0x08 | 2 | u16 | right | exclusive |
+| 0x0a | 2 | u16 | bottom | exclusive |
+| 0x0c | rest | u8[] | pixels | the stream for the whole screen, row by row, in u16 words |
 
 A pixel is a u16 RGB555 (0RRRRRGGGGGBBBBB), the top 5 bits of each
 channel **[S `FUN_0805bb54`]**. The value 0x6c59 means unchanged; a real
@@ -93,14 +107,16 @@ never changed, so no later 903 came **[O]**.
 Initiator: Client, on the view display connection. Privilege: Control
 Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | modifiers | as in [905 View Display Keyboard](#m905); Client 1.620 beta 5's bits are unknown **[I]** |
-| 0x04 | 2 | x | in screen pixels |
-| 0x06 | 2 | y | |
-| 0x08 | 2 | wheel | the event field [4201 Mouse](gconsole.md#m4201) sends as its wheel; 0 for clicks and moves **[O]** |
-| 0x0a | 1 | button | 1 left, 2 right, 3 middle **[S `FUN_00420270`]** |
-| 0x0b | 1 | kind | 1 down, 2 up, 3 move, 4 wheel **[S `FUN_0805c344`]** |
+Struct `ViewDisplayMouse` (12 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | modifiers | as in [905 View Display Keyboard](#m905); Client 1.620 beta 5's bits are unknown **[I]** |
+| 0x04 | 2 | u16 | x | in screen pixels |
+| 0x06 | 2 | u16 | y |  |
+| 0x08 | 2 | u16 | wheel | the event field [4201 Mouse](gconsole.md#m4201) sends as its wheel; 0 for clicks and moves **[O]** |
+| 0x0a | 1 | u8 | button | 1 left, 2 right, 3 middle **[S `FUN_00420270`]** |
+| 0x0b | 1 | u8 | kind | 1 down, 2 up, 3 move, 4 wheel **[S `FUN_0805c344`]** |
 
 A click is kind 1, then kind 2, both with button 1; moves have button 0
 (frames 307-310) **[O]**. Other kinds are ignored. After kind 2, the server
@@ -119,13 +135,15 @@ wheel. The Linux server ignores all of it.
 Initiator: Client, on the view display connection. Privilege: Control
 Display (67). **[S `FUN_0805c498`, client `FUN_0806f1f4`]**
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | modifiers | from Client 1.600 (`FUN_00463870`): Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 **[S client `FUN_00463870`]**; Client 1.620 beta 5's bits are unknown **[I]** |
-| 0x04 | 2 | character | **[O]** |
-| 0x06 | 2 | key code | **[O]**; `a` = 4, `b` = 5, `c` = 6 from Client 1.620 |
-| 0x08 | 3 | 0 | |
-| 0x0b | 1 | kind | 1 key down, 2 key up, 3 key repeat **[S `FUN_0805c498`]** |
+Struct `ViewDisplayKeyboard` (12 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | modifiers | from Client 1.600 (`FUN_00463870`): Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30 **[S client `FUN_00463870`]**; Client 1.620 beta 5's bits are unknown **[I]** |
+| 0x04 | 2 | u16 | character | **[O]** |
+| 0x06 | 2 | u16 | key_code | **[O]**; `a` = 4, `b` = 5, `c` = 6 from Client 1.620 |
+| 0x08 | 3 | u8[3] | ignored | 0 as sent. |
+| 0x0b | 1 | u8 | kind | 1 key down, 2 key up, 3 key repeat **[S `FUN_0805c498`]** |
 
 Typing `abc` sends `0061 0004`, `0062 0005`, `0063 0006` with kind 1, each
 followed by a kind 2 that is zero apart from the kind (frames 312-322)

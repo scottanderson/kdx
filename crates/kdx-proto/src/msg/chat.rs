@@ -70,27 +70,30 @@ pub struct ChatWindowInfo {
     /// Key.
     pub key: u32,
     /// Bytes 0x10 to 0x13; meaning unknown.
-    pub unknown_10: [u8; 4],
+    pub ignored_10: [u8; 4],
     /// Flags: bit 0 private, bit 1 voice.
     pub flags: u16,
     /// Bytes 0x18 to 0x1d; meaning unknown.
-    pub unknown_18: [u8; 6],
+    pub ignored_18: [u8; 6],
     /// Byte 0x23; meaning unknown.
-    pub unknown_23: u8,
+    pub ignored_23: u8,
     /// User IDs of the members, the joiner included.
     pub members: Vec<u32>,
-    /// The five strings whose lengths are at 0x1e; the third is the name.
-    pub strings: [Vec<u8>; 5],
+    /// The chat's name.
+    pub name: Vec<u8>,
+    /// The topic.
+    pub topic: Vec<u8>,
+    /// The nick that set the topic.
+    pub topic_setter: Vec<u8>,
+    /// The IRC server.
+    pub irc_server: Vec<u8>,
+    /// The IRC channel.
+    pub irc_channel: Vec<u8>,
 }
 
 impl ChatWindowInfo {
     /// Size of the fixed part before the member IDs.
     pub const HEADER_LEN: usize = 0x24;
-
-    /// The chat's name.
-    pub fn name(&self) -> &[u8] {
-        &self.strings[2]
-    }
 
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
@@ -101,18 +104,33 @@ impl ChatWindowInfo {
         let members = (0..count)
             .map(|i| u32_at(buf, Self::HEADER_LEN + 4 * i))
             .collect();
-        let lens = [0x1e, 0x1f, 0x20, 0x21, 0x22].map(|at| usize::from(buf[at]));
-        let (strings, _) = strings(buf, ids_end, lens)?;
+        let [irc_server_len, irc_channel_len, name_len, topic_len, topic_setter_len] =
+            [0x1e, 0x1f, 0x20, 0x21, 0x22].map(|at| usize::from(buf[at]));
+        let ([name, topic, topic_setter, irc_server, irc_channel], _) = strings(
+            buf,
+            ids_end,
+            [
+                name_len,
+                topic_len,
+                topic_setter_len,
+                irc_server_len,
+                irc_channel_len,
+            ],
+        )?;
         Ok(Self {
             time: u64_at(buf, 0),
             chat_id: u32_at(buf, 8),
             key: u32_at(buf, 0x0c),
-            unknown_10: buf[0x10..0x14].try_into().expect("4 bytes"),
+            ignored_10: buf[0x10..0x14].try_into().expect("4 bytes"),
             flags: u16_at(buf, 0x14),
-            unknown_18: buf[0x18..0x1e].try_into().expect("6 bytes"),
-            unknown_23: buf[0x23],
+            ignored_18: buf[0x18..0x1e].try_into().expect("6 bytes"),
+            ignored_23: buf[0x23],
             members,
-            strings,
+            name,
+            topic,
+            topic_setter,
+            irc_server,
+            irc_channel,
         })
     }
 
@@ -124,18 +142,26 @@ impl ChatWindowInfo {
         out[0..8].copy_from_slice(&self.time.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.chat_id.to_be_bytes());
         out[0x0c..0x10].copy_from_slice(&self.key.to_be_bytes());
-        out[0x10..0x14].copy_from_slice(&self.unknown_10);
+        out[0x10..0x14].copy_from_slice(&self.ignored_10);
         out[0x14..0x16].copy_from_slice(&self.flags.to_be_bytes());
         out[0x16..0x18].copy_from_slice(&count.to_be_bytes());
-        out[0x18..0x1e].copy_from_slice(&self.unknown_18);
-        for (i, s) in self.strings.iter().enumerate() {
-            out[0x1e + i] = len_u8(s, "chat string")?;
-        }
-        out[0x23] = self.unknown_23;
+        out[0x18..0x1e].copy_from_slice(&self.ignored_18);
+        out[0x1e] = len_u8(&self.irc_server, "IRC server")?;
+        out[0x1f] = len_u8(&self.irc_channel, "IRC channel")?;
+        out[0x20] = len_u8(&self.name, "chat name")?;
+        out[0x21] = len_u8(&self.topic, "chat topic")?;
+        out[0x22] = len_u8(&self.topic_setter, "topic setter")?;
+        out[0x23] = self.ignored_23;
         for id in &self.members {
             out.extend_from_slice(&id.to_be_bytes());
         }
-        for s in &self.strings {
+        for s in [
+            &self.name,
+            &self.topic,
+            &self.topic_setter,
+            &self.irc_server,
+            &self.irc_channel,
+        ] {
             out.extend_from_slice(s);
         }
         Ok(out)
@@ -150,9 +176,9 @@ pub struct ChatUserChange {
     /// The user who joined or left.
     pub user_id: u32,
     /// Meaning unknown; 0 in 205 and 1 in 206 after 204 Leave Chat.
-    pub unknown_08: u8,
+    pub ignored_08: u8,
     /// Bytes 0x09 to 0x0b; meaning unknown.
-    pub unknown_09: [u8; 3],
+    pub ignored_09: [u8; 3],
 }
 
 impl ChatUserChange {
@@ -165,8 +191,8 @@ impl ChatUserChange {
         Ok(Self {
             chat_id: u32_at(buf, 0),
             user_id: u32_at(buf, 4),
-            unknown_08: buf[8],
-            unknown_09: buf[9..0x0c].try_into().expect("3 bytes"),
+            ignored_08: buf[8],
+            ignored_09: buf[9..0x0c].try_into().expect("3 bytes"),
         })
     }
 
@@ -175,8 +201,8 @@ impl ChatUserChange {
         let mut out = [0; Self::LEN];
         out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.user_id.to_be_bytes());
-        out[8] = self.unknown_08;
-        out[9..].copy_from_slice(&self.unknown_09);
+        out[8] = self.ignored_08;
+        out[9..].copy_from_slice(&self.ignored_09);
         out
     }
 }
@@ -189,7 +215,7 @@ pub struct ChatText {
     /// The sender in 208 Receive Chat Text; the server ignores it in 207.
     pub user_id: u32,
     /// Bytes 0x08 to 0x0b; meaning unknown.
-    pub unknown_08: [u8; 4],
+    pub ignored: [u8; 4],
     /// Message text.
     pub text: Vec<u8>,
 }
@@ -206,7 +232,7 @@ impl ChatText {
         Ok(Self {
             chat_id: u32_at(buf, 0),
             user_id: u32_at(buf, 4),
-            unknown_08: buf[8..0x0c].try_into().expect("4 bytes"),
+            ignored: buf[8..0x0c].try_into().expect("4 bytes"),
             text: buf[Self::HEADER_LEN..].to_vec(),
         })
     }
@@ -219,7 +245,7 @@ impl ChatText {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.user_id.to_be_bytes());
-        out[8..0x0c].copy_from_slice(&self.unknown_08);
+        out[8..0x0c].copy_from_slice(&self.ignored);
         out.extend_from_slice(&self.text);
         Ok(out)
     }
@@ -231,9 +257,9 @@ pub struct SetChatTopic {
     /// Chat ID.
     pub chat_id: u32,
     /// Bytes 0x04 to 0x09; meaning unknown, 0 from the client.
-    pub unknown_04: [u8; 6],
+    pub ignored_04: [u8; 6],
     /// Byte 0x0b; meaning unknown, 0 from the client.
-    pub unknown_0b: u8,
+    pub ignored_0b: u8,
     /// New topic.
     pub topic: Vec<u8>,
     /// Bytes after the topic, which the server ignores; empty from the client.
@@ -250,8 +276,8 @@ impl SetChatTopic {
         let ([topic], end) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x0a])])?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
-            unknown_04: buf[4..0x0a].try_into().expect("6 bytes"),
-            unknown_0b: buf[0x0b],
+            ignored_04: buf[4..0x0a].try_into().expect("6 bytes"),
+            ignored_0b: buf[0x0b],
             topic,
             rest: buf[end..].to_vec(),
         })
@@ -261,9 +287,9 @@ impl SetChatTopic {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
-        out[4..0x0a].copy_from_slice(&self.unknown_04);
+        out[4..0x0a].copy_from_slice(&self.ignored_04);
         out[0x0a] = len_u8(&self.topic, "topic")?;
-        out[0x0b] = self.unknown_0b;
+        out[0x0b] = self.ignored_0b;
         out.extend_from_slice(&self.topic);
         out.extend_from_slice(&self.rest);
         Ok(out)
@@ -280,9 +306,9 @@ pub struct ChatTopicChanged {
     /// The user who set the topic.
     pub user_id: u32,
     /// Bytes 0x10 to 0x17; meaning unknown.
-    pub unknown_10: [u8; 8],
+    pub ignored_10: [u8; 8],
     /// Bytes 0x1a and 0x1b; meaning unknown.
-    pub unknown_1a: [u8; 2],
+    pub ignored_1a: [u8; 2],
     /// New topic.
     pub topic: Vec<u8>,
     /// The setter's nick.
@@ -302,8 +328,8 @@ impl ChatTopicChanged {
             time: u64_at(buf, 0),
             chat_id: u32_at(buf, 8),
             user_id: u32_at(buf, 0x0c),
-            unknown_10: buf[0x10..0x18].try_into().expect("8 bytes"),
-            unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
+            ignored_10: buf[0x10..0x18].try_into().expect("8 bytes"),
+            ignored_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
             topic,
             nick,
         })
@@ -315,10 +341,10 @@ impl ChatTopicChanged {
         out[0..8].copy_from_slice(&self.time.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.chat_id.to_be_bytes());
         out[0x0c..0x10].copy_from_slice(&self.user_id.to_be_bytes());
-        out[0x10..0x18].copy_from_slice(&self.unknown_10);
+        out[0x10..0x18].copy_from_slice(&self.ignored_10);
         out[0x18] = len_u8(&self.topic, "topic")?;
         out[0x19] = len_u8(&self.nick, "nick")?;
-        out[0x1a..0x1c].copy_from_slice(&self.unknown_1a);
+        out[0x1a..0x1c].copy_from_slice(&self.ignored_1a);
         out.extend_from_slice(&self.topic);
         out.extend_from_slice(&self.nick);
         Ok(out)
@@ -331,9 +357,9 @@ pub struct ChatInvite {
     /// Chat ID.
     pub chat_id: u32,
     /// Bytes 0x04 to 0x07; meaning unknown.
-    pub unknown_04: [u8; 4],
+    pub ignored_04: [u8; 4],
     /// Bytes 0x0a to 0x0e; meaning unknown.
-    pub unknown_0a: [u8; 5],
+    pub ignored_0a: [u8; 5],
     /// User IDs of the invitees.
     pub user_ids: Vec<u32>,
     /// Message to the invitees.
@@ -358,8 +384,8 @@ impl ChatInvite {
         let ([message], _) = strings(buf, ids_end, [usize::from(buf[0x0f])])?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
-            unknown_04: buf[4..8].try_into().expect("4 bytes"),
-            unknown_0a: buf[0x0a..0x0f].try_into().expect("5 bytes"),
+            ignored_04: buf[4..8].try_into().expect("4 bytes"),
+            ignored_0a: buf[0x0a..0x0f].try_into().expect("5 bytes"),
             user_ids,
             message,
         })
@@ -372,9 +398,9 @@ impl ChatInvite {
         }
         let mut out = vec![0; Self::HEADER_LEN];
         out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
-        out[4..8].copy_from_slice(&self.unknown_04);
+        out[4..8].copy_from_slice(&self.ignored_04);
         out[8..0x0a].copy_from_slice(&(self.user_ids.len() as u16).to_be_bytes());
-        out[0x0a..0x0f].copy_from_slice(&self.unknown_0a);
+        out[0x0a..0x0f].copy_from_slice(&self.ignored_0a);
         out[0x0f] = len_u8(&self.message, "invite message")?;
         for id in &self.user_ids {
             out.extend_from_slice(&id.to_be_bytes());
@@ -394,13 +420,13 @@ pub struct ChatInvitation {
     /// The inviter.
     pub user_id: u32,
     /// Meaning unknown; 1 then 2 in the lab.
-    pub unknown_0c: u32,
+    pub ignored_0c: u32,
     /// Meaning unknown; 1 in the lab.
-    pub unknown_10: u16,
+    pub ignored_10: u16,
     /// Bytes 0x12 to 0x17; meaning unknown.
-    pub unknown_12: [u8; 6],
+    pub ignored_12: [u8; 6],
     /// Bytes 0x1a and 0x1b; meaning unknown.
-    pub unknown_1a: [u8; 2],
+    pub ignored_1a: [u8; 2],
     /// Probably the invite message; empty in the lab.
     pub message: Vec<u8>,
     /// Chat name.
@@ -420,10 +446,10 @@ impl ChatInvitation {
             chat_id: u32_at(buf, 0),
             key: u32_at(buf, 4),
             user_id: u32_at(buf, 8),
-            unknown_0c: u32_at(buf, 0x0c),
-            unknown_10: u16_at(buf, 0x10),
-            unknown_12: buf[0x12..0x18].try_into().expect("6 bytes"),
-            unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
+            ignored_0c: u32_at(buf, 0x0c),
+            ignored_10: u16_at(buf, 0x10),
+            ignored_12: buf[0x12..0x18].try_into().expect("6 bytes"),
+            ignored_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
             message,
             name,
         })
@@ -435,12 +461,12 @@ impl ChatInvitation {
         out[0..4].copy_from_slice(&self.chat_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.key.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.user_id.to_be_bytes());
-        out[0x0c..0x10].copy_from_slice(&self.unknown_0c.to_be_bytes());
-        out[0x10..0x12].copy_from_slice(&self.unknown_10.to_be_bytes());
-        out[0x12..0x18].copy_from_slice(&self.unknown_12);
+        out[0x0c..0x10].copy_from_slice(&self.ignored_0c.to_be_bytes());
+        out[0x10..0x12].copy_from_slice(&self.ignored_10.to_be_bytes());
+        out[0x12..0x18].copy_from_slice(&self.ignored_12);
         out[0x18] = len_u8(&self.message, "invite message")?;
         out[0x19] = len_u8(&self.name, "chat name")?;
-        out[0x1a..0x1c].copy_from_slice(&self.unknown_1a);
+        out[0x1a..0x1c].copy_from_slice(&self.ignored_1a);
         out.extend_from_slice(&self.message);
         out.extend_from_slice(&self.name);
         Ok(out)
@@ -455,7 +481,7 @@ pub struct ChatListEntry {
     /// Key.
     pub key: u32,
     /// Bytes 0x08 to 0x0d; meaning unknown.
-    pub unknown_08: [u8; 6],
+    pub ignored: [u8; 6],
     /// Flags: bit 1 voice.
     pub flags: u16,
     /// Number of members.
@@ -487,7 +513,7 @@ impl ChatListEntry {
             list.push(Self {
                 chat_id: u32_at(entry, 0),
                 key: u32_at(entry, 4),
-                unknown_08: entry[8..0x0e].try_into().expect("6 bytes"),
+                ignored: entry[8..0x0e].try_into().expect("6 bytes"),
                 flags: u16_at(entry, 0x0e),
                 member_count: u16_at(entry, 0x10),
                 name,
@@ -507,7 +533,7 @@ impl ChatListEntry {
             let mut fixed = [0; Self::HEADER_LEN];
             fixed[0..4].copy_from_slice(&entry.chat_id.to_be_bytes());
             fixed[4..8].copy_from_slice(&entry.key.to_be_bytes());
-            fixed[8..0x0e].copy_from_slice(&entry.unknown_08);
+            fixed[8..0x0e].copy_from_slice(&entry.ignored);
             fixed[0x0e..0x10].copy_from_slice(&entry.flags.to_be_bytes());
             fixed[0x10..0x12].copy_from_slice(&entry.member_count.to_be_bytes());
             fixed[0x12] = len_u8(&entry.name, "chat name")?;
@@ -528,9 +554,9 @@ pub struct DccAddress {
     /// User ID.
     pub user_id: u32,
     /// Bytes 0x04 to 0x0d; the server writes zeros.
-    pub unknown_04: [u8; 10],
+    pub ignored_04: [u8; 10],
     /// Byte 0x0f; the server writes zero.
-    pub unknown_0f: u8,
+    pub ignored_0f: u8,
     /// `ip:port` text of the member's DCC listener.
     pub address: Vec<u8>,
     /// Bytes after the address up to the next multiple of 4, as received.
@@ -552,8 +578,8 @@ impl DccAddress {
             let (padding, padded) = padding(entry, end);
             list.push(Self {
                 user_id: u32_at(entry, 0),
-                unknown_04: entry[4..0x0e].try_into().expect("10 bytes"),
-                unknown_0f: entry[0x0f],
+                ignored_04: entry[4..0x0e].try_into().expect("10 bytes"),
+                ignored_0f: entry[0x0f],
                 address,
                 padding,
             });
@@ -568,9 +594,9 @@ impl DccAddress {
         for entry in list {
             let start = out.len();
             out.extend_from_slice(&entry.user_id.to_be_bytes());
-            out.extend_from_slice(&entry.unknown_04);
+            out.extend_from_slice(&entry.ignored_04);
             out.push(len_u8(&entry.address, "DCC address")?);
-            out.push(entry.unknown_0f);
+            out.push(entry.ignored_0f);
             out.extend_from_slice(&entry.address);
             out.extend_from_slice(&entry.padding);
             out.resize(start + pad4(out.len() - start), 0);
@@ -587,7 +613,7 @@ pub struct ChatRecord {
     /// Key.
     pub key: u32,
     /// Bytes 0x08 to 0x13; meaning unknown.
-    pub unknown_08: [u8; 0x0c],
+    pub ignored_08: [u8; 0x0c],
     /// Account classes that may join, most significant bit = class 0.
     pub join_classes: u32,
     /// Account classes that may send text.
@@ -595,19 +621,19 @@ pub struct ChatRecord {
     /// Account classes that may set the topic.
     pub topic_classes: u32,
     /// Bytes 0x20 to 0x27; meaning unknown.
-    pub unknown_20: [u8; 8],
+    pub ignored_20: [u8; 8],
     /// Flags: bit 0 private, bit 1 voice.
     pub flags: u16,
     /// Bytes 0x2e and 0x2f; meaning unknown.
-    pub unknown_2e: [u8; 2],
+    pub ignored_2e: [u8; 2],
     /// Chat name.
     pub name: Vec<u8>,
     /// Description.
     pub description: Vec<u8>,
-    /// Probably the topic.
-    pub third: Vec<u8>,
-    /// Meaning unknown.
-    pub fourth: Vec<u8>,
+    /// IRC server, `host:port`; the client adds `:6667` when the port is missing.
+    pub irc_server: Vec<u8>,
+    /// IRC channel; the client adds `#` if the name has none.
+    pub irc_channel: Vec<u8>,
 }
 
 impl ChatRecord {
@@ -618,21 +644,22 @@ impl ChatRecord {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x2a, 0x2b, 0x2c, 0x2d].map(|at| usize::from(buf[at]));
-        let ([name, description, third, fourth], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description, irc_server, irc_channel], _) =
+            strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             chat_id: u32_at(buf, 0),
             key: u32_at(buf, 4),
-            unknown_08: buf[8..0x14].try_into().expect("12 bytes"),
+            ignored_08: buf[8..0x14].try_into().expect("12 bytes"),
             join_classes: u32_at(buf, 0x14),
             send_classes: u32_at(buf, 0x18),
             topic_classes: u32_at(buf, 0x1c),
-            unknown_20: buf[0x20..0x28].try_into().expect("8 bytes"),
+            ignored_20: buf[0x20..0x28].try_into().expect("8 bytes"),
             flags: u16_at(buf, 0x28),
-            unknown_2e: buf[0x2e..0x30].try_into().expect("2 bytes"),
+            ignored_2e: buf[0x2e..0x30].try_into().expect("2 bytes"),
             name,
             description,
-            third,
-            fourth,
+            irc_server,
+            irc_channel,
         })
     }
 
@@ -641,18 +668,23 @@ impl ChatRecord {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.chat_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.key.to_be_bytes());
-        out[8..0x14].copy_from_slice(&self.unknown_08);
+        out[8..0x14].copy_from_slice(&self.ignored_08);
         out[0x14..0x18].copy_from_slice(&self.join_classes.to_be_bytes());
         out[0x18..0x1c].copy_from_slice(&self.send_classes.to_be_bytes());
         out[0x1c..0x20].copy_from_slice(&self.topic_classes.to_be_bytes());
-        out[0x20..0x28].copy_from_slice(&self.unknown_20);
+        out[0x20..0x28].copy_from_slice(&self.ignored_20);
         out[0x28..0x2a].copy_from_slice(&self.flags.to_be_bytes());
         out[0x2a] = len_u8(&self.name, "chat name")?;
         out[0x2b] = len_u8(&self.description, "chat description")?;
-        out[0x2c] = len_u8(&self.third, "third string")?;
-        out[0x2d] = len_u8(&self.fourth, "fourth string")?;
-        out[0x2e..0x30].copy_from_slice(&self.unknown_2e);
-        for s in [&self.name, &self.description, &self.third, &self.fourth] {
+        out[0x2c] = len_u8(&self.irc_server, "irc_server string")?;
+        out[0x2d] = len_u8(&self.irc_channel, "irc_channel string")?;
+        out[0x2e..0x30].copy_from_slice(&self.ignored_2e);
+        for s in [
+            &self.name,
+            &self.description,
+            &self.irc_server,
+            &self.irc_channel,
+        ] {
             out.extend_from_slice(s);
         }
         Ok(out)

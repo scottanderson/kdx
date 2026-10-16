@@ -12,7 +12,7 @@ use super::{
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ExtraServerInfo {
     /// Bytes 0x00 to 0x0f; meaning unknown.
-    pub unknown_00: [u8; 0x10],
+    pub ignored_00: [u8; 0x10],
     /// Server start time in milliseconds.
     pub start_time: u64,
     /// Current server time in milliseconds.
@@ -24,7 +24,7 @@ pub struct ExtraServerInfo {
     /// An operating system value; 1000 in the lab.
     pub os_value_28: u32,
     /// Bytes 0x2d to 0x2f; meaning unknown.
-    pub unknown_2d: [u8; 3],
+    pub ignored_2d: [u8; 3],
     /// Operating system description, as from `uname`.
     pub os: Vec<u8>,
 }
@@ -38,13 +38,13 @@ impl ExtraServerInfo {
         need(buf, Self::HEADER_LEN)?;
         let ([os], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x2c])])?;
         Ok(Self {
-            unknown_00: buf[..0x10].try_into().expect("16 bytes"),
+            ignored_00: buf[..0x10].try_into().expect("16 bytes"),
             start_time: u64_at(buf, 0x10),
             now: u64_at(buf, 0x18),
             uptime: u32_at(buf, 0x20),
             os_value_24: u32_at(buf, 0x24),
             os_value_28: u32_at(buf, 0x28),
-            unknown_2d: buf[0x2d..0x30].try_into().expect("3 bytes"),
+            ignored_2d: buf[0x2d..0x30].try_into().expect("3 bytes"),
             os,
         })
     }
@@ -52,14 +52,14 @@ impl ExtraServerInfo {
     /// Encodes the payload.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..0x10].copy_from_slice(&self.unknown_00);
+        out[..0x10].copy_from_slice(&self.ignored_00);
         out[0x10..0x18].copy_from_slice(&self.start_time.to_be_bytes());
         out[0x18..0x20].copy_from_slice(&self.now.to_be_bytes());
         out[0x20..0x24].copy_from_slice(&self.uptime.to_be_bytes());
         out[0x24..0x28].copy_from_slice(&self.os_value_24.to_be_bytes());
         out[0x28..0x2c].copy_from_slice(&self.os_value_28.to_be_bytes());
         out[0x2c] = len_u8(&self.os, "OS string")?;
-        out[0x2d..0x30].copy_from_slice(&self.unknown_2d);
+        out[0x2d..0x30].copy_from_slice(&self.ignored_2d);
         out.extend_from_slice(&self.os);
         Ok(out)
     }
@@ -111,13 +111,13 @@ pub struct MonitoredConnection {
     /// Transfer state; 0x19c (412) for a download.
     pub state: u32,
     /// Bytes 0x40 and 0x41; meaning unknown.
-    pub unknown_40: [u8; 2],
+    pub ignored_40: [u8; 2],
     /// Account class index.
     pub class_index: u8,
     /// Bytes 0x43 to 0x5f; meaning unknown.
-    pub unknown_43: [u8; 0x1d],
+    pub ignored_43: [u8; 0x1d],
     /// Bytes 0x64 and 0x65; meaning unknown.
-    pub unknown_64: [u8; 2],
+    pub ignored_64: [u8; 2],
     /// Nick.
     pub nick: Vec<u8>,
     /// Login.
@@ -166,10 +166,10 @@ impl MonitoredConnection {
             seconds_left: u32_at(buf, 0x34),
             value_38: u32_at(buf, 0x38),
             state: u32_at(buf, 0x3c),
-            unknown_40: buf[0x40..0x42].try_into().expect("2 bytes"),
+            ignored_40: buf[0x40..0x42].try_into().expect("2 bytes"),
             class_index: buf[0x42],
-            unknown_43: buf[0x43..0x60].try_into().expect("29 bytes"),
-            unknown_64: buf[0x64..0x66].try_into().expect("2 bytes"),
+            ignored_43: buf[0x43..0x60].try_into().expect("29 bytes"),
+            ignored_64: buf[0x64..0x66].try_into().expect("2 bytes"),
             nick,
             login,
             account,
@@ -198,10 +198,10 @@ impl MonitoredConnection {
             fixed[0x34..0x38].copy_from_slice(&record.seconds_left.to_be_bytes());
             fixed[0x38..0x3c].copy_from_slice(&record.value_38.to_be_bytes());
             fixed[0x3c..0x40].copy_from_slice(&record.state.to_be_bytes());
-            fixed[0x40..0x42].copy_from_slice(&record.unknown_40);
+            fixed[0x40..0x42].copy_from_slice(&record.ignored_40);
             fixed[0x42] = record.class_index;
-            fixed[0x43..0x60].copy_from_slice(&record.unknown_43);
-            fixed[0x64..0x66].copy_from_slice(&record.unknown_64);
+            fixed[0x43..0x60].copy_from_slice(&record.ignored_43);
+            fixed[0x64..0x66].copy_from_slice(&record.ignored_64);
             let parts = [
                 &record.nick,
                 &record.login,
@@ -230,17 +230,17 @@ pub struct DisconnectUser {
     /// The user to disconnect.
     pub user_id: u32,
     /// Bytes 0x04 to 0x07; meaning unknown.
-    pub unknown_04: [u8; 4],
+    pub ignored_04: [u8; 4],
     /// How long to ban the user's address, in seconds; 0 for no ban.
     pub ban_seconds: u32,
     /// Bytes 0x0c to 0x10; meaning unknown.
-    pub unknown_0c: [u8; 5],
+    pub ignored_0c: [u8; 5],
     /// [`Self::SILENT`] or 0.
     pub options: u8,
     /// Bytes 0x12 and 0x13; meaning unknown.
-    pub unknown_12: [u8; 2],
+    pub ignored_12: [u8; 2],
     /// Bytes 0x15 to 0x17; meaning unknown.
-    pub unknown_15: [u8; 3],
+    pub ignored_15: [u8; 3],
     /// Message for the user.
     pub message: Vec<u8>,
 }
@@ -259,12 +259,12 @@ impl DisconnectUser {
         let ([message], _) = strings(buf, Self::HEADER_LEN, [usize::from(buf[0x14])])?;
         Ok(Self {
             user_id: u32_at(buf, 0),
-            unknown_04: buf[4..8].try_into().expect("4 bytes"),
+            ignored_04: buf[4..8].try_into().expect("4 bytes"),
             ban_seconds: u32_at(buf, 8),
-            unknown_0c: buf[0x0c..0x11].try_into().expect("5 bytes"),
+            ignored_0c: buf[0x0c..0x11].try_into().expect("5 bytes"),
             options: buf[0x11],
-            unknown_12: buf[0x12..0x14].try_into().expect("2 bytes"),
-            unknown_15: buf[0x15..0x18].try_into().expect("3 bytes"),
+            ignored_12: buf[0x12..0x14].try_into().expect("2 bytes"),
+            ignored_15: buf[0x15..0x18].try_into().expect("3 bytes"),
             message,
         })
     }
@@ -273,13 +273,13 @@ impl DisconnectUser {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
-        out[4..8].copy_from_slice(&self.unknown_04);
+        out[4..8].copy_from_slice(&self.ignored_04);
         out[8..0x0c].copy_from_slice(&self.ban_seconds.to_be_bytes());
-        out[0x0c..0x11].copy_from_slice(&self.unknown_0c);
+        out[0x0c..0x11].copy_from_slice(&self.ignored_0c);
         out[0x11] = self.options;
-        out[0x12..0x14].copy_from_slice(&self.unknown_12);
+        out[0x12..0x14].copy_from_slice(&self.ignored_12);
         out[0x14] = len_u8(&self.message, "message")?;
-        out[0x15..0x18].copy_from_slice(&self.unknown_15);
+        out[0x15..0x18].copy_from_slice(&self.ignored_15);
         out.extend_from_slice(&self.message);
         Ok(out)
     }
@@ -291,7 +291,7 @@ pub struct DisconnectMessage {
     /// The user who sent it.
     pub user_id: u32,
     /// Bytes 0x04 to 0x0b; meaning unknown.
-    pub unknown_04: [u8; 8],
+    pub ignored: [u8; 8],
     /// [`Self::BANNED`], [`Self::SHUTDOWN`], or 0.
     pub flags: u16,
     /// Meaning unknown; 0 in the lab.
@@ -319,7 +319,7 @@ impl DisconnectMessage {
         let ([message, name], _) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             user_id: u32_at(buf, 0),
-            unknown_04: buf[4..0x0c].try_into().expect("8 bytes"),
+            ignored: buf[4..0x0c].try_into().expect("8 bytes"),
             flags: u16_at(buf, 0x0c),
             value_0e: u16_at(buf, 0x0e),
             value_10: u16_at(buf, 0x10),
@@ -332,7 +332,7 @@ impl DisconnectMessage {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
-        out[4..0x0c].copy_from_slice(&self.unknown_04);
+        out[4..0x0c].copy_from_slice(&self.ignored);
         out[0x0c..0x0e].copy_from_slice(&self.flags.to_be_bytes());
         out[0x0e..0x10].copy_from_slice(&self.value_0e.to_be_bytes());
         out[0x10..0x12].copy_from_slice(&self.value_10.to_be_bytes());
@@ -390,7 +390,7 @@ pub struct RcvBroadcast {
     /// The sender; 0 for the server's own notices.
     pub user_id: u32,
     /// Bytes 0x04 to 0x0d; meaning unknown.
-    pub unknown_04: [u8; 0x0a],
+    pub ignored: [u8; 0x0a],
     /// Copied from 0x02 of 154 Send Broadcast Message.
     pub value_0e: u16,
     /// Message text, to the end of the payload.
@@ -406,7 +406,7 @@ impl RcvBroadcast {
         need(buf, Self::HEADER_LEN)?;
         Ok(Self {
             user_id: u32_at(buf, 0),
-            unknown_04: buf[4..0x0e].try_into().expect("10 bytes"),
+            ignored: buf[4..0x0e].try_into().expect("10 bytes"),
             value_0e: u16_at(buf, 0x0e),
             text: buf[Self::HEADER_LEN..].to_vec(),
         })
@@ -416,7 +416,7 @@ impl RcvBroadcast {
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
-        out[4..0x0e].copy_from_slice(&self.unknown_04);
+        out[4..0x0e].copy_from_slice(&self.ignored);
         out[0x0e..0x10].copy_from_slice(&self.value_0e.to_be_bytes());
         out.extend_from_slice(&self.text);
         out
@@ -427,11 +427,11 @@ impl RcvBroadcast {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ShutdownServer {
     /// Byte 0x00; meaning unknown.
-    pub unknown_00: u8,
+    pub ignored_00: u8,
     /// [`Self::EXIT`], [`Self::RESTART_COMPUTER`], or [`Self::SHUT_DOWN_COMPUTER`].
     pub mode: u8,
     /// Bytes 0x02 and 0x03; meaning unknown.
-    pub unknown_02: [u8; 2],
+    pub ignored_02: [u8; 2],
     /// Message for the users, to the end of the payload.
     pub message: Vec<u8>,
 }
@@ -452,9 +452,9 @@ impl ShutdownServer {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         Ok(Self {
-            unknown_00: buf[0],
+            ignored_00: buf[0],
             mode: buf[1],
-            unknown_02: buf[2..4].try_into().expect("2 bytes"),
+            ignored_02: buf[2..4].try_into().expect("2 bytes"),
             message: buf[Self::HEADER_LEN..].to_vec(),
         })
     }
@@ -464,8 +464,8 @@ impl ShutdownServer {
         if self.message.len() > Self::MAX_MESSAGE_LEN {
             return Err(EncodeError::TooLong("shutdown message"));
         }
-        let [a, b] = self.unknown_02;
-        let mut out = vec![self.unknown_00, self.mode, a, b];
+        let [a, b] = self.ignored_02;
+        let mut out = vec![self.ignored_00, self.mode, a, b];
         out.extend_from_slice(&self.message);
         Ok(out)
     }
@@ -481,11 +481,11 @@ pub struct HistoryRecord {
     /// The user it is about; 0 for the server itself.
     pub user_id: u32,
     /// Bytes 0x10 to 0x41; meaning unknown.
-    pub unknown_10: [u8; 0x32],
+    pub ignored_10: [u8; 0x32],
     /// Bytes 0x44 and 0x45; meaning unknown.
-    pub unknown_44: [u8; 2],
+    pub ignored_44: [u8; 2],
     /// Bytes 0x4a and 0x4b; meaning unknown.
-    pub unknown_4a: [u8; 2],
+    pub ignored_4a: [u8; 2],
     /// The user's address as `ip:port`.
     pub address: Vec<u8>,
     /// The user's nick.
@@ -522,9 +522,9 @@ impl HistoryRecord {
             time: u64_at(buf, 0),
             kind: MessageType(u32_at(buf, 8)),
             user_id: u32_at(buf, 0x0c),
-            unknown_10: buf[0x10..0x42].try_into().expect("50 bytes"),
-            unknown_44: buf[0x44..0x46].try_into().expect("2 bytes"),
-            unknown_4a: buf[0x4a..0x4c].try_into().expect("2 bytes"),
+            ignored_10: buf[0x10..0x42].try_into().expect("50 bytes"),
+            ignored_44: buf[0x44..0x46].try_into().expect("2 bytes"),
+            ignored_4a: buf[0x4a..0x4c].try_into().expect("2 bytes"),
             address,
             nick,
             login,
@@ -549,10 +549,10 @@ impl HistoryRecord {
         out[0..8].copy_from_slice(&self.time.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.kind.0.to_be_bytes());
         out[0x0c..0x10].copy_from_slice(&self.user_id.to_be_bytes());
-        out[0x10..0x42].copy_from_slice(&self.unknown_10);
+        out[0x10..0x42].copy_from_slice(&self.ignored_10);
         out[0x42..0x44].copy_from_slice(&path_len.to_be_bytes());
-        out[0x44..0x46].copy_from_slice(&self.unknown_44);
-        out[0x4a..0x4c].copy_from_slice(&self.unknown_4a);
+        out[0x44..0x46].copy_from_slice(&self.ignored_44);
+        out[0x4a..0x4c].copy_from_slice(&self.ignored_4a);
         let parts = [&self.address, &self.nick, &self.login, &self.detail];
         for (i, s) in parts.iter().enumerate() {
             out[0x46 + i] = len_u8(s, "history string")?;
@@ -570,7 +570,7 @@ impl HistoryRecord {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct HistoryList {
     /// Bytes 0x00 to 0x03; 0 from the server.
-    pub unknown_00: [u8; 4],
+    pub ignored: [u8; 4],
     /// The records.
     pub records: Vec<HistoryRecord>,
 }
@@ -580,14 +580,14 @@ impl HistoryList {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         let records = decode_counted(buf, 4, HistoryRecord::decode)?;
         Ok(Self {
-            unknown_00: buf[..4].try_into().expect("4 bytes"),
+            ignored: buf[..4].try_into().expect("4 bytes"),
             records,
         })
     }
 
     /// Encodes the payload, padding each record to 4 with zeros past its stored padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
-        let mut out = self.unknown_00.to_vec();
+        let mut out = self.ignored.to_vec();
         encode_counted(&mut out, &self.records, HistoryRecord::encode)?;
         Ok(out)
     }
@@ -659,19 +659,19 @@ pub struct AccountClass {
     /// A time in milliseconds.
     pub time: u64,
     /// Bytes 0x18 to 0x24; meaning unknown.
-    pub unknown_18: [u8; 0x0d],
+    pub ignored_18: [u8; 0x0d],
     /// Flood protection in commands per 2 minutes, such as 0x50 for Administrator in 503; 0 in 506.
-    pub unknown_25: u8,
+    pub ignored_25: u8,
     /// Bytes 0x26 and 0x27; stored by the server as given.
-    pub unknown_26: [u8; 2],
+    pub ignored_26: [u8; 2],
     /// The 8 bytes at 0x28 of 503 and 504, which 506 leaves out.
-    pub unknown_28: [u8; 8],
+    pub ignored_28: [u8; 8],
     /// Class index.
     pub index: u8,
     /// The three bytes after the index; 0xff in the first for Administrator.
-    pub unknown_after_index: [u8; 3],
+    pub ignored_after_index: [u8; 3],
     /// The byte after the editor login length; meaning unknown.
-    pub unknown_after_lengths: u8,
+    pub ignored_after_lengths: u8,
     /// Class name.
     pub name: Vec<u8>,
     /// A second string; empty in the lab.
@@ -733,17 +733,17 @@ impl AccountClass {
         let class = Self {
             privileges: buf[..16].try_into().expect("16 bytes"),
             time: u64_at(buf, 0x10),
-            unknown_18: buf[0x18..0x25].try_into().expect("13 bytes"),
-            unknown_25: buf[0x25],
-            unknown_26: buf[0x26..0x28].try_into().expect("2 bytes"),
-            unknown_28: if index_at == Self::INFO_INDEX_AT {
+            ignored_18: buf[0x18..0x25].try_into().expect("13 bytes"),
+            ignored_25: buf[0x25],
+            ignored_26: buf[0x26..0x28].try_into().expect("2 bytes"),
+            ignored_28: if index_at == Self::INFO_INDEX_AT {
                 buf[0x28..0x30].try_into().expect("8 bytes")
             } else {
                 [0; 8]
             },
             index: buf[index_at],
-            unknown_after_index: buf[index_at + 1..index_at + 4].try_into().expect("3 bytes"),
-            unknown_after_lengths: buf[index_at + 7],
+            ignored_after_index: buf[index_at + 1..index_at + 4].try_into().expect("3 bytes"),
+            ignored_after_lengths: buf[index_at + 7],
             name,
             second,
             editor,
@@ -756,18 +756,18 @@ impl AccountClass {
         let mut out = vec![0; index_at + 8];
         out[..16].copy_from_slice(&self.privileges);
         out[0x10..0x18].copy_from_slice(&self.time.to_be_bytes());
-        out[0x18..0x25].copy_from_slice(&self.unknown_18);
-        out[0x25] = self.unknown_25;
-        out[0x26..0x28].copy_from_slice(&self.unknown_26);
+        out[0x18..0x25].copy_from_slice(&self.ignored_18);
+        out[0x25] = self.ignored_25;
+        out[0x26..0x28].copy_from_slice(&self.ignored_26);
         if index_at == Self::INFO_INDEX_AT {
-            out[0x28..0x30].copy_from_slice(&self.unknown_28);
+            out[0x28..0x30].copy_from_slice(&self.ignored_28);
         }
         out[index_at] = self.index;
-        out[index_at + 1..index_at + 4].copy_from_slice(&self.unknown_after_index);
+        out[index_at + 1..index_at + 4].copy_from_slice(&self.ignored_after_index);
         out[index_at + 4] = len_u8(&self.name, "class name")?;
         out[index_at + 5] = len_u8(&self.second, "second string")?;
         out[index_at + 6] = len_u8(&self.editor, "editor login")?;
-        out[index_at + 7] = self.unknown_after_lengths;
+        out[index_at + 7] = self.ignored_after_lengths;
         for s in [&self.name, &self.second, &self.editor, &self.padding] {
             out.extend_from_slice(s);
         }
@@ -793,13 +793,13 @@ pub struct Account {
     /// Last login time in milliseconds; 0 if never.
     pub last_login: u64,
     /// Bytes 0x58 to 0x75; meaning unknown.
-    pub unknown_58: [u8; 0x1e],
+    pub ignored_58: [u8; 0x1e],
     /// Class index.
     pub class_index: u8,
     /// The three bytes after the class index, stored as given.
-    pub unknown_77: [u8; 3],
+    pub ignored_77: [u8; 3],
     /// Bytes 0x7e and 0x7f; meaning unknown.
-    pub unknown_7e: [u8; 2],
+    pub ignored_7e: [u8; 2],
     /// Login.
     pub login: Vec<u8>,
     /// Account name.
@@ -821,10 +821,10 @@ impl std::fmt::Debug for Account {
             .field("created", &self.created)
             .field("modified", &self.modified)
             .field("last_login", &self.last_login)
-            .field("unknown_58", &self.unknown_58)
+            .field("ignored_58", &self.ignored_58)
             .field("class_index", &self.class_index)
-            .field("unknown_77", &self.unknown_77)
-            .field("unknown_7e", &self.unknown_7e)
+            .field("ignored_77", &self.ignored_77)
+            .field("ignored_7e", &self.ignored_7e)
             .field("login", &self.login)
             .field("name", &self.name)
             .field("third", &self.third)
@@ -855,10 +855,10 @@ impl Account {
             created: u64_at(buf, 0x40),
             modified: u64_at(buf, 0x48),
             last_login: u64_at(buf, 0x50),
-            unknown_58: buf[0x58..0x76].try_into().expect("30 bytes"),
+            ignored_58: buf[0x58..0x76].try_into().expect("30 bytes"),
             class_index: buf[0x76],
-            unknown_77: buf[0x77..0x7a].try_into().expect("3 bytes"),
-            unknown_7e: buf[0x7e..0x80].try_into().expect("2 bytes"),
+            ignored_77: buf[0x77..0x7a].try_into().expect("3 bytes"),
+            ignored_7e: buf[0x7e..0x80].try_into().expect("2 bytes"),
             login,
             name,
             third,
@@ -876,10 +876,10 @@ impl Account {
         out[0x40..0x48].copy_from_slice(&self.created.to_be_bytes());
         out[0x48..0x50].copy_from_slice(&self.modified.to_be_bytes());
         out[0x50..0x58].copy_from_slice(&self.last_login.to_be_bytes());
-        out[0x58..0x76].copy_from_slice(&self.unknown_58);
+        out[0x58..0x76].copy_from_slice(&self.ignored_58);
         out[0x76] = self.class_index;
-        out[0x77..0x7a].copy_from_slice(&self.unknown_77);
-        out[0x7e..0x80].copy_from_slice(&self.unknown_7e);
+        out[0x77..0x7a].copy_from_slice(&self.ignored_77);
+        out[0x7e..0x80].copy_from_slice(&self.ignored_7e);
         out[0x7a] = len_u8(&self.login, "login")?;
         out[0x7b] = len_u8(&self.name, "account name")?;
         out[0x7c] = len_u8(&self.third, "third string")?;
@@ -906,19 +906,19 @@ pub struct AccountListEntry {
     /// Last login time in milliseconds; 0 if never.
     pub last_login: u64,
     /// Bytes 0x10 to 0x1a; meaning unknown.
-    pub unknown_10: [u8; 0x0b],
+    pub ignored_10: [u8; 0x0b],
     /// Meaning unknown; 1 for admin and 0 for guest in the lab.
-    pub unknown_1b: u8,
+    pub ignored_1b: u8,
     /// Bytes 0x1c to 0x1f; meaning unknown.
-    pub unknown_1c: [u8; 4],
+    pub ignored_1c: [u8; 4],
     /// Class index.
     pub class_index: u8,
     /// Meaning unknown; 0xff for admin, as in the class.
-    pub unknown_21: u8,
+    pub ignored_21: u8,
     /// Bytes 0x22 and 0x23; meaning unknown.
-    pub unknown_22: [u8; 2],
+    pub ignored_22: [u8; 2],
     /// Bytes 0x26 and 0x27; meaning unknown.
-    pub unknown_26: [u8; 2],
+    pub ignored_26: [u8; 2],
     /// Login.
     pub login: Vec<u8>,
     /// Account name.
@@ -941,13 +941,13 @@ impl AccountListEntry {
             let account = Self {
                 created: u64_at(entry, 0),
                 last_login: u64_at(entry, 8),
-                unknown_10: entry[0x10..0x1b].try_into().expect("11 bytes"),
-                unknown_1b: entry[0x1b],
-                unknown_1c: entry[0x1c..0x20].try_into().expect("4 bytes"),
+                ignored_10: entry[0x10..0x1b].try_into().expect("11 bytes"),
+                ignored_1b: entry[0x1b],
+                ignored_1c: entry[0x1c..0x20].try_into().expect("4 bytes"),
                 class_index: entry[0x20],
-                unknown_21: entry[0x21],
-                unknown_22: entry[0x22..0x24].try_into().expect("2 bytes"),
-                unknown_26: entry[0x26..0x28].try_into().expect("2 bytes"),
+                ignored_21: entry[0x21],
+                ignored_22: entry[0x22..0x24].try_into().expect("2 bytes"),
+                ignored_26: entry[0x26..0x28].try_into().expect("2 bytes"),
                 login,
                 name,
                 padding,
@@ -963,15 +963,15 @@ impl AccountListEntry {
             let mut entry = vec![0; Self::HEADER_LEN];
             entry[0..8].copy_from_slice(&account.created.to_be_bytes());
             entry[8..0x10].copy_from_slice(&account.last_login.to_be_bytes());
-            entry[0x10..0x1b].copy_from_slice(&account.unknown_10);
-            entry[0x1b] = account.unknown_1b;
-            entry[0x1c..0x20].copy_from_slice(&account.unknown_1c);
+            entry[0x10..0x1b].copy_from_slice(&account.ignored_10);
+            entry[0x1b] = account.ignored_1b;
+            entry[0x1c..0x20].copy_from_slice(&account.ignored_1c);
             entry[0x20] = account.class_index;
-            entry[0x21] = account.unknown_21;
-            entry[0x22..0x24].copy_from_slice(&account.unknown_22);
+            entry[0x21] = account.ignored_21;
+            entry[0x22..0x24].copy_from_slice(&account.ignored_22);
             entry[0x24] = len_u8(&account.login, "login")?;
             entry[0x25] = len_u8(&account.name, "account name")?;
-            entry[0x26..0x28].copy_from_slice(&account.unknown_26);
+            entry[0x26..0x28].copy_from_slice(&account.ignored_26);
             entry.extend_from_slice(&account.login);
             entry.extend_from_slice(&account.name);
             entry.extend_from_slice(&account.padding);
@@ -989,7 +989,7 @@ pub struct ProcessList {
     /// Probably the host's memory in bytes.
     pub memory_08: u64,
     /// Bytes 0x10 to 0x1b; meaning unknown.
-    pub unknown_10: [u8; 0x0c],
+    pub ignored: [u8; 0x0c],
     /// The processes.
     pub processes: Vec<Process>,
 }
@@ -1000,15 +1000,15 @@ pub struct Process {
     /// Process ID.
     pub pid: u32,
     /// Bytes 0x04 to 0x07; meaning unknown.
-    pub unknown_04: [u8; 4],
+    pub ignored_04: [u8; 4],
     /// Start time in milliseconds.
     pub start_time: u64,
     /// Bytes 0x10 to 0x38; meaning unknown.
-    pub unknown_10: [u8; 0x29],
-    /// Byte 0x3b; meaning unknown.
-    pub unknown_3b: u8,
+    pub ignored_10: [u8; 0x29],
     /// Command line, cut at 0xff bytes.
     pub command: Vec<u8>,
+    /// Third string, between the command and the user name; empty in captures.
+    pub string_3b: Vec<u8>,
     /// User name.
     pub user: Vec<u8>,
     /// Bytes after the user name up to the next multiple of 4, as received; empty in a new entry.
@@ -1019,11 +1019,11 @@ impl Default for Process {
     fn default() -> Self {
         Self {
             pid: 0,
-            unknown_04: [0; 4],
+            ignored_04: [0; 4],
             start_time: 0,
-            unknown_10: [0; 0x29],
-            unknown_3b: 0,
+            ignored_10: [0; 0x29],
             command: Vec::new(),
+            string_3b: Vec::new(),
             user: Vec::new(),
             padding: Vec::new(),
         }
@@ -1040,16 +1040,20 @@ impl ProcessList {
         need(buf, Self::HEADER_LEN)?;
         let processes = decode_counted(buf, Self::HEADER_LEN, |entry| {
             need(entry, Self::ENTRY_LEN)?;
-            let lens = [usize::from(entry[0x3a]), usize::from(entry[0x39])];
-            let ([command, user], end) = strings(entry, Self::ENTRY_LEN, lens)?;
+            let lens = [
+                usize::from(entry[0x3a]),
+                usize::from(entry[0x3b]),
+                usize::from(entry[0x39]),
+            ];
+            let ([command, string_3b, user], end) = strings(entry, Self::ENTRY_LEN, lens)?;
             let (padding, padded) = padding(entry, end);
             let process = Process {
                 pid: u32_at(entry, 0),
-                unknown_04: entry[4..8].try_into().expect("4 bytes"),
+                ignored_04: entry[4..8].try_into().expect("4 bytes"),
                 start_time: u64_at(entry, 8),
-                unknown_10: entry[0x10..0x39].try_into().expect("41 bytes"),
-                unknown_3b: entry[0x3b],
+                ignored_10: entry[0x10..0x39].try_into().expect("41 bytes"),
                 command,
+                string_3b,
                 user,
                 padding,
             };
@@ -1058,7 +1062,7 @@ impl ProcessList {
         Ok(Self {
             memory_00: u64_at(buf, 0),
             memory_08: u64_at(buf, 8),
-            unknown_10: buf[0x10..0x1c].try_into().expect("12 bytes"),
+            ignored: buf[0x10..0x1c].try_into().expect("12 bytes"),
             processes,
         })
     }
@@ -1068,17 +1072,18 @@ impl ProcessList {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..8].copy_from_slice(&self.memory_00.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.memory_08.to_be_bytes());
-        out[0x10..0x1c].copy_from_slice(&self.unknown_10);
+        out[0x10..0x1c].copy_from_slice(&self.ignored);
         encode_counted(&mut out, &self.processes, |process| {
             let mut entry = vec![0; Self::ENTRY_LEN];
             entry[0..4].copy_from_slice(&process.pid.to_be_bytes());
-            entry[4..8].copy_from_slice(&process.unknown_04);
+            entry[4..8].copy_from_slice(&process.ignored_04);
             entry[8..0x10].copy_from_slice(&process.start_time.to_be_bytes());
-            entry[0x10..0x39].copy_from_slice(&process.unknown_10);
+            entry[0x10..0x39].copy_from_slice(&process.ignored_10);
             entry[0x39] = len_u8(&process.user, "user")?;
             entry[0x3a] = len_u8(&process.command, "command")?;
-            entry[0x3b] = process.unknown_3b;
+            entry[0x3b] = len_u8(&process.string_3b, "string_3b")?;
             entry.extend_from_slice(&process.command);
+            entry.extend_from_slice(&process.string_3b);
             entry.extend_from_slice(&process.user);
             entry.extend_from_slice(&process.padding);
             Ok(entry)
@@ -1190,9 +1195,9 @@ pub struct FolderAccessItem {
     /// Icon, as in a 401 File List entry; 0 for `[Default]`.
     pub icon: u32,
     /// Bytes 0x08 to 0x0f; meaning unknown.
-    pub unknown_08: [u8; 8],
+    pub ignored_08: [u8; 8],
     /// Meaning unknown; 0 in the lab.
-    pub unknown_10: u8,
+    pub ignored_10: u8,
     /// Item name.
     pub name: Vec<u8>,
     /// A second string; empty in the lab.
@@ -1217,8 +1222,8 @@ impl FolderAccessItem {
             let item = Self {
                 flags: u32_at(entry, 0),
                 icon: u32_at(entry, 4),
-                unknown_08: entry[8..0x10].try_into().expect("8 bytes"),
-                unknown_10: entry[0x10],
+                ignored_08: entry[8..0x10].try_into().expect("8 bytes"),
+                ignored_10: entry[0x10],
                 name,
                 second,
                 description,
@@ -1235,8 +1240,8 @@ impl FolderAccessItem {
             let mut entry = vec![0; Self::HEADER_LEN];
             entry[0..4].copy_from_slice(&item.flags.to_be_bytes());
             entry[4..8].copy_from_slice(&item.icon.to_be_bytes());
-            entry[8..0x10].copy_from_slice(&item.unknown_08);
-            entry[0x10] = item.unknown_10;
+            entry[8..0x10].copy_from_slice(&item.ignored_08);
+            entry[0x10] = item.ignored_10;
             entry[0x11] = len_u8(&item.name, "item name")?;
             entry[0x12] = len_u8(&item.second, "second string")?;
             entry[0x13] = len_u8(&item.description, "description")?;
@@ -1253,7 +1258,7 @@ impl FolderAccessItem {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FolderAccess {
     /// Meaning unknown; 0 in the lab.
-    pub unknown_00: u32,
+    pub ignored_00: u32,
     /// [`Self::BUILT_IN`] and [`Self::OWNER_IN_NAME`].
     pub flags: u32,
     /// Icon, such as 0x2c for Dropbox.
@@ -1263,11 +1268,11 @@ pub struct FolderAccess {
     /// One rule per account class: permission bits in the top u16, bit 0 first.
     pub class_rules: [u32; 32],
     /// Bytes 0x90 to 0xac; meaning unknown.
-    pub unknown_90: [u8; 0x1d],
+    pub ignored_90: [u8; 0x1d],
     /// Meaning unknown; 0 in the lab.
-    pub unknown_b0: u8,
+    pub ignored_b0: u8,
     /// Bytes 0xb2 to 0xb7; meaning unknown.
-    pub unknown_b2: [u8; 6],
+    pub ignored_b2: [u8; 6],
     /// Item name, the tag in a folder name, such as `DB`.
     pub name: Vec<u8>,
     /// Owner login.
@@ -1294,14 +1299,14 @@ impl FolderAccess {
         let lens = [0xad, 0xae, 0xaf, 0xb1].map(|at| usize::from(buf[at]));
         let ([name, owner, description, current_name], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
-            unknown_00: u32_at(buf, 0),
+            ignored_00: u32_at(buf, 0),
             flags: u32_at(buf, 4),
             icon: u32_at(buf, 8),
             rule: u32_at(buf, 0x0c),
             class_rules: std::array::from_fn(|i| u32_at(buf, 0x10 + 4 * i)),
-            unknown_90: buf[0x90..0xad].try_into().expect("29 bytes"),
-            unknown_b0: buf[0xb0],
-            unknown_b2: buf[0xb2..0xb8].try_into().expect("6 bytes"),
+            ignored_90: buf[0x90..0xad].try_into().expect("29 bytes"),
+            ignored_b0: buf[0xb0],
+            ignored_b2: buf[0xb2..0xb8].try_into().expect("6 bytes"),
             name,
             owner,
             description,
@@ -1313,20 +1318,20 @@ impl FolderAccess {
     /// Encodes the payload, padded to 4 with zeros past the stored padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[0..4].copy_from_slice(&self.unknown_00.to_be_bytes());
+        out[0..4].copy_from_slice(&self.ignored_00.to_be_bytes());
         out[4..8].copy_from_slice(&self.flags.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.icon.to_be_bytes());
         out[0x0c..0x10].copy_from_slice(&self.rule.to_be_bytes());
         for (i, rule) in self.class_rules.iter().enumerate() {
             out[0x10 + 4 * i..0x14 + 4 * i].copy_from_slice(&rule.to_be_bytes());
         }
-        out[0x90..0xad].copy_from_slice(&self.unknown_90);
+        out[0x90..0xad].copy_from_slice(&self.ignored_90);
         out[0xad] = len_u8(&self.name, "item name")?;
         out[0xae] = len_u8(&self.owner, "owner login")?;
         out[0xaf] = len_u8(&self.description, "description")?;
-        out[0xb0] = self.unknown_b0;
+        out[0xb0] = self.ignored_b0;
         out[0xb1] = len_u8(&self.current_name, "current name")?;
-        out[0xb2..0xb8].copy_from_slice(&self.unknown_b2);
+        out[0xb2..0xb8].copy_from_slice(&self.ignored_b2);
         for s in [
             &self.name,
             &self.owner,

@@ -16,7 +16,7 @@ pub struct DownloadFile {
     /// Where to resume the resource fork; the server rounds it down to 0x1000.
     pub rsrc_offset: u64,
     /// Bytes 0x10 to 0x16; meaning unknown.
-    pub unknown_10: [u8; 7],
+    pub ignored: [u8; 7],
     /// Option bits such as [`OPTION_PLAIN`].
     pub options: u8,
     /// The file.
@@ -33,7 +33,7 @@ impl DownloadFile {
         Ok(Self {
             data_offset: u64_at(buf, 0),
             rsrc_offset: u64_at(buf, 8),
-            unknown_10: buf[0x10..0x17].try_into().expect("7 bytes"),
+            ignored: buf[0x10..0x17].try_into().expect("7 bytes"),
             options: buf[0x17],
             path: FilePath::decode(&buf[Self::HEADER_LEN..])?,
         })
@@ -44,7 +44,7 @@ impl DownloadFile {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..8].copy_from_slice(&self.data_offset.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.rsrc_offset.to_be_bytes());
-        out[0x10..0x17].copy_from_slice(&self.unknown_10);
+        out[0x10..0x17].copy_from_slice(&self.ignored);
         out[0x17] = self.options;
         out.extend(self.path.encode()?);
         Ok(out)
@@ -102,17 +102,17 @@ pub struct DownloadInfo {
     /// Full size of the resource fork.
     pub rsrc_size: u64,
     /// Bytes 0x10 to 0x17; meaning unknown.
-    pub unknown_10: [u8; 8],
+    pub ignored_10: [u8; 8],
     /// Creation time in milliseconds.
     pub created: u64,
     /// Modification time in milliseconds.
     pub modified: u64,
     /// Bytes 0x28 to 0x2f; meaning unknown.
-    pub unknown_28: [u8; 8],
+    pub ignored_28: [u8; 8],
     /// Meaning unknown; 1 in the lab.
-    pub unknown_30: u32,
+    pub ignored_30: u32,
     /// Bytes 0x34 to 0x47; meaning unknown.
-    pub unknown_34: [u8; 0x14],
+    pub ignored_34: [u8; 0x14],
     /// Name and type strings.
     pub strings: FileStrings,
 }
@@ -128,12 +128,12 @@ impl DownloadInfo {
         Ok(Self {
             data_size: u64_at(buf, 0),
             rsrc_size: u64_at(buf, 8),
-            unknown_10: buf[0x10..0x18].try_into().expect("8 bytes"),
+            ignored_10: buf[0x10..0x18].try_into().expect("8 bytes"),
             created: u64_at(buf, 0x18),
             modified: u64_at(buf, 0x20),
-            unknown_28: buf[0x28..0x30].try_into().expect("8 bytes"),
-            unknown_30: u32_at(buf, 0x30),
-            unknown_34: buf[0x34..0x48].try_into().expect("20 bytes"),
+            ignored_28: buf[0x28..0x30].try_into().expect("8 bytes"),
+            ignored_30: u32_at(buf, 0x30),
+            ignored_34: buf[0x34..0x48].try_into().expect("20 bytes"),
             strings,
         })
     }
@@ -143,12 +143,12 @@ impl DownloadInfo {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..8].copy_from_slice(&self.data_size.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.rsrc_size.to_be_bytes());
-        out[0x10..0x18].copy_from_slice(&self.unknown_10);
+        out[0x10..0x18].copy_from_slice(&self.ignored_10);
         out[0x18..0x20].copy_from_slice(&self.created.to_be_bytes());
         out[0x20..0x28].copy_from_slice(&self.modified.to_be_bytes());
-        out[0x28..0x30].copy_from_slice(&self.unknown_28);
-        out[0x30..0x34].copy_from_slice(&self.unknown_30.to_be_bytes());
-        out[0x34..0x48].copy_from_slice(&self.unknown_34);
+        out[0x28..0x30].copy_from_slice(&self.ignored_28);
+        out[0x30..0x34].copy_from_slice(&self.ignored_30.to_be_bytes());
+        out[0x34..0x48].copy_from_slice(&self.ignored_34);
         self.strings.encode(&mut out, 0x48)?;
         Ok(out)
     }
@@ -162,13 +162,13 @@ pub struct UploadFile {
     /// Size of the resource fork; this build expects 0.
     pub rsrc_size: u64,
     /// Bytes 0x10 to 0x16; meaning unknown.
-    pub unknown_10: [u8; 7],
+    pub ignored_10: [u8; 7],
     /// Option bits such as [`OPTION_PLAIN`].
     pub options: u8,
     /// Bytes 0x18 to 0x2f; probably times, as at the same offsets of 413.
-    pub unknown_18: [u8; 0x18],
+    pub ignored_18: [u8; 0x18],
     /// Bytes 0x30 to 0x45; meaning unknown.
-    pub unknown_30: [u8; 0x16],
+    pub ignored_30: [u8; 0x16],
     /// Name and type strings; the name must not be empty.
     pub strings: FileStrings,
     /// The destination folder.
@@ -193,10 +193,10 @@ impl UploadFile {
         Ok(Self {
             data_size: u64_at(buf, 0),
             rsrc_size: u64_at(buf, 8),
-            unknown_10: buf[0x10..0x17].try_into().expect("7 bytes"),
+            ignored_10: buf[0x10..0x17].try_into().expect("7 bytes"),
             options: buf[0x17],
-            unknown_18: buf[0x18..0x30].try_into().expect("24 bytes"),
-            unknown_30: buf[0x30..0x46].try_into().expect("22 bytes"),
+            ignored_18: buf[0x18..0x30].try_into().expect("24 bytes"),
+            ignored_30: buf[0x30..0x46].try_into().expect("22 bytes"),
             strings,
             folder: FilePath::decode(&buf[end..end + path_len])?,
             rest: buf[end + path_len..].to_vec(),
@@ -210,10 +210,10 @@ impl UploadFile {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..8].copy_from_slice(&self.data_size.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.rsrc_size.to_be_bytes());
-        out[0x10..0x17].copy_from_slice(&self.unknown_10);
+        out[0x10..0x17].copy_from_slice(&self.ignored_10);
         out[0x17] = self.options;
-        out[0x18..0x30].copy_from_slice(&self.unknown_18);
-        out[0x30..0x46].copy_from_slice(&self.unknown_30);
+        out[0x18..0x30].copy_from_slice(&self.ignored_18);
+        out[0x30..0x46].copy_from_slice(&self.ignored_30);
         out[0x46..0x48].copy_from_slice(&path_len.to_be_bytes());
         self.strings.encode(&mut out, 0x48)?;
         out.extend(folder);
@@ -230,7 +230,7 @@ pub struct UploadReply {
     /// Resource-fork offset; all ones, since resource forks don't resume.
     pub rsrc_offset: u64,
     /// Bytes 0x10 to 0x17; meaning unknown.
-    pub unknown_10: [u8; 8],
+    pub ignored: [u8; 8],
 }
 
 impl UploadReply {
@@ -243,7 +243,7 @@ impl UploadReply {
         Ok(Self {
             data_offset: u64_at(buf, 0),
             rsrc_offset: u64_at(buf, 8),
-            unknown_10: buf[0x10..0x18].try_into().expect("8 bytes"),
+            ignored: buf[0x10..0x18].try_into().expect("8 bytes"),
         })
     }
 
@@ -252,7 +252,7 @@ impl UploadReply {
         let mut out = [0; Self::LEN];
         out[0..8].copy_from_slice(&self.data_offset.to_be_bytes());
         out[8..0x10].copy_from_slice(&self.rsrc_offset.to_be_bytes());
-        out[0x10..].copy_from_slice(&self.unknown_10);
+        out[0x10..].copy_from_slice(&self.ignored);
         out
     }
 }

@@ -10,13 +10,23 @@ sequence that uses them is in [dcc.md](../dcc.md#voice).
 Initiator: Client (to client). **[S `FUN_0808f1ac`]**
 Handled by the client, on DCC only **[S `FUN_08094074`]**.
 
-The caller sends it, empty, on login to the secondary connection.
+No payload.
+
+The caller sends it on login to the secondary connection.
 
 ## <a id="m1001"></a>1001 Start Voice (R)
 
 Initiator: Client (to client). **[S `FUN_08094074`]**
 
-Reply to [1000 Start Voice](#m1000), a u32:
+Reply to [1000 Start Voice](#m1000):
+
+Struct `StartVoiceReply` (4 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | result | see below |
+
+The value is:
 
 - 0x00640007 if the peer's Voice Controls window is not open;
 - 0, followed by the peer's own [1002 Set Voice Format](#m1002), if it is.
@@ -29,16 +39,16 @@ open." and closes the connection **[S `FUN_08094218`]**.
 
 Initiator: Client (to client). **[S `FUN_08093ae0`, `FUN_080943a0`]**
 
-0x18 bytes:
+Struct `VoiceFormat` (24 bytes):
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 0xc | 0 | |
-| 0x0c | 4 | sample rate | Hz |
-| 0x10 | 4 | codec | `ADPC` |
-| 0x14 | 2 | buffer | ms; the receiver divides by 10 and clamps to 35..500 |
-| 0x16 | 1 | channels | 1 |
-| 0x17 | 1 | bits per sample | 16 |
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 12 | u8[12] | ignored | 0 as sent. |
+| 0x0c | 4 | u32 | sample_rate | Hz |
+| 0x10 | 4 | char[4] | codec | `ADPC` |
+| 0x14 | 2 | u16 | buffer | ms; the receiver divides by 10 and clamps to 35..500 |
+| 0x16 | 1 | u8 | channels | 1 |
+| 0x17 | 1 | u8 | bits_per_sample | 16 |
 
 Both sides sent 11025 Hz (0x2b11), `ADPC`, 500 ms (0x01f4), 1 channel, and 16
 bits (frames 136, 138) **[O]**.
@@ -47,6 +57,12 @@ bits (frames 136, 138) **[O]**.
 
 Initiator: Client (to client). **[S `FUN_08093670`, `FUN_0809455c`,
 `FUN_080e15e4`]**
+
+Struct `VoiceData` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | rest | u8[] | audio | IMA ADPCM |
 
 The payload is IMA ADPCM, two samples per byte, high nibble first. The
 decoder state starts fresh for each message. It decodes to big-endian

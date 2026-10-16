@@ -53,6 +53,10 @@ Put details in those files. Keep this file to rules.
 - Wrap Markdown prose at 80 columns. Leave tables and code blocks unwrapped.
 - Use relative links in Markdown, except in `crates/*/README.md`, which
   use absolute GitHub URLs so the links work on crates.io and GitHub.
+- Describe each message payload with struct tables in the one shape set out
+  under Structs in the
+  [protocol conventions](docs/protocol/README.md#conventions).
+  `ci/check-docs.py` enforces it.
 - Give each message its own heading in `docs/protocol/messages/` with an
   anchor such as `<a id="m100"></a>`, in ascending type order on its page, and
   list it in `docs/protocol/messages/README.md`. `ci/check-docs.py` checks the

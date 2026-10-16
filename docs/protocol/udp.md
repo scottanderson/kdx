@@ -47,25 +47,36 @@ group 0 as typed; Comments, Address, and the password are not sent **[O]**.
 Server 1.620 doesn't clear the padding: frame 255 is 86 bytes of header and
 strings, then `12 22` **[O]**.
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | magic | `"%KDX"` (0x254b4458) |
-| 0x04 | 2 | version | 0x0010. The tracker drops anything else |
-| 0x06 | 2 | flags | bit 0: the sender is a tracker. Server 1.620 sends 0; Tracker 1.110 sends 1 |
-| 0x08 | 4 | checksum | see below |
-| 0x0c | 12 | server ID | Server 1.620 fills it with three random words the first time it runs and keeps them in its settings **[S server `FUN_080535b4`]**. Tracker 1.110 ignores it |
-| 0x18 | 4 | server port | the server's TCP port, which a tracker forwards unchanged (Server 1.620: settings +0x258, default 10700) |
-| 0x1c | 8 | 0 | |
-| 0x24 | 2 | users | number of users logged in. The server keeps it XOR'd with 0x2ba9 in memory and sends it plain **[S server `FUN_080528c8`, `FUN_0804a930`]** |
-| 0x26 | 13 | 0 | |
-| 0x33 | 1 | len0 | 0 |
-| 0x34 | 1 | len1 | the Login of the tracker entry in the server's settings. The tracker skips it |
-| 0x35 | 1 | name_len | server name |
-| 0x36 | 1 | desc_len | server description |
-| 0x37 | 1 | len4 | 0 |
-| 0x38 | 6 | group_len[6] | up to six group names, from the tracker entry |
-| 0x3e | 2 | 0 | |
-| 0x40 | | strings | in field order: len0 bytes, len1 bytes, name, description, len4 bytes, groups 0-5 |
+Struct `Registration` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | char[4] | magic | not stored. `"%KDX"` (0x254b4458) **[S tracker `FUN_0804c048`; O frame 23]** |
+| 0x04 | 2 | u16 | version | not stored. 0x0010. The tracker drops anything else **[S tracker `FUN_0804c048`; O frame 23]** |
+| 0x06 | 2 | u16 | flags | bit 0: the sender is a tracker. Server 1.620 sends 0; Tracker 1.110 sends 1 **[O frames 23, 78]** |
+| 0x08 | 4 | u32 | checksum | not stored. see below |
+| 0x0c | 12 | u8[12] | server_id | Server 1.620 fills it with three random words the first time it runs and keeps them in its settings **[S server `FUN_080535b4`]**. Tracker 1.110 ignores it |
+| 0x18 | 4 | u32 | server_port | the server's TCP port, which a tracker forwards unchanged (Server 1.620: settings +0x258, default 10700) |
+| 0x1c | 8 | u8[8] | ignored_1c | 0 as sent |
+| 0x24 | 2 | u16 | users | number of users logged in. The server keeps it XOR'd with 0x2ba9 in memory and sends it plain **[S server `FUN_080528c8`, `FUN_0804a930`]** |
+| 0x26 | 13 | u8[13] | ignored_26 | 0 as sent |
+| 0x33 | 1 | u8 | string0_len |  |
+| 0x34 | 1 | u8 | login_len |  |
+| 0x35 | 1 | u8 | name_len |  |
+| 0x36 | 1 | u8 | description_len |  |
+| 0x37 | 1 | u8 | string4_len |  |
+| 0x38 | 6 | u8[6] | groups_len |  |
+| 0x3e | 1 | u8 | string11_len |  |
+| 0x3f | 1 | u8 | string12_len |  |
+| 0x40 | string0_len | str | string0 | Empty from Server 1.620 |
+|  | login_len | str | login | The Login of the tracker entry in the server's settings. The tracker skips it |
+|  | name_len | str | name | The server name |
+|  | description_len | str | description | The server description |
+|  | string4_len | str | string4 | Empty from Server 1.620 |
+|  | groups_len | str[6] | groups | the tracker entry's group names. Server 1.620 sends its Groups field, as typed, as group 0 |
+|  | string11_len | str | string11 | not stored. Empty from Server 1.620 |
+|  | string12_len | str | string12 | not stored. Empty from Server 1.620 |
+|  | pad4 | u8[] | padding | the datagram is padded to a multiple of 4; Server 1.620 does not clear the padding |
 
 ## Checksum
 

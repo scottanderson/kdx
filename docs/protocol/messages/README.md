@@ -1,6 +1,8 @@
 # Messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+Tags, hex, and struct tables: see [Conventions](../README.md#conventions).
+Field names are the `kdx-proto` field names, and the other bytes are named as
+in the [special field names](../README.md#special-field-names).
 
 Every message type, in order, grouped by the page that describes it. Each page
 covers one contiguous range of type numbers, so a type's page can be found from

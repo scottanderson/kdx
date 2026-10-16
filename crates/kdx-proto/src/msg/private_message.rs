@@ -8,7 +8,7 @@ pub struct PrivateMessage {
     /// The target's ID in 300 Send Private Message; the sender's in 301.
     pub user_id: u32,
     /// Bytes 0x04 to 0x0f; meaning unknown.
-    pub unknown_04: [u8; 0x0c],
+    pub ignored: [u8; 0x0c],
     /// Message text.
     pub text: Vec<u8>,
 }
@@ -22,7 +22,7 @@ impl PrivateMessage {
         need(buf, Self::HEADER_LEN + 1)?;
         Ok(Self {
             user_id: u32_at(buf, 0),
-            unknown_04: buf[4..Self::HEADER_LEN].try_into().expect("12 bytes"),
+            ignored: buf[4..Self::HEADER_LEN].try_into().expect("12 bytes"),
             text: buf[Self::HEADER_LEN..].to_vec(),
         })
     }
@@ -31,7 +31,7 @@ impl PrivateMessage {
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..4].copy_from_slice(&self.user_id.to_be_bytes());
-        out[4..Self::HEADER_LEN].copy_from_slice(&self.unknown_04);
+        out[4..Self::HEADER_LEN].copy_from_slice(&self.ignored);
         out.extend_from_slice(&self.text);
         out
     }

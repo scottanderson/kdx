@@ -552,7 +552,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             format!(
                 "you are user {}, server {} version {} name {} description {}",
                 info.user_id,
-                info.server_value,
+                info.file_transfer_port,
                 info.version,
                 quoted(&info.name),
                 quoted(&info.description)
@@ -655,7 +655,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             format!(
                 "chat {} {} members {:?}",
                 window.chat_id,
-                quoted(window.name()),
+                quoted(&window.name),
                 window.members
             )
         }
@@ -1131,7 +1131,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                     "{} {} at {} users {} flags {:#x} first seen {}",
                     quoted(&s.name),
                     quoted(&s.description),
-                    s.address,
+                    s.socket_addr(),
                     s.users,
                     s.flags,
                     time_1900(s.first_seen)

@@ -12,11 +12,11 @@ pub struct NewsgroupEntry {
     /// Newsgroup ID.
     pub group_id: u32,
     /// Bytes 0x0c to 0x0f; meaning unknown.
-    pub unknown_0c: [u8; 4],
+    pub ignored_0c: [u8; 4],
     /// Probably the message count.
     pub message_count: u16,
     /// Bytes 0x12 to 0x15; meaning unknown.
-    pub unknown_12: [u8; 4],
+    pub ignored_12: [u8; 4],
     /// Newsgroup name.
     pub name: Vec<u8>,
     /// Probably the description; empty in the lab.
@@ -43,9 +43,9 @@ impl NewsgroupEntry {
             list.push(Self {
                 time: u64_at(entry, 0),
                 group_id: u32_at(entry, 8),
-                unknown_0c: entry[0x0c..0x10].try_into().expect("4 bytes"),
+                ignored_0c: entry[0x0c..0x10].try_into().expect("4 bytes"),
                 message_count: u16_at(entry, 0x10),
-                unknown_12: entry[0x12..0x16].try_into().expect("4 bytes"),
+                ignored_12: entry[0x12..0x16].try_into().expect("4 bytes"),
                 name,
                 description,
                 padding,
@@ -62,9 +62,9 @@ impl NewsgroupEntry {
             let mut fixed = [0; Self::HEADER_LEN];
             fixed[0..8].copy_from_slice(&entry.time.to_be_bytes());
             fixed[8..0x0c].copy_from_slice(&entry.group_id.to_be_bytes());
-            fixed[0x0c..0x10].copy_from_slice(&entry.unknown_0c);
+            fixed[0x0c..0x10].copy_from_slice(&entry.ignored_0c);
             fixed[0x10..0x12].copy_from_slice(&entry.message_count.to_be_bytes());
-            fixed[0x12..0x16].copy_from_slice(&entry.unknown_12);
+            fixed[0x12..0x16].copy_from_slice(&entry.ignored_12);
             fixed[0x16] = len_u8(&entry.name, "newsgroup name")?;
             fixed[0x17] = len_u8(&entry.description, "newsgroup description")?;
             out.extend_from_slice(&fixed);
@@ -83,7 +83,7 @@ pub struct NewsgroupInfo {
     /// Newsgroup ID.
     pub group_id: u32,
     /// Bytes 0x04 to 0x0f; meaning unknown.
-    pub unknown_04: [u8; 0x0c],
+    pub ignored_04: [u8; 0x0c],
     /// Time of the last post in milliseconds.
     pub time: u64,
     /// Classes that may read, class 0 in the top bit.
@@ -91,17 +91,17 @@ pub struct NewsgroupInfo {
     /// Classes that may post, class 0 in the top bit.
     pub post_classes: u32,
     /// Meaning unknown; `01 00 00 00` in the lab.
-    pub unknown_20: [u8; 4],
+    pub ignored_20: [u8; 4],
     /// Bytes 0x24 to 0x2f; meaning unknown.
-    pub unknown_24: [u8; 0x0c],
+    pub ignored_24: [u8; 0x0c],
     /// Message count.
     pub message_count: u16,
     /// Probably the size limit in KiB; 50 in the lab.
     pub size_limit_kib: u16,
     /// Bytes 0x34 to 0x3b; meaning unknown.
-    pub unknown_34: [u8; 8],
+    pub ignored_34: [u8; 8],
     /// Bytes 0x3e and 0x3f; meaning unknown.
-    pub unknown_3e: [u8; 2],
+    pub ignored_3e: [u8; 2],
     /// Newsgroup name.
     pub name: Vec<u8>,
     /// Description.
@@ -119,16 +119,16 @@ impl NewsgroupInfo {
         let ([name, description], _) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             group_id: u32_at(buf, 0),
-            unknown_04: buf[4..0x10].try_into().expect("12 bytes"),
+            ignored_04: buf[4..0x10].try_into().expect("12 bytes"),
             time: u64_at(buf, 0x10),
             read_classes: u32_at(buf, 0x18),
             post_classes: u32_at(buf, 0x1c),
-            unknown_20: buf[0x20..0x24].try_into().expect("4 bytes"),
-            unknown_24: buf[0x24..0x30].try_into().expect("12 bytes"),
+            ignored_20: buf[0x20..0x24].try_into().expect("4 bytes"),
+            ignored_24: buf[0x24..0x30].try_into().expect("12 bytes"),
             message_count: u16_at(buf, 0x30),
             size_limit_kib: u16_at(buf, 0x32),
-            unknown_34: buf[0x34..0x3c].try_into().expect("8 bytes"),
-            unknown_3e: buf[0x3e..0x40].try_into().expect("2 bytes"),
+            ignored_34: buf[0x34..0x3c].try_into().expect("8 bytes"),
+            ignored_3e: buf[0x3e..0x40].try_into().expect("2 bytes"),
             name,
             description,
         })
@@ -138,18 +138,18 @@ impl NewsgroupInfo {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
-        out[4..0x10].copy_from_slice(&self.unknown_04);
+        out[4..0x10].copy_from_slice(&self.ignored_04);
         out[0x10..0x18].copy_from_slice(&self.time.to_be_bytes());
         out[0x18..0x1c].copy_from_slice(&self.read_classes.to_be_bytes());
         out[0x1c..0x20].copy_from_slice(&self.post_classes.to_be_bytes());
-        out[0x20..0x24].copy_from_slice(&self.unknown_20);
-        out[0x24..0x30].copy_from_slice(&self.unknown_24);
+        out[0x20..0x24].copy_from_slice(&self.ignored_20);
+        out[0x24..0x30].copy_from_slice(&self.ignored_24);
         out[0x30..0x32].copy_from_slice(&self.message_count.to_be_bytes());
         out[0x32..0x34].copy_from_slice(&self.size_limit_kib.to_be_bytes());
-        out[0x34..0x3c].copy_from_slice(&self.unknown_34);
+        out[0x34..0x3c].copy_from_slice(&self.ignored_34);
         out[0x3c] = len_u8(&self.name, "newsgroup name")?;
         out[0x3d] = len_u8(&self.description, "newsgroup description")?;
-        out[0x3e..0x40].copy_from_slice(&self.unknown_3e);
+        out[0x3e..0x40].copy_from_slice(&self.ignored_3e);
         out.extend_from_slice(&self.name);
         out.extend_from_slice(&self.description);
         Ok(out)
@@ -166,11 +166,11 @@ pub struct NewsMessage {
     /// Message ID within the group.
     pub message_id: u32,
     /// Bytes 0x10 to 0x17; 0 in the lab.
-    pub unknown_10: [u8; 8],
+    pub ignored_10: [u8; 8],
     /// Bytes 0x1a and 0x1b; 0 in the lab.
-    pub unknown_1a: [u8; 2],
+    pub ignored_1a: [u8; 2],
     /// Byte 0x1f; 0 in the lab.
-    pub unknown_1f: u8,
+    pub ignored_1f: u8,
     /// Poster's name.
     pub poster: Vec<u8>,
     /// Poster's login, which 612 Delete News Message checks.
@@ -202,9 +202,9 @@ impl NewsMessage {
             time: u64_at(buf, 0),
             group_id: u32_at(buf, 8),
             message_id: u32_at(buf, 0x0c),
-            unknown_10: buf[0x10..0x18].try_into().expect("8 bytes"),
-            unknown_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
-            unknown_1f: buf[0x1f],
+            ignored_10: buf[0x10..0x18].try_into().expect("8 bytes"),
+            ignored_1a: buf[0x1a..0x1c].try_into().expect("2 bytes"),
+            ignored_1f: buf[0x1f],
             poster,
             login,
             subject,
@@ -221,13 +221,13 @@ impl NewsMessage {
         out[0..8].copy_from_slice(&self.time.to_be_bytes());
         out[8..0x0c].copy_from_slice(&self.group_id.to_be_bytes());
         out[0x0c..0x10].copy_from_slice(&self.message_id.to_be_bytes());
-        out[0x10..0x18].copy_from_slice(&self.unknown_10);
+        out[0x10..0x18].copy_from_slice(&self.ignored_10);
         out[0x18..0x1a].copy_from_slice(&body_len.to_be_bytes());
-        out[0x1a..0x1c].copy_from_slice(&self.unknown_1a);
+        out[0x1a..0x1c].copy_from_slice(&self.ignored_1a);
         out[0x1c] = len_u8(&self.poster, "poster")?;
         out[0x1d] = len_u8(&self.login, "login")?;
         out[0x1e] = len_u8(&self.subject, "subject")?;
-        out[0x1f] = self.unknown_1f;
+        out[0x1f] = self.ignored_1f;
         for part in [
             &self.poster,
             &self.login,
@@ -257,7 +257,7 @@ pub struct NewsMessages {
     /// What the user may do in the group: [`NEWS_POST`], [`NEWS_DELETE`], [`NEWS_READ`].
     pub permissions: u32,
     /// Bytes 0x08 to 0x0b; meaning unknown.
-    pub unknown_08: [u8; 4],
+    pub ignored: [u8; 4],
     /// The messages.
     pub messages: Vec<NewsMessage>,
 }
@@ -280,7 +280,7 @@ impl NewsMessages {
         Ok(Self {
             group_id: u32_at(buf, 0),
             permissions: u32_at(buf, 4),
-            unknown_08: buf[8..0x0c].try_into().expect("4 bytes"),
+            ignored: buf[8..0x0c].try_into().expect("4 bytes"),
             messages,
         })
     }
@@ -289,7 +289,7 @@ impl NewsMessages {
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = self.group_id.to_be_bytes().to_vec();
         out.extend_from_slice(&self.permissions.to_be_bytes());
-        out.extend_from_slice(&self.unknown_08);
+        out.extend_from_slice(&self.ignored);
         out.extend(encode_count(self.messages.len())?);
         for message in &self.messages {
             out.extend(message.encode()?);
@@ -314,9 +314,9 @@ pub struct PostNewsMessage {
     /// Newsgroup ID.
     pub group_id: u32,
     /// Bytes 0x04 to 0x0b, which the server ignores.
-    pub unknown_04: [u8; 8],
+    pub ignored_04: [u8; 8],
     /// Byte 0x0f, which the server ignores.
-    pub unknown_0f: u8,
+    pub ignored_0f: u8,
     /// Subject; the server keeps at most 0x80 bytes.
     pub subject: Vec<u8>,
     /// Body text; the server keeps at most 0x4000 bytes.
@@ -336,8 +336,8 @@ impl PostNewsMessage {
         let ([subject, body], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             group_id: u32_at(buf, 0),
-            unknown_04: buf[4..0x0c].try_into().expect("8 bytes"),
-            unknown_0f: buf[0x0f],
+            ignored_04: buf[4..0x0c].try_into().expect("8 bytes"),
+            ignored_0f: buf[0x0f],
             subject,
             body,
             rest: buf[end..].to_vec(),
@@ -349,10 +349,10 @@ impl PostNewsMessage {
         let body_len = u16::try_from(self.body.len()).map_err(|_| EncodeError::TooLong("body"))?;
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.group_id.to_be_bytes());
-        out[4..0x0c].copy_from_slice(&self.unknown_04);
+        out[4..0x0c].copy_from_slice(&self.ignored_04);
         out[0x0c..0x0e].copy_from_slice(&body_len.to_be_bytes());
         out[0x0e] = len_u8(&self.subject, "subject")?;
-        out[0x0f] = self.unknown_0f;
+        out[0x0f] = self.ignored_0f;
         out.extend_from_slice(&self.subject);
         out.extend_from_slice(&self.body);
         out.extend_from_slice(&self.rest);

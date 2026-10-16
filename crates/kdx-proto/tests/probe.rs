@@ -56,7 +56,7 @@ fn chat() {
 
     let window = one(&session, MessageType::CHAT_WINDOW_INFO);
     let info = ChatWindowInfo::decode(window).unwrap();
-    assert_eq!(info.name(), b"Public Chat");
+    assert_eq!(info.name, b"Public Chat");
     assert_eq!(info.members, [3]);
     assert_eq!(info.encode().unwrap(), window);
 
@@ -285,19 +285,19 @@ fn account_classes() {
         .iter()
         .enumerate()
         .all(|(i, c)| usize::from(c.index) == i));
-    assert_eq!(list[0].unknown_after_index, [0xff, 0, 0]);
-    assert_eq!(list[1].unknown_after_index, [0, 0, 0xff]);
+    assert_eq!(list[0].ignored_after_index, [0xff, 0, 0]);
+    assert_eq!(list[1].ignored_after_index, [0, 0, 0xff]);
     assert_eq!(AccountClass::encode_list(&list).unwrap(), wire);
 
     let session = connection!("59006");
     let replies = payloads(&session, MessageType::ACCOUNT_CLASS_INFO);
-    for (wire, index, unknown_25) in [(replies[0], 0, 0x50), (replies[1], 2, 0x28)] {
+    for (wire, index, ignored_25) in [(replies[0], 0, 0x50), (replies[1], 2, 0x28)] {
         let class = AccountClass::decode_info(wire).unwrap();
         assert_eq!(
             class,
             AccountClass {
-                unknown_25,
-                unknown_28: class.unknown_28,
+                ignored_25,
+                ignored_28: class.ignored_28,
                 padding: class.padding.clone(),
                 ..list[index].clone()
             }
@@ -342,6 +342,7 @@ fn processes() {
     assert_eq!(list.processes[1].command, b"./KDXServer.lexe");
     assert_eq!(list.processes[2].command, b"/bin/ps auxwww");
     assert_eq!(list.processes[0].command.len(), 0xff);
+    assert!(list.processes.iter().all(|p| p.string_3b.is_empty()));
     assert_eq!(list.encode().unwrap(), wire);
 }
 

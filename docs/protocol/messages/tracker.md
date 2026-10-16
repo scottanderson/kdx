@@ -16,7 +16,9 @@ also sends [1 Status](status.md#tracker-form) in its short form, and answers
 
 Initiator: Client. **[S `FUN_0804abf4`; O frame 34]**
 
-No payload. The reply is [701 Tracker Group List](#m701).
+No payload.
+
+The reply is [701 Tracker Group List](#m701).
 
 ## <a id="m701"></a>701 Tracker Group List
 
@@ -26,20 +28,24 @@ Reply to [700 Get Tracker Group List](#m700). A fresh Tracker 1.110 has
 eight groups: Business, Chat, Education, Games, General, Macintosh,
 Trackers, and Windows, none with a description **[O]**.
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | count | |
-| 0x04 | | groups | `count` group records |
+Struct `TrackerGroupList` (dynamic):
 
-Group record, padded to a multiple of 4:
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | groups_count |  |
+| 0x04 | groups_count | GroupListEntry[] | groups |  |
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 2 | servers | number of servers in the group |
-| 0x02 | 4 | | not set by the tracker; the client ignores it **[S client `FUN_08068bcc`]** |
-| 0x06 | 1 | name_len | |
-| 0x07 | 1 | desc_len | |
-| 0x08 | | name, description | |
+Struct `GroupListEntry` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | servers | number of servers in the group |
+| 0x02 | 4 | u8[4] | value_02 | not set by the tracker; the client ignores it **[S client `FUN_08068bcc`]** |
+| 0x06 | 1 | u8 | name_len |  |
+| 0x07 | 1 | u8 | description_len |  |
+| 0x08 | name_len | str | name |  |
+|  | description_len | str | description |  |
+|  | pad4 | u8[] | padding |  |
 
 ## <a id="m702"></a>702 Get Tracker Server List
 
@@ -47,12 +53,14 @@ Initiator: Client, where the sender is client `FUN_08069ac4` and the handler
 is `FUN_0804adcc`. **[S `FUN_0804adcc`, client `FUN_08069ac4`; O frames 36,
 37]**
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 2 | 0 | |
-| 0x02 | 1 | name_len | |
-| 0x03 | 1 | 0 | |
-| 0x04 | | group name | |
+Struct `GetServerList` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u8[2] | ignored_00 | 0 as sent. |
+| 0x02 | 1 | u8 | group_len |  |
+| 0x03 | 1 | u8 | ignored_03 | 0 as sent. |
+| 0x04 | group_len | str | group |  |
 
 A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown group
 0x1000c **[O `captures/kdx-cli-tracker.pcapng` frame 39]**; group names match
@@ -65,27 +73,35 @@ Initiator: Tracker.
 Reply to [702 Get Tracker Server List](#m702), with an empty payload for an
 empty group:
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | count | the client rejects more than 0xffff |
-| 0x04 | | servers | `count` server records |
+Struct `TrackerServerList` (dynamic):
 
-Server record, padded to a multiple of 4 **[S tracker `FUN_0804adcc`, client
-`FUN_08068da0`]**:
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | servers_count |  |
+| 0x04 | servers_count | ServerListEntry[] | servers | the client rejects more than 0xffff |
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 8 | first seen | u64 milliseconds since 1900, as in [encodings.md](../encodings.md#times); frame 37 holds the arrival time of registration 23 **[O]** |
-| 0x08 | 6 | 0 | |
-| 0x0e | 2 | flags | from the registration |
-| 0x10 | 2 | users | |
-| 0x12 | 6 | 0 | |
-| 0x18 | 1 | addr_len | 6 |
-| 0x19 | 1 | name_len | |
-| 0x1a | 1 | desc_len | |
-| 0x1b | 1 | extra_len | 0 |
-| 0x1c | | address | IPv4 address (4 bytes) and TCP port (2 bytes) |
-| | | name, description, extra | |
+Each server record is padded to a multiple of 4 **[S tracker `FUN_0804adcc`,
+client `FUN_08068da0`]**:
+
+Struct `ServerListEntry` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | u64 | first_seen | milliseconds since 1900, as in [encodings.md](../encodings.md#times); frame 37 holds the arrival time of registration 23 **[O]** |
+| 0x08 | 6 | u8[6] | ignored_08 | 0 as sent. |
+| 0x0e | 2 | u16 | flags | from the registration |
+| 0x10 | 2 | u16 | users |  |
+| 0x12 | 6 | u8[6] | ignored_12 | 0 as sent. |
+| 0x18 | 1 | u8 | address_len | 6: the address and port |
+| 0x19 | 1 | u8 | name_len |  |
+| 0x1a | 1 | u8 | description_len |  |
+| 0x1b | 1 | u8 | extra_len |  |
+| 0x1c | 4 | u8[4] | address | IPv4 address |
+| 0x20 | 2 | u16 | port | TCP port |
+| 0x22 | name_len | str | name |  |
+|  | description_len | str | description |  |
+|  | extra_len | u8[] | extra | Length 0 |
+|  | pad4 | u8[] | padding |  |
 
 Verified: `kdx-proto` re-encodes [701 Tracker Group List](#m701), 702, and
 [703 Tracker Server List](#m703) from frames 34, 36, 37, 57, 58, 247, and 257
@@ -95,28 +111,42 @@ byte for byte **[O]**.
 
 Initiator: Client. **[S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80]**
 
-No payload. The reply, [711 TrackerServ Settings Info](#m711), is the
-tracker's settings in its file format without the secrets. That format,
-which [712 Set TrackerServ Settings](#m712) also uses:
+No payload.
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 8 | magic | `"%KDXTSTG"` |
-| 0x08 | 2 | format | 1 |
-| 0x0c | 8 | section 0 | offset (0x78) and size: general settings |
-| 0x14 | 8 | section 1 | offset and size: upstream trackers |
-| 0x1c | 8 | section 2 | offset and size: groups |
-| 0x24 | 8 | section 3 | 0 |
-| 0x2c | 8 | section 4 | offset and size: the greeting (tracker +0x224) |
-| 0x34 | 8 | section 5 | offset and size: admin |
-| 0x3c | 0x30 | sections 6-11 | 0 |
-| 0x6c | 1 | present | general section |
-| 0x6d | 1 | present | upstream trackers |
-| 0x6e | 1 | present | groups |
-| 0x6f | 1 | present | section 3; 0 |
-| 0x70 | 1 | present | greeting |
-| 0x71 | 1 | present | admin |
-| 0x72 | 6 | present | sections 6-11; 0 |
+The reply, [711 TrackerServ Settings Info](#m711), is the tracker's settings in
+its file format without the secrets. That format, which
+[712 Set TrackerServ Settings](#m712) also uses, is a header and then the
+sections:
+
+Struct `TrackerSettings` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | char[8] | magic | not stored. `"%KDXTSTG"` |
+| 0x08 | 2 | u16 | format | 1 |
+| 0x0a | 2 | u8[2] | ignored |  |
+| 0x0c | 8 | TrackerSettingsSection | section_0 | Rust `sections`. offset (0x78) and size: general settings |
+| 0x14 | 8 | TrackerSettingsSection | section_1 | Rust `sections`. offset and size: upstream trackers |
+| 0x1c | 8 | TrackerSettingsSection | section_2 | Rust `sections`. offset and size: groups |
+| 0x24 | 8 | TrackerSettingsSection | section_3 | Rust `sections`. 0 |
+| 0x2c | 8 | TrackerSettingsSection | section_4 | Rust `sections`. offset and size: the greeting (tracker +0x224) |
+| 0x34 | 8 | TrackerSettingsSection | section_5 | Rust `sections`. offset and size: admin |
+| 0x3c | 48 | TrackerSettingsSection[6] | sections_6_11 | Rust `sections`. 0 |
+| 0x6c | 1 | u8 | present_0 | Rust `present`. general section |
+| 0x6d | 1 | u8 | present_1 | Rust `present`. upstream trackers |
+| 0x6e | 1 | u8 | present_2 | Rust `present`. groups |
+| 0x6f | 1 | u8 | present_3 | Rust `present`. section 3; 0 |
+| 0x70 | 1 | u8 | present_4 | Rust `present`. greeting |
+| 0x71 | 1 | u8 | present_5 | Rust `present`. admin |
+| 0x72 | 6 | u8[6] | present_6_11 | Rust `present`. sections 6-11; 0 |
+| 0x78 | rest | u8[] | sections | the sections the offsets point to, back to back |
+
+Struct `TrackerSettingsSection` (8 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | offset | from the start of the settings; 0 for an absent section |
+| 0x04 | 4 | u32 | size | 0 for an absent section |
 
 An absent section has offset and size 0. The others follow the header back to
 back in the order general, upstream trackers, groups, admin, greeting; a
@@ -170,6 +200,97 @@ login length at +0x90, and the login from +0x94, padded to 4. The key is the
 `AccountKey` of the password, as for a server account: frame 82 carries the key
 of `lab-tracker-pw!2`, verified **[O]**.
 
+The sections have these layouts. Offsets are from the start of the section.
+The general section:
+
+Struct `GeneralSettings` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | u16[4] | limits | four limits, from the file only; 0 in 711 |
+| 0x08 | 24 | u8[24] | ignored_08 |  |
+| 0x20 | 4 | u32 | flags | bit 0 Register with Trackers, bit 1 Enable Greeting |
+| 0x24 | 4 | u32 | tracker_port | 0 or above 0xfffe means 10800 |
+| 0x28 | 4 | u8[4] | ignored_28 |  |
+| 0x2c | 12 | u8[12] | server_id | from the file only |
+| 0x38 | 14 | u8[14] | ignored_38 |  |
+| 0x46 | 1 | u8 | name_len |  |
+| 0x47 | 1 | u8 | description_len |  |
+| 0x48 | 4 | u8[4] | ignored_48 | `kdx-proto` does not keep these bytes |
+| 0x4c | name_len | str | name |  |
+|  | description_len | str | description |  |
+|  | pad4 | u8[] | padding |  |
+
+The upstream trackers section is a run of entries. Whether each is padded to 4
+is not verified **[I]**:
+
+Struct `UpstreamTracker` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | u8[8] | ignored_00 |  |
+| 0x08 | 12 | u8[12] | ignored_08 | raw bytes |
+| 0x14 | 1 | u8 | name_len |  |
+| 0x15 | 1 | u8 | comments_len |  |
+| 0x16 | 1 | u8 | address_len |  |
+| 0x17 | 1 | u8 | login_len |  |
+| 0x18 | 1 | u8 | key_len |  |
+| 0x19 | 1 | u8 | unused_len |  |
+| 0x1a | 1 | u8 | group_0_len |  |
+| 0x1b | 1 | u8 | group_1_len |  |
+| 0x1c | 1 | u8 | group_2_len |  |
+| 0x1d | 1 | u8 | group_3_len |  |
+| 0x1e | 1 | u8 | group_4_len |  |
+| 0x1f | 1 | u8 | group_5_len |  |
+| 0x20 | name_len | str | name |  |
+|  | comments_len | str | comments |  |
+|  | address_len | str | address |  |
+|  | login_len | str | login |  |
+|  | key_len | u8[] | key |  |
+|  | unused_len | str | unused |  |
+|  | group_0_len | str | group_0 |  |
+|  | group_1_len | str | group_1 |  |
+|  | group_2_len | str | group_2 |  |
+|  | group_3_len | str | group_3 |  |
+|  | group_4_len | str | group_4 |  |
+|  | group_5_len | str | group_5 |  |
+
+The groups section is a run of group records:
+
+Struct `SettingsGroup` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 12 | u8[12] | ignored_00 |  |
+| 0x0c | 4 | u32 | flags | set when the name contains `tracker`; 0 in 711 |
+| 0x10 | 2 | u16 | value_10 | nothing sets it |
+| 0x12 | 2 | u16 | value_12 | nothing sets it |
+| 0x14 | 4 | u8[4] | ignored_14 |  |
+| 0x18 | 1 | u8 | name_len |  |
+| 0x19 | 1 | u8 | description_len |  |
+| 0x1a | 2 | u8[2] | ignored_1a | the parser counts these as two more lengths **[S]** |
+| 0x1c | name_len | str | name |  |
+|  | description_len | str | description |  |
+|  | pad4 | u8[] | padding |  |
+
+The admin section:
+
+Struct `AdminSettings` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 7 | u8[7] | ignored_00 |  |
+| 0x07 | 1 | u8 | flags_07 | bit 0: a key follows |
+| 0x08 | 32 | u8[32] | key | the `AccountKey` of the password; 711 leaves it out |
+| 0x28 | 104 | u8[104] | ignored_28 |  |
+| 0x90 | 1 | u8 | login_len |  |
+| 0x91 | 3 | u8[3] | ignored_91 |  |
+| 0x94 | login_len | str | login |  |
+|  | pad4 | u8[] | padding |  |
+
+The greeting section is a [107 Server Greeting](session.md#m107) payload
+(`ServerGreeting`).
+
 The client's settings window shows Tracker Name, Description, Port Number,
 Admin Login, Change Admin Password (Password, Confirm), a Groups panel
 (Group Name, Description), a Trackers panel with Register with Trackers,
@@ -178,6 +299,12 @@ and a Greeting panel with Enable Greeting **[S client `FUN_0806b1b0`]**.
 ## <a id="m711"></a>711 TrackerServ Settings Info
 
 Initiator: Tracker. **[S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80]**
+
+Struct `TrackerSettingsInfo` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 |  | TrackerSettings | settings | defined in [710 Get TrackerServ Settings](#m710) |
 
 Reply to [710 Get TrackerServ Settings](#m710), in the format described
 there. [711 TrackerServ Settings Info](#m711) sets every present byte **[O frame
@@ -188,6 +315,12 @@ the `Trackers` group has 0 there **[O frame 80]**. It leaves the admin key out.
 ## <a id="m712"></a>712 Set TrackerServ Settings
 
 Initiator: Client.
+
+Struct `SetTrackerSettings` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 |  | TrackerSettings | settings | defined in [710 Get TrackerServ Settings](#m710) |
 
 The payload is the [711 TrackerServ Settings Info](#m711) format (see
 [710 Get TrackerServ Settings](#m710)), parsed by `FUN_0804d63c` **[S]**. The
@@ -213,14 +346,18 @@ is XOR'd with a second LCG (seed 0xacb8fa74, multiplier 0x41a609fd, increment
 
 Initiator: Tracker. **[S `FUN_0804cc10`; O frame 83]**
 
-Reply to [712 Set TrackerServ Settings](#m712), with no payload, even to a
-blob the tracker can't read.
+No payload.
+
+Reply to [712 Set TrackerServ Settings](#m712), even to a blob the tracker
+can't read.
 
 ## <a id="m720"></a>720 Get TrackerServ Statistics
 
 Initiator: Client. **[S `FUN_0804b180`]**
 
-No payload. The reply is [721 TrackerServ Statistics](#m721).
+No payload.
+
+The reply is [721 TrackerServ Statistics](#m721).
 
 ## <a id="m721"></a>721 TrackerServ Statistics
 
@@ -229,15 +366,17 @@ Initiator: Tracker. It matches the client's Tracker Stats window.
 
 Reply to [720 Get TrackerServ Statistics](#m720), 0x38 bytes:
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 8 | start time | u64 milliseconds since 1900 |
-| 0x08 | 8 | connection counter | TCP connections accepted (`DAT_08104b00`) |
-| 0x10 | 8 | UDP packet counter | UDP datagrams received (`DAT_08104b04`) |
-| 0x18 | 8 | 0 | |
-| 0x20 | 4 | hours since start | |
-| 0x24 | 4 | connections | TCP connections open now (tracker +0x1c) |
-| 0x28 | 4 | servers | records listed |
-| 0x2c | 12 | 0 | |
+Struct `TrackerStats` (56 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | u64 | start_time | milliseconds since 1900 |
+| 0x08 | 8 | u64 | connections_accepted | TCP connections accepted (`DAT_08104b00`) |
+| 0x10 | 8 | u64 | datagrams_received | UDP datagrams received (`DAT_08104b04`) |
+| 0x18 | 8 | u8[8] | ignored_18 | 0 as sent. |
+| 0x20 | 4 | u32 | hours |  |
+| 0x24 | 4 | u32 | connections | TCP connections open now (tracker +0x1c) |
+| 0x28 | 4 | u32 | servers | records listed |
+| 0x2c | 12 | u8[12] | ignored_2c | 0 as sent. |
 
 Verified: `kdx-proto` re-encodes frame 86 byte for byte **[O]**.

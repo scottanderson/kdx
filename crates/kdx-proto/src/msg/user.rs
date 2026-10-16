@@ -11,7 +11,7 @@ pub struct UserRecord {
     /// Status value, also set by 110 Set Mini User Icon.
     pub status: u8,
     /// Bytes 0x05 to 0x09; meaning unknown.
-    pub unknown_05: [u8; 5],
+    pub ignored_05: [u8; 5],
     /// TCP port of the client's client-to-client (DCC) listener; 0 if it has none.
     pub client_port: u16,
     /// Six bytes the client chooses, probably two RGB colours.
@@ -25,7 +25,7 @@ pub struct UserRecord {
     /// Flag bits: bit 2 comes from the client, bit 1 is the server's hidden-marker flag.
     pub flags: u8,
     /// Byte 0x1b; meaning unknown.
-    pub unknown_1b: u8,
+    pub ignored_1b: u8,
     /// Icon bitmap; empty when the server leaves it out.
     pub icon: Vec<u8>,
     /// Extra data, skipped by the server.
@@ -58,14 +58,14 @@ impl UserRecord {
         let record = Self {
             user_id: u32_at(buf, 0),
             status: buf[4],
-            unknown_05: buf[5..0x0a].try_into().expect("5 bytes"),
+            ignored_05: buf[5..0x0a].try_into().expect("5 bytes"),
             client_port: u16_at(buf, 0x0a),
             colors: buf[0x0e..0x14].try_into().expect("6 bytes"),
             server_14: buf[0x14],
             server_15: buf[0x15],
             server_16: buf[0x16],
             flags: buf[0x17],
-            unknown_1b: buf[0x1b],
+            ignored_1b: buf[0x1b],
             icon,
             extra,
             nick,
@@ -94,7 +94,7 @@ impl UserRecord {
         let mut out = vec![0; Self::HEADER_LEN];
         out[0..4].copy_from_slice(&self.user_id.to_be_bytes());
         out[4] = self.status;
-        out[5..0x0a].copy_from_slice(&self.unknown_05);
+        out[5..0x0a].copy_from_slice(&self.ignored_05);
         out[0x0a..0x0c].copy_from_slice(&self.client_port.to_be_bytes());
         out[0x0c..0x0e].copy_from_slice(&(self.icon.len() as u16).to_be_bytes());
         out[0x0e..0x14].copy_from_slice(&self.colors);
@@ -105,7 +105,7 @@ impl UserRecord {
         out[0x18] = len_u8(&self.extra, "extra data")?;
         out[0x19] = len_u8(&self.nick, "nick")?;
         out[0x1a] = len_u8(&self.info, "info text")?;
-        out[0x1b] = self.unknown_1b;
+        out[0x1b] = self.ignored_1b;
         for part in [
             &self.icon,
             &self.extra,
@@ -137,7 +137,7 @@ pub struct UserDeparted {
     /// Meaning unknown; 7 in every capture.
     pub value_4: u8,
     /// Bytes 0x05 to 0x07; meaning unknown.
-    pub unknown_05: [u8; 3],
+    pub ignored: [u8; 3],
 }
 
 impl UserDeparted {
@@ -150,7 +150,7 @@ impl UserDeparted {
         Ok(Self {
             user_id: u32_at(buf, 0),
             value_4: buf[4],
-            unknown_05: buf[5..8].try_into().expect("3 bytes"),
+            ignored: buf[5..8].try_into().expect("3 bytes"),
         })
     }
 
@@ -159,7 +159,7 @@ impl UserDeparted {
         let mut out = [0; Self::LEN];
         out[..4].copy_from_slice(&self.user_id.to_be_bytes());
         out[4] = self.value_4;
-        out[5..].copy_from_slice(&self.unknown_05);
+        out[5..].copy_from_slice(&self.ignored);
         out
     }
 }
@@ -170,7 +170,7 @@ pub struct MiniUserIcon {
     /// Status: 1 after `/away`, 0 after `/back`.
     pub status: u8,
     /// Bytes 0x01 to 0x03; meaning unknown.
-    pub unknown_01: [u8; 3],
+    pub ignored: [u8; 3],
 }
 
 impl MiniUserIcon {
@@ -182,13 +182,13 @@ impl MiniUserIcon {
         need(buf, Self::LEN)?;
         Ok(Self {
             status: buf[0],
-            unknown_01: buf[1..4].try_into().expect("3 bytes"),
+            ignored: buf[1..4].try_into().expect("3 bytes"),
         })
     }
 
     /// Encodes the payload.
     pub const fn encode(&self) -> [u8; Self::LEN] {
-        let [a, b, c] = self.unknown_01;
+        let [a, b, c] = self.ignored;
         [self.status, a, b, c]
     }
 }

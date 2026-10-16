@@ -50,7 +50,7 @@ async fn browse() {
             .unwrap();
     assert_eq!(servers.len(), 1);
     assert_eq!(servers[0].name, b"Lab Server");
-    assert_eq!(servers[0].address, "127.0.0.1:10700".parse().unwrap());
+    assert_eq!(servers[0].socket_addr(), "127.0.0.1:10700".parse().unwrap());
 
     let me = request(&mut conn, 115, &[]).await;
     assert_eq!(usize::from(me[0]), me.len() - 1);
