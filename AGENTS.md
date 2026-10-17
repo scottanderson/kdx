@@ -108,7 +108,7 @@ cargo run -p kdx-dissect -- captures/linux-tracker.pcapng \
 Static analysis runs headless; one call takes about 30 seconds:
 
 ```sh
-re/ghidra /work/projects kdx -process KDXServer.lexe -noanalysis -readOnly \
+re/ghidra /work/projects KDXServer1620-Lnx -process KDXServer.lexe -noanalysis -readOnly \
   -scriptPath /work/scripts -postScript decompile.py 0x0804fdac
 ```
 

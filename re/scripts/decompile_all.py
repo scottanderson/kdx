@@ -1,4 +1,4 @@
-# Decompile every function to /work/out/<program>/all.c, one block per function, for grepping.
+# Decompile every function to /work/out/<project>/all.c, one block per function, for grepping.
 # @runtime PyGhidra
 
 import os
@@ -7,7 +7,7 @@ from ghidra.app.decompiler import DecompInterface
 from ghidra.util.task import ConsoleTaskMonitor
 
 prog = currentProgram  # noqa: F821
-OUT = os.path.join("/work/out", prog.getName().replace(".", "-"))
+OUT = os.path.join("/work/out", prog.getDomainFile().getProjectLocator().getName())
 os.makedirs(OUT, exist_ok=True)
 
 dec = DecompInterface()

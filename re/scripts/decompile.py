@@ -1,4 +1,4 @@
-# Decompile functions by entry/contained address or name to /work/out/<program>/decomp/.
+# Decompile functions by entry/contained address or name to /work/out/<project>/decomp/.
 # Args: one or more of 0x<addr> | <addr> | <function name>
 # @runtime PyGhidra
 
@@ -9,7 +9,7 @@ from ghidra.util.task import ConsoleTaskMonitor
 
 prog = currentProgram  # noqa: F821
 fm = prog.getFunctionManager()
-OUT = os.path.join("/work/out", prog.getName().replace(".", "-"), "decomp")
+OUT = os.path.join("/work/out", prog.getDomainFile().getProjectLocator().getName(), "decomp")
 os.makedirs(OUT, exist_ok=True)
 
 dec = DecompInterface()
