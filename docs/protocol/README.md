@@ -172,6 +172,8 @@ Bytes that `kdx-proto` does not store as a field have one of these names:
 
 The checker enforces these rules:
 
+- Any table in `docs/` whose first column is Off, or whose first row starts
+  at 0x00, lays out bytes, so it has the struct header row and a caption.
 - The first Off is 0x00, and each Off is the previous Off plus the previous
   Size, until the first dynamic row.
 - A fixed row's Size is the primitive's size, or the fixed struct's size,

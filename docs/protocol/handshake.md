@@ -55,24 +55,32 @@ also sends its own hello before reporting an error, if it hasn't sent one yet.
 
 ## HELLO
 
-Total length: `(name_len + pad + ext_len + 0x27) & ~3`. It must be at most
-0x800 **[S `FUN_080876e8`]**.
+Total length: `(name_len + pad_len + skipped_len + 0x27) & ~3`. It must be at
+most 0x800 **[S `FUN_080876e8`]**.
 
-| Off | Size | Field | Notes |
-|---|---|---|---|
-| 0x00 | 4 | key | random XOR key, sent in the clear |
-| 0x04 | 4 | protocol | `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 (lab probe) **[S; O]** |
-| 0x08 | 4 | sub-protocol | `"%KDX"` (0x254b4458) for client/server **[S; O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`; O]** |
-| 0x0c | 1 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | sub-version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O `captures/linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S; O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) in the version callback at +0x88 **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
-| 0x0e | 1 | pad | bytes skipped before the name, sent as 0 **[S; O]** |
-| 0x0f | 1 | name_len | 0..31 |
-| 0x10 | 4 | reserved | 0 **[O]** |
-| 0x14 | 2 | ext_len | more bytes skipped before the name, sent as 0 **[S; O]** |
-| 0x16 | 2 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S; O]** |
-| 0x18 | 12 | nonce | per-connection value. It looks time-based (both sides' nonces share bytes) **[O]**. A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) **[S]** |
-| 0x24 | name_len | name | login name (client) or empty (server 1.620) **[O]**. See "Login names" |
-| … | | padding | zeros up to a 4-byte boundary |
+Struct `Hello` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | key | not stored. Random XOR key, sent in the clear |
+| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 (lab probe) **[S; O]** |
+| 0x08 | 4 | char[4] | sub_protocol | `"%KDX"` (0x254b4458) for client/server **[S; O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`; O]** |
+| 0x0c | 1 | u8 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
+| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O `captures/linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S; O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) in the version callback at +0x88 **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
+| 0x0e | 1 | u8 | pad_len | sent as 0 **[S; O]** |
+| 0x0f | 1 | u8 | name_len | 0..31; the receiver keeps at most 31 bytes **[S `FUN_08085a04`]** |
+| 0x10 | 4 | u8[4] | ignored | 0 as sent **[S `FUN_08085a04`; O]** |
+| 0x14 | 2 | u16 | skipped_len | sent as 0 **[S; O]** |
+| 0x16 | 2 | u16 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S; O]** |
+| 0x18 | 12 | u8[12] | nonce | per-connection value. It looks time-based (both sides' nonces share bytes) **[O]**. A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) **[S]** |
+| 0x24 | pad_len | u8[] | pad | not stored. Bytes the receiver skips before the name **[S `FUN_08085a04`]** |
+|  | skipped_len | u8[] | skipped | not stored. More bytes the receiver skips before the name **[S `FUN_08085a04`]** |
+|  | name_len | str | name | login name (client) or empty (server 1.620) **[O]**. See "Login names" |
+|  | pad4 | u8[] | padding |  |
+
+The receiver adds `pad_len` and `skipped_len` and skips that many bytes, so
+the split between `pad` and `skipped` is not visible on the wire
+**[S `FUN_08085a04`]**.
 
 The field names follow the server's error text: a wrong protocol or
 sub-protocol raises 0x40071, "The network protocol is unknown", and a
@@ -81,14 +89,16 @@ protocol version of the remote host is too OLD" or "…more recent"
 **[S `FUN_08066d04`]**. The sub-version also tells the peer's role: 0x10 a
 client, 0x20 a server, 0x30 a tracker, and 0x40 a GConsole peer.
 
-## PROOF (44 bytes)
+## PROOF
 
-| Off | Size | Field |
-|---|---|---|
-| 0x00 | 20 | `auth`: the first 4 bytes double as the XOR key for the rest |
-| 0x14 | 20 | the 20 bytes of the challenge table at the offset from the **peer's** hello |
-| 0x28 | 1 | status: `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new **[S]** |
-| 0x29 | 3 | zero |
+Struct `Proof` (44 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 20 | u8[20] | auth | the first 4 bytes double as the XOR key for the rest |
+| 0x14 | 20 | u8[20] | response | the 20 bytes of the challenge table at the offset from the **peer's** hello |
+| 0x28 | 1 | u8 | status | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new **[S]** |
+| 0x29 | 3 | u8[3] | ignored | 0 as sent **[S `FUN_08085a04`; O]** |
 
 Bytes 0x04..0x2b are XORed with the stream keyed by bytes 0..3.
 

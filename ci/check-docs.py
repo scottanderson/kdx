@@ -280,9 +280,27 @@ def check_captions(path):
             errors.append(f"{path}:{n}: struct table has no caption")
 
 
+def check_layout_tables(path):
+    # A table that starts with an Off column or a 0x00 row lays out bytes, so it must be a struct table.
+    lines = list(read_lines(path))
+    for i, (n, text) in enumerate(lines[:-1]):
+        if not text.startswith("|") or not re.match(r"^\|\s*:?-", lines[i + 1][1]):
+            continue
+        if i > 0 and lines[i - 1][1].startswith("|"):
+            continue
+        first = text.strip("|").split("|")[0].strip().lower()
+        row = lines[i + 2][1] if i + 2 < len(lines) else ""
+        starts = re.match(r"^\|\s*`?0x0+`?\s*\|", row)
+        if (first in ("off", "offset") or starts) and text != STRUCT_HEAD:
+            errors.append(f"{path}:{n}: a byte layout must be a struct table with header {STRUCT_HEAD!r}")
+
+
 def check_structs():
     structs = {}
     parsed = []
+    for path in tracked_markdown():
+        if path.startswith("docs/"):
+            check_layout_tables(path)
     for path in struct_pages():
         found = find_tables(path)
         check_captions(path)
