@@ -29,7 +29,7 @@ fn connection_monitor_with_a_transfer() {
     let mut transfers = 0;
     for wire in &replies {
         let list = MonitoredConnection::decode_list(wire).unwrap();
-        // The server leaves the padding uninitialised; the codec keeps it.
+        // The server leaves the padding uninitialized; the codec keeps it.
         assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), *wire);
         for record in list.iter().filter(|r| r.transfer_id != 0) {
             assert_eq!((record.value_38, record.state), (0x5000, 412));

@@ -47,5 +47,5 @@ blob (170-173) is issue 05.
   81), 0x12a..0x12b is `20 43` (`linux-chat-admin` 143, 146, 149), 0x8e..0x8f
   is `6e 88` (`probe` 239). Fixed: `MonitoredConnection::padding` keeps
   them.
-- [ ] Are those bytes uninitialised padding? `messages/monitoring.md` says so
+- [ ] Are those bytes uninitialized padding? `messages/monitoring.md` says so
   from the captures; <!-- [O] --> confirm in the builder.

@@ -67,7 +67,7 @@ types](../README.md#message-types) tells where the names come from.
 | 115 | [Get My Address](session.md#m115) | Request, reply [116](session.md#m116) |  | Client | Client |  |
 | 116 | ↳ [Your Address](session.md#m116) | Reply to [115](session.md#m115) |  | Server | Tracker |  |
 | 117 | [SKPK](session.md#m117) | Sent first, after the login | Either |  |  |  |
-| 118 | [(unnamed; licence report)](session.md#m118) | Request |  | Client |  |  |
+| 118 | [(unnamed; license report)](session.md#m118) | Request |  | Client |  |  |
 
 ### [Connection monitor](monitoring.md), 140 to 143
 

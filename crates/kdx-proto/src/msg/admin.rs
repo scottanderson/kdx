@@ -668,7 +668,7 @@ pub struct AccountClass {
     pub ignored_28: [u8; 8],
     /// Class index.
     pub index: u8,
-    /// The colour of the class's users in the user list.
+    /// The color of the class's users in the user list.
     pub color: Color,
     /// The byte after the editor login length; meaning unknown.
     pub ignored_after_lengths: u8,
@@ -678,7 +678,7 @@ pub struct AccountClass {
     pub second: Vec<u8>,
     /// The login of whoever last saved the class; the server sets it on 504, and it is not in 506.
     pub editor: Vec<u8>,
-    /// Bytes after the strings (to the next multiple of 4 in 506), uninitialised on the wire; empty in a new record.
+    /// Bytes after the strings (to the next multiple of 4 in 506), uninitialized on the wire; empty in a new record.
     pub padding: Vec<u8>,
 }
 
@@ -806,7 +806,7 @@ pub struct Account {
     pub ignored_58: [u8; 0x1e],
     /// Class index.
     pub class_index: u8,
-    /// The colour in the user list, used with Color Overrides Class.
+    /// The color in the user list, used with Color Overrides Class.
     pub color: Color,
     /// Bytes 0x7e and 0x7f; meaning unknown.
     pub ignored_7e: [u8; 2],
@@ -818,7 +818,7 @@ pub struct Account {
     pub third: Vec<u8>,
     /// In 511, the login of the account to change; in 510, the login of whoever last saved it.
     pub editor: Vec<u8>,
-    /// Bytes after the strings up to the next multiple of 4, uninitialised on the wire; empty in a new record.
+    /// Bytes after the strings up to the next multiple of 4, uninitialized on the wire; empty in a new record.
     pub padding: Vec<u8>,
 }
 
@@ -1291,7 +1291,7 @@ pub struct FolderAccess {
     pub description: Vec<u8>,
     /// In 1105, the name of the item to change.
     pub current_name: Vec<u8>,
-    /// Bytes after the strings, uninitialised padding to 4 on the wire; empty in a new record.
+    /// Bytes after the strings, uninitialized padding to 4 on the wire; empty in a new record.
     pub padding: Vec<u8>,
 }
 

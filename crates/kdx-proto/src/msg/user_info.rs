@@ -58,7 +58,7 @@ pub struct UserInfo {
     pub login: Vec<u8>,
     /// Probably the account or class name.
     pub name_41: Vec<u8>,
-    /// Bytes after the strings, uninitialised padding to 4 on the wire; empty in a new message.
+    /// Bytes after the strings, uninitialized padding to 4 on the wire; empty in a new message.
     pub padding: Vec<u8>,
 }
 

@@ -18,10 +18,10 @@ Docs: `messages/status.md`, `encodings.md` (user record), `handshake.md`,
 User record (`FUN_0804af04`, `FUN_0804b304`; client `FUN_0804d654`):
 
 - [ ] 0x05, 5 bytes listed as 0.
-- [ ] 0x0e, 6 bytes: "two 3-byte RGB colours" from the client. Which
-  colours, and does anything draw them?
+- [ ] 0x0e, 6 bytes: "two 3-byte RGB colors" from the client. Which
+  colors, and does anything draw them?
 - [ ] 0x14, u8 set by the server, 0xff for admin. Compare with the class
-  colour in 503 offset 0x31 and 513 offset 0x21 (issue 08).
+  color in 503 offset 0x31 and 513 offset 0x21 (issue 08).
 - [ ] 0x15, u16 set by the server.
 - [ ] 0x17 flags: bit 2 from the client, bit 1 the hidden marker; name the
   others or show they are unused.
@@ -61,4 +61,4 @@ Session (`session.md`):
   2; `kdx-cli` 392: 2; `linux-text-encoding` 328: 1). Fixed:
   `UserRecord::padding` keeps them, and the header gaps are stored too.
 - [ ] Is the padding after a 102 or 103 record always zero, or
-  uninitialised like other records' padding?
+  uninitialized like other records' padding?

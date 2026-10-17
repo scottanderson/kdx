@@ -1162,10 +1162,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
         }
         MessageType::GCONSOLE_OPEN_WINDOW => {
             let open = OpenWindow::decode(payload)?;
-            format!(
-                "window {}x{} colour {}",
-                open.width, open.height, open.color
-            )
+            format!("window {}x{} color {}", open.width, open.height, open.color)
         }
         MessageType::GCONSOLE_DRAW => Draw::decode(payload)?
             .records

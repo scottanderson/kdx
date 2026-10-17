@@ -3,7 +3,7 @@
 
 use super::{need, u16_at, u32_at, DecodeError, EncodeError};
 
-/// A colour: a transparency byte (0 opaque, 0xff invisible), then red, green, and blue.
+/// A color: a transparency byte (0 opaque, 0xff invisible), then red, green, and blue.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Color(pub u32);
 
@@ -88,7 +88,7 @@ fn put_rect(out: &mut Vec<u8>, r: Rect) {
     }
 }
 
-/// 4000 Open Window: the size and colour of the client's window.
+/// 4000 Open Window: the size and color of the client's window.
 /// Provisional name.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct OpenWindow {
@@ -96,7 +96,7 @@ pub struct OpenWindow {
     pub width: u16,
     /// Height, 0x10..=0x1000.
     pub height: u16,
-    /// The window's colour.
+    /// The window's color.
     pub color: Color,
     /// Bytes 0x08..0x18, which the client doesn't read.
     pub rest: [u8; 0x10],
@@ -171,7 +171,7 @@ pub enum DrawRecord {
         value_02: u16,
         /// Rectangle.
         rect: Rect,
-        /// Colour.
+        /// Color.
         color: Color,
     },
     /// Kind 101: fills a rectangle with a gradient from `from` on the left to `to` on the right.
@@ -182,9 +182,9 @@ pub enum DrawRecord {
         value_02: u16,
         /// Rectangle.
         rect: Rect,
-        /// Colour at the left.
+        /// Color at the left.
         from: Color,
-        /// Colour at the right.
+        /// Color at the right.
         to: Color,
     },
     /// Kind 102: draws a rectangle's outline.
@@ -195,7 +195,7 @@ pub enum DrawRecord {
         width: u16,
         /// Rectangle.
         rect: Rect,
-        /// Colour.
+        /// Color.
         color: Color,
     },
     /// Kind 103: sets one pixel.
@@ -206,7 +206,7 @@ pub enum DrawRecord {
         value_02: u16,
         /// The pixel.
         at: Point,
-        /// Colour.
+        /// Color.
         color: Color,
     },
     /// Kind 104: draws a line.
@@ -221,7 +221,7 @@ pub enum DrawRecord {
         from: Point,
         /// End.
         to: Point,
-        /// Colour.
+        /// Color.
         color: Color,
     },
     /// Kinds 105 and 106: draws text.
@@ -245,7 +245,7 @@ pub enum DrawRecord {
         id: u16,
         /// Bytes 0x02..0x04.
         value_02: u16,
-        /// Colour.
+        /// Color.
         color: Color,
         /// Point at 0x08; (0, 0) in the only capture.
         origin: Point,
@@ -260,7 +260,7 @@ pub enum DrawRecord {
         value_02: u16,
         /// Where the fill starts.
         at: Point,
-        /// Colour.
+        /// Color.
         color: Color,
     },
     /// Kind 109: copies part of an object within itself.

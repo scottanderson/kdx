@@ -51,8 +51,8 @@ drove the client with `xdotool`; the GConsole window's content starts at
 - The handshake and session decode with GConsole's header scramble and the
   account key of `lab-only-pw!1`. The client sent `%KDX` 0x10 with login
   `admin` (4), and its proof matched the peer's hello (8).
-- 4000 (10): width 0x200, height 0x180, colour 0x00336699. The window
-  opened at that size, filled with that colour.
+- 4000 (10): width 0x200, height 0x180, color 0x00336699. The window
+  opened at that size, filled with that color.
 - 4001 (14): 21 records, 456 bytes. All drew as the table in
   `docs/protocol/messages/gconsole.md` describes.
 - 4201 is the mouse and 4200 the keyboard, the reverse of the guess from

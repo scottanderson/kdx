@@ -21,4 +21,4 @@ auxwww` (`FUN_0805b454`), so each field should map to a `ps` column.
 - [x] Audit (01): 803 Process List lost byte 0x1dc, 32
   (`linux-chat-admin` 155). Fixed: `Process::padding` and the header gaps
   keep it.
-- [ ] Is that byte uninitialised padding after a process entry?
+- [ ] Is that byte uninitialized padding after a process entry?

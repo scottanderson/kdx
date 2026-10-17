@@ -15,7 +15,7 @@ captures.
   connection. <!-- [O] --> Check the Windows client 1.600 for a sender.
 - [ ] 902 View Display Params: 0x04..0x0f, 0 in the capture.
 - [ ] 903: only one full frame of a black screen has been seen, so only
-  runs. The two-colour codes, single pixels, partial rectangles, the
+  runs. The two-color codes, single pixels, partial rectangles, the
   unchanged-pixel marker 0x6c59, and later frames need a screen that
   changes. That needs a way to show a window on the Wine server's screen
   (a second Wine program in its prefix, through `kdx-lab`), then a `win-`
@@ -43,5 +43,5 @@ screen.
 
 2026-10-13: Read statically in the Windows server; see
 `messages/view-display.md`, 904 and 905. The 903 encoder is read too, but its
-two-colour and bitmap codes still need a screen that changes
+two-color and bitmap codes still need a screen that changes
 (`.scratch/capture-gaps/issues/12-view-display-content.md`).
