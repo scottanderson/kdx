@@ -668,8 +668,8 @@ async fn account_command(client: &mut Client, action: AccountAction) -> Result<(
             println!("saved by:   {}", text(&account.editor));
             println!(
                 "privileges: {} of {}",
-                hex(&account.privileges),
-                hex(&account.privilege_mask)
+                hex(&account.privileges.encode()),
+                hex(&account.privilege_mask.encode())
             );
         }
         AccountAction::Add {

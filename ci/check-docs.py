@@ -246,7 +246,7 @@ def check_open_questions():
             elif inside and re.match(r"\s*[-*] Resolved\b", line):
                 errors.append(f"{path}:{n}: resolved item in an Open questions section")
 
-PRIMITIVES = {"u8": 1, "u16": 2, "u32": 4, "u48": 6, "u64": 8, "i8": 1, "i16": 2, "i32": 4, "i64": 8, "char": 1}
+PRIMITIVES = {"u8": 1, "u16": 2, "u32": 4, "u48": 6, "u64": 8, "u128": 16, "i8": 1, "i16": 2, "i32": 4, "i64": 8, "char": 1}
 STRUCT_HEAD = "| Off | Size | Type | Field | Notes |"
 STRUCT_SEP = "|---|---|---|---|---|"
 CAPTION = re.compile(r"^Struct `([A-Z][A-Za-z0-9]*)` \((?:(\d+) bytes|dynamic)\):$")

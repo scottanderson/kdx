@@ -12,6 +12,7 @@ pub mod gconsole;
 pub mod news;
 pub mod path;
 pub mod private_message;
+pub mod privileges;
 pub mod server_info;
 pub mod status;
 pub mod tracker;
@@ -21,6 +22,7 @@ pub mod user_info;
 
 pub use path::FilePath;
 pub use private_message::PrivateMessage;
+pub use privileges::{Privilege, Privileges};
 pub use server_info::ServerInfo;
 pub use status::Status;
 pub use user::UserRecord;
