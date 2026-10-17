@@ -246,7 +246,19 @@ def check_open_questions():
             elif inside and re.match(r"\s*[-*] Resolved\b", line):
                 errors.append(f"{path}:{n}: resolved item in an Open questions section")
 
-PRIMITIVES = {"u8": 1, "u16": 2, "u32": 4, "u48": 6, "u64": 8, "u128": 16, "i8": 1, "i16": 2, "i32": 4, "i64": 8, "char": 1}
+# uN and iN take any whole number of bytes, as in LLVM: u24, u48, u128.
+INTEGER = re.compile(r"^[ui]([1-9][0-9]*)$")
+
+
+def primitive_size(base):
+    # Returns the size in bytes of a primitive type, or None.
+    if base == "char":
+        return 1
+    m = INTEGER.match(base)
+    if m and int(m.group(1)) % 8 == 0:
+        return int(m.group(1)) // 8
+    return None
+
 STRUCT_HEAD = "| Off | Size | Type | Field | Notes |"
 STRUCT_SEP = "|---|---|---|---|---|"
 CAPTION = re.compile(r"^Struct `([A-Z][A-Za-z0-9]*)` \((?:(\d+) bytes|dynamic)\):$")
@@ -451,8 +463,8 @@ def check_struct(path, n, name, size, rows, blank, structs):
             unit_dynamic = True
             if count is None:
                 count = ""
-        elif base in PRIMITIVES:
-            unit = PRIMITIVES[base]
+        elif primitive_size(base):
+            unit = primitive_size(base)
             unit_dynamic = False
         elif base in structs:
             unit = structs[base][1]

@@ -108,7 +108,7 @@ fn session() {
 #[test]
 fn payloads() {
     use kdx_proto::msg::news::{NewsMessages, NewsgroupEntry};
-    use kdx_proto::msg::{PrivateMessage, ServerInfo, UserRecord};
+    use kdx_proto::msg::{Color, PrivateMessage, ServerInfo, UserRecord};
 
     let cipher = SessionCipher::new(&AccountKey::from_password(PASSWORD));
     let mut seen = Vec::new();
@@ -123,6 +123,16 @@ fn payloads() {
                 assert_eq!(len, payload.len());
                 assert_eq!(me.user_id, 0);
                 assert_eq!(me.nick, b"kdx@gitbran.ch");
+                assert_eq!(me.text_color, Color::default());
+                assert_eq!(
+                    me.background_color,
+                    Color {
+                        r: 0xff,
+                        g: 0xcc,
+                        b: 0
+                    }
+                );
+                assert_eq!(me.account_color, Color::default());
                 assert_eq!(me.encode().unwrap(), payload);
             }
             MessageType::USER_LIST => {
@@ -130,6 +140,14 @@ fn payloads() {
                 assert_eq!(list.len(), 1);
                 assert_eq!(list[0].nick, b"kdx@gitbran.ch");
                 assert_ne!(list[0].user_id, 0);
+                assert_eq!(
+                    list[0].account_color,
+                    Color {
+                        r: 0xff,
+                        g: 0,
+                        b: 0
+                    }
+                );
                 assert_eq!(UserRecord::encode_list(&list).unwrap(), payload);
             }
             MessageType::SERVER_INFO => {

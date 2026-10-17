@@ -14,7 +14,7 @@ use kdx_proto::msg::server_info::{ServerGreeting, ServerSettings};
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, UploadFile, UploadReply};
 use kdx_proto::msg::user::RegistrationNotice;
 use kdx_proto::msg::user_info::GetUserInfo;
-use kdx_proto::msg::{FilePath, ServerInfo, UserInfo};
+use kdx_proto::msg::{Color, FilePath, ServerInfo, UserInfo};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
 
@@ -285,8 +285,22 @@ fn account_classes() {
         .iter()
         .enumerate()
         .all(|(i, c)| usize::from(c.index) == i));
-    assert_eq!(list[0].color, [0xff, 0, 0]);
-    assert_eq!(list[1].color, [0, 0, 0xff]);
+    assert_eq!(
+        list[0].color,
+        Color {
+            r: 0xff,
+            g: 0,
+            b: 0
+        }
+    );
+    assert_eq!(
+        list[1].color,
+        Color {
+            r: 0,
+            g: 0,
+            b: 0xff
+        }
+    );
     assert_eq!(AccountClass::encode_list(&list).unwrap(), wire);
 
     let session = connection!("59006");

@@ -116,7 +116,7 @@ Struct `ServerListEntry` (dynamic):
 | 0x19 | 1 | u8 | `name_len` |  |
 | 0x1a | 1 | u8 | `description_len` |  |
 | 0x1b | 1 | u8 | `extra_len` |  |
-| 0x1c | 4 | u8[4] | `address` | IPv4 address. |
+| 0x1c | 4 | u32 | `address` | IPv4 address, such as 0x7f000001 for 127.0.0.1. |
 | 0x20 | 2 | u16 | `port` | TCP port. |
 | 0x22 | `name_len` | str | `name` |  |
 |  | `description_len` | str | `description` |  |
@@ -196,7 +196,7 @@ Struct `GeneralSettings` (dynamic):
 | 0x20 | 4 | u32 | `flags` | Bit 0: Register with Trackers. Bit 1: Enable Greeting. |
 | 0x24 | 4 | u32 | `tracker_port` | 0, or a value above 0xfffe, means 10800. |
 | 0x28 | 4 | u8[4] | `ignored_28` |  |
-| 0x2c | 12 | u8[12] | `server_id` | From the file only. |
+| 0x2c | 12 | u96 | `server_id` | From the file only. |
 | 0x38 | 14 | u8[14] | `ignored_38` |  |
 | 0x46 | 1 | u8 | `name_len` |  |
 | 0x47 | 1 | u8 | `description_len` |  |

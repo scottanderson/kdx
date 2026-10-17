@@ -5,7 +5,7 @@ use kdx_proto::msg::file::{
     CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, SetVolumeInfo,
     VolumeInfo, ATTR_FILE,
 };
-use kdx_proto::msg::{FilePath, Privilege, Status};
+use kdx_proto::msg::{Color, FilePath, Privilege, Status};
 use kdx_proto::session::{Header, MessageType};
 
 mod common;
@@ -97,7 +97,11 @@ fn set_account_class() {
                 time: 0,
                 flood_protection: 0x50,
                 index: 0,
-                color: [0xff, 0, 0],
+                color: Color {
+                    r: 0xff,
+                    g: 0,
+                    b: 0
+                },
                 name: b"Administrator".to_vec(),
                 ..AccountClass::default()
             }

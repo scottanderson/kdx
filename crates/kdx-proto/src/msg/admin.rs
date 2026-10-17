@@ -5,7 +5,7 @@ use crate::{AccountKey, MessageType};
 
 use super::{
     decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
-    DecodeError, EncodeError, FilePath, Privileges,
+    Color, DecodeError, EncodeError, FilePath, Privileges,
 };
 
 /// 114 Extra Server Info.
@@ -668,8 +668,8 @@ pub struct AccountClass {
     pub ignored_28: [u8; 8],
     /// Class index.
     pub index: u8,
-    /// Red, green, and blue of the class's users in the user list.
-    pub color: [u8; 3],
+    /// The colour of the class's users in the user list.
+    pub color: Color,
     /// The byte after the editor login length; meaning unknown.
     pub ignored_after_lengths: u8,
     /// Class name.
@@ -750,7 +750,7 @@ impl AccountClass {
                 [0; 8]
             },
             index: buf[index_at],
-            color: buf[index_at + 1..index_at + 4].try_into().expect("3 bytes"),
+            color: Color::decode_at(buf, index_at + 1),
             ignored_after_lengths: buf[index_at + 7],
             name,
             second,
@@ -769,7 +769,7 @@ impl AccountClass {
         out[0x25] = self.flood_protection;
         out[0x26..0x28].copy_from_slice(&self.speed_limit.to_be_bytes());
         out[index_at] = self.index;
-        out[index_at + 1..index_at + 4].copy_from_slice(&self.color);
+        out[index_at + 1..index_at + 4].copy_from_slice(&self.color.encode());
         out[index_at + 4] = len_u8(&self.name, "class name")?;
         out[index_at + 7] = self.ignored_after_lengths;
         out.extend_from_slice(&self.name);
@@ -806,8 +806,8 @@ pub struct Account {
     pub ignored_58: [u8; 0x1e],
     /// Class index.
     pub class_index: u8,
-    /// Red, green, and blue in the user list, used with Color Overrides Class.
-    pub color: [u8; 3],
+    /// The colour in the user list, used with Color Overrides Class.
+    pub color: Color,
     /// Bytes 0x7e and 0x7f; meaning unknown.
     pub ignored_7e: [u8; 2],
     /// Login.
@@ -867,7 +867,7 @@ impl Account {
             last_login: u64_at(buf, 0x50),
             ignored_58: buf[0x58..0x76].try_into().expect("30 bytes"),
             class_index: buf[0x76],
-            color: buf[0x77..0x7a].try_into().expect("3 bytes"),
+            color: Color::decode_at(buf, 0x77),
             ignored_7e: buf[0x7e..0x80].try_into().expect("2 bytes"),
             login,
             name,
@@ -888,7 +888,7 @@ impl Account {
         out[0x50..0x58].copy_from_slice(&self.last_login.to_be_bytes());
         out[0x58..0x76].copy_from_slice(&self.ignored_58);
         out[0x76] = self.class_index;
-        out[0x77..0x7a].copy_from_slice(&self.color);
+        out[0x77..0x7a].copy_from_slice(&self.color.encode());
         out[0x7e..0x80].copy_from_slice(&self.ignored_7e);
         out[0x7a] = len_u8(&self.login, "login")?;
         out[0x7b] = len_u8(&self.name, "account name")?;

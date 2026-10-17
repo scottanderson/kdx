@@ -213,6 +213,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClientBETA5-Lnx` | `0x0812c760` | account editor privilege table: {label, bit} pairs |
 | `KDXClientBETA5-Lnx` | `0x0804c01c` | send 118 (licence report) on a timer |
 | `KDXClientBETA5-Lnx` | `0x0804d654` | build the [100 Set Identity](../docs/protocol/messages/session.md#m100) user record |
+| `KDXClientBETA5-Lnx` | `0x080542b4` | draw a user list row: account color strip, background (gradient with flag bit 2), text color |
 | `KDXClientBETA5-Lnx` | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
 | `KDXClientBETA5-Lnx` | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send [117 SKPK](../docs/protocol/messages/session.md#m117) / handle 117 |
 | `KDXClientBETA5-Lnx` | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle [1000 Start Voice](../docs/protocol/messages/voice.md#m1000) / handle [1001 Start Voice (R)](../docs/protocol/messages/voice.md#m1001) |

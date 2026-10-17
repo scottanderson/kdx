@@ -118,6 +118,18 @@ A time is a u64 count of milliseconds since 1900-01-01 00:00 UTC. The server
 makes it as (tv_sec + 2208988800) × 1000 + ms, <!-- [S `FUN_08090eb0`] --> so
 0x3a36c4895ba is 2026-10-08. <!-- [O] -->
 
+## Colors
+
+A color is three bytes: red, green, then blue. <!-- [S client `FUN_0804d654`] -->
+
+Struct `Color` (3 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 1 | u8 | `r` |  |
+| 0x01 | 1 | u8 | `g` |  |
+| 0x02 | 1 | u8 | `b` |  |
+
 ## File paths
 
 A path is a list of names. Each name is one folder level below the user's base
@@ -175,11 +187,10 @@ Struct `UserRecord` (dynamic):
 | 0x05 | 5 | u8[5] | `ignored_05` | 0 as sent. |
 | 0x0a | 2 | u16 | `client_port` | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
 | 0x0c | 2 | u16 | `icon_len` |  |
-| 0x0e | 6 | u8[6] | `colors` | From the client: two 3-byte RGB colors. <!-- [S client `FUN_0804d654`] --> `00 00 00 ff cc 00` in the capture. |
-| 0x14 | 1 | u8 | `server_14` | Set by the server. 0 from the client, and 0xff for admin. <!-- [O] --> |
-| 0x15 | 1 | u8 | `server_15` | Set by the server. |
-| 0x16 | 1 | u8 | `server_16` | Set by the server. |
-| 0x17 | 1 | u8 | `flags` | Bit 2 comes from the client. The server sets bit 1; see below. |
+| 0x0e | 3 | Color | `text_color` | The [color](#colors) of the nick and info text in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `00 00 00` in the capture. <!-- [O] --> |
+| 0x11 | 3 | Color | `background_color` | The background of the user's row in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `ff cc 00` in the capture. <!-- [O] --> |
+| 0x14 | 3 | Color | `account_color` | The strip at the left of the user's row. The server sets it to the color of the user's class, or of the account under Color Overrides Class. <!-- [S `FUN_0804af04`, `FUN_08054900`, client `FUN_080542b4`] --> 0 from the client, and `ff 00 00` for admin. <!-- [O] --> |
+| 0x17 | 1 | u8 | `flags` | Bit 2 comes from the client, and makes the right part of the row a gradient from `background_color` to `text_color`. <!-- [S client `FUN_080542b4`] --> The server sets bit 1; see below. |
 | 0x18 | 1 | u8 | `extra_len` |  |
 | 0x19 | 1 | u8 | `nick_len` |  |
 | 0x1a | 1 | u8 | `info_len` |  |
