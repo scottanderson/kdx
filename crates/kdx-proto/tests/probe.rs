@@ -285,18 +285,18 @@ fn account_classes() {
         .iter()
         .enumerate()
         .all(|(i, c)| usize::from(c.index) == i));
-    assert_eq!(list[0].ignored_after_index, [0xff, 0, 0]);
-    assert_eq!(list[1].ignored_after_index, [0, 0, 0xff]);
+    assert_eq!(list[0].color, [0xff, 0, 0]);
+    assert_eq!(list[1].color, [0, 0, 0xff]);
     assert_eq!(AccountClass::encode_list(&list).unwrap(), wire);
 
     let session = connection!("59006");
     let replies = payloads(&session, MessageType::ACCOUNT_CLASS_INFO);
-    for (wire, index, ignored_25) in [(replies[0], 0, 0x50), (replies[1], 2, 0x28)] {
+    for (wire, index, flood_protection) in [(replies[0], 0, 0x50), (replies[1], 2, 0x28)] {
         let class = AccountClass::decode_info(wire).unwrap();
         assert_eq!(
             class,
             AccountClass {
-                ignored_25,
+                flood_protection,
                 ignored_28: class.ignored_28,
                 padding: class.padding.clone(),
                 ..list[index].clone()

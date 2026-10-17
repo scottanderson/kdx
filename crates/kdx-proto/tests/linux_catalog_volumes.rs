@@ -5,7 +5,7 @@ use kdx_proto::msg::file::{
     CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, SetVolumeInfo,
     VolumeInfo, ATTR_FILE,
 };
-use kdx_proto::msg::{FilePath, Status};
+use kdx_proto::msg::{FilePath, Privileges, Status};
 use kdx_proto::session::{Header, MessageType};
 
 mod common;
@@ -84,16 +84,15 @@ fn set_account_class() {
         // 69 bytes, with no padding.
         assert_eq!(wire.len(), 69);
         let class = AccountClass::decode_set(wire).unwrap();
-        let mut privileges = *b"\x28\x31\xe8\x5b\xf4\xd0\x3c\x0d\xc3\xe0\x80\0\0\0\0\0";
-        privileges[2] = byte_2;
+        let privileges = Privileges(0x2831_005b_f4d0_3c0d_c3e0_8000_0000_0000 | byte_2 << 104);
         assert_eq!(
             class,
             AccountClass {
                 privileges,
                 time: 0,
-                ignored_25: 0x50,
+                flood_protection: 0x50,
                 index: 0,
-                ignored_after_index: [0xff, 0, 0],
+                color: [0xff, 0, 0],
                 name: b"Administrator".to_vec(),
                 ..AccountClass::default()
             }

@@ -501,7 +501,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             "class {} {} privileges {}",
             c.index,
             quoted(&c.name),
-            hex(&c.privileges)
+            hex(&c.privileges.encode())
         )
     };
     let history = |r: &HistoryRecord| {
@@ -1033,8 +1033,8 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
                 quoted(&account.name),
                 account.class_index,
                 quoted(&account.editor),
-                hex(&account.privileges),
-                hex(&account.privilege_mask)
+                hex(&account.privileges.encode()),
+                hex(&account.privilege_mask.encode())
             )
         }
         MessageType::GET_ACCOUNT | MessageType::DELETE_ACCOUNT | MessageType::ACCOUNT_DELETED => {

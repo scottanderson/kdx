@@ -56,7 +56,7 @@ fn set_account_class() {
             assert_eq!(class.encode_set().unwrap(), *wire);
             // Frames 23 and 33.
             assert_eq!(status(&session, request), Status::Success { value: 0x1f8 });
-            class.privileges[1]
+            class.privileges.encode()[1]
         })
         .collect();
     assert_eq!(bytes, [0x20, 0x30]);

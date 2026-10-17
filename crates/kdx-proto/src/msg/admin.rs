@@ -5,7 +5,7 @@ use crate::{AccountKey, MessageType};
 
 use super::{
     decode_counted, encode_counted, len_u8, need, pad4, padding, strings, u16_at, u32_at, u64_at,
-    DecodeError, EncodeError, FilePath,
+    DecodeError, EncodeError, FilePath, Privileges,
 };
 
 /// 114 Extra Server Info.
@@ -654,29 +654,29 @@ impl ChangeOwnPassword {
 /// An account class, as in 503 Account Class Info, 504 Set Account Class and 506 Account Class List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AccountClass {
-    /// Privilege bits, most significant bit of byte 0 = bit 0.
-    pub privileges: [u8; 16],
+    /// Privileges of the class's users.
+    pub privileges: Privileges,
     /// A time in milliseconds.
     pub time: u64,
-    /// Bytes 0x18 to 0x24; meaning unknown.
+    /// Bytes 0x18 to 0x24; the server never stores them.
     pub ignored_18: [u8; 0x0d],
-    /// Flood protection in commands per 2 minutes, such as 0x50 for Administrator in 503; 0 in 506.
-    pub ignored_25: u8,
-    /// Bytes 0x26 and 0x27; stored by the server as given.
-    pub ignored_26: [u8; 2],
+    /// Flood protection in commands per 2 minutes; 0 for off, and 0 in 506.
+    pub flood_protection: u8,
+    /// Download speed limit in KiB per second; 0 for none, and 0 in 506.
+    pub speed_limit: u16,
     /// The 8 bytes at 0x28 of 503 and 504, which 506 leaves out.
     pub ignored_28: [u8; 8],
     /// Class index.
     pub index: u8,
-    /// The three bytes after the index; 0xff in the first for Administrator.
-    pub ignored_after_index: [u8; 3],
+    /// Red, green, and blue of the class's users in the user list.
+    pub color: [u8; 3],
     /// The byte after the editor login length; meaning unknown.
     pub ignored_after_lengths: u8,
     /// Class name.
     pub name: Vec<u8>,
-    /// A second string; empty in the lab.
+    /// A second string; empty in the lab, and not in 506.
     pub second: Vec<u8>,
-    /// The login of whoever last saved the class; the server sets it on 504.
+    /// The login of whoever last saved the class; the server sets it on 504, and it is not in 506.
     pub editor: Vec<u8>,
     /// Bytes after the strings (to the next multiple of 4 in 506), uninitialised on the wire; empty in a new record.
     pub padding: Vec<u8>,
@@ -727,22 +727,30 @@ impl AccountClass {
     fn decode_at(buf: &[u8], index_at: usize) -> Result<(Self, usize), DecodeError> {
         let names_at = index_at + 8;
         need(buf, names_at)?;
-        let lens = [4, 5, 6].map(|i| usize::from(buf[index_at + i]));
+        let info = index_at == Self::INFO_INDEX_AT;
+        // 506 sends only the name, with 0 for the other two lengths.
+        let lens = [4, 5, 6].map(|i| {
+            if info || i == 4 {
+                usize::from(buf[index_at + i])
+            } else {
+                0
+            }
+        });
         let ([name, second, editor], end) = strings(buf, names_at, lens)?;
         let (padding, padded) = padding(buf, end);
         let class = Self {
-            privileges: buf[..16].try_into().expect("16 bytes"),
+            privileges: Privileges::decode_at(buf, 0),
             time: u64_at(buf, 0x10),
             ignored_18: buf[0x18..0x25].try_into().expect("13 bytes"),
-            ignored_25: buf[0x25],
-            ignored_26: buf[0x26..0x28].try_into().expect("2 bytes"),
-            ignored_28: if index_at == Self::INFO_INDEX_AT {
+            flood_protection: buf[0x25],
+            speed_limit: u16_at(buf, 0x26),
+            ignored_28: if info {
                 buf[0x28..0x30].try_into().expect("8 bytes")
             } else {
                 [0; 8]
             },
             index: buf[index_at],
-            ignored_after_index: buf[index_at + 1..index_at + 4].try_into().expect("3 bytes"),
+            color: buf[index_at + 1..index_at + 4].try_into().expect("3 bytes"),
             ignored_after_lengths: buf[index_at + 7],
             name,
             second,
@@ -753,24 +761,26 @@ impl AccountClass {
     }
 
     fn encode_at(&self, index_at: usize) -> Result<Vec<u8>, EncodeError> {
+        let info = index_at == Self::INFO_INDEX_AT;
         let mut out = vec![0; index_at + 8];
-        out[..16].copy_from_slice(&self.privileges);
+        out[..16].copy_from_slice(&self.privileges.encode());
         out[0x10..0x18].copy_from_slice(&self.time.to_be_bytes());
         out[0x18..0x25].copy_from_slice(&self.ignored_18);
-        out[0x25] = self.ignored_25;
-        out[0x26..0x28].copy_from_slice(&self.ignored_26);
-        if index_at == Self::INFO_INDEX_AT {
-            out[0x28..0x30].copy_from_slice(&self.ignored_28);
-        }
+        out[0x25] = self.flood_protection;
+        out[0x26..0x28].copy_from_slice(&self.speed_limit.to_be_bytes());
         out[index_at] = self.index;
-        out[index_at + 1..index_at + 4].copy_from_slice(&self.ignored_after_index);
+        out[index_at + 1..index_at + 4].copy_from_slice(&self.color);
         out[index_at + 4] = len_u8(&self.name, "class name")?;
-        out[index_at + 5] = len_u8(&self.second, "second string")?;
-        out[index_at + 6] = len_u8(&self.editor, "editor login")?;
         out[index_at + 7] = self.ignored_after_lengths;
-        for s in [&self.name, &self.second, &self.editor, &self.padding] {
-            out.extend_from_slice(s);
+        out.extend_from_slice(&self.name);
+        if info {
+            out[0x28..0x30].copy_from_slice(&self.ignored_28);
+            out[index_at + 5] = len_u8(&self.second, "second string")?;
+            out[index_at + 6] = len_u8(&self.editor, "editor login")?;
+            out.extend_from_slice(&self.second);
+            out.extend_from_slice(&self.editor);
         }
+        out.extend_from_slice(&self.padding);
         Ok(out)
     }
 }
@@ -779,9 +789,9 @@ impl AccountClass {
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Account {
     /// Values of the privileges set in the mask.
-    pub privileges: [u8; 16],
+    pub privileges: Privileges,
     /// Privileges the account sets itself, overriding its class.
-    pub privilege_mask: [u8; 16],
+    pub privilege_mask: Privileges,
     /// The account key; all zero in 511 to keep the current one.
     ///
     /// 510 Account Info never holds the key: byte 0 is 1 if the account has a password.
@@ -796,8 +806,8 @@ pub struct Account {
     pub ignored_58: [u8; 0x1e],
     /// Class index.
     pub class_index: u8,
-    /// The three bytes after the class index, stored as given.
-    pub ignored_77: [u8; 3],
+    /// Red, green, and blue in the user list, used with Color Overrides Class.
+    pub color: [u8; 3],
     /// Bytes 0x7e and 0x7f; meaning unknown.
     pub ignored_7e: [u8; 2],
     /// Login.
@@ -823,7 +833,7 @@ impl std::fmt::Debug for Account {
             .field("last_login", &self.last_login)
             .field("ignored_58", &self.ignored_58)
             .field("class_index", &self.class_index)
-            .field("ignored_77", &self.ignored_77)
+            .field("color", &self.color)
             .field("ignored_7e", &self.ignored_7e)
             .field("login", &self.login)
             .field("name", &self.name)
@@ -849,15 +859,15 @@ impl Account {
         let lens = [0x7a, 0x7b, 0x7c, 0x7d].map(|at| usize::from(buf[at]));
         let ([login, name, third, editor], end) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
-            privileges: buf[..0x10].try_into().expect("16 bytes"),
-            privilege_mask: buf[0x10..0x20].try_into().expect("16 bytes"),
+            privileges: Privileges::decode_at(buf, 0),
+            privilege_mask: Privileges::decode_at(buf, 0x10),
             key: buf[0x20..0x40].try_into().expect("32 bytes"),
             created: u64_at(buf, 0x40),
             modified: u64_at(buf, 0x48),
             last_login: u64_at(buf, 0x50),
             ignored_58: buf[0x58..0x76].try_into().expect("30 bytes"),
             class_index: buf[0x76],
-            ignored_77: buf[0x77..0x7a].try_into().expect("3 bytes"),
+            color: buf[0x77..0x7a].try_into().expect("3 bytes"),
             ignored_7e: buf[0x7e..0x80].try_into().expect("2 bytes"),
             login,
             name,
@@ -870,15 +880,15 @@ impl Account {
     /// Encodes the payload, padded to 4 with zeros past the stored padding.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..0x10].copy_from_slice(&self.privileges);
-        out[0x10..0x20].copy_from_slice(&self.privilege_mask);
+        out[..0x10].copy_from_slice(&self.privileges.encode());
+        out[0x10..0x20].copy_from_slice(&self.privilege_mask.encode());
         out[0x20..0x40].copy_from_slice(&self.key);
         out[0x40..0x48].copy_from_slice(&self.created.to_be_bytes());
         out[0x48..0x50].copy_from_slice(&self.modified.to_be_bytes());
         out[0x50..0x58].copy_from_slice(&self.last_login.to_be_bytes());
         out[0x58..0x76].copy_from_slice(&self.ignored_58);
         out[0x76] = self.class_index;
-        out[0x77..0x7a].copy_from_slice(&self.ignored_77);
+        out[0x77..0x7a].copy_from_slice(&self.color);
         out[0x7e..0x80].copy_from_slice(&self.ignored_7e);
         out[0x7a] = len_u8(&self.login, "login")?;
         out[0x7b] = len_u8(&self.name, "account name")?;

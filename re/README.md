@@ -180,6 +180,10 @@ Message types the protocol reference does not cover yet are listed in
 | `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
 | `0x08094558` / `0x080945e0` | file: 64-bit fork size (`stat64`) / read a chunk at a 64-bit offset (`lseek64`) |
 | `0x080551b0` | account privilege check for [507 Create Account](../docs/protocol/messages/accounts.md#m507)/[511 Set Account](../docs/protocol/messages/accounts.md#m511): effective bits vs the requester's (0x640005) |
+| `0x08054900` | account lookup at login: effective privileges, flood limit, speed limit, and color from the class or account |
+| `0x08052440` | per-user download speed limit from class +0x26, sent as [419 Notify Speed Limit](../docs/protocol/messages/files.md#m419) |
+| `0x080553c8` | [504 Set Account Class](../docs/protocol/messages/accounts.md#m504): stores privileges, flood limit, speed limit, color, and strings |
+| `0x0805572c` | [506 Account Class List](../docs/protocol/messages/accounts.md#m506) encoder: name only, zeros elsewhere |
 | `0x08066a90` | is the key the empty password's key |
 | `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies [902 View Display Params](../docs/protocol/messages/view-display.md#m902), [903 View Display Update](../docs/protocol/messages/view-display.md#m903)) / 904 mouse / 905 keyboard |
 | `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send 903 / run encoder / two-colour encoder |

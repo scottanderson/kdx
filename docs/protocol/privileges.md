@@ -4,10 +4,18 @@ For hex and field notation, see [Conventions](README.md#conventions).
 
 This page lists the privilege bits of account classes and accounts.
 
-An account's privileges are a bit string of at least 11 bytes. The server stores
-it at user +0x44, and sends it in the class records of [506 Account Class
-List](messages/accounts.md#m506). Bit n is in byte n/8, with the mask 0x80 >> (n
-% 8). <!-- [S] -->
+A set of privileges is a 128-bit big-endian number. Bit n has the mask `1 << 127
+>> n`, so bit 0 is the high bit of the first byte, and bit n is in byte n/8 with
+the mask 0x80 >> (n % 8). The server stores a user's privileges at user +0x44 to
++0x53. It tests one privilege as a single byte, and combines sets with AND, OR,
+and NOT over all 16 bytes (`FUN_080551b0`). <!-- [S] --> Bits 65 to 127 have no
+known use.
+
+Struct `Privileges` (16 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 16 | u128 | `bits` |  |
 
 The table gives the bits that server handlers test, found by a scan of all
 handlers for tests of user +0x44 to +0x4e. <!-- [S] --> "Login" is

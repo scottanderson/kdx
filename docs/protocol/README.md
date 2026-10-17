@@ -118,10 +118,11 @@ Length fields come at their offset on the wire. Fields of variable size follow
 the order of their bytes, which can be different from the order of their
 lengths, as in [203 Chat Window Info](messages/chat.md#m203).
 
-The primitives are `u8`, `u16`, `u32`, `u48`, `u64`, `i8`, `i16`, `i32`, `i64`,
-and `char`. A `char` is one byte of ASCII, as in a magic. A `u48` is a 6-byte
-number. Some lengths are two adjacent fields that together make one 48-bit
-number; such a length is one `u48` row, and its Notes say that it is split.
+The primitives are `u8`, `u16`, `u32`, `u48`, `u64`, `u128`, `i8`, `i16`,
+`i32`, `i64`, and `char`. A `char` is one byte of ASCII, as in a magic. A `u48`
+is a 6-byte number. Some lengths are two adjacent fields that together make one
+48-bit number; such a length is one `u48` row, and its Notes say that it is
+split.
 
 All the elements of an array mean the same thing, such as the six group names in
 `groups`. Bytes with different meanings are separate rows.
