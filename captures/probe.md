@@ -28,5 +28,5 @@ requests, and disconnected. There were 18 connections in all.
   ones, which use the 105 Server Info session key as the account key.
 - The 803 Process List reply (frame 208) lists the lab's `bwrap` command
   line, `./KDXServer.lexe`, and `/bin/ps auxwww`, run as the host user.
-- The facts drawn from this capture are tagged **[O]** in the pages under
+- The facts drawn from this capture are tagged `[O]` in the pages under
   `docs/protocol/`.

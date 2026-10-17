@@ -15,8 +15,8 @@ decodes it with the empty password.
    `127.0.0.1:10600`, Connect.
 3. Commands → the client connection → look at the commands it offers and
    try each (private message, files, Voice Chat).
-4. Voice Controls (button bar or Commands menu), Start Microphone (1000–1002
-   **[I]**).
+4. Voice Controls (button bar or Commands menu), Start Microphone (1000–1002).
+   <!-- [I] -->
 5. Both clients log in to the server, create a chat with Voice Chat ticked,
    and join it. Open Voice Controls in both before joining, then once more
    with it closed in one of them (1001 with 0x00640007 and the "does not

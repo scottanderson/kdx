@@ -10,8 +10,8 @@ Docs: `messages/news.md`. Captures: `linux-accounts-news`,
 ## Gaps
 
 - [ ] 606 Newsgroup List entry: 0x0c (4 bytes) and 0x12 (4 bytes).
-- [ ] 606 0x10, "message count, 1" **[I]**, and 0x17, "probably the
-  description length" **[I]**: existing captures settle both, so update the
+- [ ] 606 0x10, "message count, 1", <!-- [I] --> and 0x17, "probably the
+  description length": <!-- [I] --> existing captures settle both, so update the
   doc. 0x10 is 3 for General News in `linux-accounts-news` frames 56 and
   105, whose 608 at 108 lists three messages with IDs 1, 6, and 7: a
   count, not the highest ID. It moves between 1 and 2 as `kdx-news` posts
@@ -22,11 +22,11 @@ Docs: `messages/news.md`. Captures: `linux-accounts-news`,
   bitmap", `01 00 00 00` from the server and 0 from the client
   (`NewsgroupInfo::unknown_20`); 0x24 (0xc bytes); 0x34 (8 bytes); 0x3e
   (2 bytes). The struct still calls the archive size "probably the size
-  limit"; the doc reads it **[S]**.
+  limit"; the doc reads it. <!-- [S] -->
 - [ ] 608 News Messages: the u32 at 0x08.
 - [ ] 610 News Message record: 0x10 (8 bytes of 0), 0x1a (2 bytes), 0x1f.
 - [ ] 611 Post News Message: 0x04 (8 bytes) and 0x0f are ignored by the
-  server **[S]**. Read what the client writes there.
+  server. <!-- [S] --> Read what the client writes there.
 - [x] Audit (01): 608 News Messages and 610 News Message had non-zero
   bytes after strings (608: `kdx-news` 204 at 0x866, 384 at 0x8b3;
   `linux-first-connect` 127 at 0x8a1. 610: `linux-first-connect` 100 at
