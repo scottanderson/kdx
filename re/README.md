@@ -186,9 +186,9 @@ Message types the protocol reference does not cover yet are listed in
 | `0x0805572c` | [506 Account Class List](../docs/protocol/messages/accounts.md#m506) encoder: name only, zeros elsewhere |
 | `0x08066a90` | is the key the empty password's key |
 | `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies [902 View Display Params](../docs/protocol/messages/view-display.md#m902), [903 View Display Update](../docs/protocol/messages/view-display.md#m903)) / 904 mouse / 905 keyboard |
-| `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send 903 / run encoder / two-colour encoder |
+| `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send 903 / run encoder / two-color encoder |
 | `0x0804fc40` | per-request flood counter: warnings, then a 2-hour ban |
-| `0x0804b7c8` | timer: licence reminder ([155 Rcv Broadcast Message](../docs/protocol/messages/administration.md#m155)) to users whose [118 (unnamed)](../docs/protocol/messages/session.md#m118) value was 0 |
+| `0x0804b7c8` | timer: license reminder ([155 Rcv Broadcast Message](../docs/protocol/messages/administration.md#m155)) to users whose [118 (unnamed)](../docs/protocol/messages/session.md#m118) value was 0 |
 | `0x0804b9b0` | [142 Get Connection Monitor Info](../docs/protocol/messages/monitoring.md#m142): connection and transfer records |
 | `0x08061598` / `0x0806172c` | [174 Shutdown Server](../docs/protocol/messages/administration.md#m174) / [175 Upgrade Server Software](../docs/protocol/messages/administration.md#m175) |
 | `0x0806155c` | timer: shut down after 174/175; mode bit 2 halts, bit 1 reboots the host |
@@ -211,7 +211,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClientBETA5-Lnx` | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send [202 Join Chat](../docs/protocol/messages/chat.md#m202) |
 | `KDXClientBETA5-Lnx` | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
 | `KDXClientBETA5-Lnx` | `0x0812c760` | account editor privilege table: {label, bit} pairs |
-| `KDXClientBETA5-Lnx` | `0x0804c01c` | send 118 (licence report) on a timer |
+| `KDXClientBETA5-Lnx` | `0x0804c01c` | send 118 (license report) on a timer |
 | `KDXClientBETA5-Lnx` | `0x0804d654` | build the [100 Set Identity](../docs/protocol/messages/session.md#m100) user record |
 | `KDXClientBETA5-Lnx` | `0x080542b4` | draw a user list row: account color strip, background (gradient with flag bit 2), text color |
 | `KDXClientBETA5-Lnx` | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
@@ -240,7 +240,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClient1600-Win` | `0x0041b970` / `0x00448830` | send 905 keyboard / GConsole 4200 Key |
 | `KDXClient1600-Win` | `0x00463870` / `0x00463970` | modifier bits from the key state / key code to character; both index the key code table at `0x004ff1e8` |
 | `KDXServer1600-Win` | `0x00418dc0` / `0x00418fc0` / `0x00419110` | 900 Open View Display / 904 mouse / 905 keyboard |
-| `KDXServer1600-Win` | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send 903 / run encoder / two-colour encoder |
+| `KDXServer1600-Win` | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send 903 / run encoder / two-color encoder |
 | `KDXServer1600-Win` | `0x00418d60` | view display timer: grab again every 1500 ms |
 | `KDXServer1600-Win` | `0x0041ffd0` | grab the primary screen: `BitBlt` from the desktop window into a 24-bit DIB |
 | `KDXServer1600-Win` | `0x00420270` / `0x00420380` | inject a mouse event (`mouse_event`) / a key (`keybd_event`, through the key code table at `0x0047fe98`) |

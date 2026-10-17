@@ -14,7 +14,7 @@ match the Handler column of the catalog exactly. Inline cases:
 |---:|---|
 | [108 Ping](../docs/protocol/messages/session.md#m108) | replies [109 Pong](../docs/protocol/messages/session.md#m109) |
 | [115 Get My Address](../docs/protocol/messages/session.md#m115) | replies [116 Your Address](../docs/protocol/messages/session.md#m116) with the peer address string at conn +0x58 |
-| [118 (unnamed)](../docs/protocol/messages/session.md#m118) | needs 4 bytes; sets conn byte +0x3b to 2 if the u32 is 0, else 1 (licence report; see the protocol reference) |
+| [118 (unnamed)](../docs/protocol/messages/session.md#m118) | needs 4 bytes; sets conn byte +0x3b to 2 if the u32 is 0, else 1 (license report; see the protocol reference) |
 | [140 Open Connection Monitor](../docs/protocol/messages/monitoring.md#m140) / [141 Close Connection Monitor](../docs/protocol/messages/monitoring.md#m141) | set / clear conn byte +0x3c, then log a history record |
 | [421 Empty Trash](../docs/protocol/messages/files.md#m421) | needs privilege bit at conn +0x45 & 4; replies [1 Status](../docs/protocol/messages/status.md#m1) success 0x1a5 |
 
@@ -156,7 +156,7 @@ the voice connection handles 1000-1003. See `docs/protocol/dcc.md`.
   [4200 Key](../docs/protocol/messages/gconsole.md#m4200) (see the open
   questions in `docs/protocol/gconsole.md`).
 
-## Other behaviour found in the sweep
+## Other behavior found in the sweep
 
 Not protocol, but worth knowing when running the originals: <!-- [S] -->
 

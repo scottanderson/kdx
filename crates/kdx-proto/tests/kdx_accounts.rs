@@ -65,7 +65,7 @@ fn account_info() {
     let account = Account::decode(wire).unwrap();
     assert_eq!(account.login, b"rs-nopw");
     assert!(!account.has_password());
-    // The server leaves the padding uninitialised; the codec keeps it.
+    // The server leaves the padding uninitialized; the codec keeps it.
     assert!(account.padding.iter().any(|&b| b != 0));
     assert_eq!(account.encode().unwrap(), wire);
 }

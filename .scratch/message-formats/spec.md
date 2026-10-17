@@ -14,7 +14,7 @@ A field is understood when the protocol docs give it one of these:
   with a capture and frame;
 - "unused", with `[S]` evidence that no reader in Server 1.620, Client
   1.620 beta 5, or Tracker 1.110 looks at it, and what the writer puts
-  there (zero, a copy, or uninitialised memory);
+  there (zero, a copy, or uninitialized memory);
 - "not decidable from the Linux builds", with the reason, when only a
   Windows or Mac build could say more and that build can't be run or read
   usefully.
@@ -61,7 +61,7 @@ Issues here are static analysis plus doc work, for an agent alone.
    byte. The codecs store every byte they don't model, padding included, so
    `kdx-dissect --audit` must report no `mismatch`.
 6. Tick the gap off in the issue. When none are left, set `Status: done`
-   and add a comment summarising the result.
+   and add a comment summarizing the result.
 
 ## Handing off a capture
 

@@ -27,7 +27,7 @@ Docs: `messages/folder-access.md`. Captures: `linux-files`,
 - [x] Audit (01): 1100 and 1104 lost byte 0xc1, 01
   (`linux-folder-access-guest` 21, 28). Fixed: `FolderAccess::padding`
   keeps the bytes after the strings.
-- [ ] Is that byte uninitialised padding, as the client sends it?
+- [ ] Is that byte uninitialized padding, as the client sends it?
 - [x] Audit (01): no codec for 1101, 1102, 1103 (a name), or 1106 with its
   optional u32 (`linux-accounts-folder-access` 70, 71, 60; `linux-files`
   23). Fixed: `FolderAccessName` and `GetFolderAccessList`, which keeps

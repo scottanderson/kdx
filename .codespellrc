@@ -1,0 +1,5 @@
+[codespell]
+builtin = en-GB_to_en-US
+check-hidden = true
+regex = [\w']+
+skip = .git,vendor,target,lab,out,projects,Cargo.lock,*.pcapng,*.bin

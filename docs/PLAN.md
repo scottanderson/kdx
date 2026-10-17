@@ -38,7 +38,7 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
   `The network protocol is unknown. (ID 4/113 @ TRN941)`.
 - An unregistered client reports itself with
   [118 (unnamed)](protocol/messages/session.md#m118), and the server then sends
-  it a licence reminder every 15 minutes or so during its first two hours
+  it a license reminder every 15 minutes or so during its first two hours
   (`protocol/messages/session.md`, 118). No other limit has been found.
 
 ### Phase 1: Transport and crypto (done; see `protocol/handshake.md`, `protocol/framing.md`)

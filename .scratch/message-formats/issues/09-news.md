@@ -31,7 +31,7 @@ Docs: `messages/news.md`. Captures: `linux-accounts-news`,
   bytes after strings (608: `kdx-news` 204 at 0x866, 384 at 0x8b3;
   `linux-first-connect` 127 at 0x8a1. 610: `linux-first-connect` 100 at
   0x4a, 113 at 0x35, 121 at 0x3a). Fixed: `NewsMessage::padding` keeps them.
-- [ ] Are those bytes uninitialised padding?
+- [ ] Are those bytes uninitialized padding?
 - [x] Audit (01): `PostNewsMessage::encode` padded 611 to 4, but the client
   sends it unpadded (`linux-first-connect` 94, 107, 115;
   `linux-text-encoding` 319). Fixed: the encoder no longer pads, and

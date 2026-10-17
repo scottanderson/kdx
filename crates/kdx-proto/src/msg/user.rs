@@ -16,13 +16,13 @@ pub struct UserRecord {
     pub ignored_05: [u8; 5],
     /// TCP port of the client's client-to-client (DCC) listener; 0 if it has none.
     pub client_port: u16,
-    /// Colour of the nick and info text in the user list; the client chooses it.
+    /// Color of the nick and info text in the user list; the client chooses it.
     pub text_color: Color,
     /// Background of the user's row in the user list; the client chooses it.
     pub background_color: Color,
-    /// Colour of the strip at the left of the row; the server sets it from the class or account.
+    /// Color of the strip at the left of the row; the server sets it from the class or account.
     pub account_color: Color,
-    /// Flag bits: bit 2 (from the client) fades the background to the text colour, bit 1 is the server's hidden-marker flag.
+    /// Flag bits: bit 2 (from the client) fades the background to the text color, bit 1 is the server's hidden-marker flag.
     pub flags: u8,
     /// Byte 0x1b; meaning unknown.
     pub ignored_1b: u8,

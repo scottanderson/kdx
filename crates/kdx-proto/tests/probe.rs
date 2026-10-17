@@ -110,7 +110,7 @@ fn files() {
                     .iter()
                     .all(|e| e.attributes == ATTR_FOLDER && e.is_folder()));
                 assert_eq!((first.access_item, second.access_item), (0x2c, 0x2b));
-                // The server leaves the padding after the first name uninitialised.
+                // The server leaves the padding after the first name uninitialized.
                 assert_eq!(first.padding.len(), 2);
                 assert_ne!(first.padding, [0, 0]);
             } else {
@@ -268,7 +268,7 @@ fn connection_monitor() {
     assert_eq!(me.login, b"admin");
     assert_eq!(me.account, b"Administrator");
     assert_eq!(me.address, b"127.0.0.1:50984");
-    // The server leaves the padding uninitialised; the codec keeps it.
+    // The server leaves the padding uninitialized; the codec keeps it.
     assert_eq!(me.padding, wire[wire.len() - 2..]);
     assert_eq!(MonitoredConnection::encode_list(&list).unwrap(), wire);
 }
@@ -316,7 +316,7 @@ fn account_classes() {
                 ..list[index].clone()
             }
         );
-        // The server leaves the padding uninitialised; the codec keeps it.
+        // The server leaves the padding uninitialized; the codec keeps it.
         assert_eq!(class.padding, wire[0x38 + class.name.len()..]);
         assert_eq!(class.encode_info().unwrap(), wire);
     }

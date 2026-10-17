@@ -49,7 +49,7 @@ Other messages:
 - [ ] 223 Chat DCC Addresses: entry bytes 0x04..0x0d and 0x0f are listed as
   0, <!-- [S] --> and are 0 in the one entry on record (`linux-dcc-voice-failed`
   frames 109, 155). The padding byte there is 0x22; whether it is
-  uninitialised is not settled.
+  uninitialized is not settled.
 - [ ] 300/301: 0x04, 0xc bytes. What the client puts there, and whether the
   server reads them.
 - [x] Audit (01): 223 Chat DCC Addresses has no codec

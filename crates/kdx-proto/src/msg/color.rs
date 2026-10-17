@@ -1,6 +1,6 @@
-//! A 24-bit colour.
+//! A 24-bit color.
 
-/// A colour sent as three bytes: red, green, then blue.
+/// A color sent as three bytes: red, green, then blue.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
 pub struct Color {
     /// Red.
@@ -24,7 +24,7 @@ impl Color {
         }
     }
 
-    /// Encodes the colour.
+    /// Encodes the color.
     pub const fn encode(self) -> [u8; Self::LEN] {
         [self.r, self.g, self.b]
     }

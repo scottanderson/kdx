@@ -54,7 +54,7 @@ pub struct FileListEntry {
     pub name: Vec<u8>,
     /// For files, probably a type derived from the extension, such as `exttype/bin`.
     pub kind: Vec<u8>,
-    /// Bytes after the kind up to the next multiple of 4, uninitialised on the wire; empty in a new entry.
+    /// Bytes after the kind up to the next multiple of 4, uninitialized on the wire; empty in a new entry.
     pub padding: Vec<u8>,
 }
 
