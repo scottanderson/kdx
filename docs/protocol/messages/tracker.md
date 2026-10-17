@@ -145,8 +145,9 @@ Struct `TrackerSettings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | char[8] | magic | not stored. `"%KDXTSTG"` |
-| 0x08 | 2 | u16 | format | must be 1 **[S `FUN_0804d63c`]** |
+| 0x00 | 4 | char[4] | protocol | not stored. `"%KDX"` (0x254b4458) **[S `FUN_0804d63c`]** |
+| 0x04 | 4 | char[4] | sub_protocol | not stored. `"TSTG"` (0x54535447) **[S `FUN_0804d63c`]** |
+| 0x08 | 2 | u16 | version | must be 1 **[S `FUN_0804d63c`]** |
 | 0x0a | 2 | u8[2] | ignored | the parser never reads them **[S `FUN_0804d63c`]** |
 | 0x0c | 96 | TrackerSettingsSection[12] | sections | where each section is. Rust `sections` holds the bytes each entry points at |
 | 0x6c | 12 | u8[12] | present | the parser reads a section only when its byte is exactly 1 **[S `FUN_0804d63c`]** |
@@ -167,8 +168,8 @@ and the offset where it would start **[O frames 80, 82, 237, 240]**.
 Sections 0 to 2, 4 and 5 are in use. Sections 3 and 6 to 11 have offset 0, size
 0 and a present byte of 0 **[O frames 80, 82, 237, 240]**, and the parser reads
 neither their table entries nor their present bytes **[S `FUN_0804d63c`]**.
-The parser rejects a blob shorter than 0x78 bytes or without the magic and
-format 1 **[S `FUN_0804d63c`]**. The client builds the sections in the order
+The parser rejects a blob shorter than 0x78 bytes or without the protocol,
+the sub-protocol, and version 1 **[S `FUN_0804d63c`]**. The client builds the sections in the order
 general, upstream trackers, groups, admin, then greeting, so admin (5) comes
 before greeting (4) in the file **[S `FUN_0806b68c`; O frames 80, 82, 237,
 240]**. Verified: `kdx-proto` re-encodes the blobs of those frames byte for
@@ -339,10 +340,10 @@ is named `New TrackerServ` **[O frame 80]**. 711 doesn't send a group's flag:
 the `Trackers` group has 0 there **[O frame 80]**. It leaves the admin key out.
 
 The client reads it in `FUN_0806b1b0` with the same checks as the tracker's
-parser: a blob under 0x78 bytes, or without the magic and format 1, is an error,
-and a section is read only when its present byte is 1 and it fits. From the
-general section it takes the two flag bits, the name, the description, and the
-port, and from admin only the login. It ignores the limits and the server ID
+parser: a blob under 0x78 bytes, or without the protocol, the sub-protocol,
+and version 1, is an error, and a section is read only when its present byte
+is 1 and it fits. From the general section it takes the two flag bits, the
+name, the description, and the port, and from admin only the login. It ignores the limits and the server ID
 **[S `FUN_0806b1b0`]**.
 
 ## <a id="m712"></a>712 Set TrackerServ Settings

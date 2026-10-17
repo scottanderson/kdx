@@ -62,7 +62,7 @@ Struct `Registration` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | char[4] | magic | not stored. `"%KDX"` (0x254b4458) **[S tracker `FUN_0804c048`; O frame 23]** |
+| 0x00 | 4 | char[4] | protocol | not stored. `"%KDX"` (0x254b4458) **[S tracker `FUN_0804c048`; O frame 23]** |
 | 0x04 | 2 | u16 | version | not stored. 0x0010. The tracker drops anything else **[S tracker `FUN_0804c048`; O frame 23]** |
 | 0x06 | 2 | u16 | flags | bit 0: the sender is a tracker. Server 1.620 sends 0; Tracker 1.110 sends 1 **[O frames 23, 78]** |
 | 0x08 | 4 | u32 | checksum | not stored. see below |
@@ -112,7 +112,7 @@ The tracker decrypts the datagram and keeps it only if all of these hold
 **[S tracker `FUN_0804c048`]**:
 
 - the length is more than 0x40;
-- the magic is `%KDX` and the version is 0x0010;
+- the protocol is `%KDX` and the version is 0x0010;
 - the 13 length bytes at 0x33..0x3f are not all 0, and 0x40 plus their sum
   fits in the datagram;
 - the checksum matches (computed over the received length).

@@ -158,6 +158,7 @@ Message types the protocol reference does not cover yet are listed in
 | `0x0804a454` / `0x0804a4b4` | LCG XOR (`0xa5a16c4a`/`0x41d28485`/`0x322b`) for tracker registration datagrams |
 | `0x08060e4c` | send a registration datagram to each tracker in the settings |
 | `0x0806fa28` | CRC-32 (poly 0x04c11db7, MSB first, caller's initial value) |
+| `0x08060268` | parse the settings file: `%KDX`, `SSTG`, version 1 |
 | `0x080535b4` | settings defaults: port 10700, user count 0x2ba9 (kept XOR'd), random 12-byte server ID |
 | `0x080526e0` | handshake version callback: `%KDX` with sub-version 0x10 only |
 | `0x08066fd8` / `0x08066c14` | raise error (code, module, line) / format "ID x/y @ TRNnnn" |

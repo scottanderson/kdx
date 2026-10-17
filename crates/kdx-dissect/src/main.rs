@@ -55,6 +55,8 @@ use pcap_file::DataLink;
 
 /// Longest payload prefix to hex dump; file data can run to megabytes.
 const MAX_DUMP: usize = 0x400;
+/// The block type that starts a pcapng file, its Section Header Block.
+const PCAPNG_MAGIC: [u8; 4] = [0x0a, 0x0d, 0x0d, 0x0a];
 
 #[derive(Parser)]
 #[command(about = "Decode KDX traffic from a packet capture")]
@@ -1323,8 +1325,8 @@ fn draw_record(record: &DrawRecord) -> String {
 /// Describes the sections of 711 or 712 that the tracker reads.
 fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
     let mut parts = vec![format!(
-        "format {} present {}",
-        settings.format,
+        "version {} present {}",
+        settings.version,
         hex(&settings.present)
     )];
     if let Some(general) = settings.general()? {
@@ -1364,7 +1366,7 @@ fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
 fn read_frames(path: &PathBuf) -> Result<Vec<Frame>> {
     let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
     let mut frames = Vec::new();
-    if bytes.starts_with(&[0x0a, 0x0d, 0x0d, 0x0a]) {
+    if bytes.starts_with(&PCAPNG_MAGIC) {
         let mut reader = PcapNgReader::new(&bytes[..])?;
         let mut links = Vec::new();
         while let Some(block) = reader.next_block() {

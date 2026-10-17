@@ -34,8 +34,8 @@ pub struct Registration {
 impl Registration {
     /// Size of the fixed part before the strings.
     pub const HEADER_LEN: usize = 0x40;
-    /// The magic at 0x00.
-    pub const MAGIC: &'static [u8; 4] = b"%KDX";
+    /// The protocol at 0x00.
+    pub const PROTOCOL: [u8; 4] = *b"%KDX";
     /// The only version the tracker accepts.
     pub const VERSION: u16 = 0x10;
     /// Flag bit: the sender is a tracker.
@@ -49,8 +49,8 @@ impl Registration {
         need(datagram, Self::HEADER_LEN + 1)?;
         let mut buf = datagram.to_vec();
         crypt(&mut buf);
-        if &buf[..4] != Self::MAGIC {
-            return Err(DecodeError::Invalid("registration magic"));
+        if buf[..4] != Self::PROTOCOL {
+            return Err(DecodeError::Invalid("registration protocol"));
         }
         if u16_at(&buf, 4) != Self::VERSION {
             return Err(DecodeError::Invalid("registration version"));
@@ -103,7 +103,7 @@ impl Registration {
         .into_iter()
         .chain(self.groups.iter().map(|g| (g, "group name")));
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..4].copy_from_slice(Self::MAGIC);
+        out[..4].copy_from_slice(&Self::PROTOCOL);
         out[4..6].copy_from_slice(&Self::VERSION.to_be_bytes());
         out[6..8].copy_from_slice(&self.flags.to_be_bytes());
         out[8..0x0c].copy_from_slice(&Self::CHECKSUM_PLACEHOLDER);
@@ -202,7 +202,7 @@ mod tests {
             wire[at] ^= bit;
             Registration::decode(&wire)
         };
-        assert_eq!(flip(0, 1), invalid("registration magic"));
+        assert_eq!(flip(0, 1), invalid("registration protocol"));
         assert_eq!(flip(5, 1), invalid("registration version"));
         assert_eq!(flip(0x40, 1), invalid("registration checksum"));
         assert_eq!(
