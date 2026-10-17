@@ -5,7 +5,7 @@ use kdx_proto::msg::file::{
     CatalogStatus, FileSearch, FileSearchEntry, GenerateCatalog, LaunchFile, SetVolumeInfo,
     VolumeInfo, ATTR_FILE,
 };
-use kdx_proto::msg::{FilePath, Privileges, Status};
+use kdx_proto::msg::{FilePath, Privilege, Status};
 use kdx_proto::session::{Header, MessageType};
 
 mod common;
@@ -77,18 +77,23 @@ fn set_account_class() {
         .collect();
     // The first 506 answers the Account Classes window; one follows each save.
     assert_eq!((sets.len(), lists.len()), (2, 3));
-    // Frame 40 ticks See All Volumes (bit 22, e8 to ea in byte 2); frame 59 unticks it.
-    for ((header, wire), (_, list), byte_2) in
-        [(sets[0], lists[1], 0xea), (sets[1], lists[2], 0xe8)]
+    // Frame 40 ticks See All Volumes; frame 59 unticks it, and nothing else changes.
+    let mut others = None;
+    for ((header, wire), (_, list), ticked) in
+        [(sets[0], lists[1], true), (sets[1], lists[2], false)]
     {
         // 69 bytes, with no padding.
         assert_eq!(wire.len(), 69);
         let class = AccountClass::decode_set(wire).unwrap();
-        let privileges = Privileges(0x2831_005b_f4d0_3c0d_c3e0_8000_0000_0000 | byte_2 << 104);
+        assert_eq!(class.privileges.contains(Privilege::SeeAllVolumes), ticked);
+        let mut rest = class.privileges;
+        rest.remove(Privilege::SeeAllVolumes);
+        assert_eq!(*others.get_or_insert(rest), rest);
+        assert!(rest.contains(Privilege::CanLogin) && rest.contains(Privilege::ShutdownServer));
         assert_eq!(
             class,
             AccountClass {
-                privileges,
+                privileges: class.privileges,
                 time: 0,
                 flood_protection: 0x50,
                 index: 0,

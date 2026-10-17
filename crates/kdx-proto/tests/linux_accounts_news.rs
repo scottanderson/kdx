@@ -3,7 +3,7 @@
 use kdx_proto::handshake::{compute_auth, Hello, Proof, Status as ProofStatus};
 use kdx_proto::msg::admin::AccountClass;
 use kdx_proto::msg::news::{NewsgroupId, NewsgroupInfo};
-use kdx_proto::msg::Status;
+use kdx_proto::msg::{Privilege, Status};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::AccountKey;
 
@@ -48,7 +48,7 @@ fn set_account_class() {
     }
     // Frames 20 and 30: Upload (bit 11) off, then on again; each 61 bytes, unpadded.
     let sets = all(&session, MessageType::SET_ACCOUNT_CLASS);
-    let bytes: Vec<_> = sets
+    let upload: Vec<_> = sets
         .iter()
         .map(|(request, wire)| {
             let class = AccountClass::decode_set(wire).unwrap();
@@ -56,10 +56,10 @@ fn set_account_class() {
             assert_eq!(class.encode_set().unwrap(), *wire);
             // Frames 23 and 33.
             assert_eq!(status(&session, request), Status::Success { value: 0x1f8 });
-            class.privileges.encode()[1]
+            class.privileges.contains(Privilege::Upload)
         })
         .collect();
-    assert_eq!(bytes, [0x20, 0x30]);
+    assert_eq!(upload, [false, true]);
 }
 
 #[test]

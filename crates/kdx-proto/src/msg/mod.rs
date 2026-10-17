@@ -22,7 +22,7 @@ pub mod user_info;
 
 pub use path::FilePath;
 pub use private_message::PrivateMessage;
-pub use privileges::Privileges;
+pub use privileges::{Privilege, Privileges};
 pub use server_info::ServerInfo;
 pub use status::Status;
 pub use user::UserRecord;

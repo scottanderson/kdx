@@ -8,14 +8,14 @@ A set of privileges is a 128-bit big-endian number. Bit n has the mask `1 << 127
 >> n`, so bit 0 is the high bit of the first byte, and bit n is in byte n/8 with
 the mask 0x80 >> (n % 8). The server stores a user's privileges at user +0x44 to
 +0x53. It tests one privilege as a single byte, and combines sets with AND, OR,
-and NOT over all 16 bytes (`FUN_080551b0`). <!-- [S] --> Bits 65 to 127 have no
+and NOT over all 16 bytes (`FUN_080551b0`). <!-- [S] --> Bits 83 to 127 have no
 known use.
 
 Struct `Privileges` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u128 | `bits` |  |
+| 0x00 | 16 | u128 | `bits` | A bit set. The table below names the bits. |
 
 The table gives the bits that server handlers test, found by a scan of all
 handlers for tests of user +0x44 to +0x4e. <!-- [S] --> "Login" is
