@@ -28,6 +28,16 @@ re/ghidra /work/projects KDXServer1620-Lnx -import /work/bin/KDXServer1620-Lnx/e
 re/ghidra /work/projects KDXClient1600-Win -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
 re/ghidra /work/projects KDXServer1600-Win -import /work/bin/KDXServer1600-Win/extracted/KDXServer1600-Win/KDXServer.exe
 re/ghidra /work/projects KDXServer0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXServer Folder/KDXServer"
+# older 1.x builds, as project/binary (see "Across versions" in framing.md)
+for p in KDXClient1320-Win/KDXClient.exe KDXClient1400-Win/KDXClient.exe \
+    KDXClient1500-Win/KDXClient.exe KDXClient1520-Win/KDXClient.exe \
+    KDXServer1300-Win/KDXServer.exe KDXServer1500-Win/KDXServer.exe \
+    KDXServer1520-Win/KDXServer.exe KDXServer1520-Lnx/KDXServer.lexe \
+    KDXServer1600-Lnx/KDXServer.lexe KDXTrackerServ1110-Win/KDXTracker.exe; do
+  d=${p%%/*}
+  re/ghidra /work/projects "$d" -import "/work/bin/$d/extracted/$d/${p#*/}"
+done
+re/ghidra /work/projects KDXClient-Lnx-beta4 -import /work/bin/KDXClient-Lnx-beta4/extracted/KDXClientBETA4-Lnx/KDXClient.lexe
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects KDXServer1620-Lnx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \
   -postScript decompile.py 0x08085a04 -postScript callers.py 0x08085328
@@ -59,6 +69,12 @@ Scripts (PyGhidra / Python 3):
   marks the result with a `NOTE` comment.
 - `dump_bytes.py <addr> <count>` prints the program's bytes at an address,
   such as a lookup table.
+- `call_args.py <addr>...` prints each decompiled call to a function with
+  its arguments, such as the receive caps passed to a cap setter.
+
+`re/scan_consts.py` runs without Ghidra. It reports which header scramble
+constants (`%KDX` and `%HGC`) each binary has, for x86 and PowerPC builds
+alike: `python3 -I re/scan_consts.py vendor/haxial/*/extracted/*/KDX*`.
 
 `callers.py` takes a function's address. To find the code that reads a
 table, give the table's address to `find_scalars.py`. Each run logs a
@@ -237,6 +253,22 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXTrackerServ1110-Lnx` | `0x0804d63c` | parse a `%KDXTSTG` settings blob (712 and the settings file) |
 | `KDXTrackerServ1110-Lnx` | `0x0804df70` | register with upstream trackers (flags bit 0) |
 | `KDXTrackerServ1110-Lnx` | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |
+| `KDXClient1110-Win` | `0x00460320` / `0x00460850` / `0x0045ef70` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient1320-Win` | `0x00464cf0` / `0x00465220` / `0x00463870` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient1400-Win` | `0x004677f0` / `0x00467d00` / `0x004663c0` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient1500-Win` | `0x0046d530` / `0x0046da40` / `0x0046c100` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient1520-Win` | `0x0046d7f0` / `0x0046dd00` / `0x0046c3c0` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient-Lnx-beta4` | `0x080e94a4` / `0x080e9c50` / `0x080e8a68` | session: receive and validate header / send header only / set receive cap |
+| `KDXClient-Lnx-beta5` | `0x080eae6c` / `0x080eb618` / `0x080ea430` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1300-Win` | `0x0042cf20` / `0x0042d450` / `0x0042ba90` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1500-Win` | `0x004300e0` / `0x004305f0` / `0x0042ec90` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1520-Win` | `0x00430240` / `0x00430750` / `0x0042edf0` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1520-Lnx` | `0x0808ac04` / `0x0808b108` / `0x0808a248` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1600-Win` | `0x004317a0` / `0x00431cb0` / `0x00430350` | session: receive and validate header / send header only / set receive cap |
+| `KDXServer1600-Lnx` | `0x0808b71c` / `0x0808bc20` / `0x0808ad60` | session: receive and validate header / send header only / set receive cap |
+| `KDXTrackerServ1110-Lnx` | `0x080885dc` / `0x08088ae0` / `0x08087c20` | session: receive and validate header / send header only / set receive cap |
+| `KDXTrackerServ1110-Win` | `0x00414d00` / `0x00413990` | session: receive and validate header / set receive cap (no header-only send) |
+| `KDXServer0921-Mac` | `0x10035790` / `0x10035b20` / `0x10035d10` | session: receive and validate header / send header only / receive header only |
 | `KDXServer0921-Mac` | `0x10034560` | create connection object (sub-protocol, sub-version) |
 | `KDXServer0921-Mac` | `0x10035480` | 0.9x handshake state machine |
 | `KDXServer0921-Mac` | `0x10034fc0` / `0x100350b0` | send 0.9x HELLO / validate its header and return its length |
