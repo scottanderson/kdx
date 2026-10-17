@@ -9,6 +9,19 @@ Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
 `FUN_0805c8f8`, client `FUN_08089034`; O `captures/linux-accounts-news.pcapng`
 frames 58 to 63]**
 
+A group is created or changed, and the client then reloads the list:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 600 Create Newsgroup
+    S->>C: 1 Status (success 0x258)
+    C->>S: 605 Get Newsgroup List
+    S->>C: 606 Newsgroup List
+```
+
 Struct `CreateNewsgroup` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -57,6 +70,17 @@ group **[S `FUN_0805ed88`]**.
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). **[S
 `FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81 to 84]**
 
+On success [601 Delete Newsgroup](#m601) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 601 Delete Newsgroup
+    S->>C: 1 Status (success 0x259)
+```
+
 Struct `DeleteNewsgroup` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -70,6 +94,17 @@ Struct `DeleteNewsgroup` (4 bytes):
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). Observed size: 76
 bytes. **[S `FUN_0805cc24`; O `captures/linux-accounts-news.pcapng` frames 68 to
 69]**
+
+[602 Get Newsgroup](#m602) gets [603 Newsgroup Info](#m603):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 602 Get Newsgroup
+    S->>C: 603 Newsgroup Info
+```
 
 Struct `GetNewsgroup` (4 bytes):
 
@@ -116,6 +151,17 @@ It is 91 bytes, unpadded **[O]**.
 ## <a id="m605"></a>605 Get Newsgroup List
 Initiator: Client. Privilege: View News (70). **[S `FUN_0805d038`; O]**
 
+The newsgroup list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 605 Get Newsgroup List
+    S->>C: 606 Newsgroup List
+```
+
 No payload.
 
 The request is empty **[O `captures/linux-accounts-news.pcapng` frame 55]**.
@@ -149,6 +195,17 @@ Struct `NewsgroupEntry` (dynamic):
 
 ## <a id="m607"></a>607 Get News Messages
 Initiator: Client. **[S `FUN_0805d2e8`; O]**
+
+A group's messages are one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 607 Get News Messages
+    S->>C: 608 News Messages
+```
 
 Struct `GetNewsMessages` (4 bytes):
 
@@ -201,6 +258,17 @@ header with permissions 1 and count 0 **[S]**.
 ## <a id="m609"></a>609 Get News Message
 Initiator: Client. **[S `FUN_0805d54c`; O]**
 
+One message is read with 609 Get News Message and [610 News Message](#m610):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 609 Get News Message
+    S->>C: 610 News Message
+```
+
 `NewsMessageId` encodes the request (`captures/kdx-news.pcapng` frame 137,
 `captures/linux-first-connect.pcapng` frames 99 and 112) **[O]**:
 
@@ -230,6 +298,20 @@ Struct `NewsMessageReply` (dynamic):
 Initiator: Client. Privilege: Post News (71), and the user's class must be in
 the group's post classes unless the user has privilege 0. **[S `FUN_0805d758`; O
 `captures/kdx-news.pcapng`]**
+
+A post has no reply. Every user whose class may read the group, the poster
+included, gets 613 News Message Posted:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 611 Post News Message
+    S-->>C: 613 News Message Posted
+    S-->>O: 613 News Message Posted
+```
 
 Struct `PostNewsMessage` (dynamic):
 
@@ -263,6 +345,19 @@ user whose class may read the group, the poster included. Errors **[O]**:
 
 ## <a id="m612"></a>612 Delete News Message
 Initiator: Client. **[S `FUN_0805db44`; O]**
+
+A delete has no reply. Every user gets 614 News Message Deleted:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 612 Delete News Message
+    S-->>C: 614 News Message Deleted
+    S-->>O: 614 News Message Deleted
+```
 
 `NewsMessageId` encodes the request (`captures/linux-first-connect.pcapng`
 frame 102, `captures/kdx-news.pcapng` frames 225 and 406) **[O]**:

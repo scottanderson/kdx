@@ -33,13 +33,22 @@ random for the hello, and for the proof it equals the proof's first 4 bytes
 
 ## Sequence
 
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: HELLO (login name)
+    S->>C: HELLO
+    C->>S: PROOF
+    Note over C,S: the server checks the proof<br/>against the account's stored key
+    S->>C: PROOF
+    Note over C,S: the client checks the server,<br/>then the session begins
 ```
-client                                server
-  | -- HELLO (login name) ----------->  |   the client speaks first [O]
-  | <------------------------ HELLO --  |
-  | -- PROOF ------------------------>  |   server verifies against the account's stored key
-  | <------------------------ PROOF --  |   client verifies the server; then the session begins
-```
+
+The client and server each send a hello, then each sends a proof. The server
+checks the client's proof against the account's stored key, and the client
+checks the server's proof, before the session begins.
 
 **[O]** The server's hello waits for the client's hello. **[S]** The server
 also sends its own hello before reporting an error, if it hasn't sent one yet.

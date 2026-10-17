@@ -19,6 +19,19 @@ primary screen with `BitBlt` from the desktop window into a 24-bit DIB **[S
 Initiator: Client, on a transfer connection. Privilege: View Display (66).
 **[S `FUN_0805c0f0`, client `FUN_0806f9d8`]**
 
+The viewer opens the display and then receives screen updates:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 900 Open View Display
+    S->>C: 902 View Display Params
+    S-->>C: 903 View Display Update (full frame)
+    S-->>C: 903 View Display Update (each change)
+```
+
 No payload.
 
 A connection already busy gets 0x10003. The reply is
@@ -106,6 +119,18 @@ never changed, so no later 903 came **[O]**.
 ## <a id="m904"></a>904 View Display Mouse
 Initiator: Client, on the view display connection. Privilege: Control
 Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
+
+After a click the server sends the next update within 100 ms:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 904 View Display Mouse (kind 1)
+    C->>S: 904 View Display Mouse (kind 2)
+    S-->>C: 903 View Display Update
+```
 
 Struct `ViewDisplayMouse` (12 bytes):
 

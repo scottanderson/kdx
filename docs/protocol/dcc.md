@@ -64,6 +64,20 @@ After login, each side sends [117 SKPK](messages/session.md#m117) and then
 
 A 300 in frame 28 is u32 1, 12 zero bytes, then "dcc message body" **[O]**.
 
+The exchange after the login, up to a chat line (frames 22-28):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant P as Client
+    C-->>P: 117 SKPK
+    P-->>C: 117 SKPK
+    C->>P: 100 Set Identity
+    P->>C: 100 Set Identity
+    C->>P: 300 Send Private Message
+```
+
 A user opens a primary connection from the Connect dialog with Type "Client".
 Joining a voice chat also opens one to each address in
 [223 Chat DCC Addresses](messages/chat.md#m223): the member who joins calls the
@@ -77,16 +91,30 @@ A voice chat is a server chat with flag bit 1 set (see the chat record in
 [222 Get Chat DCC Addresses](messages/chat.md#m222) and gets each other member's
 `ip:port`. Voice then runs on TCP between the clients, not over UDP.
 
-1. The caller opens a secondary connection to the peer's DCC port, with the
-   login `00` + the connection ID from the peer's
-   [117 SKPK](messages/session.md#m117) (0x24) and the peer's key K **[S
-   `FUN_08092240`]**.
-2. On login it sends [1000 Start Voice](messages/voice.md#m1000).
-3. The peer answers with [1001 Start Voice (R)](messages/voice.md#m1001).
-4. On 1001 the caller sends its [1002 Set Voice Format](messages/voice.md#m1002)
-   if the value is 0, or gives up.
-5. Both sides then send [1003 Voice Data](messages/voice.md#m1003) as they
-   record.
+The caller opens a secondary connection to the peer's DCC port, with the login
+`00` + the connection ID from the peer's [117 SKPK](messages/session.md#m117)
+(0x24) and the peer's key K **[S `FUN_08092240`]**. On login it sends
+[1000 Start Voice](messages/voice.md#m1000), and the peer answers with
+[1001 Start Voice (R)](messages/voice.md#m1001). On a 1001 value of 0 the caller
+sends its [1002 Set Voice Format](messages/voice.md#m1002), or else gives up.
+Both sides then send [1003 Voice Data](messages/voice.md#m1003) as they record.
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant P as Client
+    C->>S: 222 Get Chat DCC Addresses
+    S->>C: 223 Chat DCC Addresses
+    Note over C,P: secondary connection, login 00 + ID
+    C->>P: 1000 Start Voice
+    P->>C: 1001 Start Voice (R)
+    P-->>C: 1002 Set Voice Format
+    C-->>P: 1002 Set Voice Format
+    C-->>P: 1003 Voice Data
+    P-->>C: 1003 Voice Data
+```
 
 The capture confirms steps 1-3 **[O]**: 1000 and 1001 0x00640007 with the
 peer's Voice Controls closed (frames 39-40), and 1001 0 then both 1002s with

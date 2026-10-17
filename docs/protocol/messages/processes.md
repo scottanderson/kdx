@@ -25,6 +25,17 @@ Struct `CloseProcessMonitor` (dynamic):
 ## <a id="m802"></a>802 Get Process List
 Initiator: Client. Privilege: View Processes (80). **[S `FUN_0805b454`; O]**
 
+The process list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 802 Get Process List
+    S->>C: 803 Process List
+```
+
 No payload.
 
 The server runs `/bin/ps auxwww` (its own child shows

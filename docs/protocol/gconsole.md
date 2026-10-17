@@ -46,6 +46,19 @@ Opening GConsole..." shows once the proofs check out.
 ## Messages
 
 The messages are described in [messages/gconsole.md](messages/gconsole.md).
+The peer opens the window and draws, and the client sends its input back (the
+peer is drawn as Server):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    S-->>C: 4000 Open Window
+    S-->>C: 4001 Draw
+    C-->>S: 4200 Key
+    C-->>S: 4201 Mouse
+```
 
 ## Compared with view display
 

@@ -150,6 +150,17 @@ option is bit 1 of byte 0x93 of the settings blob.
 Initiator: Client. **[S]**
 Handled inline in the dispatcher **[S]**.
 
+[108 Ping](#m108) gets [109 Pong](#m109):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 108 Ping
+    S->>C: 109 Pong
+```
+
 No payload.
 
 Ping does not reset the idle timer.
@@ -163,6 +174,19 @@ No payload.
 
 ## <a id="m110"></a>110 Set Mini User Icon
 Initiator: Client. **[S `FUN_0804b6d4`; O]**
+
+The change reaches everyone, the sender included:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 110 Set Mini User Icon
+    S-->>C: 111 Mini User Icon Changed
+    S-->>O: 111 Mini User Icon Changed
+```
 
 Struct `MiniUserIcon` (4 bytes):
 
@@ -203,6 +227,17 @@ greeting.
 ## <a id="m113"></a>113 Get Extra Server Info
 Initiator: Client. **[S `FUN_080619d8`; O]**
 
+[113 Get Extra Server Info](#m113) gets [114 Extra Server Info](#m114):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 113 Get Extra Server Info
+    S->>C: 114 Extra Server Info
+```
+
 No payload.
 
 ## <a id="m114"></a>114 Extra Server Info
@@ -227,6 +262,17 @@ Struct `ExtraServerInfo` (dynamic):
 ## <a id="m115"></a>115 Get My Address
 Initiator: Client. **[S; O]**
 Handled inline in the dispatcher **[S]**.
+
+[115 Get My Address](#m115) gets [116 Your Address](#m116):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 115 Get My Address
+    S->>C: 116 Your Address
+```
 
 No payload.
 

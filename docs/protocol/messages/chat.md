@@ -9,6 +9,17 @@ voice flags. Private messages are on [their own page](private-messages.md).
 Initiator: Client. Privilege: Create Private Chat (34). **[S `FUN_08058420`; O
 `captures/linux-chat-admin.pcapng` frames 84 to 85]**
 
+A new private chat is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 200 Create Private Chat
+    S->>C: 216 Create Private Chat (R)
+```
+
 No payload.
 
 A user can have at most 10 private chats. The server
@@ -17,6 +28,20 @@ answers with [216 Create Private Chat (R)](#m216).
 ## <a id="m201"></a>201 Delete Chat
 Initiator: Client. Privilege: Create/Modify Chats (37). **[S `FUN_08059774`;
 O]**
+
+Every member gets 221 Chat Deleted before the requester gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 201 Delete Chat
+    S-->>C: 221 Chat Deleted
+    S-->>O: 221 Chat Deleted
+    S->>C: 1 Status (success)
+```
 
 Struct `ChatId` (4 bytes):
 
@@ -39,6 +64,19 @@ re-encodes [201 Delete Chat](#m201) (frames 77, 122) byte for byte (test
 ## <a id="m202"></a>202 Join Chat
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
 **[S `FUN_08058710`; O]**
+
+Joining a chat, with the other members told:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 202 Join Chat
+    S->>C: 203 Chat Window Info
+    S-->>O: 205 Chat User Joined
+```
 
 Struct `JoinChat` (8 bytes):
 
@@ -95,6 +133,18 @@ set; the payload is not padded.
 Initiator: Client. **[S `FUN_08058c0c`; O `captures/linux-chat-rooms.pcapng`
 frame 75; O `captures/kdx-cli.pcapng` frames 423 to 424]**
 
+Leaving a chat tells the other members:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 204 Leave Chat
+    S-->>O: 206 Chat User Departed
+```
+
 Struct `LeaveChat` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -143,6 +193,19 @@ unknown; [205 Chat User Joined](#m205) has 0 there. `ChatUserChange` in
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
 **[S `FUN_08058d74`; O]**
 
+The server forwards the text to every member, the sender included:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 207 Send Chat Text
+    S-->>C: 208 Receive Chat Text
+    S-->>O: 208 Receive Chat Text
+```
+
 Struct `ChatText` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -169,6 +232,19 @@ Struct `ReceiveChatText` (dynamic):
 ## <a id="m209"></a>209 Set Chat Topic
 Initiator: Client. Privilege: Set Chat Topic (35) and the chat's topic
 classes. **[S `FUN_08058eac`; O]**
+
+Members receive the new topic:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 209 Set Chat Topic
+    S-->>C: 210 Chat Topic Changed
+    S-->>O: 210 Chat Topic Changed
+```
 
 Struct `SetChatTopic` (dynamic):
 
@@ -207,6 +283,18 @@ Struct `ChatTopicChanged` (dynamic):
 ## <a id="m211"></a>211 Chat Invite
 Initiator: Client. **[S `FUN_080591ac`; O `captures/linux-chat-admin.pcapng`
 frames 87 to 88, 118 to 120]**
+
+Each invitee receives an invitation:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 211 Chat Invite
+    S-->>O: 212 Chat Invitation
+```
 
 Struct `ChatInvite` (dynamic):
 
@@ -258,6 +346,18 @@ although [216 Create Private Chat (R)](#m216) gave the chat flags 0.
 ## <a id="m213"></a>213 Must Join Chat
 Initiator: Server. **[S `FUN_0804b114`; O]**
 
+After login the server asks for the join, and the client joins chat 1:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    S-->>C: 213 Must Join Chat
+    C->>S: 202 Join Chat
+    S->>C: 203 Chat Window Info
+```
+
 No payload.
 
 The payload is empty **[O `captures/linux-chat-rooms.pcapng` frame 167]**. Sent
@@ -276,6 +376,17 @@ for chat 1 (frame 175).
 
 ## <a id="m214"></a>214 Get Chat List
 Initiator: Client. **[S `FUN_080594dc`; O]**
+
+The chat list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 214 Get Chat List
+    S->>C: 215 Chat List
+```
 
 No payload.
 
@@ -336,6 +447,21 @@ Initiator: Client. Privilege: Create/Modify Chats (37) for
 [217 Create Chat](#m217) and [220 Set Chat](#m220). **[S; O
 `captures/linux-chat-rooms.pcapng` frames 42 to 62, 85, 136 to 137]** Handler:
 **[S `FUN_08059944`]**.
+
+Creating, reading, and changing a chat record:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 217 Create Chat
+    S->>C: 1 Status (success 0xd9)
+    C->>S: 218 Get Chat
+    S->>C: 219 Chat Info
+    C->>S: 220 Set Chat
+    S->>C: 1 Status (success 0xdc)
+```
 
 217 Create Chat and 220 Set Chat carry a chat record.
 [218 Get Chat](#m218) is a u32 chat ID, and [219 Chat Info](#m219) is a chat
@@ -417,6 +543,17 @@ sent `e8 df 4d 29 00 00 00 02` to both members (frames 125, 127).
 
 ## <a id="m222"></a>222 Get Chat DCC Addresses
 Initiator: Client. **[S `FUN_0805a110`; O]**
+
+A voice chat member asks where the others listen:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 222 Get Chat DCC Addresses
+    S->>C: 223 Chat DCC Addresses
+```
 
 Struct `GetChatDccAddresses` (4 bytes):
 

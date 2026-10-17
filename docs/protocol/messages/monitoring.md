@@ -8,6 +8,21 @@ Message types 140 to 143: watching the list of connections to the server.
 Initiator: Client. **[S]**
 Handled inline in the dispatcher **[S]**.
 
+The monitor is one open, any number of polls, and one close:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 140 Open Connection Monitor
+    loop while the monitor is open
+        C->>S: 142 Get Connection Monitor Info
+        S->>C: 143 Connection Monitor Info
+    end
+    C->>S: 141 Close Connection Monitor
+```
+
 No payload.
 
 [140 Open Connection Monitor](#m140) and [141 Close Connection Monitor](#m141)

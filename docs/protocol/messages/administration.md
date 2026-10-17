@@ -10,6 +10,18 @@ record.
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to ban.
 **[S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159, 161]**
 
+The target is told:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 150 Disconnect User
+    S-->>O: 151 Disconnect Message
+```
+
 Struct `DisconnectUser` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -60,6 +72,17 @@ target, the capture doesn't tell the two apart at 0x00.
 ## <a id="m152"></a>152 Get User Info
 Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 
+[152 Get User Info](#m152) gets [153 User Info](#m153):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 152 Get User Info
+    S->>C: 153 User Info
+```
+
 Struct `GetUserInfo` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -103,6 +126,19 @@ Struct `UserInfo` (dynamic):
 ## <a id="m154"></a>154 Send Broadcast Message
 Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`; O
 `captures/linux-chat-admin.pcapng` frames 129, 130, 132]**
+
+Everyone receives the broadcast, the sender included:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 154 Send Broadcast Message
+    S-->>C: 155 Rcv Broadcast Message
+    S-->>O: 155 Rcv Broadcast Message
+```
 
 Struct `SendBroadcast` (dynamic):
 
@@ -212,6 +248,19 @@ the 171 at frame 116 of `captures/probe.pcapng` byte for byte.
 Initiator: Client.
 Handler: **[S `FUN_0805f638`]**.
 
+The settings are read, then written back:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 170 Get Server Settings
+    S->>C: 171 Server Settings Info
+    C->>S: 172 Set Server Settings
+    S->>C: 173 Set Server Settings Done
+```
+
 Struct `SetServerSettings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -235,6 +284,19 @@ The reply is empty **[O `captures/linux-server-settings.pcapng` frames 41,
 ## <a id="m174"></a>174 Shutdown Server
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
 
+Users are told before the server exits:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 174 Shutdown Server
+    S-->>C: 151 Disconnect Message (flag 4)
+    S-->>O: 151 Disconnect Message (flag 4)
+```
+
 Struct `ShutdownServer` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -254,6 +316,19 @@ exiting, mode bit 2 runs `/sbin/shutdown -h now` and bit 1
 ## <a id="m175"></a>175 Upgrade Server Software
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
 (82). **[S `FUN_0806172c`]**
+
+Users are told before the server restarts:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 175 Upgrade Server Software
+    S-->>C: 151 Disconnect Message (flag 4)
+    S-->>O: 151 Disconnect Message (flag 4)
+```
 
 No payload.
 
@@ -283,6 +358,19 @@ back about 5 s after the 151; the next login's
 ## <a id="m180"></a>180 Server History Join
 Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
 `FUN_080627f8`, `FUN_08061d80`]**
+
+A client joins the history, gets new records, and leaves:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 180 Server History Join
+    S->>C: 181 Server History Join (R)
+    S-->>C: 183 Server History Added (each new record)
+    C->>S: 182 Server History Leave
+```
 
 No payload.
 

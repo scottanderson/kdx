@@ -13,6 +13,17 @@ and its parents name no item. The u16 at offset 0x30 of a
 Initiator: Client. Privilege: Modify Folder Access (28). **[S `FUN_080572f0`; O
 `captures/linux-files.pcapng` frames 231 to 234]**
 
+On success [1100 Create Folder Access](#m1100) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1100 Create Folder Access
+    S->>C: 1 Status (success 0x44c)
+```
+
 The request is a folder access record, also read by the client's folder access
 editor **[S `FUN_080572f0`, `FUN_08057634`; O `captures/linux-files.pcapng`
 frames 226, 229, 231; O `captures/linux-accounts-folder-access.pcapng`; O
@@ -77,6 +88,17 @@ with every other field 0, and frame 234 is the success.
 Initiator: Client. Privilege: Modify Folder Access (28). **[S `FUN_08057460`; O
 `captures/linux-accounts-folder-access.pcapng` frames 70 to 71]**
 
+A delete has no Status reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1101 Delete Folder Access
+    S-->>C: 1102 Folder Access Deleted
+```
+
 The request is the item name, with no length byte:
 
 Struct `FolderAccessName` (dynamic):
@@ -108,6 +130,17 @@ server's own next txid, not the request's (`f2cfecc3` at frame 71) **[O]**.
 ## <a id="m1103"></a>1103 Get Folder Access
 Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_08057534`; O
 `captures/linux-files.pcapng` frames 225 to 229]**
+
+[1103 Get Folder Access](#m1103) gets [1104 Folder Access Info](#m1104):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1103 Get Folder Access
+    S->>C: 1104 Folder Access Info
+```
 
 The request is the item name, with no length byte (`DB` at 225, `[Default]`
 at 228):
@@ -142,6 +175,17 @@ is the 1105's record as sent, with its current name
 Initiator: Client. Privilege: Modify Folder Access (28). **[S `FUN_08057634`; O
 `captures/linux-accounts-folder-access.pcapng` frames 63, 66]**
 
+On success [1105 Set Folder Access](#m1105) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1105 Set Folder Access
+    S->>C: 1 Status (success 0x451)
+```
+
 The request is a folder access record:
 
 Struct `SetFolderAccess` (dynamic):
@@ -160,6 +204,17 @@ See Folder for Guest alone and then for User alone sets 0x14 and then 0x10
 
 ## <a id="m1106"></a>1106 Get Folder Access List
 Initiator: Client. Privilege: View Folder Access (27). **[S `FUN_080578d8`; O]**
+
+The folder access list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 1106 Get Folder Access List
+    S->>C: 1107 Folder Access List
+```
 
 The request is empty or a u32; `kdx_proto::msg::admin::GetFolderAccessList`
 keeps the u32 and any bytes after it:

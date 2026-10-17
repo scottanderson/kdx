@@ -24,6 +24,17 @@ re-encodes each request below byte for byte (test `linux_files`).
 ### <a id="m400"></a>400 Get File List
 Initiator: Client. **[S `FUN_0804d938`; O]**
 
+A folder listing is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 400 Get File List
+    S->>C: 401 File List
+```
+
 Struct `GetFileList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -586,6 +597,17 @@ In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
 ### <a id="m452"></a>452 File Search
 Initiator: Client. **[S `FUN_0805abc0`; O
 `captures/linux-catalog-volumes.pcapng` frames 28 to 29]**
+
+A search is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 452 File Search
+    S->>C: 453 File Search (R)
+```
 
 The request is at least 0x58 bytes. Byte 0x54 is the query length (at least 3;
 the client checks this too), and the query starts at 0x58.

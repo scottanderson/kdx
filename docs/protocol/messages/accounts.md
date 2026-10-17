@@ -7,6 +7,18 @@ Message types 502 to 551: accounts, user classes, privileges, and passwords.
 ## <a id="m502"></a>502 Get Account Class
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080552b8`; O]**
 
+A class is read with [502 Get Account Class](#m502), and the server replies with
+[503 Account Class Info](#m503):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 502 Get Account Class
+    S->>C: 503 Account Class Info
+```
+
 Struct `AccountClassIndex` (1 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -45,6 +57,17 @@ The padding after the name is uninitialised (`@`, `.` in the lab) **[O]**;
 ## <a id="m504"></a>504 Set Account Class
 Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_080553c8`; O]**
 
+The server answers [504 Set Account Class](#m504) with 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 504 Set Account Class
+    S->>C: 1 Status (success 0x1f8)
+```
+
 The request is a [503 Account Class Info](#m503) record (at least 0x38 bytes)
 with the class index at 0x30.
 
@@ -68,6 +91,17 @@ Logged-in users of that class get the new privileges at once (`FUN_08054900`).
 Initiator: Client. Any one of View Folder Access (27), Create/Modify Chats
 (37), View Accounts (50), or Create/Modify Newsgroups (73), since every
 class-list editor uses it **[I]**. **[S `FUN_0805572c`; O]**
+
+The class list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 505 Get Account Class List
+    S->>C: 506 Account Class List
+```
 
 No payload.
 
@@ -115,6 +149,17 @@ Struct `AccountClassListEntry` (dynamic):
 
 ## <a id="m507"></a>507 Create Account
 Initiator: Client. Privilege: Create Accounts (51). **[S `FUN_08055928`; O]**
+
+On success [507 Create Account](#m507) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 507 Create Account
+    S->>C: 1 Status (success 0x1fb)
+```
 
 The request is an account record:
 
@@ -187,6 +232,18 @@ A requester with bit 0 passes.
 ## <a id="m508"></a>508 Delete Account
 Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_08055d50`; O]**
 
+There is no reply to [508 Delete Account](#m508), only 515 Account Deleted to
+the requester:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 508 Delete Account
+    S-->>C: 515 Account Deleted
+```
+
 The request is the login, with no length byte:
 
 Struct `AccountLogin` (dynamic):
@@ -210,6 +267,17 @@ Errors:
 
 ## <a id="m509"></a>509 Get Account
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_08055e98`; O]**
+
+[509 Get Account](#m509) gets [510 Account Info](#m510):
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 509 Get Account
+    S->>C: 510 Account Info
+```
 
 The request is the account's login, with no length byte (`AccountLogin`, as in
 [508 Delete Account](#m508) and [515 Account Deleted](#m515)):
@@ -241,6 +309,17 @@ Struct `AccountInfo` (dynamic):
 ## <a id="m511"></a>511 Set Account
 Initiator: Client. Privilege: Modify Accounts (52). **[S `FUN_08055ff4`; O]**
 
+On success [511 Set Account](#m511) gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 511 Set Account
+    S->>C: 1 Status (success 0x1ff)
+```
+
 The request is an account record whose editor field holds the current login:
 
 Struct `SetAccount` (dynamic):
@@ -265,6 +344,17 @@ Errors:
 
 ## <a id="m512"></a>512 Get Account List
 Initiator: Client. Privilege: View Accounts (50). **[S `FUN_080566bc`; O]**
+
+The account list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 512 Get Account List
+    S->>C: 513 Account List
+```
 
 No payload.
 
@@ -330,6 +420,17 @@ notification (its own txid, reply bit clear) (frames 607-610).
 ## <a id="m550"></a>550 Change Own Password
 Initiator: Client. Privilege: Change Own Password (53). **[S `FUN_08056a04`;
 O]**
+
+A password change is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 550 Change Own Password
+    S->>C: 551 Change Own Password Done
+```
 
 The request is the 32-byte key of the new password, not the password
 (`kdx_proto::msg::admin::ChangeOwnPassword`):
