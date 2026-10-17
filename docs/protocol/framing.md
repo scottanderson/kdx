@@ -146,8 +146,8 @@ Function addresses by Ghidra project (`re/README.md`):
 | `KDXTrackerServ1110-Win` | `FUN_00414d00` | none | `FUN_00413990` |
 | `KDXTrackerServ1110-Lnx` | `FUN_080885dc` | `FUN_08088ae0` | `FUN_08087c20` |
 
-Client 1.110 is `KDXClient-Win.zip` from a local download dated 2003-12-15.
-It isn't in `vendor/MANIFEST.md` because no Wayback capture of it was found.
+Client 1.110 is `KDXClient-Win.zip` from a 2003-12-15 Wayback capture of
+Haxial's downloadstatic folder (`vendor/MANIFEST.md`).
 
 ## Messages
 
