@@ -1,84 +1,84 @@
 # Status
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
-Message type 1: the reply that carries a result code, for an error or for a
-success. The codes are in [Error codes](#error-codes).
+Message type 1 is the reply that carries a result code, for an error or a
+success. [Error codes](#error-codes) lists the codes.
 
 ## <a id="m1"></a>1 Status
+Initiator: Server. A tracker and a DCC peer send it too. It is always a
+reply. <!-- [S `FUN_08086640`, `FUN_080865c0`; O] -->
 
-Initiator: Server. A tracker and a DCC peer send it too. Sent as a reply. <!-- [S `FUN_08086640`, `FUN_080865c0`; O] -->
+The dispatcher (`FUN_0804fdac`) runs each handler in a C++ `try`. The catch at
+0x0805090c changes the exception into a 1 Status reply to the request's txid.
+Some handlers also send 1 Status when they succeed.
 
-The dispatcher (`FUN_0804fdac`) runs each handler inside a C++ `try`. The
-catch at 0x0805090c turns the exception into a [1 Status](#m1) reply to the
-request's txid. Some handlers also send 1 Status on success.
-
-Every form starts with two u32 words, and the server's error form adds 16
-more bytes, so the payload is 8 or 24 bytes.
+Each form starts with two u32 words. The server's error form adds 16 more bytes,
+so the payload is 8 or 24 bytes.
 
 Struct `Status` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | code | 0 in the success form; otherwise an error code (see [Error codes](#error-codes)) |
-| 0x04 | 4 | u32 | request_type_or_value | the request type in an error, e.g. 0x98 for a failed [152 Get User Info](administration.md#m152); <!-- [O] --> the value in the success form |
-| 0x08 | rest | StatusDetail[] | detail | the server's 24-byte error form only; absent from the success form and the tracker form. `rest` holds at most one `StatusDetail`, never more |
+| 0x00 | 4 | u32 | code | 0 in the success form. If not, an error code; see [Error codes](#error-codes). |
+| 0x04 | 4 | u32 | request_type_or_value | In an error, the request type, such as 0x98 for a failed [152 Get User Info](administration.md#m152). <!-- [O] --> In the success form, the value. |
+| 0x08 | rest | StatusDetail[] | detail | Only in the server's 24-byte error form, not in the success form or the tracker form. It holds at most one `StatusDetail`. |
 
 Struct `StatusDetail` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | module | source module tag of the raise site, ASCII packed into an integer (`0x54524e` = `TRN`; 0x46 for the path code) |
-| 0x04 | 4 | u32 | line | source line of the raise site |
-| 0x08 | 4 | u32 | extra | a value the raise site passes along |
+| 0x00 | 4 | u32 | module | The module tag of the code that gave the error, as ASCII packed into an integer: `0x54524e` is `TRN`, and 0x46 is the path code. |
+| 0x04 | 4 | u32 | line | The source line of the code that gave the error. |
+| 0x08 | 4 | u32 | extra | A value from the code that gave the error. |
 | 0x0c | 4 | u32 | ignored | 0 as sent. |
 
-The error form is 24 bytes: the `code` and `request type or value` rows, and
-one `StatusDetail` in `detail`.
+The error form is 24 bytes: `code`, `request_type_or_value`, and one
+`StatusDetail` in `detail`. For example: <!-- [O] -->
 
-<!-- [O] --> examples:
+- `152:00000003` (there is no user 3) gets `00 01 00 0c 00 00 00 98 00…`, which
+  is 0x1000c, item does not exist.
+- `400:0000` (a malformed path) gets `00 01 00 0a 00 00 01 90 00 00 00 46 00 00
+  00 98…`, which is 0x1000a, corrupt, from module 0x46 at line 0x98 of
+  `FUN_080969f8`.
 
-- `152:00000003` (no user 3) returns `00 01 00 0c 00 00 00 98 00…`, which is
-  0x1000c item does not exist.
-- `400:0000` (malformed path) returns `00 01 00 0a 00 00 01 90 00 00 00 46
-  00 00 00 98…`, which is 0x1000a corrupt, raised in module 0x46 at line
-  0x98 of `FUN_080969f8`.
+The success form is 8 bytes: `code` is 0, and `request_type_or_value` is the
+value, which is often the request type. <!-- [S `FUN_080865c0`] --> [507 Create
+Account](accounts.md#m507) gets the value 0x1fb, and [511 Set
+Account](accounts.md#m511) gets 0x1ff. <!-- [O `captures/kdx-accounts.pcapng`
+frames 235, 413] --> [201 Delete Chat](chat.md#m201) gets 0xc9, [217 Create
+Chat](chat.md#m217) 0xd9, [220 Set Chat](chat.md#m220) 0xdc, and [504 Set
+Account Class](accounts.md#m504) 0x1f8. <!-- [O
+`captures/linux-chat-rooms.pcapng` frames 81, 45, 55, 148] -->
 
-Success form, 8 bytes: the `code` row is 0 and the `request type or value` row
-is the value, often the request type. <!-- [S `FUN_080865c0`] -->
-[507 Create Account](accounts.md#m507) gets value 0x1fb and
-[511 Set Account](accounts.md#m511) 0x1ff.
-<!-- [O `captures/kdx-accounts.pcapng` frames 235, 413] -->
-[201 Delete Chat](chat.md#m201) gets 0xc9, [217 Create Chat](chat.md#m217) 0xd9,
-[220 Set Chat](chat.md#m220) 0xdc, and [504 Set Account Class](accounts.md#m504)
-0x1f8. <!-- [O `captures/linux-chat-rooms.pcapng` frames 81, 45, 55, 148] -->
-
-The client renders an error as `ID ^0/^1 [^2] @ ^3 #^4`, filling in the
-code's class and number, the module, and the line. <!-- [S] -->
+The client shows an error as `ID ^0/^1 [^2] @ ^3 #^4`, with the class and number
+of the code, the module, and the line. <!-- [S] -->
 
 ### Tracker form
 
-The tracker's error Status is 8 bytes: the `code` and `request type or value`
-rows only, like the first 8 bytes of the server's 24-byte error form above: <!-- [O `captures/linux-tracker.pcapng` frames 61, 164; O `captures/kdx-cli-tracker.pcapng` frames 39, 53] -->
+The tracker's error Status is 8 bytes: only `code` and `request_type_or_value`,
+the same as the first 8 bytes of the server's error form. <!-- [O
+`captures/linux-tracker.pcapng` frames 61, 164; O
+`captures/kdx-cli-tracker.pcapng` frames 39, 53] -->
 
 ```
 00 01 00 14  00 00 02 c6    0x10014 for 710
 ```
 
-Verified: `kdx-proto` decodes frame 61 as `Status::TrackerError` and
-re-encodes it byte for byte. <!-- [O] -->
+`kdx-proto` decodes frame 61 as `Status::TrackerError`, and encodes it again
+byte for byte. <!-- [O] -->
 
 ### Client to client
 
-A DCC primary connection handles 1 as a status reply, with no other detail
-known (see [dcc.md](../dcc.md#primary-connection)). <!-- [S] -->
+A DCC primary connection handles 1 as a status reply. Nothing more is known
+about it; see [dcc.md](../dcc.md#primary-connection). <!-- [S] -->
 
 ## Error codes
 
-The codes carried by [1 Status](#m1).
+These are the codes in [1 Status](#m1).
 
-The server's name table is `FUN_08066d04`. It has 79 entries: the codes are
-at 0x080b1dc0 and the text pointers at 0x080b1f00. <!-- [S] --> The high 16 bits
+The server's name table is `FUN_08066d04`. It has 79 entries, with the codes at
+0x080b1dc0 and the text pointers at 0x080b1f00. <!-- [S] --> The high 16 bits
 give the class.
 
 | Code | Meaning |
@@ -147,6 +147,6 @@ give the class.
 | 0x40077 | Banned for flooding. |
 | 0x50064-0x50066 | sound errors |
 
-Codes outside the table also occur. [507 Create Account](accounts.md#m507) and
-[511 Set Account](accounts.md#m511) raise 0x640005 when the account would hold a
-privilege the requester lacks. <!-- [S `FUN_080551b0`] -->
+Some codes are not in the table. [507 Create Account](accounts.md#m507) and [511
+Set Account](accounts.md#m511) give 0x640005 if the account would get a
+privilege that the requester does not have. <!-- [S `FUN_080551b0`] -->

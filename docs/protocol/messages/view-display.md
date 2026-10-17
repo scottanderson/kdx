@@ -1,6 +1,6 @@
 # View display messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 900 to 905: remote viewing of the server host screen.
 

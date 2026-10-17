@@ -1,6 +1,6 @@
 # Chat messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 200 to 223: public and private chat rooms, invitations, and
 voice flags. Private messages are on [their own page](private-messages.md).

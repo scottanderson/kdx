@@ -1,6 +1,6 @@
 # Account messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 502 to 551: accounts, user classes, privileges, and passwords.
 

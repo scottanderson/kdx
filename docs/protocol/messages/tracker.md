@@ -1,6 +1,6 @@
 # Tracker messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 700 to 721: what a client and a tracker exchange over TCP after
 the login described in [tracker.md](../tracker.md#browsing-tcp). The tracker

@@ -1,6 +1,6 @@
 # Folder access messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 1100 to 1107: per-folder access rules.
 

@@ -1,39 +1,40 @@
 # Messages
 
-Tags, hex, and struct tables: see [Conventions](../README.md#conventions).
-Field names are the `kdx-proto` field names, and the other bytes are named as
-in the [special field names](../README.md#special-field-names).
+For hex and struct tables, see [Conventions](../README.md#conventions). Field
+names are the `kdx-proto` field names. Other bytes have the [special field
+names](../README.md#special-field-names).
 
-Every message type, in order, grouped by the page that describes it. Each page
-covers one contiguous range of type numbers, so a type's page can be found from
-its number alone.
+This page lists all message types in order, grouped by the page that describes
+them. Each page covers one range of types, so the type number alone tells you
+the page.
 
 A KDX connection is one of four kinds, set by the sub-version of the sender's
-hello (see [handshake.md](../handshake.md#connection-types)): client to client
-(DCC), client to server, client to tracker, and client to GConsole. Each kind
-has a column. A cell names who sends the message on that kind of connection:
-Client, Server, Tracker or GConsole. On a DCC connection it is Caller or Callee
-for the two ends of a voice call, or Either when both sides send it. A blank
-cell means the kind has no handler for the message, or nothing shows one.
-<!-- [S] --> Most messages belong to the server. A server tells a tracker it
-exists by a UDP datagram, which has no message type; see [udp.md](../udp.md).
+hello; see [handshake.md](../handshake.md#connection-types). The kinds are
+client to client (DCC), client to server, client to tracker, and client to
+GConsole. Each kind has a column. A cell names the sender of the message on that
+kind of connection: Client, Server, Tracker, or GConsole. On a DCC connection,
+Caller and Callee are the two ends of a voice call, and Either means that both
+sides send it. A blank cell means that the kind has no handler for the message,
+or that no evidence shows one. <!-- [S] --> Most messages belong to the server.
+A server tells a tracker that it exists with a UDP datagram, which has no
+message type; see [udp.md](../udp.md).
 
-Each message has a stable link made of the page that describes it and its
-type number: [chat.md#m200](chat.md#m200) is 200 Create Private Chat. The
-Message column links to it. The header and the rules for requests and replies
-are in [the protocol overview](../README.md#messages), and where the names come
-from is in [its message types section](../README.md#message-types).
+Each message has a stable link, made of its page and its type number:
+[chat.md#m200](chat.md#m200) is 200 Create Private Chat. The Message column
+links to it. [The protocol overview](../README.md#messages) gives the header and
+the rules for requests and replies, and [Message
+types](../README.md#message-types) tells where the names come from.
 
 ## How to read the tables
 
-- **Request:** sent by the one that wants something done. The Role column
-  names the reply, when there is one.
-- **Reply:** sent back for a request, with the request's transaction ID and
-  the reply bit set.
-- **Notification:** sent on its own, without a request from the receiver. It
-  may follow some other message, as the Role column says.
+- **Request:** a message that asks for something. The Role column names the
+  reply, if there is one.
+- **Reply:** the answer to a request. It has the request's transaction ID, and
+  the reply bit is set.
+- **Notification:** a message that the receiver did not ask for. The Role column
+  says if it follows some other message.
 - **Data:** the bytes of a transfer or a stream, sent after a request.
-- A reply has a `↳` before its name, and the Role column links the request
+- A `↳` comes before the name of a reply, and the Role column links the request
   and the reply to each other.
 
 ## Messages by page

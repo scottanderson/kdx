@@ -1,6 +1,6 @@
 # File messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 400 to 453: listings, folders, deletion, file info, downloads
 and uploads, launching, the trash, volumes, the catalog, and search.

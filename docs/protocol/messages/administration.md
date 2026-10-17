@@ -1,6 +1,6 @@
 # Administration messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 150 to 183: disconnects, user info, broadcasts, server settings,
 shutdown, upgrades, and server history; and 184 to 191, the kinds of history

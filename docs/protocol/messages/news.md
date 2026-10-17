@@ -1,6 +1,6 @@
 # News messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 600 to 614: newsgroups and their messages.
 

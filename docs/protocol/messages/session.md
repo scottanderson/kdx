@@ -1,6 +1,6 @@
 # Session messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 100 to 118: setup, identity, user list, server information,
 greeting, ping, and the key exchange between clients.

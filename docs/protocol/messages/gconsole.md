@@ -1,6 +1,6 @@
 # GConsole messages
 
-Tags, hex, and field notation: see [Conventions](../README.md#conventions).
+For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 4000 to 4201, on the connection described in
 [gconsole.md](../gconsole.md).
