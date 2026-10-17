@@ -44,7 +44,7 @@ for each 32-bit big-endian word w[i]:
 Only whole words are XORed, so the sender pads the datagram to a multiple of 4.
 
 `kdx-proto` decodes registrations 23, 78, and 255, and encodes them again byte
-for byte. <!-- [O] --> crates/kdx-proto/tests/linux_tracker.rs
+for byte. <!-- [O] crates/kdx-proto/tests/linux_tracker.rs -->
 
 ## Layout
 

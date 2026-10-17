@@ -101,9 +101,9 @@ field:
   - `rest`: the field runs to the end of the payload.
   - `pad4`: zero to three bytes, up to a multiple of 4 from the start of the
     struct.
-  - The name of an earlier field that holds the length. A `str`, a `u8[]`,
-    or a single struct has a `<field>_len` that counts bytes. Any other array
-    has a `<field>_count` that counts elements.
+  - The name of an earlier field that holds the length. A `str`, a `u8[]`, or a
+    single struct has a `<field>_len` that counts bytes. Any other array has a
+    `<field>_count` that counts elements.
 - **Type** is a primitive or the name of a struct. `[N]` after it makes an array
   of N elements, as in `u8[12]`, and `[]` makes an array of variable size. `str`
   is text of variable size. `str[N]` is N strings, whose lengths are the N
@@ -234,8 +234,8 @@ sequenceDiagram
 - A **request** has the next txid of the sender, and the reply bit (bit 0 of the
   flags byte) is clear.
 - A **reply** has the txid of its request, and the reply bit is set. The server
-  sets the bit only when it answers a request. <!-- [S; O] --> FUN_080863b4
-  receives the request's txid.
+  sets the bit only when it answers a request. <!-- [S; O] FUN_080863b4 receives
+  the request's txid. -->
 - A **notification** is a message that the server sends on its own. It has its
   own txid, and the reply bit is clear. For example, when a user logs in, the
   server sends [103 User Joined](messages/session.md#m103) to all other
@@ -255,8 +255,8 @@ when they succeed. <!-- [S; O] -->
 
 [messages/README.md](messages/README.md) lists all message types. For each type,
 it gives the connection that carries it, the sender, and the page that describes
-it. The names come from the name table in the server. <!-- [S] --> FUN_08049d14,
-jump table at 0x080abc6c. In those names, (R) means reply, (D) data, (C)
+it. The names come from the name table in the server. <!-- [S] FUN_08049d14,
+jump table at 0x080abc6c. --> In those names, (R) means reply, (D) data, (C)
 complete, and (S) status. The server ignores a type that it does not know, and
 sends no reply. <!-- [S] --> Types 4000 to 4201 belong to GConsole, not to the
 server, so their names are provisional; see [gconsole.md](gconsole.md).

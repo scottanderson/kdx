@@ -14,8 +14,8 @@ to a multiple of 4. The padding bytes are uninitialized memory, so ignore them,
 such as the `86 ab` at the end of the first entry in the [401 File
 List](messages/files.md#m401) example. <!-- [O] --> `kdx-proto` still keeps
 them, with any other bytes that it does not model, and writes them back, so a
-decoded payload encodes to the same bytes. <!-- [O] --> kdx-dissect --audit over
-every capture
+decoded payload encodes to the same bytes. <!-- [O] kdx-dissect --audit over
+every capture -->
 
 Text is UTF-8 in the 1.6 builds, but the Linux server passes file names through
 as raw bytes:
@@ -49,7 +49,7 @@ as raw bytes:
 - Server 1.620 for Linux copies `readdir64` names without change
   (`FUN_08091b6c`), so a name is the bytes on disk. <!-- [S] --> Names copied
   from a classic Mac, or uploaded by an older client, can be Mac OS Roman, such
-  as `Erik’s` with byte 0xd5. <!-- [O] --> user report The Mach-O and Linux
+  as `Erik’s` with byte 0xd5. <!-- [O] user report --> The Mach-O and Linux
   trackers also read their folders with raw `readdir`. <!-- [S] -->
 
 Chat, nicks, and news follow from this. Each client makes text from UTF-16 or
@@ -57,7 +57,7 @@ UTF-8 input and has no other codec, so it sends UTF-8. <!-- [I] --> Servers
 relay chat bytes without decoding them. [207 Send Chat
 Text](messages/chat.md#m207) copies the text into [208 Receive Chat
 Text](messages/chat.md#m208) after it cuts the message to 0x1000 bytes, which
-can split a multi-byte character. <!-- [S] --> FUN_08058d74
+can split a multi-byte character. <!-- [S] FUN_08058d74 -->
 
 The Linux client and server confirm this. Client 1.620 beta 5 sends UTF-8 in
 207, [300 Send Private Message](messages/private-messages.md#m300), [611 Post
@@ -82,10 +82,10 @@ The decoders never fail. Each invalid sequence becomes one U+FFFD:
   that it claims.
 - A sequence cut off at the end uses the rest.
 
-So `Erik\xd5s` shows as `Erik�`, and the `s` is lost. <!-- [S] --> Windows
-client 0x00457190, Windows server FUN_00428490, Linux client FUN_080e75d8 The
-Linux client shows `caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses the
-space after it, so the client draws three boxes. <!-- [O
+So `Erik\xd5s` shows as `Erik�`, and the `s` is lost. <!-- [S] Windows client
+0x00457190, Windows server FUN_00428490, Linux client FUN_080e75d8 --> The Linux
+client shows `caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses the space
+after it, so the client draws three boxes. <!-- [O
 `captures/linux-text-encoding.pcapng` frames 195, 302] --> In the other
 direction, a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`). <!-- [S] -->
 
@@ -173,7 +173,7 @@ Struct `UserRecord` (dynamic):
 | 0x00 | 4 | u32 | user_id | The server assigns it. 0 in 100 Set Identity. |
 | 0x04 | 1 | u8 | status | The value that [110 Set Mini User Icon](messages/session.md#m110) sets. |
 | 0x05 | 5 | u8[5] | ignored_05 | 0 as sent. |
-| 0x0a | 2 | u16 | client_port | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] --> 10600 in the capture |
+| 0x0a | 2 | u16 | client_port | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
 | 0x0c | 2 | u16 | icon_len |  |
 | 0x0e | 6 | u8[6] | colors | From the client: two 3-byte RGB colors. <!-- [S client `FUN_0804d654`] --> `00 00 00 ff cc 00` in the capture. |
 | 0x14 | 1 | u8 | server_14 | Set by the server. 0 from the client, and 0xff for admin. <!-- [O] --> |

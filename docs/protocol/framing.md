@@ -33,8 +33,8 @@ bytes from the server, with the handshakes. <!-- [O] -->
 
 Before the header block is encrypted, it goes through a scramble with no key.
 The server installs the scramble as the connection's header hook. <!-- [S; O]
---> The hook is at +0x08; FUN_08052ad0 sets it to FUN_0804a510, and the
-transport's default does nothing. The client uses the same scramble, because its
+The hook is at +0x08; FUN_08052ad0 sets it to FUN_0804a510, and the transport's
+default does nothing. --> The client uses the same scramble, because its
 messages decode with the same inverse.
 
 Let `h0..h3` be the four 32-bit words of the header, and `w0..w3` the words
@@ -77,7 +77,7 @@ of the wire format. <!-- [S `FUN_080868b4`, `FUN_08086108`] -->
 | Client 1.600 receiving from a server | 0x100000 <!-- [S client `FUN_0046d430`, client `FUN_00402310`, client `FUN_0046e860`] --> | 0x40075 past the cap |  |
 | Tracker receiving on a TCP browse connection | 0x10000 <!-- [S `FUN_0804bd9c`] --> | unknown | [tracker.md](tracker.md#connection) |
 | Receive path, bits 32 to 47 of the length | must be zero <!-- [S `FUN_08086108`] --> | 0x40075, as for any length past the cap |  |
-| Transfer data header, bits 32 to 47 of the length | set when a fork has more than 4 GiB left. A [414 Download File (D)](messages/files.md#m414) from `kdx.erb.pw` had byte 0x0b = 0x01. <!-- [O] --> not captured | unknown |  |
+| Transfer data header, bits 32 to 47 of the length | set when a fork has more than 4 GiB left. A [414 Download File (D)](messages/files.md#m414) from `kdx.erb.pw` had byte 0x0b = 0x01. <!-- [O] not captured --> | unknown |  |
 | Transfer data (414, 417) | one header covers the whole fork, past the normal caps <!-- [O `captures/kdx-cli.pcapng` frames 133, 190] --> | none seen | [files.md](messages/files.md#m414) |
 | Hello in the handshake | 0x800 <!-- [S `FUN_080876e8`] --> | 0x40075 | [handshake.md](handshake.md#hello) |
 | Chat text in 207 Send Chat Text | 0x1000 <!-- [S `FUN_08058d74`] --> | The server cuts the message, which can split a multi-byte character. | [encodings.md](encodings.md#strings) |
@@ -85,8 +85,8 @@ of the wire format. <!-- [S `FUN_080868b4`, `FUN_08086108`] -->
 The sender also has a path that sends only a header (`FUN_080868b4`), and then
 chunks that are encrypted separately (`FUN_08086a9c`). The server sends each 414
 Download File (D) through this path, with the fork's remaining length as a
-64-bit value. <!-- [S `FUN_08050984`, `FUN_080512b4`] --> FUN_08050984 at
-0x0805101f
+64-bit value. <!-- [S `FUN_08050984`, `FUN_080512b4`] FUN_08050984 at 0x0805101f
+-->
 
 ## Across versions
 
@@ -104,7 +104,7 @@ They differ only in how they give the error. Server 1.620 and Client betas 4 and
 
 All 1.x builds have the four constants of the header scramble: Windows, Linux,
 Mac PEF, and Mach-O, from Client 1.110 and Server 1.300 on. The `%HGC` constants
-first appear in Client 1.320. <!-- [S] --> re/scan_consts.py The x86 builds use
+first appear in Client 1.320. <!-- [S] re/scan_consts.py --> The x86 builds use
 the constants in the same scramble. The Mac builds are not decompiled, but
 probably do the same. <!-- [I] -->
 

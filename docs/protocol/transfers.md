@@ -16,8 +16,8 @@ Info](messages/session.md#m105) names a file transfer port, the client connects
 to that port instead. <!-- [S client `FUN_08052cc0`] -->
 
 1. The client connects and does the normal handshake with a special login:
-   - The login name is 5 bytes: `00`, then the u32 user ID from 105 Server
-     Info offset 0x24.
+   - The login name is 5 bytes: `00`, then the u32 user ID from 105 Server Info
+     offset 0x24.
    - The account key is the 32 bytes at 105 Server Info offset 0x00, not a
      password hash.
 2. The server accepts the login only if that user is logged in, connects from
@@ -31,10 +31,9 @@ to that port instead. <!-- [S client `FUN_08052cc0`] -->
    - [402 Create Folder](messages/files.md#m402)
    - [412 Download File](messages/files.md#m412)
    - [415 Upload File](messages/files.md#m415)
-   - [900 Open View Display](messages/view-display.md#m900),
-     [904 View Display Mouse](messages/view-display.md#m904), and
-     [905 View Display Keyboard](messages/view-display.md#m905), for view
-     display
+   - [900 Open View Display](messages/view-display.md#m900), [904 View Display
+     Mouse](messages/view-display.md#m904), and [905 View Display
+     Keyboard](messages/view-display.md#m905), for view display
 4. A connection runs one transfer at a time. If a second 412 Download File or
    415 Upload File arrives during a transfer, the server replies [1
    Status](messages/status.md#m1) 0x10003. When the transfer ends, the

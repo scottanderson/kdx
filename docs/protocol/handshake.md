@@ -60,10 +60,10 @@ Struct `Hello` (dynamic):
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | key | not stored. The random XOR key, sent in the clear. |
-| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Any other value gives error 0x40071 at TRN line 941. <!-- [S; O] --> lab probe |
+| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Any other value gives error 0x40071 at TRN line 941. <!-- [S; O] lab probe --> |
 | 0x08 | 4 | char[4] | sub_protocol | `"%KDX"` (0x254b4458) between a client and a server. <!-- [S; O] --> A GConsole peer sends `"%HGC"` (0x25484743), which a client accepts with sub-version 0x40; see [gconsole.md](gconsole.md#handshake). <!-- [S `FUN_0804b824`; O] --> |
 | 0x0c | 1 | u8 | version | `1`. 0 means that the peer is too old (0x40072), and more than 1 means that it is too new (0x40073). <!-- [S] --> |
-| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, and Server 1.620 sends `0x20`. <!-- [O `captures/linux-first-connect.pcapng` frames 8, 10] --> Tracker 1.110 sends `0x30`, <!-- [S] --> and a GConsole peer sends `0x40`. <!-- [S; O] --> Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (else 0x40072 below, 0x40073 above). <!-- [S server `0x080526e0`, tracker `FUN_0804bb4c`] --> version callback at +0x88 |
+| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, and Server 1.620 sends `0x20`. <!-- [O `captures/linux-first-connect.pcapng` frames 8, 10] --> Tracker 1.110 sends `0x30`, <!-- [S] --> and a GConsole peer sends `0x40`. <!-- [S; O] --> Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (else 0x40072 below, 0x40073 above). <!-- [S server `0x080526e0`, tracker `FUN_0804bb4c`] version callback at +0x88 --> |
 | 0x0e | 1 | u8 | pad_len | 0 as sent. <!-- [S; O] --> |
 | 0x0f | 1 | u8 | name_len | 0 to 31. The receiver keeps at most 31 bytes. <!-- [S `FUN_08085a04`] --> |
 | 0x10 | 4 | u8[4] | ignored | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
@@ -131,8 +131,8 @@ The constant for an empty password is not what the formula gives for an empty
 input. Words 0, 2, 4, 6, and 7 are the five words of SHA-1(""), and words 1, 3,
 and 5 are other values. Use the bytes exactly as they are above. Both sides of a
 guest login use them. <!-- [O `captures/kdx-news.pcapng`; O
-`captures/linux-accounts-news.pcapng` frames 94 to 100] --> the kdx CLI on port
-40434, and Client 1.620 beta 5
+`captures/linux-accounts-news.pcapng` frames 94 to 100] the kdx CLI on port
+40434, and Client 1.620 beta 5 -->
 
 The server stores this 32-byte key for each account, so `Accounts.dat` alone
 does not give the password. <!-- [I] -->
@@ -198,12 +198,12 @@ There are three tables:
 | `All your base are belong to us!` | 31 (0x1f) | a connection made with no table. No caller in the client or server does that. <!-- [S `FUN_0808529c`] --> |
 
 Each connection starts with the KDX story, which goes to the
-constructor. <!-- [S] --> client FUN_080ea08c, nine callers; server
-FUN_08085328, one caller in FUN_08052ad0 After the peer's hello, the client
-changes to the GConsole story. So the client picked the challenge that it sent
-from the KDX story's length, but answers it from the GConsole story. All client,
-server, and tracker builds hold the 31-byte default, but no caller in Client
-1.620 beta 5 or Server 1.620 gives a length of 0. <!-- [S] -->
+constructor. <!-- [S] client FUN_080ea08c, nine callers; server FUN_08085328,
+one caller in FUN_08052ad0 --> After the peer's hello, the client changes to the
+GConsole story. So the client picked the challenge that it sent from the KDX
+story's length, but answers it from the GConsole story. All client, server, and
+tracker builds hold the 31-byte default, but no caller in Client 1.620 beta 5 or
+Server 1.620 gives a length of 0. <!-- [S] -->
 
 ### The KDX story
 
@@ -285,7 +285,7 @@ made as `re/README.md` describes.
 |---|---:|---|
 | `%KDX` | 1 | Client and Server 0.915 to 0.921 <!-- [S server `FUN_10005b40`, client `FUN_10000a50`] --> |
 | `%KDt` | 1 | Tracker 0.900 and 0.902, and Client 0.920 and 0.921 when they browse a tracker <!-- [S tracker `0x1000154c`, client `FUN_1001b410`] --> |
-| `%NFO` | 1 | NetFone 1.400, probably. The tag and the argument 1 have the same call shape as in the KDX programs. <!-- [I] --> read from the raw code, because Ghidra 12.1.4's PEF loader fails on NetFone's relocations |
+| `%NFO` | 1 | NetFone 1.400, probably. The tag and the argument 1 have the same call shape as in the KDX programs. <!-- [I] read from the raw code, because Ghidra 12.1.4's PEF loader fails on NetFone's relocations --> |
 
 A peer must send the same sub-protocol and exactly the same sub-version. If not,
 the error is 0x40071, or 0x40072 or 0x40073. <!-- [S `FUN_100350b0`] --> Clients

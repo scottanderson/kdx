@@ -16,8 +16,8 @@ The static evidence comes from these Ghidra projects; see `re/README.md`:
 ## Ports
 
 The tracker opens TCP and UDP on the same port, 10800 (0x2a30) by
-default. <!-- [S tracker `FUN_0804c540`, tracker `FUN_0804c7a8`] -->
-FUN_0804c540 sets it, with the default in FUN_0804c7a8
+default. <!-- [S tracker `FUN_0804c540`, tracker `FUN_0804c7a8`] FUN_0804c540
+sets it, with the default in FUN_0804c7a8 -->
 
 If a tracker address has no `:port`, the server adds `:10800` before it sends a
 registration. <!-- [S server `FUN_08060e4c`] --> The client picks the default
@@ -56,10 +56,10 @@ The login works like this: <!-- [S `FUN_0804bb78`] -->
   Settings](messages/tracker.md#m710), [712 Set TrackerServ
   Settings](messages/tracker.md#m712), and [720 Get TrackerServ
   Statistics](messages/tracker.md#m720) need this bit, and give 0x10014 without
-  it. <!-- [O] --> frames 61 and 164, for a guest's 710 and 720
+  it. <!-- [O] frames 61 and 164, for a guest's 710 and 720 -->
 - With a wrong password, the proof fails with status 1, in the error form that
   [handshake.md](handshake.md#proof) describes: `auth` is zero except for its
-  key word. <!-- [O] --> frame 104
+  key word. <!-- [O] frame 104 -->
 
 After the login, if the tracker has a greeting, it sends [107 Server
 Greeting](messages/session.md#m107) before the client's [700 Get Tracker Group
@@ -101,10 +101,10 @@ Statistics](messages/tracker.md#m721). <!-- [S; O frames 33, 75] -->
 
 `kdx-tracker` replays the requests of the `linux-tracker` capture, and its
 replies match those of Tracker 1.110 byte for byte, except for the times when a
-server was first seen. <!-- [O] --> 701 at 34, 234, and 247; 703 at 37, 58, 244,
+server was first seen. <!-- [O] 701 at 34, 234, and 247; 703 at 37, 58, 244,
 250, and 257; 711 at 80 and 237; 713 at 83 and 241; and the Status at 61
-(crates/kdx-tracker/src/tests.rs) In `captures/kdx-tracker.pcapng`, Server 1.620
-registers with `kdx-tracker` (frame 16), and a 703 lists it (frame 34). In
+(crates/kdx-tracker/src/tests.rs) --> In `captures/kdx-tracker.pcapng`, Server
+1.620 registers with `kdx-tracker` (frame 16), and a 703 lists it (frame 34). In
 `captures/kdx-tracker-gui.pcapng`, Client 1.620 beta 5 lists it (frames 15 and
 33). <!-- [O] -->
 
