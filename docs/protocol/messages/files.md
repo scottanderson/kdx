@@ -40,7 +40,7 @@ Struct `GetFileList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FilePath | path | Empty for the root. |
+| 0x00 |  | FilePath | `path` | Empty for the root. |
 
 The server replies with [401 File List](#m401).
 
@@ -58,29 +58,29 @@ Struct `FileList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | entries_count |  |
-| 0x04 | entries_count | FileListEntry[] | entries |  |
+| 0x00 | 4 | u32 | `entries_count` |  |
+| 0x04 | `entries_count` | FileListEntry[] | `entries` |  |
 
 Struct `FileListEntry` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | size | 0x1000 for folders. |
-| 0x08 | 8 | u64 | created | Time. |
-| 0x10 | 8 | u64 | modified | Time. |
-| 0x18 | 8 | u8[8] | ignored_18 |  |
-| 0x20 | 4 | u32 | attributes | 1 for a file, and 0x01000002 for a folder. <!-- [O] --> The server clears bit 24 and tests 0x42. <!-- [S] --> |
-| 0x24 | 10 | u8[10] | ignored_24 |  |
-| 0x2e | 2 | u16 | ignored_2e | 0xffff for folders, and 0 for a file. |
-| 0x30 | 2 | u16 | access_item | The icon of the folder access entry: 0x2c for Dropbox, and 0x2b for Uploads. 0 for a file. See [1100 Create Folder Access](folder-access.md#m1100). <!-- [S] --> |
-| 0x32 | 2 | u8[2] | ignored_32 |  |
-| 0x34 | 1 | u8 | ignored_34 | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, and 0 for a file. |
-| 0x35 | 1 | u8 | name_len |  |
-| 0x36 | 1 | u8 | kind_len |  |
-| 0x37 | 1 | u8 | ignored_37 |  |
-| 0x38 | name_len | str | name |  |
-|  | kind_len | str | kind | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). |
-|  | pad4 | u8[] | padding | Uninitialized. <!-- [O] --> |
+| 0x00 | 8 | u64 | `size` | 0x1000 for folders. |
+| 0x08 | 8 | u64 | `created` | Time. |
+| 0x10 | 8 | u64 | `modified` | Time. |
+| 0x18 | 8 | u8[8] | `ignored_18` |  |
+| 0x20 | 4 | u32 | `attributes` | 1 for a file, and 0x01000002 for a folder. <!-- [O] --> The server clears bit 24 and tests 0x42. <!-- [S] --> |
+| 0x24 | 10 | u8[10] | `ignored_24` |  |
+| 0x2e | 2 | u16 | `ignored_2e` | 0xffff for folders, and 0 for a file. |
+| 0x30 | 2 | u16 | `access_item` | The icon of the folder access entry: 0x2c for Dropbox, and 0x2b for Uploads. 0 for a file. See [1100 Create Folder Access](folder-access.md#m1100). <!-- [S] --> |
+| 0x32 | 2 | u8[2] | `ignored_32` |  |
+| 0x34 | 1 | u8 | `ignored_34` | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, and 0 for a file. |
+| 0x35 | 1 | u8 | `name_len` |  |
+| 0x36 | 1 | u8 | `kind_len` |  |
+| 0x37 | 1 | u8 | `ignored_37` |  |
+| 0x38 | `name_len` | str | `name` |  |
+|  | `kind_len` | str | `kind` | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). |
+|  | pad4 | u8[] | `padding` | Uninitialized. <!-- [O] --> |
 
 In `captures/kdx-cli.pcapng`, a 600000-byte `cli-big.bin` is listed with size
 0x927c0 and kind `exttype/bin`. <!-- [O] -->
@@ -93,15 +93,15 @@ Struct `CreateFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 19 | u8[19] | ignored | 0 as sent. |
-| 0x13 | 1 | u8 | access_len |  |
-| 0x14 | 2 | u16 | path_len |  |
-| 0x16 | 1 | u8 | name_len |  |
-| 0x17 | 1 | u8 | owner_len |  |
-| 0x18 | name_len | str | name | If empty, the last name in the path is the new folder. |
-|  | access_len | str | access | The tag, such as `DB`. Needs Modify Folder Access (28). |
-|  | owner_len | str | owner |  |
-|  | path_len | FilePath | path | The parent folder. |
+| 0x00 | 19 | u8[19] | `ignored` | 0 as sent. |
+| 0x13 | 1 | u8 | `access_len` |  |
+| 0x14 | 2 | u16 | `path_len` |  |
+| 0x16 | 1 | u8 | `name_len` |  |
+| 0x17 | 1 | u8 | `owner_len` |  |
+| 0x18 | `name_len` | str | `name` | If empty, the last name in the path is the new folder. |
+|  | `access_len` | str | `access` | The tag, such as `DB`. Needs Modify Folder Access (28). |
+|  | `owner_len` | str | `owner` |  |
+|  | `path_len` | FilePath | `path` | The parent folder. |
 
 The strings come in the order name, access, owner, but the access length comes
 first. <!-- [S `FUN_0804e0f8`] -->
@@ -125,9 +125,9 @@ Struct `MoveItems` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | DelimitedFilePath | destination | The folder that the items, or their aliases, go to. |
-|  |  | DelimitedFilePath | source | The folder that holds the items. |
-|  |  | DelimitedFilePath | names | The items' names, as a name list. An empty list is `00 00`. |
+| 0x00 |  | DelimitedFilePath | `destination` | The folder that the items, or their aliases, go to. |
+|  |  | DelimitedFilePath | `source` | The folder that holds the items. |
+|  |  | DelimitedFilePath | `names` | The items' names, as a name list. An empty list is `00 00`. |
 
 ### Unhandled requests
 
@@ -143,7 +143,7 @@ Struct `DeleteFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | Unknown, because the server has no handler. <!-- [S] --> |
+| 0x00 | rest | u8[] | `ignored` | Unknown, because the server has no handler. <!-- [S] --> |
 
 ### <a id="m405"></a>405 Move To Trash
 Initiator: Client. Privilege: Delete (18). <!-- [S `FUN_0804e980`; O `captures/linux-files.pcapng` frames 241 to 244] -->
@@ -156,8 +156,8 @@ Struct `MoveToTrash` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | DelimitedFilePath | folder | The folder that holds the items. |
-|  |  | DelimitedFilePath | names | The items' names, as a name list. An empty list is `00 00`. |
+| 0x00 |  | DelimitedFilePath | `folder` | The folder that holds the items. |
+|  |  | DelimitedFilePath | `names` | The items' names, as a name list. An empty list is `00 00`. |
 
 ### <a id="m406"></a>406 Rename File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
@@ -166,7 +166,7 @@ Struct `RenameFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | Unknown, because the server has no handler. <!-- [S] --> |
+| 0x00 | rest | u8[] | `ignored` | Unknown, because the server has no handler. <!-- [S] --> |
 
 ### <a id="m407"></a>407 Move File/Folder
 Initiator: Client. Privilege: Move (16). <!-- [S `FUN_0804ebd8`; O `captures/linux-files.pcapng` frames 76, 80, 127, 131, 206, 210] -->
@@ -181,7 +181,7 @@ Struct `MoveFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | MoveItems | items | See [403 Create Alias](#m403). |
+| 0x00 |  | MoveItems | `items` | See [403 Create Alias](#m403). |
 
 ### <a id="m408"></a>408 Copy File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
@@ -190,7 +190,7 @@ Struct `CopyFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | Unknown, because the server has no handler. <!-- [S] --> |
+| 0x00 | rest | u8[] | `ignored` | Unknown, because the server has no handler. <!-- [S] --> |
 
 ### <a id="m409"></a>409 Get File/Folder Info
 Initiator: Client. <!-- [S `FUN_0804ef00`; O] -->
@@ -199,7 +199,7 @@ Struct `GetFileFolderInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FilePath | path |  |
+| 0x00 |  | FilePath | `path` |  |
 
 The server replies with [410 File/Folder Info](#m410). If the path is a single
 name that is a volume, and the user can see all volumes, it replies with [422
@@ -216,20 +216,20 @@ Struct `FileInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | ignored_00 | 0x39 |
-| 0x04 | 4 | u32 | ignored_04 | 0xbf |
-| 0x08 | 8 | u64 | size |  |
-| 0x10 | 8 | u64 | created |  |
-| 0x18 | 8 | u64 | modified |  |
-| 0x20 | 8 | u8[8] | ignored_20 |  |
-| 0x28 | 4 | u32 | ignored_28 | 2 (frame 138 of `captures/probe.pcapng`). |
-| 0x2c | 17 | u8[17] | ignored_2c |  |
-| 0x3d | 1 | u8 | name_len |  |
-| 0x3e | 1 | u8 | kind_len |  |
-| 0x3f | 1 | u8 | ignored_3f |  |
-| 0x40 | name_len | str | name |  |
-|  | kind_len | str | kind | `folder` |
-|  | rest | u8[] | rest | Any bytes after the kind. None in the capture. |
+| 0x00 | 4 | u32 | `ignored_00` | 0x39 |
+| 0x04 | 4 | u32 | `ignored_04` | 0xbf |
+| 0x08 | 8 | u64 | `size` |  |
+| 0x10 | 8 | u64 | `created` |  |
+| 0x18 | 8 | u64 | `modified` |  |
+| 0x20 | 8 | u8[8] | `ignored_20` |  |
+| 0x28 | 4 | u32 | `ignored_28` | 2 (frame 138 of `captures/probe.pcapng`). |
+| 0x2c | 17 | u8[17] | `ignored_2c` |  |
+| 0x3d | 1 | u8 | `name_len` |  |
+| 0x3e | 1 | u8 | `kind_len` |  |
+| 0x3f | 1 | u8 | `ignored_3f` |  |
+| 0x40 | `name_len` | str | `name` |  |
+|  | `kind_len` | str | `kind` | `folder` |
+|  | rest | u8[] | `rest` | Any bytes after the kind. None in the capture. |
 
 ### <a id="m411"></a>411 Set File/Folder Info
 Initiator: Client. <!-- [S `FUN_0804f684`; O `captures/linux-files.pcapng` frame 89] -->
@@ -238,15 +238,15 @@ Struct `SetFileInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 40 | u8[40] | ignored_00 | 0 as sent. |
-| 0x28 | 4 | u32 | flags | Bit 0 renames, and needs Rename (17). Bits 0x86 set attributes, and need Set File/Folder Attributes (20). |
-| 0x2c | 2 | u8[2] | ignored_2c | 0 as sent. |
-| 0x2e | 2 | u16 | path_len |  |
-| 0x30 | 1 | u8 | ignored_30 | 0 as sent. |
-| 0x31 | 1 | u8 | name_len |  |
-| 0x32 | 2 | u8[2] | ignored_32 | Other lengths. 0 from the client. |
-| 0x34 | path_len | FilePath | path | Frame 89 renames `Uploads [UL]/upload.txt` to `upload2.txt`. |
-|  | name_len | str | name |  |
+| 0x00 | 40 | u8[40] | `ignored_00` | 0 as sent. |
+| 0x28 | 4 | u32 | `flags` | Bit 0 renames, and needs Rename (17). Bits 0x86 set attributes, and need Set File/Folder Attributes (20). |
+| 0x2c | 2 | u8[2] | `ignored_2c` | 0 as sent. |
+| 0x2e | 2 | u16 | `path_len` |  |
+| 0x30 | 1 | u8 | `ignored_30` | 0 as sent. |
+| 0x31 | 1 | u8 | `name_len` |  |
+| 0x32 | 2 | u8[2] | `ignored_32` | Other lengths. 0 from the client. |
+| 0x34 | `path_len` | FilePath | `path` | Frame 89 renames `Uploads [UL]/upload.txt` to `upload2.txt`. |
+|  | `name_len` | str | `name` |  |
 
 Without Modify Folder Access (28), a new name must keep the folder's ` [tag]`
 suffix. There is no reply, whether it succeeds or not: frame 89 gets no Status
@@ -263,11 +263,11 @@ Struct `DownloadFile` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | data_offset | Where to resume. |
-| 0x08 | 8 | u64 | rsrc_offset |  |
-| 0x10 | 7 | u8[7] | ignored |  |
-| 0x17 | 1 | u8 | options | Bit 0: plain (unencrypted) transfer. |
-| 0x18 |  | FilePath | path |  |
+| 0x00 | 8 | u64 | `data_offset` | Where to resume. |
+| 0x08 | 8 | u64 | `rsrc_offset` |  |
+| 0x10 | 7 | u8[7] | `ignored` |  |
+| 0x17 | 1 | u8 | `options` | Bit 0: plain (unencrypted) transfer. |
+| 0x18 |  | FilePath | `path` |  |
 
 The payload must be at least 0x1a bytes. The server rounds each offset down to a
 multiple of 0x1000. An offset at or past the end still gets its [414 Download
@@ -308,14 +308,14 @@ Struct `FileStrings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | name_len |  |
-| 0x01 | 1 | u8 | second_len |  |
-| 0x02 | 1 | u8 | third_len |  |
-| 0x03 | 1 | u8 | fourth_len | At most 0x41. |
-| 0x04 | name_len | str | name | `probe-dl.bin`. <!-- [O] --> |
-|  | second_len | str | second | `exttype/bin`. <!-- [O] --> Probably a type that the server makes from the file extension, because Linux files have no type code. <!-- [I] --> |
-|  | third_len | str | third | Empty. <!-- [O] --> |
-|  | fourth_len | str | fourth | Empty. <!-- [O] --> |
+| 0x00 | 1 | u8 | `name_len` |  |
+| 0x01 | 1 | u8 | `second_len` |  |
+| 0x02 | 1 | u8 | `third_len` |  |
+| 0x03 | 1 | u8 | `fourth_len` | At most 0x41. |
+| 0x04 | `name_len` | str | `name` | `probe-dl.bin`. <!-- [O] --> |
+|  | `second_len` | str | `second` | `exttype/bin`. <!-- [O] --> Probably a type that the server makes from the file extension, because Linux files have no type code. <!-- [I] --> |
+|  | `third_len` | str | `third` | Empty. <!-- [O] --> |
+|  | `fourth_len` | str | `fourth` | Empty. <!-- [O] --> |
 
 The reply is 99 bytes for a plain Linux file:
 
@@ -323,15 +323,15 @@ Struct `DownloadInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | data_size | 0x11170 = 70000 |
-| 0x08 | 8 | u64 | rsrc_size |  |
-| 0x10 | 8 | u8[8] | ignored_10 | 0 as sent. |
-| 0x18 | 8 | u64 | created |  |
-| 0x20 | 8 | u64 | modified |  |
-| 0x28 | 8 | u8[8] | ignored_28 | 0 |
-| 0x30 | 4 | u32 | ignored_30 | 1 |
-| 0x34 | 20 | u8[20] | ignored_34 | 0 as sent. |
-| 0x48 |  | FileStrings | strings | The name and its three strings. |
+| 0x00 | 8 | u64 | `data_size` | 0x11170 = 70000 |
+| 0x08 | 8 | u64 | `rsrc_size` |  |
+| 0x10 | 8 | u8[8] | `ignored_10` | 0 as sent. |
+| 0x18 | 8 | u64 | `created` |  |
+| 0x20 | 8 | u64 | `modified` |  |
+| 0x28 | 8 | u8[8] | `ignored_28` | 0 |
+| 0x30 | 4 | u32 | `ignored_30` | 1 |
+| 0x34 | 20 | u8[20] | `ignored_34` | 0 as sent. |
+| 0x48 |  | FileStrings | `strings` | The name and its three strings. |
 
 ### <a id="m414"></a>414 Download File (D)
 Initiator: Server. The data for [412 Download File](#m412), sent after
@@ -341,7 +341,7 @@ Struct `FileData` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | data | The bytes of one fork, with no framing. |
+| 0x00 | rest | u8[] | `data` | The bytes of one fork, with no framing. |
 
 One 414 Download File (D) header covers the whole fork, even past the limits on
 normal payloads. A 600000-byte file came as a single 414 of length 600000, byte
@@ -359,16 +359,16 @@ Struct `UploadFile` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | data_size |  |
-| 0x08 | 8 | u64 | rsrc_size |  |
-| 0x10 | 7 | u8[7] | ignored_10 |  |
-| 0x17 | 1 | u8 | options | Bit 0: plain (unencrypted) transfer. |
-| 0x18 | 24 | u8[24] | ignored_18 | Probably times, as at the same offsets of [413](#m413). <!-- [I] --> |
-| 0x30 | 22 | u8[22] | ignored_30 |  |
-| 0x46 | 2 | u16 | folder_len |  |
-| 0x48 |  | FileStrings | strings | The name must not be empty. |
-|  | folder_len | FilePath | folder | The destination folder. |
-|  | rest | u8[] | rest | Any bytes after the folder path. |
+| 0x00 | 8 | u64 | `data_size` |  |
+| 0x08 | 8 | u64 | `rsrc_size` |  |
+| 0x10 | 7 | u8[7] | `ignored_10` |  |
+| 0x17 | 1 | u8 | `options` | Bit 0: plain (unencrypted) transfer. |
+| 0x18 | 24 | u8[24] | `ignored_18` | Probably times, as at the same offsets of [413](#m413). <!-- [I] --> |
+| 0x30 | 22 | u8[22] | `ignored_30` |  |
+| 0x46 | 2 | u16 | `folder_len` |  |
+| 0x48 |  | FileStrings | `strings` | The name must not be empty. |
+|  | `folder_len` | FilePath | `folder` | The destination folder. |
+|  | rest | u8[] | `rest` | Any bytes after the folder path. |
 
 The server writes to a temporary name until the upload is complete. If the name
 already exists, the upload fails with 0x30073. The server resumes an earlier
@@ -397,9 +397,9 @@ Struct `UploadReply` (24 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | data_offset | From a partial upload. The server resumes at this value, rounded down to a multiple of 0x1000. |
-| 0x08 | 8 | u64 | rsrc_offset | Always all ones. Resource forks do not resume. |
-| 0x10 | 8 | u8[8] | ignored | 0 as sent. |
+| 0x00 | 8 | u64 | `data_offset` | From a partial upload. The server resumes at this value, rounded down to a multiple of 0x1000. |
+| 0x08 | 8 | u64 | `rsrc_offset` | Always all ones. Resource forks do not resume. |
+| 0x10 | 8 | u8[8] | `ignored` | 0 as sent. |
 
 ### <a id="m417"></a>417 Upload File (D)
 Initiator: Client. The data for [415 Upload File](#m415), sent after
@@ -409,7 +409,7 @@ Struct `UploadFileData` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FileData | data | See [414 Download File (D)](#m414). |
+| 0x00 |  | FileData | `data` | See [414 Download File (D)](#m414). |
 
 300000 bytes sent under one 417 Upload File (D) header arrived byte for byte
 (`captures/kdx-cli.pcapng` frame 244). <!-- [O] -->
@@ -432,7 +432,7 @@ Struct `NotifySpeedLimit` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | bytes_per_second |  |
+| 0x00 | 4 | u32 | `bytes_per_second` |  |
 
 It came on the session, not on the transfer connection, when a download started
 under the total outgoing speed limit. It held `00 00 50 00`, the 20480 bytes per
@@ -449,8 +449,8 @@ Struct `LaunchFile` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u8[8] | ignored | 0 as sent. |
-| 0x08 |  | FilePath | path | The payload is at least 9 bytes. |
+| 0x00 | 8 | u8[8] | `ignored` | 0 as sent. |
+| 0x08 |  | FilePath | `path` | The payload is at least 9 bytes. |
 
 If it succeeds, the reply is [1 Status](status.md#m1) 0x1a4, and the server runs
 the file. Frames 31 and 32 of `captures/linux-catalog-volumes.pcapng` launch
@@ -477,28 +477,28 @@ Struct `VolumeInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | total | All ones if unknown. |
-| 0x08 | 8 | u64 | free | The client shows the used size as total minus free. |
-| 0x10 | 8 | u64 | modified | Time. |
-| 0x18 | 8 | u64 | created | Time. |
-| 0x20 | 4 | u32 | item_count | 0xffffffff if unknown. |
-| 0x24 | 2 | u8[2] | ignored_24 |  |
-| 0x26 | 1 | u8 | disk_type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy. 0 on Linux. <!-- [O] --> |
-| 0x27 | 5 | u8[5] | ignored_27 |  |
-| 0x2c | 4 | u32 | ignored_2c | 0x88 <!-- [O] --> |
-| 0x30 | 4 | u32 | icon | 0x3d <!-- [O] --> |
-| 0x34 | 16 | u8[16] | ignored_34 |  |
-| 0x44 | 4 | u32 | flags | Bit 0: the name can be edited. Bit 1: the comments can be edited. |
-| 0x48 | 4 | u32 | flags_mask | The client ANDs it with 0x44. |
-| 0x4c | 2 | u8[2] | ignored_4c |  |
-| 0x4e | 1 | u8 | name_len |  |
-| 0x4f | 1 | u8 | ignored_4f | The new name's length in [423](#m423). |
-| 0x50 | 1 | u8 | format_len |  |
-| 0x51 | 1 | u8 | comments_len |  |
-| 0x52 | 2 | u8[2] | ignored_52 |  |
-| 0x54 | name_len | str | name | `/tmp` at frame 51. <!-- [O] --> |
-|  | format_len | str | format | The file system name, such as `tmpfs` at frame 51. <!-- [O] --> |
-|  | comments_len | str | comments |  |
+| 0x00 | 8 | u64 | `total` | All ones if unknown. |
+| 0x08 | 8 | u64 | `free` | The client shows the used size as total minus free. |
+| 0x10 | 8 | u64 | `modified` | Time. |
+| 0x18 | 8 | u64 | `created` | Time. |
+| 0x20 | 4 | u32 | `item_count` | 0xffffffff if unknown. |
+| 0x24 | 2 | u8[2] | `ignored_24` |  |
+| 0x26 | 1 | u8 | `disk_type` | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy. 0 on Linux. <!-- [O] --> |
+| 0x27 | 5 | u8[5] | `ignored_27` |  |
+| 0x2c | 4 | u32 | `ignored_2c` | 0x88 <!-- [O] --> |
+| 0x30 | 4 | u32 | `icon` | 0x3d <!-- [O] --> |
+| 0x34 | 16 | u8[16] | `ignored_34` |  |
+| 0x44 | 4 | u32 | `flags` | Bit 0: the name can be edited. Bit 1: the comments can be edited. |
+| 0x48 | 4 | u32 | `flags_mask` | The client ANDs it with 0x44. |
+| 0x4c | 2 | u8[2] | `ignored_4c` |  |
+| 0x4e | 1 | u8 | `name_len` |  |
+| 0x4f | 1 | u8 | `ignored_4f` | The new name's length in [423](#m423). |
+| 0x50 | 1 | u8 | `format_len` |  |
+| 0x51 | 1 | u8 | `comments_len` |  |
+| 0x52 | 2 | u8[2] | `ignored_52` |  |
+| 0x54 | `name_len` | str | `name` | `/tmp` at frame 51. <!-- [O] --> |
+|  | `format_len` | str | `format` | The file system name, such as `tmpfs` at frame 51. <!-- [O] --> |
+|  | `comments_len` | str | `comments` |  |
 
 On Linux, the sizes and the item count are all ones, and the times are
 0. <!-- [O] --> `kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for
@@ -525,18 +525,18 @@ Struct `SetVolumeInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 68 | u8[68] | ignored_00 | The server ignores it. |
-| 0x44 | 4 | u32 | flags | Bit 0 renames the volume. Bit 1 sets the comments. |
-| 0x48 | 6 | u8[6] | ignored_48 | The server ignores it. |
-| 0x4e | 1 | u8 | name_len |  |
-| 0x4f | 1 | u8 | new_name_len |  |
-| 0x50 | 1 | u8 | format_len |  |
-| 0x51 | 1 | u8 | comments_len |  |
-| 0x52 | 2 | u8[2] | ignored_52 | The server ignores it. |
-| 0x54 | name_len | str | name | The volume's current name. |
-|  | new_name_len | str | new_name |  |
-|  | format_len | str | format | Ignored. |
-|  | comments_len | str | comments |  |
+| 0x00 | 68 | u8[68] | `ignored_00` | The server ignores it. |
+| 0x44 | 4 | u32 | `flags` | Bit 0 renames the volume. Bit 1 sets the comments. |
+| 0x48 | 6 | u8[6] | `ignored_48` | The server ignores it. |
+| 0x4e | 1 | u8 | `name_len` |  |
+| 0x4f | 1 | u8 | `new_name_len` |  |
+| 0x50 | 1 | u8 | `format_len` |  |
+| 0x51 | 1 | u8 | `comments_len` |  |
+| 0x52 | 2 | u8[2] | `ignored_52` | The server ignores it. |
+| 0x54 | `name_len` | str | `name` | The volume's current name. |
+|  | `new_name_len` | str | `new_name` |  |
+|  | `format_len` | str | `format` | Ignored. |
+|  | `comments_len` | str | `comments` |  |
 
 If it succeeds, there is no reply, and the server writes history record
 0x1a7. <!-- [S] -->
@@ -564,7 +564,7 @@ Struct `GenerateCatalog` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | flags | Bit 0 cancels. The client can leave out the whole payload for 0. |
+| 0x00 | 4 | u32 | `flags` | Bit 0 cancels. The client can leave out the whole payload for 0. |
 
 A second start while a catalog is running gets [1 Status](status.md#m1) 0x30075.
 The server writes history record 0x1c2 and builds an index of all files. 450
@@ -581,8 +581,8 @@ Struct `CatalogStatus` (8 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | flags | 0x00000001: done. |
-| 0x04 | 4 | u32 | items | The number of items indexed so far. |
+| 0x00 | 4 | u32 | `flags` | 0x00000001: done. |
+| 0x04 | 4 | u32 | `items` | The number of items indexed so far. |
 
 In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
 `00000000 00000002` (frame 24), then `00000001 0000000b` (frame 26). <!-- [O]
@@ -609,10 +609,10 @@ Struct `FileSearch` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 84 | u8[84] | ignored_00 | The client sends zeros, and the server ignores it. |
-| 0x54 | 1 | u8 | query_len |  |
-| 0x55 | 3 | u8[3] | ignored_55 | The client sends zeros, and the server ignores it. |
-| 0x58 | query_len | str | query | At least 3 bytes. |
+| 0x00 | 84 | u8[84] | `ignored_00` | The client sends zeros, and the server ignores it. |
+| 0x54 | 1 | u8 | `query_len` |  |
+| 0x55 | 3 | u8[3] | `ignored_55` | The client sends zeros, and the server ignores it. |
+| 0x58 | `query_len` | str | `query` | At least 3 bytes. |
 
 If there is no catalog, the reply is [1 Status](status.md#m1) 0x640001, as in
 `captures/linux-files.pcapng`. <!-- [O] --> If there is, the server writes
@@ -628,29 +628,29 @@ Struct `FileSearchReply` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | entries_count |  |
-| 0x04 | entries_count | FileSearchEntry[] | entries |  |
+| 0x00 | 4 | u32 | `entries_count` |  |
+| 0x04 | `entries_count` | FileSearchEntry[] | `entries` |  |
 
 Struct `FileSearchEntry` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | size |  |
-| 0x08 | 8 | u64 | created | Time. Probably the creation time. <!-- [I] --> |
-| 0x10 | 8 | u64 | modified | Time. Probably the modification time. <!-- [I] --> |
-| 0x18 | 4 | u32 | path_len |  |
-| 0x1c | 4 | u8[4] | ignored_1c |  |
-| 0x20 | 4 | u32 | attributes | As in [401 File List](#m401). |
-| 0x24 | 10 | u8[10] | ignored_24 |  |
-| 0x2e | 2 | u16 | ignored_2e | As in 401. |
-| 0x30 | 4 | u8[4] | ignored_30 |  |
-| 0x34 | 1 | u8 | ignored_34 | 0x10 for a file. <!-- [O] --> |
-| 0x35 | 1 | u8 | ignored_35 |  |
-| 0x36 | 1 | u8 | name_len |  |
-| 0x37 | 1 | u8 | ignored_37 |  |
-| 0x38 | name_len | str | name |  |
-|  | path_len | FilePath | path | The item's full file path, root first. |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 8 | u64 | `size` |  |
+| 0x08 | 8 | u64 | `created` | Time. Probably the creation time. <!-- [I] --> |
+| 0x10 | 8 | u64 | `modified` | Time. Probably the modification time. <!-- [I] --> |
+| 0x18 | 4 | u32 | `path_len` |  |
+| 0x1c | 4 | u8[4] | `ignored_1c` |  |
+| 0x20 | 4 | u32 | `attributes` | As in [401 File List](#m401). |
+| 0x24 | 10 | u8[10] | `ignored_24` |  |
+| 0x2e | 2 | u16 | `ignored_2e` | As in 401. |
+| 0x30 | 4 | u8[4] | `ignored_30` |  |
+| 0x34 | 1 | u8 | `ignored_34` | 0x10 for a file. <!-- [O] --> |
+| 0x35 | 1 | u8 | `ignored_35` |  |
+| 0x36 | 1 | u8 | `name_len` |  |
+| 0x37 | 1 | u8 | `ignored_37` |  |
+| 0x38 | `name_len` | str | `name` |  |
+|  | `path_len` | FilePath | `path` | The item's full file path, root first. |
+|  | pad4 | u8[] | `padding` |  |
 
 The server leaves out the items that the user cannot see through folder access.
 If nothing matches, the reply is an empty 453 File Search (R).

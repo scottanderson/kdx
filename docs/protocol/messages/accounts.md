@@ -24,7 +24,7 @@ Struct `AccountClassIndex` (1 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | class_index |  |
+| 0x00 | 1 | u8 | `class_index` |  |
 
 ## <a id="m503"></a>503 Account Class Info
 Initiator: Server. Reply to [502 Get Account Class](#m502).
@@ -35,22 +35,22 @@ Struct `AccountClassInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u8[16] | privileges | 11 bytes are used. |
-| 0x10 | 8 | u64 | time |  |
-| 0x18 | 13 | u8[13] | ignored_18 |  |
-| 0x25 | 1 | u8 | flood_protection | Commands per 2 minutes: 0x50 (Relaxed) for Administrator, and 0x28 (Strict) for Guest; see [Flood ban](../sequences.md#flood-ban). <!-- [S] --> 0x3c (Average) for User, which [504 Set Account Class](#m504) sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43. <!-- [O] --> |
-| 0x26 | 2 | u8[2] | ignored_26 | Stored as given. <!-- [S] --> |
-| 0x28 | 8 | u8[8] | ignored_28 |  |
-| 0x30 | 1 | u8 | class_index | 0, 2 |
-| 0x31 | 3 | u8[3] | ignored_31 | Byte 0 is 0xff for Administrator, and 0 for Guest. Probably the color. <!-- [I] --> |
-| 0x34 | 1 | u8 | name_len |  |
-| 0x35 | 1 | u8 | second_string_len |  |
-| 0x36 | 1 | u8 | editor_login_len |  |
-| 0x37 | 1 | u8 | ignored_37 |  |
-| 0x38 | name_len | str | name |  |
-|  | second_string_len | str | second_string | <!-- [S] --> |
-|  | editor_login_len | str | editor_login | The server sets it on 504. <!-- [S] --> |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 16 | u8[16] | `privileges` | 11 bytes are used. |
+| 0x10 | 8 | u64 | `time` |  |
+| 0x18 | 13 | u8[13] | `ignored_18` |  |
+| 0x25 | 1 | u8 | `flood_protection` | Commands per 2 minutes: 0x50 (Relaxed) for Administrator, and 0x28 (Strict) for Guest; see [Flood ban](../sequences.md#flood-ban). <!-- [S] --> 0x3c (Average) for User, which [504 Set Account Class](#m504) sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43. <!-- [O] --> |
+| 0x26 | 2 | u8[2] | `ignored_26` | Stored as given. <!-- [S] --> |
+| 0x28 | 8 | u8[8] | `ignored_28` |  |
+| 0x30 | 1 | u8 | `class_index` | 0, 2 |
+| 0x31 | 3 | u8[3] | `ignored_31` | Byte 0 is 0xff for Administrator, and 0 for Guest. Probably the color. <!-- [I] --> |
+| 0x34 | 1 | u8 | `name_len` |  |
+| 0x35 | 1 | u8 | `second_string_len` |  |
+| 0x36 | 1 | u8 | `editor_login_len` |  |
+| 0x37 | 1 | u8 | `ignored_37` |  |
+| 0x38 | `name_len` | str | `name` |  |
+|  | `second_string_len` | str | `second_string` | <!-- [S] --> |
+|  | `editor_login_len` | str | `editor_login` | The server sets it on 504. <!-- [S] --> |
+|  | pad4 | u8[] | `padding` |  |
 
 The padding after the name is uninitialized memory, such as `@` and `.` in the
 lab. <!-- [O] --> `kdx-proto` keeps it on a round trip.
@@ -76,7 +76,7 @@ Struct `SetAccountClass` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountClassInfo | class |  |
+| 0x00 |  | AccountClassInfo | `class` |  |
 
 Client 1.620 for Linux sends it with no padding, with the time 0, and with the
 second string and the editor login empty. It is 69 bytes for Administrator
@@ -124,28 +124,28 @@ Struct `AccountClassList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | classes_count |  |
-| 0x04 | classes_count | AccountClassListEntry[] | classes |  |
+| 0x00 | 4 | u32 | `classes_count` |  |
+| 0x04 | `classes_count` | AccountClassListEntry[] | `classes` |  |
 
 Struct `AccountClassListEntry` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u8[16] | privileges | 11 bytes are used; see [privileges.md](../privileges.md). |
-| 0x10 | 8 | u64 | time |  |
-| 0x18 | 13 | u8[13] | ignored_18 | 0 as sent. |
-| 0x25 | 1 | u8 | flood_protection | 0 in this list. <!-- [S] --> |
-| 0x26 | 2 | u8[2] | ignored_26 | 0 as sent. |
-| 0x28 | 1 | u8 | class_index | 0 to 11, in list order. |
-| 0x29 | 3 | u8[3] | ignored_29 | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
-| 0x2c | 1 | u8 | name_len |  |
-| 0x2d | 1 | u8 | second_string_len |  |
-| 0x2e | 1 | u8 | editor_login_len |  |
-| 0x2f | 1 | u8 | ignored_2f |  |
-| 0x30 | name_len | str | name |  |
-|  | second_string_len | str | second_string |  |
-|  | editor_login_len | str | editor_login |  |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 16 | u8[16] | `privileges` | 11 bytes are used; see [privileges.md](../privileges.md). |
+| 0x10 | 8 | u64 | `time` |  |
+| 0x18 | 13 | u8[13] | `ignored_18` | 0 as sent. |
+| 0x25 | 1 | u8 | `flood_protection` | 0 in this list. <!-- [S] --> |
+| 0x26 | 2 | u8[2] | `ignored_26` | 0 as sent. |
+| 0x28 | 1 | u8 | `class_index` | 0 to 11, in list order. |
+| 0x29 | 3 | u8[3] | `ignored_29` | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
+| 0x2c | 1 | u8 | `name_len` |  |
+| 0x2d | 1 | u8 | `second_string_len` |  |
+| 0x2e | 1 | u8 | `editor_login_len` |  |
+| 0x2f | 1 | u8 | `ignored_2f` |  |
+| 0x30 | `name_len` | str | `name` |  |
+|  | `second_string_len` | str | `second_string` |  |
+|  | `editor_login_len` | str | `editor_login` |  |
+|  | pad4 | u8[] | `padding` |  |
 
 These are the privilege bytes in the lab: <!-- [O] -->
 
@@ -175,25 +175,25 @@ Struct `Account` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u8[16] | privileges | The values of the bits set in the mask. `80 00 00 00 00 00 02 00…` for admin, and 0 for new accounts. <!-- [S `FUN_080551b0`] --> |
-| 0x10 | 16 | u8[16] | privilege_mask | The bits that the account sets itself. The other bits come from its class. <!-- [S `FUN_080551b0`] --> |
-| 0x20 | 32 | u8[32] | key | See below. |
-| 0x40 | 8 | u64 | created | The server sets it. |
-| 0x48 | 8 | u64 | modified | The server sets it. |
-| 0x50 | 8 | u64 | last_login | 0 if never. |
-| 0x58 | 30 | u8[30] | ignored_58 | 0 as sent. |
-| 0x76 | 1 | u8 | class_index | Must be a class that exists, or the server gives 0x10002. |
-| 0x77 | 3 | u8[3] | ignored_77 | Stored as given. |
-| 0x7a | 1 | u8 | login_len |  |
-| 0x7b | 1 | u8 | name_len |  |
-| 0x7c | 1 | u8 | third_len |  |
-| 0x7d | 1 | u8 | editor_len |  |
-| 0x7e | 2 | u8[2] | ignored_7e |  |
-| 0x80 | login_len | str | login |  |
-|  | name_len | str | name | The server filters the name (`FUN_08081ffc`). |
-|  | third_len | str | third | Stored as given. 0 in the lab. |
-|  | editor_len | str | editor | See below. |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 16 | u8[16] | `privileges` | The values of the bits set in the mask. `80 00 00 00 00 00 02 00…` for admin, and 0 for new accounts. <!-- [S `FUN_080551b0`] --> |
+| 0x10 | 16 | u8[16] | `privilege_mask` | The bits that the account sets itself. The other bits come from its class. <!-- [S `FUN_080551b0`] --> |
+| 0x20 | 32 | u8[32] | `key` | See below. |
+| 0x40 | 8 | u64 | `created` | The server sets it. |
+| 0x48 | 8 | u64 | `modified` | The server sets it. |
+| 0x50 | 8 | u64 | `last_login` | 0 if never. |
+| 0x58 | 30 | u8[30] | `ignored_58` | 0 as sent. |
+| 0x76 | 1 | u8 | `class_index` | Must be a class that exists, or the server gives 0x10002. |
+| 0x77 | 3 | u8[3] | `ignored_77` | Stored as given. |
+| 0x7a | 1 | u8 | `login_len` |  |
+| 0x7b | 1 | u8 | `name_len` |  |
+| 0x7c | 1 | u8 | `third_len` |  |
+| 0x7d | 1 | u8 | `editor_len` |  |
+| 0x7e | 2 | u8[2] | `ignored_7e` |  |
+| 0x80 | `login_len` | str | `login` |  |
+|  | `name_len` | str | `name` | The server filters the name (`FUN_08081ffc`). |
+|  | `third_len` | str | `third` | Stored as given. 0 in the lab. |
+|  | `editor_len` | str | `editor` | See below. |
+|  | pad4 | u8[] | `padding` |  |
 
 The key field holds:
 
@@ -217,7 +217,7 @@ Struct `CreateAccount` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | account |  |
+| 0x00 |  | Account | `account` |  |
 
 The server sets the times and the editor, and replies with [1
 Status](status.md#m1) success 0x1fb (frame 235). These are the errors:
@@ -253,7 +253,7 @@ Struct `AccountLogin` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | str | login | No length byte. |
+| 0x00 | rest | str | `login` | No length byte. |
 
 If it succeeds, the server sends [515 Account Deleted](#m515) to the requester,
 and no reply (frames 607 to 610).
@@ -287,7 +287,7 @@ Struct `GetAccount` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountLogin | login |  |
+| 0x00 |  | AccountLogin | `login` |  |
 
 An unknown login gets [1 Status](status.md#m1) 0x1000c. <!-- [O
 `captures/kdx-accounts.pcapng` frame 554] -->
@@ -304,7 +304,7 @@ Struct `AccountInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | account | Byte 0 of `key` is the has-password flag. |
+| 0x00 |  | Account | `account` | Byte 0 of `key` is the has-password flag. |
 
 ## <a id="m511"></a>511 Set Account
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_08055ff4`; O] -->
@@ -326,7 +326,7 @@ Struct `SetAccount` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | account | `editor` holds the current login. |
+| 0x00 |  | Account | `account` | `editor` holds the current login. |
 
 If the login field is different, the server renames the account. If the new
 login already exists, it fails with 0x1000d. The server keeps the creation and
@@ -369,27 +369,27 @@ Struct `AccountList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | accounts_count |  |
-| 0x04 | accounts_count | AccountListEntry[] | accounts |  |
+| 0x00 | 4 | u32 | `accounts_count` |  |
+| 0x04 | `accounts_count` | AccountListEntry[] | `accounts` |  |
 
 Struct `AccountListEntry` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | created |  |
-| 0x08 | 8 | u64 | last_login | 0 if never. |
-| 0x10 | 11 | u8[11] | ignored_10 |  |
-| 0x1b | 1 | u8 | ignored_1b | 1 for admin, and 0 for guest. |
-| 0x1c | 4 | u8[4] | ignored_1c |  |
-| 0x20 | 1 | u8 | class_index | 0 for admin, and 2 for guest. |
-| 0x21 | 1 | u8 | ignored_21 | 0xff for admin. The same as offset 0x31 of [503 Account Class Info](#m503). |
-| 0x22 | 2 | u8[2] | ignored_22 |  |
-| 0x24 | 1 | u8 | login_len |  |
-| 0x25 | 1 | u8 | name_len |  |
-| 0x26 | 2 | u8[2] | ignored_26 |  |
-| 0x28 | login_len | str | login |  |
-|  | name_len | str | name |  |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 8 | u64 | `created` |  |
+| 0x08 | 8 | u64 | `last_login` | 0 if never. |
+| 0x10 | 11 | u8[11] | `ignored_10` |  |
+| 0x1b | 1 | u8 | `ignored_1b` | 1 for admin, and 0 for guest. |
+| 0x1c | 4 | u8[4] | `ignored_1c` |  |
+| 0x20 | 1 | u8 | `class_index` | 0 for admin, and 2 for guest. |
+| 0x21 | 1 | u8 | `ignored_21` | 0xff for admin. The same as offset 0x31 of [503 Account Class Info](#m503). |
+| 0x22 | 2 | u8[2] | `ignored_22` |  |
+| 0x24 | 1 | u8 | `login_len` |  |
+| 0x25 | 1 | u8 | `name_len` |  |
+| 0x26 | 2 | u8[2] | `ignored_26` |  |
+| 0x28 | `login_len` | str | `login` |  |
+|  | `name_len` | str | `name` |  |
+|  | pad4 | u8[] | `padding` |  |
 
 ## <a id="m514"></a>514 Account Changed
 Initiator: Server. Server 1.620 never sends it, and Client 1.620 beta 5 does
@@ -401,7 +401,7 @@ Struct `AccountChanged` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored |  |
+| 0x00 | rest | u8[] | `ignored` |  |
 
 ## <a id="m515"></a>515 Account Deleted
 Initiator: Server. It follows a successful [508 Delete Account](#m508).
@@ -412,7 +412,7 @@ Struct `AccountDeleted` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountLogin | login |  |
+| 0x00 |  | AccountLogin | `login` |  |
 
 The server sends it to the requester as a notification, with its own txid and
 the reply bit clear (frames 607 to 610).
@@ -438,7 +438,7 @@ Struct `ChangeOwnPassword` (32 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 32 | u8[32] | account_key | The key of the new password. |
+| 0x00 | 32 | u8[32] | `account_key` | The key of the new password. |
 
 The server stores it as the account's key, and replies with [551 Change Own
 Password Done](#m551). The old password stops working at once.

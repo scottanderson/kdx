@@ -24,10 +24,10 @@ Struct `OpenWindow` (24 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | width | 0x40 to 0x1000 |
-| 0x02 | 2 | u16 | height | 0x10 to 0x1000 |
-| 0x04 | 4 | u32 | color | The client fills the window with it. |
-| 0x08 | 16 | u8[16] | rest | The client does not read these bytes. |
+| 0x00 | 2 | u16 | `width` | 0x40 to 0x1000 |
+| 0x02 | 2 | u16 | `height` | 0x10 to 0x1000 |
+| 0x04 | 4 | u32 | `color` | The client fills the window with it. |
+| 0x08 | 16 | u8[16] | `rest` | The client does not read these bytes. |
 
 A second 4000 Open Window fails with 0x10003. Frame 10 opened a window of 0x200
 × 0x180, filled with 0x00336699. <!-- [O] --> The color goes through
@@ -46,15 +46,15 @@ Struct `Draw` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | DrawRecord[] | records | Rust `padding`: the padding after each record. |
+| 0x00 | rest | DrawRecord[] | `records` | Rust `padding`: the padding after each record. |
 
 Struct `DrawRecord` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | body_len |  |
-| 0x04 | body_len | u8[] | body | The length is the low 22 bits of `body_len`, and the top 10 bits are the kind. The table below gives the layout of each kind. |
-|  | pad4 | u8[] | padding | Padding to a multiple of 4. Keep it as received. |
+| 0x00 | 4 | u32 | `body_len` |  |
+| 0x04 | `body_len` | u8[] | `body` | The length is the low 22 bits of `body_len`, and the top 10 bits are the kind. The table below gives the layout of each kind. |
+|  | pad4 | u8[] | `padding` | Padding to a multiple of 4. Keep it as received. |
 
 A color is a u32: a transparency byte, then red, green, and blue. A transparency
 of 0 is opaque, 0x01 to 0xfe blend, and 0xff draws nothing. <!-- [S
@@ -92,12 +92,12 @@ Struct `Key` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | time | The client's clock, in ms. |
-| 0x04 | 4 | u32 | modifiers | The modifiers held before the event: 8 Shift (frame 54), 2 Alt (frame 18). |
-| 0x08 | 4 | u32 | character | `a` 0x61, `A` 0x41, Return 0x0a, BackSpace 0x08. 0 for keys with no character, and on release. |
-| 0x0c | 2 | u16 | usage | The key's USB HID usage: `a` 4, Return 0x28, Left 0x50, Left Shift 0xe1. 0 on most releases. |
-| 0x0e | 1 | u8 | kind | 1 pressed, 2 released, 3 for window event 7 (not seen). |
-| 0x0f | 1 | u8 | value_0f |  |
+| 0x00 | 4 | u32 | `time` | The client's clock, in ms. |
+| 0x04 | 4 | u32 | `modifiers` | The modifiers held before the event: 8 Shift (frame 54), 2 Alt (frame 18). |
+| 0x08 | 4 | u32 | `character` | `a` 0x61, `A` 0x41, Return 0x0a, BackSpace 0x08. 0 for keys with no character, and on release. |
+| 0x0c | 2 | u16 | `usage` | The key's USB HID usage: `a` 4, Return 0x28, Left 0x50, Left Shift 0xe1. 0 on most releases. |
+| 0x0e | 1 | u8 | `kind` | 1 pressed, 2 released, 3 for window event 7 (not seen). |
+| 0x0f | 1 | u8 | `value_0f` |  |
 
 <!-- [O] all but kind 3 -->
 A held key repeats as a release and a press together, every 40 ms after the
@@ -113,13 +113,13 @@ Struct `Mouse` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | time | The client's clock, in ms. |
-| 0x04 | 4 | u32 | value_04 | 0x00040000 on a right button press (frame 32), and 0 otherwise. |
-| 0x08 | 2 | u16 | x | In the window. |
-| 0x0a | 2 | u16 | y | In the window. |
-| 0x0c | 1 | u8 | button | 1 left, 2 right, 3 middle, 4 wheel up, 5 wheel down |
-| 0x0d | 1 | u8 | kind | 5 pressed, 6 released, 10 wheel |
-| 0x0e | 2 | i16 | wheel | 0x78 up, −0x78 down, and 0 for buttons. |
+| 0x00 | 4 | u32 | `time` | The client's clock, in ms. |
+| 0x04 | 4 | u32 | `value_04` | 0x00040000 on a right button press (frame 32), and 0 otherwise. |
+| 0x08 | 2 | u16 | `x` | In the window. |
+| 0x0a | 2 | u16 | `y` | In the window. |
+| 0x0c | 1 | u8 | `button` | 1 left, 2 right, 3 middle, 4 wheel up, 5 wheel down |
+| 0x0d | 1 | u8 | `kind` | 5 pressed, 6 released, 10 wheel |
+| 0x0e | 2 | i16 | `wheel` | 0x78 up, −0x78 down, and 0 for buttons. |
 
 <!-- [O frames 20 to 46] -->
 Each wheel step sends two identical messages (frames 40 and 42).

@@ -38,30 +38,30 @@ Struct `FolderAccess` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u8[4] | ignored_00 | 0 in the lab. |
-| 0x04 | 4 | u32 | flags | In byte 7, bit 0 is built-in, and bit 1 is Owner Login In Folder Name. |
-| 0x08 | 4 | u32 | icon | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
-| 0x0c | 128 | FolderAccessRule[32] | class_rules | One rule for each class, at 0x0c + 4 × class index. User (class 1) is at 0x10, and Guest (class 2) at 0x14. <!-- [O] --> The first rule is 0xfffe0000 (all permissions) in both lab items, so it is probably Administrator's. <!-- [I] --> |
-| 0x8c | 4 | FolderAccessRule | rule | 0xfffe0000 in `DB`, and 0 in `[Default]`. Probably the owner's rule. <!-- [I] --> |
-| 0x90 | 29 | u8[29] | ignored_90 | 0 as sent. |
-| 0xad | 1 | u8 | name_len |  |
-| 0xae | 1 | u8 | owner_len |  |
-| 0xaf | 1 | u8 | description_len |  |
-| 0xb0 | 1 | u8 | ignored_b0 |  |
-| 0xb1 | 1 | u8 | current_name_len |  |
-| 0xb2 | 6 | u8[6] | ignored_b2 |  |
-| 0xb8 | name_len | str | name | The tag, such as `DB`. |
-|  | owner_len | str | owner |  |
-|  | description_len | str | description |  |
-|  | current_name_len | str | current_name | Only in 1105: the item to change. |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 4 | u8[4] | `ignored_00` | 0 in the lab. |
+| 0x04 | 4 | u32 | `flags` | In byte 7, bit 0 is built-in, and bit 1 is Owner Login In Folder Name. |
+| 0x08 | 4 | u32 | `icon` | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
+| 0x0c | 128 | FolderAccessRule[32] | `class_rules` | One rule for each class, at 0x0c + 4 × class index. User (class 1) is at 0x10, and Guest (class 2) at 0x14. <!-- [O] --> The first rule is 0xfffe0000 (all permissions) in both lab items, so it is probably Administrator's. <!-- [I] --> |
+| 0x8c | 4 | FolderAccessRule | `rule` | 0xfffe0000 in `DB`, and 0 in `[Default]`. Probably the owner's rule. <!-- [I] --> |
+| 0x90 | 29 | u8[29] | `ignored_90` | 0 as sent. |
+| 0xad | 1 | u8 | `name_len` |  |
+| 0xae | 1 | u8 | `owner_len` |  |
+| 0xaf | 1 | u8 | `description_len` |  |
+| 0xb0 | 1 | u8 | `ignored_b0` |  |
+| 0xb1 | 1 | u8 | `current_name_len` |  |
+| 0xb2 | 6 | u8[6] | `ignored_b2` |  |
+| 0xb8 | `name_len` | str | `name` | The tag, such as `DB`. |
+|  | `owner_len` | str | `owner` |  |
+|  | `description_len` | str | `description` |  |
+|  | `current_name_len` | str | `current_name` | Only in 1105: the item to change. |
+|  | pad4 | u8[] | `padding` |  |
 
 Struct `FolderAccessRule` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | permission_bits | The MSB is bit 0. |
-| 0x02 | 2 | u16 | ignored | 0 as sent. |
+| 0x00 | 2 | u16 | `permission_bits` | The MSB is bit 0. |
+| 0x02 | 2 | u16 | `ignored` | 0 as sent. |
 
 The permission bits come from the client's menu at file offset 0xf6448:
 
@@ -92,7 +92,7 @@ Struct `CreateFolderAccess` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | item |  |
+| 0x00 |  | FolderAccess | `item` |  |
 
 An invalid name gets 0x1001e, and a name that already exists gets 0x1000d. If it
 succeeds, the reply is [1 Status](status.md#m1) 0x44c. Frame 231 makes `test`
@@ -118,7 +118,7 @@ Struct `FolderAccessName` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | str | name | No length byte. |
+| 0x00 | rest | str | `name` | No length byte. |
 
 An unknown name gets 0x1000c. If the delete succeeds, there is no Status reply.
 Instead, the server sends [1102 Folder Access Deleted](#m1102) to the requester,
@@ -136,7 +136,7 @@ Struct `FolderAccessDeleted` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccessName | name |  |
+| 0x00 |  | FolderAccessName | `name` |  |
 
 1102 Folder Access Deleted has the server's own next txid, not the request's:
 `f2cfecc3` in frame 71. <!-- [O] -->
@@ -162,7 +162,7 @@ Struct `GetFolderAccess` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccessName | name |  |
+| 0x00 |  | FolderAccessName | `name` |  |
 
 The request has no padding: 2 bytes and 9 bytes in `captures/linux-files.pcapng`
 frames 225 and 228. <!-- [O] --> `kdx_proto::msg::admin::FolderAccessName`
@@ -178,7 +178,7 @@ Struct `FolderAccessInfo` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | item |  |
+| 0x00 |  | FolderAccess | `item` |  |
 
 After a [1105 Set Folder Access](#m1105), this is the record from 1105 as sent,
 with its current name. <!-- [O `captures/linux-folder-access-guest.pcapng`
@@ -204,7 +204,7 @@ Struct `SetFolderAccess` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | item | `current_name` selects the item. |
+| 0x00 |  | FolderAccess | `item` | `current_name` selects the item. |
 
 The current name (0xb1) selects the item. If the name is different, the server
 renames the item. If it succeeds, the reply is [1 Status](status.md#m1) 0x451.
@@ -235,7 +235,7 @@ Struct `GetFolderAccessList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | rest | Empty, or a u32 of flags and then any bytes. Rust `flags` is the first 4 bytes, if present. <!-- [S] --> |
+| 0x00 | rest | u8[] | `rest` | Empty, or a u32 of flags and then any bytes. Rust `flags` is the first 4 bytes, if present. <!-- [S] --> |
 
 If bit 0 of the top byte of the u32 is set, a user without the privilege gets no
 reply, not [1 Status](status.md#m1) 0x10014. Client 1.620 for Linux sends
@@ -257,21 +257,21 @@ Struct `FolderAccessList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | items_count |  |
-| 0x04 | items_count | FolderAccessItem[] | items |  |
+| 0x00 | 4 | u32 | `items_count` |  |
+| 0x04 | `items_count` | FolderAccessItem[] | `items` |  |
 
 Struct `FolderAccessItem` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | flags | 1 is built-in (`[Default]`), and 2 is Owner Login In Folder Name. 1, 2, and 0 in the lab. <!-- [S] --> |
-| 0x04 | 4 | u32 | icon | 0 for `[Default]`, 0x2c Dropbox (`DB`), 0x2b Uploads (`UL`). <!-- [S] --> |
-| 0x08 | 8 | u8[8] | ignored_08 | The server does not write these bytes. |
-| 0x10 | 1 | u8 | ignored_10 |  |
-| 0x11 | 1 | u8 | name_len |  |
-| 0x12 | 1 | u8 | second_len |  |
-| 0x13 | 1 | u8 | description_len |  |
-| 0x14 | name_len | str | name | `[Default]` in the lab. |
-|  | second_len | str | second | Empty in the lab. |
-|  | description_len | str | description | `If a folder and its parents…` |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 4 | u32 | `flags` | 1 is built-in (`[Default]`), and 2 is Owner Login In Folder Name. 1, 2, and 0 in the lab. <!-- [S] --> |
+| 0x04 | 4 | u32 | `icon` | 0 for `[Default]`, 0x2c Dropbox (`DB`), 0x2b Uploads (`UL`). <!-- [S] --> |
+| 0x08 | 8 | u8[8] | `ignored_08` | The server does not write these bytes. |
+| 0x10 | 1 | u8 | `ignored_10` |  |
+| 0x11 | 1 | u8 | `name_len` |  |
+| 0x12 | 1 | u8 | `second_len` |  |
+| 0x13 | 1 | u8 | `description_len` |  |
+| 0x14 | `name_len` | str | `name` | `[Default]` in the lab. |
+|  | `second_len` | str | `second` | Empty in the lab. |
+|  | `description_len` | str | `description` | `If a folder and its parents…` |
+|  | pad4 | u8[] | `padding` |  |
