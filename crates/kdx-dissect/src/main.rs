@@ -1325,8 +1325,8 @@ fn draw_record(record: &DrawRecord) -> String {
 /// Describes the sections of 711 or 712 that the tracker reads.
 fn tracker_settings(settings: &TrackerSettings) -> Result<String> {
     let mut parts = vec![format!(
-        "format {} present {}",
-        settings.format,
+        "version {} present {}",
+        settings.version,
         hex(&settings.present)
     )];
     if let Some(general) = settings.general()? {

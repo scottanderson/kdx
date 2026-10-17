@@ -182,8 +182,10 @@ The reply is [171 Server Settings Info](#m171).
 Initiator: Server. Observed sizes: 216 and 764 bytes. **[S `FUN_0805f598`; O]**
 
 Reply to [170 Get Server Settings](#m170). The reply is the server's
-settings file. It starts with the magic `%KDXSSTG` and a version, followed by
-a table of section offsets and the sections.
+settings file. It starts with the protocol `%KDX`, the sub-protocol `SSTG`, and a
+version, followed by a table of section offsets and the sections. The server
+compares the protocol and the sub-protocol as two separate words
+**[S `FUN_08060268`]**.
 
 What the captures show (`captures/linux-server-settings.pcapng` frames 36,
 40, 56, 221, 225) **[O]**:
@@ -192,7 +194,8 @@ Struct `ServerSettings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | char[8] | magic | not stored. `%KDXSSTG` |
+| 0x00 | 4 | char[4] | protocol | not stored. `"%KDX"` (0x254b4458) **[S `FUN_08060268`]** |
+| 0x04 | 4 | char[4] | sub_protocol | not stored. `"SSTG"` (0x53535447) **[S `FUN_08060268`]** |
 | 0x08 | 2 | u16 | version | 1 |
 | 0x0a | 2 | u8[2] | ignored |  |
 | 0x0c | 88 | ServerSettingsSection[11] | sections | 11 entries **[I]** |

@@ -263,8 +263,8 @@ impl TrackerStats {
 /// accessors read a section only where the tracker would.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TrackerSettings {
-    /// Format; 1 from Tracker 1.110 and Client 1.620 beta 5.
-    pub format: u16,
+    /// Version; 1 from Tracker 1.110 and Client 1.620 beta 5.
+    pub version: u16,
     /// Bytes 0x0a and 0x0b; meaning unknown.
     pub ignored: [u8; 2],
     /// The present bytes at 0x6c, one per section; the tracker reads a section only when 1.
@@ -276,7 +276,7 @@ pub struct TrackerSettings {
 impl Default for TrackerSettings {
     fn default() -> Self {
         Self {
-            format: Self::FORMAT,
+            version: Self::VERSION,
             ignored: [0; 2],
             present: [0; Self::SECTIONS],
             sections: Default::default(),
@@ -285,10 +285,12 @@ impl Default for TrackerSettings {
 }
 
 impl TrackerSettings {
-    /// The magic at the start of the blob.
-    pub const MAGIC: [u8; 8] = *b"%KDXTSTG";
-    /// The format Tracker 1.110 writes.
-    pub const FORMAT: u16 = 1;
+    /// The protocol at 0x00.
+    pub const PROTOCOL: [u8; 4] = *b"%KDX";
+    /// The sub-protocol at 0x04.
+    pub const SUB_PROTOCOL: [u8; 4] = *b"TSTG";
+    /// The version Tracker 1.110 writes.
+    pub const VERSION: u16 = 1;
     /// Size of the header, where the first section starts.
     pub const HEADER_LEN: usize = 0x78;
     /// Entries in the section table.
@@ -311,8 +313,8 @@ impl TrackerSettings {
     /// Decodes the blob.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        if buf[..8] != Self::MAGIC {
-            return Err(DecodeError::Invalid("tracker settings magic"));
+        if buf[..4] != Self::PROTOCOL || buf[4..8] != Self::SUB_PROTOCOL {
+            return Err(DecodeError::Invalid("tracker settings protocol"));
         }
         let mut sections: [Option<Vec<u8>>; Self::SECTIONS] = Default::default();
         for (i, section) in sections.iter_mut().enumerate() {
@@ -329,7 +331,7 @@ impl TrackerSettings {
             *section = Some(buf[offset..offset + len].to_vec());
         }
         Ok(Self {
-            format: u16_at(buf, 8),
+            version: u16_at(buf, 8),
             ignored: buf[0x0a..Self::TABLE_AT].try_into().expect("2 bytes"),
             present: buf[Self::PRESENT_AT..Self::HEADER_LEN]
                 .try_into()
@@ -341,8 +343,9 @@ impl TrackerSettings {
     /// Encodes the blob, with the sections back to back in the order the programs use.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..8].copy_from_slice(&Self::MAGIC);
-        out[8..0x0a].copy_from_slice(&self.format.to_be_bytes());
+        out[..4].copy_from_slice(&Self::PROTOCOL);
+        out[4..8].copy_from_slice(&Self::SUB_PROTOCOL);
+        out[8..0x0a].copy_from_slice(&self.version.to_be_bytes());
         out[0x0a..Self::TABLE_AT].copy_from_slice(&self.ignored);
         out[Self::PRESENT_AT..].copy_from_slice(&self.present);
         for i in Self::LAYOUT {

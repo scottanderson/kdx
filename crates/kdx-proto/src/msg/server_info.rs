@@ -185,8 +185,10 @@ pub struct ServerSettings {
 }
 
 impl ServerSettings {
-    /// The magic at the start of the blob.
-    pub const MAGIC: [u8; 8] = *b"%KDXSSTG";
+    /// The protocol at 0x00.
+    pub const PROTOCOL: [u8; 4] = *b"%KDX";
+    /// The sub-protocol at 0x04.
+    pub const SUB_PROTOCOL: [u8; 4] = *b"SSTG";
     /// Size of the header, which ends where the main section starts in the lab.
     pub const HEADER_LEN: usize = 0x70;
     /// Entries in the section table.
@@ -210,8 +212,8 @@ impl ServerSettings {
     /// Decodes the blob.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
-        if buf[..8] != Self::MAGIC {
-            return Err(DecodeError::Invalid("settings magic"));
+        if buf[..4] != Self::PROTOCOL || buf[4..8] != Self::SUB_PROTOCOL {
+            return Err(DecodeError::Invalid("settings protocol"));
         }
         let sections = std::array::from_fn(|i| SettingsSection {
             offset: u32_at(buf, Self::TABLE_AT + 8 * i),
@@ -233,7 +235,8 @@ impl ServerSettings {
     /// Encodes the blob.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[..8].copy_from_slice(&Self::MAGIC);
+        out[..4].copy_from_slice(&Self::PROTOCOL);
+        out[4..8].copy_from_slice(&Self::SUB_PROTOCOL);
         out[8..0x0a].copy_from_slice(&self.version.to_be_bytes());
         out[0x0a..Self::TABLE_AT].copy_from_slice(&self.ignored);
         for (i, section) in self.sections.iter().enumerate() {

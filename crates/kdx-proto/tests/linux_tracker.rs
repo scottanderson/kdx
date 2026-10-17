@@ -80,7 +80,7 @@ fn registration() {
     // The checksum is stored big-endian.
     let mut plain = wire.to_vec();
     registration::crypt(&mut plain);
-    assert_eq!(plain[..4], Registration::MAGIC);
+    assert_eq!(plain[..4], Registration::PROTOCOL);
     assert_eq!(plain[4..6], Registration::VERSION.to_be_bytes());
     assert_eq!(plain[6..8], [0, 0]);
     assert_eq!(plain[8..12], [0x40, 0x17, 0xb3, 0xa7]);
@@ -222,7 +222,7 @@ fn server_list() {
 fn decode_settings(wire: &[u8]) -> TrackerSettings {
     let settings = TrackerSettings::decode(wire).unwrap();
     assert_eq!(settings.encode(), wire);
-    assert_eq!(settings.format, 1);
+    assert_eq!(settings.version, 1);
     for (i, section) in settings.sections.iter().enumerate() {
         let Some(bytes) = section else { continue };
         let reencoded = match i {
