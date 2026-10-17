@@ -14,8 +14,8 @@ hello (see [handshake.md](../handshake.md#connection-types)): client to client
 has a column. A cell names who sends the message on that kind of connection:
 Client, Server, Tracker or GConsole. On a DCC connection it is Caller or Callee
 for the two ends of a voice call, or Either when both sides send it. A blank
-cell means the kind has no handler for the message, or nothing shows one
-**[S]**. Most messages belong to the server. A server tells a tracker it
+cell means the kind has no handler for the message, or nothing shows one.
+<!-- [S] --> Most messages belong to the server. A server tells a tracker it
 exists by a UDP datagram, which has no message type; see [udp.md](../udp.md).
 
 Each message has a stable link made of the page that describes it and its

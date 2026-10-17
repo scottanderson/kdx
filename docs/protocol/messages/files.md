@@ -14,7 +14,7 @@ A *name list* below has the same layout as a file path: a u16 count, then for
 each name a u16 0, a u8 length, and the name. When a request carries paths back
 to back, each one is self-delimiting, and the root is written as a count of 0
 (`00 00`) rather than left empty (`captures/linux-files.pcapng` frames 206 and
-241) **[O]**. `kdx_proto::msg::FilePath::decode_delimited` reads such a path.
+241). <!-- [O] --> `kdx_proto::msg::FilePath::decode_delimited` reads such a path.
 Each request also passes the folder access check (`FUN_08057e5c`) with an access
 kind; a failure gets [1 Status](status.md#m1) 0x10014. `kdx_proto::msg::file`
 re-encodes each request below byte for byte (test `linux_files`).
@@ -22,7 +22,7 @@ re-encodes each request below byte for byte (test `linux_files`).
 ## 400 to 409: Listings, folders and deletion
 
 ### <a id="m400"></a>400 Get File List
-Initiator: Client. **[S `FUN_0804d938`; O]**
+Initiator: Client. <!-- [S `FUN_0804d938`; O] -->
 
 A folder listing is one request and one reply:
 
@@ -68,10 +68,10 @@ Struct `FileListEntry` (dynamic):
 | 0x08 | 8 | u64 | created | time |
 | 0x10 | 8 | u64 | modified | time |
 | 0x18 | 8 | u8[8] | ignored_18 |  |
-| 0x20 | 4 | u32 | attributes | 1 for a file, 0x01000002 for a folder **[O]**; the server clears bit 24 and tests 0x42 **[S]** |
+| 0x20 | 4 | u32 | attributes | 1 for a file, 0x01000002 for a folder; <!-- [O] --> the server clears bit 24 and tests 0x42 <!-- [S] --> |
 | 0x24 | 10 | u8[10] | ignored_24 |  |
 | 0x2e | 2 | u16 | ignored_2e | 0xffff for folders, 0 for a file |
-| 0x30 | 2 | u16 | access_item | the folder access entry's icon: 0x2c Dropbox, 0x2b Uploads; 0 for a file (see [1100 Create Folder Access](folder-access.md#m1100)) **[S]** |
+| 0x30 | 2 | u16 | access_item | the folder access entry's icon: 0x2c Dropbox, 0x2b Uploads; 0 for a file (see [1100 Create Folder Access](folder-access.md#m1100)) <!-- [S] --> |
 | 0x32 | 2 | u8[2] | ignored_32 |  |
 | 0x34 | 1 | u8 | ignored_34 | 4 for `Admin Dropbox [DB]`, 5 for `Uploads [UL]`, 0 for a file |
 | 0x35 | 1 | u8 | name_len |  |
@@ -79,15 +79,14 @@ Struct `FileListEntry` (dynamic):
 | 0x37 | 1 | u8 | ignored_37 |  |
 | 0x38 | name_len | str | name |  |
 |  | kind_len | str | kind | 0 for folders; `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413) |
-|  | pad4 | u8[] | padding | uninitialised **[O]** |
+|  | pad4 | u8[] | padding | uninitialised <!-- [O] --> |
 
-**[O]** `captures/kdx-cli.pcapng`: a 600000-byte `cli-big.bin` is listed with
+<!-- [O] --> `captures/kdx-cli.pcapng`: a 600000-byte `cli-big.bin` is listed with
 size 0x927c0 and kind `exttype/bin`. `kdx_proto::msg::file::FileListEntry`
 decodes both kinds of entry.
 
 ### <a id="m402"></a>402 Create Folder
-Initiator: Client. Privilege: Upload (11). **[S `FUN_0804e0f8`; O
-`captures/linux-files.pcapng` frames 26 to 29]**
+Initiator: Client. Privilege: Upload (11). <!-- [S `FUN_0804e0f8`; O `captures/linux-files.pcapng` frames 26 to 29] -->
 
 Struct `CreateFolder` (dynamic):
 
@@ -104,18 +103,17 @@ Struct `CreateFolder` (dynamic):
 |  | path_len | FilePath | path | the parent folder |
 
 The strings come in the order name, access, owner, though the length of the
-access is first **[S `FUN_0804e0f8`]**.
+access is first. <!-- [S `FUN_0804e0f8`] -->
 
 With a tag the folder is named `name [tag]`, or `name [tag,owner]` with an owner
 login. A name ending in a reserved suffix such as `lnk` gets 0x30076. Success is
 [1 Status](status.md#m1) 0x192 (frame 29). The client's New Folder dialog has
 Name, a Folder Access popup, and Owner Login. Frame 26 is 51 bytes: the name
 `lab-folder` and the path `Uploads [UL]`, with no tag or owner and no padding
-**[O]** (`CreateFolder`).
+<!-- [O] --> (`CreateFolder`).
 
 ### <a id="m403"></a>403 Create Alias
-Initiator: Client. Privilege: Create Aliases (15). **[S `FUN_0804e4ec`; O
-`captures/linux-files.pcapng` frames 95 to 98]**
+Initiator: Client. Privilege: Create Aliases (15). <!-- [S `FUN_0804e4ec`; O `captures/linux-files.pcapng` frames 95 to 98] -->
 
 The request is the destination folder path, the source folder path, then a name
 list of items in the source folder (frame 95: `Uploads [UL]`, `Uploads [UL]`,
@@ -135,7 +133,7 @@ Struct `MoveItems` (dynamic):
 Server 1.620 has no handler for [404 Delete File/Folder](#m404),
 [406 Rename File/Folder](#m406) and [408 Copy File/Folder](#m408).
 [405 Move To Trash](#m405), [407 Move File/Folder](#m407), and
-[411 Set File/Folder Info](#m411) cover the same ground **[S `FUN_0804fdac`]**.
+[411 Set File/Folder Info](#m411) cover the same ground. <!-- [S `FUN_0804fdac`] -->
 
 ### <a id="m404"></a>404 Delete File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
@@ -144,11 +142,10 @@ Struct `DeleteFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | unknown: the server has no handler **[S]** |
+| 0x00 | rest | u8[] | ignored | unknown: the server has no handler <!-- [S] --> |
 
 ### <a id="m405"></a>405 Move To Trash
-Initiator: Client. Privilege: Delete (18). **[S `FUN_0804e980`; O
-`captures/linux-files.pcapng` frames 241 to 244]**
+Initiator: Client. Privilege: Delete (18). <!-- [S `FUN_0804e980`; O `captures/linux-files.pcapng` frames 241 to 244] -->
 
 The request is a folder path, then a name list (frame 241: the root, then
 `lab-folder`). Each item gets a history record. Success is
@@ -168,11 +165,10 @@ Struct `RenameFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | unknown: the server has no handler **[S]** |
+| 0x00 | rest | u8[] | ignored | unknown: the server has no handler <!-- [S] --> |
 
 ### <a id="m407"></a>407 Move File/Folder
-Initiator: Client. Privilege: Move (16). **[S `FUN_0804ebd8`; O
-`captures/linux-files.pcapng` frames 76, 80, 127, 131, 206, 210]**
+Initiator: Client. Privilege: Move (16). <!-- [S `FUN_0804ebd8`; O `captures/linux-files.pcapng` frames 76, 80, 127, 131, 206, 210] -->
 
 The request is the destination folder path, the source folder path, then a name
 list. Frame 76 moves `upload.txt` from `Uploads [UL]/lab-folder` to
@@ -193,10 +189,10 @@ Struct `CopyFileFolder` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | unknown: the server has no handler **[S]** |
+| 0x00 | rest | u8[] | ignored | unknown: the server has no handler <!-- [S] --> |
 
 ### <a id="m409"></a>409 Get File/Folder Info
-Initiator: Client. **[S `FUN_0804ef00`; O]**
+Initiator: Client. <!-- [S `FUN_0804ef00`; O] -->
 
 Struct `GetFileFolderInfo` (dynamic):
 
@@ -235,8 +231,7 @@ Struct `FileInfo` (dynamic):
 |  | rest | u8[] | rest | any bytes after the kind; none in the capture |
 
 ### <a id="m411"></a>411 Set File/Folder Info
-Initiator: Client. **[S `FUN_0804f684`; O `captures/linux-files.pcapng` frame
-89]**
+Initiator: Client. <!-- [S `FUN_0804f684`; O `captures/linux-files.pcapng` frame 89] -->
 
 Struct `SetFileInfo` (dynamic):
 
@@ -254,14 +249,14 @@ Struct `SetFileInfo` (dynamic):
 
 Without Modify Folder Access (28), a new name must keep the folder's
 ` [tag]` suffix. There is no reply, success or not (frame 89: no Status for
-its txid). Frame 89 is 93 bytes, unpadded **[O]**.
+its txid). Frame 89 is 93 bytes, unpadded. <!-- [O] -->
 
 Downloads and uploads run on their own connection; see
 [transfers.md](../transfers.md).
 
 ### <a id="m412"></a>412 Download File
 Initiator: Client, on a transfer connection. Privilege: Download (10).
-**[S `FUN_08050984`, `FUN_080512b4`; O]**
+<!-- [S `FUN_08050984`, `FUN_080512b4`; O] -->
 
 Struct `DownloadFile` (dynamic):
 
@@ -275,24 +270,24 @@ Struct `DownloadFile` (dynamic):
 
 The payload must be at least 0x1a bytes. Each offset is rounded down to a
 multiple of 0x1000. An offset at or past the end still gets its
-[414 Download File (D)](#m414), with length 0. **[O]**: offset 5000 resumed at
+[414 Download File (D)](#m414), with length 0.: <!-- [O] --> offset 5000 resumed at
 4096, and the 65904 bytes that came back equal the full download from 0x1000;
 offset 70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng`
 frames 271-281, 383-389, and 348-351; test `downloads`).
 
 Offsets and sizes are 64-bit throughout. The server rounds the offset down
 within its 64-bit value, reads with `lseek64` to it, and sends the remaining
-length as a 48-bit header length **[S `FUN_08050984`, `FUN_080945e0`]**. Server
-1.600 for Windows seeks with the high half too **[S `FUN_0042c600`]**. So the
+length as a 48-bit header length. <!-- [S `FUN_08050984`, `FUN_080945e0`] --> Server
+1.600 for Windows seeks with the high half too. <!-- [S `FUN_0042c600`] --> So the
 data should start exactly at the rounded offset past 4 GiB as well. Once,
 though, a download from `kdx.erb.pw` with an offset above 4 GiB began 0xF000
-bytes past the rounded offset (not captured) **[O]**; the server's build is
+bytes past the rounded offset (not captured); <!-- [O] --> the server's build is
 unknown, and the cause is open. A client should take the start as the data fork
-size less the 414 length, not as the rounded offset **[I]**.
+size less the 414 length, not as the rounded offset. <!-- [I] -->
 
 A file over 0x40000 bytes is refused with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25
-(probably Allow Simultaneous Downloads **[I]**).
+(probably Allow Simultaneous Downloads). <!-- [I] -->
 
 The server answers with [413 Download File (R)](#m413). Then it streams:
 
@@ -316,10 +311,10 @@ Struct `FileStrings` (dynamic):
 | 0x01 | 1 | u8 | second_len |  |
 | 0x02 | 1 | u8 | third_len |  |
 | 0x03 | 1 | u8 | fourth_len | at most 0x41 |
-| 0x04 | name_len | str | name | `probe-dl.bin` **[O]** |
-|  | second_len | str | second | probably a type that the server derives from the file extension, since Linux files have no type code **[I]**; `exttype/bin` **[O]** |
-|  | third_len | str | third | empty **[O]** |
-|  | fourth_len | str | fourth | empty **[O]** |
+| 0x04 | name_len | str | name | `probe-dl.bin` <!-- [O] --> |
+|  | second_len | str | second | probably a type that the server derives from the file extension, since Linux files have no type code; <!-- [I] --> `exttype/bin` <!-- [O] --> |
+|  | third_len | str | third | empty <!-- [O] --> |
+|  | fourth_len | str | fourth | empty <!-- [O] --> |
 
 99 bytes for a plain Linux file:
 
@@ -350,7 +345,7 @@ Struct `FileData` (dynamic):
 One [414 Download File (D)](#m414) header covers the whole fork, even past the
 limits on normal payloads: a 600000-byte file came as a single 414 of length
 600000, byte for byte, and a resume from 300000 as one of 300992 from 299008
-(`captures/kdx-cli.pcapng` frames 133 and 190) **[O]**.
+(`captures/kdx-cli.pcapng` frames 133 and 190). <!-- [O] -->
 `kdx_proto::msg::file::FileData` holds the payload of 414 and
 [417 Upload File (D)](#m417) unchanged. Data is read in chunks starting at
 0x10000 and growing to 0x80000. With a speed limit, chunks are multiples of
@@ -358,7 +353,7 @@ limits on normal payloads: a 600000-byte file came as a single 414 of length
 
 ### <a id="m415"></a>415 Upload File
 Initiator: Client, on a transfer connection. Privilege: Upload (11).
-**[S `FUN_08051750`, `FUN_08051dec`; O]**
+<!-- [S `FUN_08051750`, `FUN_08051dec`; O] -->
 
 Struct `UploadFile` (dynamic):
 
@@ -368,7 +363,7 @@ Struct `UploadFile` (dynamic):
 | 0x08 | 8 | u64 | rsrc_size |  |
 | 0x10 | 7 | u8[7] | ignored_10 |  |
 | 0x17 | 1 | u8 | options | bit 0: plain (unencrypted) transfer |
-| 0x18 | 24 | u8[24] | ignored_18 | probably times, as at the same offsets of [413](#m413) **[I]** |
+| 0x18 | 24 | u8[24] | ignored_18 | probably times, as at the same offsets of [413](#m413) <!-- [I] --> |
 | 0x30 | 22 | u8[22] | ignored_30 |  |
 | 0x46 | 2 | u16 | folder_len |  |
 | 0x48 |  | FileStrings | strings | the name must not be empty |
@@ -379,7 +374,7 @@ The server writes to a temporary name until the upload finishes. If the
 name already exists, it fails with 0x30073. An earlier partial upload of
 the same name is resumed. At the end, the server applies the second to
 fourth strings to the file. They probably carry type and comment
-information **[I]**.
+information. <!-- [I] -->
 
 The server answers with [416 Upload File (R)](#m416). The client then
 sends:
@@ -388,7 +383,7 @@ sends:
    data-fork bytes that remain, or the server fails with 0x40074. The data
    follows.
 2. A **417 Upload File (D)** header for the resource fork, then its data.
-   This build expects length 0 here **[S]**.
+   This build expects length 0 here. <!-- [S] -->
 
 When both forks are complete, the server renames the file into place, writes a
 [189 Finished File Upload](administration.md#m189) history record, and sends
@@ -417,7 +412,7 @@ Struct `UploadFileData` (dynamic):
 |---|---|---|---|---|
 | 0x00 |  | FileData | data | defined in [414 Download File (D)](#m414) |
 
-**[O]**: 300000 bytes sent under one [417 Upload File (D)](#m417) header arrived
+<!-- [O] --> 300000 bytes sent under one [417 Upload File (D)](#m417) header arrived
 byte for byte (`captures/kdx-cli.pcapng` frame 244).
 `kdx_proto::msg::file::FileData` holds the payload unchanged, as for
 [414 Download File (D)](#m414).
@@ -428,11 +423,11 @@ Initiator: Server. Completes [415 Upload File](#m415).
 No payload.
 
 An empty message with the server's own txid, sent when both forks are
-complete. The payload is empty **[O `captures/linux-files.pcapng` frame 51]**.
-**[O]**: 100 bytes uploaded to `Uploads [UL]` arrived byte for byte.
+complete. The payload is empty. <!-- [O `captures/linux-files.pcapng` frame 51] -->:
+<!-- [O] --> 100 bytes uploaded to `Uploads [UL]` arrived byte for byte.
 
 ### <a id="m419"></a>419 Notify Speed Limit
-Initiator: Server. **[O]**
+Initiator: Server. <!-- [O] -->
 
 Struct `NotifySpeedLimit` (4 bytes):
 
@@ -441,7 +436,7 @@ Struct `NotifySpeedLimit` (4 bytes):
 | 0x00 | 4 | u32 | bytes_per_second | in bytes per second |
 
 It came on the session, not on the transfer connection, when a download
-started under the total outgoing speed limit. **[O]**: `00 00 50 00`, the
+started under the total outgoing speed limit.: <!-- [O] --> `00 00 50 00`, the
 20480 bytes per second set in the server settings, came right after the
 [413 Download File (R)](#m413) (`captures/linux-server-settings.pcapng` frames
 106, 110). `kdx_proto::msg::transfer::NotifySpeedLimit` re-encodes it.
@@ -449,8 +444,7 @@ started under the total outgoing speed limit. **[O]**: `00 00 50 00`, the
 ## 420 to 429: Launch, trash and volumes
 
 ### <a id="m420"></a>420 Launch File
-Initiator: Client. Privilege: Launch Programs (82). **[S `FUN_0804fa90`, client
-`FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames 31 to 32]**
+Initiator: Client. Privilege: Launch Programs (82). <!-- [S `FUN_0804fa90`, client `FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames 31 to 32] -->
 
 Struct `LaunchFile` (dynamic):
 
@@ -461,21 +455,19 @@ Struct `LaunchFile` (dynamic):
 
 Success is [1 Status](status.md#m1) 0x1a4, and the server runs the file. Frames
 31 and 32 of `captures/linux-catalog-volumes.pcapng` launch `lab-files/hello.sh`
-this way **[O]**.
+this way. <!-- [O] -->
 
 ### <a id="m421"></a>421 Empty Trash
 Initiator: Client. Privilege: Empty Trash (13). Handled inline; success is
-[1 Status](status.md#m1) 0x1a5 **[S]**.
+[1 Status](status.md#m1) 0x1a5. <!-- [S] -->
 
 No payload.
 
-The request is empty **[O `captures/linux-files.pcapng` frame 260]**.
+The request is empty. <!-- [O `captures/linux-files.pcapng` frame 260] -->
 
 ### <a id="m422"></a>422 Volume Info
 Initiator: Server. Reply to [409 Get File/Folder Info](#m409) when the path is a
-single name that is a volume (the user can see all volumes) **[S `FUN_0804ef00`,
-client `FUN_080758dc`; O `captures/linux-catalog-volumes.pcapng` frames 50 to
-51]**.
+single name that is a volume (the user can see all volumes). <!-- [S `FUN_0804ef00`, client `FUN_080758dc`; O `captures/linux-catalog-volumes.pcapng` frames 50 to 51] -->
 
 A reply is not padded (93 bytes at 51):
 
@@ -489,10 +481,10 @@ Struct `VolumeInfo` (dynamic):
 | 0x18 | 8 | u64 | created | time |
 | 0x20 | 4 | u32 | item_count | 0xffffffff if unknown |
 | 0x24 | 2 | u8[2] | ignored_24 |  |
-| 0x26 | 1 | u8 | disk_type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy; 0 on Linux **[O]** |
+| 0x26 | 1 | u8 | disk_type | 1 RAM, 2 Network, 3 Cartridge, 4 Hard Disk, 5 CD, 6 DVD, 7 Floppy; 0 on Linux <!-- [O] --> |
 | 0x27 | 5 | u8[5] | ignored_27 |  |
-| 0x2c | 4 | u32 | ignored_2c | 0x88 **[O]** |
-| 0x30 | 4 | u32 | icon | 0x3d **[O]** |
+| 0x2c | 4 | u32 | ignored_2c | 0x88 <!-- [O] --> |
+| 0x30 | 4 | u32 | icon | 0x3d <!-- [O] --> |
 | 0x34 | 16 | u8[16] | ignored_34 |  |
 | 0x44 | 4 | u32 | flags | bit 0 name editable, bit 1 comments editable |
 | 0x48 | 4 | u32 | flags_mask | the client ANDs it with 0x44 |
@@ -502,11 +494,11 @@ Struct `VolumeInfo` (dynamic):
 | 0x50 | 1 | u8 | format_len |  |
 | 0x51 | 1 | u8 | comments_len |  |
 | 0x52 | 2 | u8[2] | ignored_52 |  |
-| 0x54 | name_len | str | name | `/tmp` at 51 **[O]** |
-|  | format_len | str | format | `tmpfs` at 51 **[O]** e.g. the file system name |
+| 0x54 | name_len | str | name | `/tmp` at 51 <!-- [O] --> |
+|  | format_len | str | format | `tmpfs` at 51 <!-- [O] --> e.g. the file system name |
 |  | comments_len | str | comments |  |
 
-On Linux the sizes and item count are all ones and the times are 0 **[O]**.
+On Linux the sizes and item count are all ones and the times are 0. <!-- [O] -->
 `kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for byte. The
 client labels are Free Size, Used Size, Total Size, Item Count, Disk Type,
 Format, Created, Modified, and Comments. It makes the name or comments field
@@ -514,19 +506,18 @@ read-only when its bit is clear (`FUN_080a0410`).
 
 Server 1.620 for Linux writes `caps & 2 | 1` to both 0x44 and 0x48, where
 `caps` is the constant 0x39 from `FUN_08096780`. So the name is always
-editable and the comments never are **[S `FUN_0804ef00`]**. Both words are
+editable and the comments never are. <!-- [S `FUN_0804ef00`] --> Both words are
 `00000001` in frame 51 of `captures/linux-catalog-volumes.pcapng`, which
-also ends with the format, `tmpfs` **[O]**.
+also ends with the format, `tmpfs`. <!-- [O] -->
 
 ### <a id="m423"></a>423 Set Volume Info
-Initiator: Client. Privilege: See All Volumes (22). **[S `FUN_0804f8d0`, client
-`FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames 53 to 54]**
+Initiator: Client. Privilege: See All Volumes (22). <!-- [S `FUN_0804f8d0`, client `FUN_08074420`; O `captures/linux-catalog-volumes.pcapng` frames 53 to 54] -->
 
 The request has the [422 Volume Info](#m422) layout, but its strings differ. At
 0x54 come the volume's current name, the new name, the format (ignored), and
 the comments. Flags at 0x44: bit 0 renames the volume, bit 1 sets the comments.
 The client sets a bit only for a field the user edited, and sends nothing if
-neither was **[S client `FUN_08074420`]**.
+neither was. <!-- [S client `FUN_08074420`] -->
 
 Struct `SetVolumeInfo` (dynamic):
 
@@ -545,24 +536,23 @@ Struct `SetVolumeInfo` (dynamic):
 |  | format_len | str | format | ignored |
 |  | comments_len | str | comments |  |
 
-On success there is no reply; the server writes history record 0x1a7 **[S]**.
+On success there is no reply; the server writes history record 0x1a7. <!-- [S] -->
 
-In Server 1.620 for Linux both setters are stubs **[S]**. Renaming
+In Server 1.620 for Linux both setters are stubs. <!-- [S] --> Renaming
 (`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the history
 record is written, and the client gets a [1 Status](status.md#m1) error with it.
 In frame 53 of `captures/linux-catalog-volumes.pcapng`,
 [423 Set Volume Info](#m423) has flags `00000001`, the name `/tmp`, and the new
-name `/tmp-renamed`; frame 54 is the error, at module 0x46, line 2175 **[O]**.
+name `/tmp-renamed`; frame 54 is the error, at module 0x46, line 2175. <!-- [O] -->
 Setting the comments (`FUN_08094e6c`) does nothing. Frame 53 is 100 bytes,
-unpadded, with every field but the flags and string lengths 0 **[O]**.
+unpadded, with every field but the flags and string lengths 0. <!-- [O] -->
 `kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
 `linux_catalog_volumes`).
 
 ## 450 to 459: Catalog and search
 
 ### <a id="m450"></a>450 Generate Catalog
-Initiator: Client. Privilege: Modify Server Settings (61). **[S `FUN_0805a728`,
-`FUN_0805a878`; O `captures/linux-catalog-volumes.pcapng` frames 23 to 26]**
+Initiator: Client. Privilege: Modify Server Settings (61). <!-- [S `FUN_0805a728`, `FUN_0805a878`; O `captures/linux-catalog-volumes.pcapng` frames 23 to 26] -->
 
 The request is empty or a u32 of flags; bit 0 cancels a running catalog (only
 its starter may).
@@ -592,11 +582,10 @@ Struct `CatalogStatus` (8 bytes):
 | 0x04 | 4 | u32 | items | items indexed so far |
 
 In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
-`00000000 00000002` (24), then `00000001 0000000b` (26) **[O]**.
+`00000000 00000002` (24), then `00000001 0000000b` (26). <!-- [O] -->
 
 ### <a id="m452"></a>452 File Search
-Initiator: Client. **[S `FUN_0805abc0`; O
-`captures/linux-catalog-volumes.pcapng` frames 28 to 29]**
+Initiator: Client. <!-- [S `FUN_0805abc0`; O `captures/linux-catalog-volumes.pcapng` frames 28 to 29] -->
 
 A search is one request and one reply:
 
@@ -622,7 +611,7 @@ Struct `FileSearch` (dynamic):
 | 0x58 | query_len | str | query | at least 3 |
 
 Without a catalog the reply is
-[1 Status](status.md#m1) 0x640001, as in `captures/linux-files.pcapng` **[O]**.
+[1 Status](status.md#m1) 0x640001, as in `captures/linux-files.pcapng`. <!-- [O] -->
 Otherwise the server writes history record 0x1c4 and replies with
 [453 File Search (R)](#m453).
 
@@ -643,15 +632,15 @@ Struct `FileSearchEntry` (dynamic):
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 8 | u64 | size |  |
-| 0x08 | 8 | u64 | created | time; probably the creation time **[I]** |
-| 0x10 | 8 | u64 | modified | time; probably the modification time **[I]** |
+| 0x08 | 8 | u64 | created | time; probably the creation time <!-- [I] --> |
+| 0x10 | 8 | u64 | modified | time; probably the modification time <!-- [I] --> |
 | 0x18 | 4 | u32 | path_len |  |
 | 0x1c | 4 | u8[4] | ignored_1c |  |
 | 0x20 | 4 | u32 | attributes | as in [401 File List](#m401) |
 | 0x24 | 10 | u8[10] | ignored_24 |  |
 | 0x2e | 2 | u16 | ignored_2e | as in 401 |
 | 0x30 | 4 | u8[4] | ignored_30 |  |
-| 0x34 | 1 | u8 | ignored_34 | 0x10 for a file **[O]** |
+| 0x34 | 1 | u8 | ignored_34 | 0x10 for a file <!-- [O] --> |
 | 0x35 | 1 | u8 | ignored_35 |  |
 | 0x36 | 1 | u8 | name_len |  |
 | 0x37 | 1 | u8 | ignored_37 |  |
@@ -664,7 +653,7 @@ an empty [453 File Search (R)](#m453).
 
 Frame 29 of `captures/linux-catalog-volumes.pcapng` has one hit for `a.txt`:
 size 6, attributes 1, name length 0, and a path length of 0x16 for the
-path `lab-files`, `a.txt` **[O]**. So the name can be empty, with the item's
+path `lab-files`, `a.txt`. <!-- [O] --> So the name can be empty, with the item's
 name only in its path. `kdx_proto::msg::file` re-encodes
 [420 Launch File](#m420) and [450 Generate Catalog](#m450) to 453 byte for byte
 (test `linux_catalog_volumes`).

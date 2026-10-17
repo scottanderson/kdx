@@ -39,10 +39,15 @@ Put details in those files. Keep this file to rules.
 
 ## Docs
 
-- Tag each claim with its evidence: **[O]** observed in a capture, **[S]**
-  read in a binary, **[I]** inferred.
-- Write each tag in bold, in tables and headings too:
-  `**[S FUN_08085a04]**`. Leave tags in code blocks plain.
+- Write all text in the repo in ASD-STE100 style, but let it flow
+  naturally; flow wins when the two conflict. Write the simplest version that
+  keeps the nuance.
+- Tag each claim with its evidence: `[O]` observed in a capture, `[S]` read
+  in a binary, `[I]` inferred.
+- Put each tag in an HTML comment right after its claim, as in
+  `<!-- [S FUN_08085a04] -->`, so the rendered text reads like a spec. Put a
+  heading's tag on its own line below it. Keep hedges such as "probably" in
+  the prose, since the reader cannot see an `[I]`.
 - Cite static findings by function address (`FUN_08085a04`), and cite
   captures by file and frame number.
 - Write numbers in the protocol as hex where the binary uses hex. Write all

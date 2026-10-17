@@ -7,8 +7,8 @@ also serves as login: the client proves it knows the account's
 password-derived key, and the server proves it knows the same key. The
 password itself never crosses the wire.
 
-Evidence tags: **[O]** means observed in a capture, **[S]** means found
-statically in a binary, **[I]** means inferred.
+Evidence tags: <!-- [O] --> means observed in a capture, <!-- [S] --> means found
+statically in a binary, <!-- [I] --> means inferred.
 - Capture: `captures/first-connect.pcapng`. The Win32 Client 1.600 logs in as
   `admin` to Server 1.620. Frames 16 (C→S hello), 18 (S→C hello), 20 (C→S
   proof), 21 (S→C proof).
@@ -20,7 +20,7 @@ All multi-byte integers are big-endian.
 ## XOR layer
 
 Both messages are sent as `key(4) | body`. `body` is a whole number of 32-bit
-words, each XORed with a key stream **[S `FUN_080872f4`, `FUN_0808751c`; O]**:
+words, each XORed with a key stream: <!-- [S `FUN_080872f4`, `FUN_0808751c`; O] -->
 
 ```
 k = key
@@ -50,43 +50,43 @@ The client and server each send a hello, then each sends a proof. The server
 checks the client's proof against the account's stored key, and the client
 checks the server's proof, before the session begins.
 
-**[O]** The server's hello waits for the client's hello. **[S]** The server
+<!-- [O] --> The server's hello waits for the client's hello. <!-- [S] --> The server
 also sends its own hello before reporting an error, if it hasn't sent one yet.
 
 ## HELLO
 
 Total length: `(name_len + pad_len + skipped_len + 0x27) & ~3`. It must be at
-most 0x800 **[S `FUN_080876e8`]**.
+most 0x800. <!-- [S `FUN_080876e8`] -->
 
 Struct `Hello` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | key | not stored. Random XOR key, sent in the clear |
-| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 (lab probe) **[S; O]** |
-| 0x08 | 4 | char[4] | sub_protocol | `"%KDX"` (0x254b4458) for client/server **[S; O]**; `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) **[S `FUN_0804b824`; O]** |
-| 0x0c | 1 | u8 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) **[S]** |
-| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20` **[O `captures/linux-first-connect.pcapng` frames 8, 10]**, Tracker 1.110 sends `0x30` **[S]**, and a GConsole peer `0x40` **[S; O]**. Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) in the version callback at +0x88 **[S server `0x080526e0`, tracker `FUN_0804bb4c`]** |
-| 0x0e | 1 | u8 | pad_len | sent as 0 **[S; O]** |
-| 0x0f | 1 | u8 | name_len | 0..31; the receiver keeps at most 31 bytes **[S `FUN_08085a04`]** |
-| 0x10 | 4 | u8[4] | ignored | 0 as sent **[S `FUN_08085a04`; O]** |
-| 0x14 | 2 | u16 | skipped_len | sent as 0 **[S; O]** |
-| 0x16 | 2 | u16 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables **[S; O]** |
-| 0x18 | 12 | u8[12] | nonce | per-connection value. It looks time-based (both sides' nonces share bytes) **[O]**. A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) **[S]** |
-| 0x24 | pad_len | u8[] | pad | not stored. Bytes the receiver skips before the name **[S `FUN_08085a04`]** |
-|  | skipped_len | u8[] | skipped | not stored. More bytes the receiver skips before the name **[S `FUN_08085a04`]** |
-|  | name_len | str | name | login name (client) or empty (server 1.620) **[O]**. See "Login names" |
+| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Anything else gives error 0x40071 at TRN line 941 (lab probe) <!-- [S; O] --> |
+| 0x08 | 4 | char[4] | sub_protocol | `"%KDX"` (0x254b4458) for client/server; <!-- [S; O] --> `"%HGC"` (0x25484743) from a GConsole peer, which a client accepts with sub-version 0x40 ([gconsole.md](gconsole.md#handshake)) <!-- [S `FUN_0804b824`; O] --> |
+| 0x0c | 1 | u8 | version | `1`. A value of 0 means "peer too old" (0x40072), and >1 means "peer too new" (0x40073) <!-- [S] --> |
+| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, Server 1.620 sends `0x20`, <!-- [O `captures/linux-first-connect.pcapng` frames 8, 10] --> Tracker 1.110 sends `0x30`, <!-- [S] --> and a GConsole peer `0x40`. <!-- [S; O] --> Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (0x40072 below, 0x40073 above) in the version callback at +0x88 <!-- [S server `0x080526e0`, tracker `FUN_0804bb4c`] --> |
+| 0x0e | 1 | u8 | pad_len | sent as 0 <!-- [S; O] --> |
+| 0x0f | 1 | u8 | name_len | 0..31; the receiver keeps at most 31 bytes <!-- [S `FUN_08085a04`] --> |
+| 0x10 | 4 | u8[4] | ignored | 0 as sent <!-- [S `FUN_08085a04`; O] --> |
+| 0x14 | 2 | u16 | skipped_len | sent as 0 <!-- [S; O] --> |
+| 0x16 | 2 | u16 | challenge | offset of the 0x14 bytes of the receiver's challenge table that the receiver's proof must echo; see Challenge tables <!-- [S; O] --> |
+| 0x18 | 12 | u8[12] | nonce | per-connection value. It looks time-based (both sides' nonces share bytes). <!-- [O] --> A peer that echoes our nonce is treated as a connection to ourselves and rejected (0x40074) <!-- [S] --> |
+| 0x24 | pad_len | u8[] | pad | not stored. Bytes the receiver skips before the name <!-- [S `FUN_08085a04`] --> |
+|  | skipped_len | u8[] | skipped | not stored. More bytes the receiver skips before the name <!-- [S `FUN_08085a04`] --> |
+|  | name_len | str | name | login name (client) or empty (server 1.620). <!-- [O] --> See "Login names" |
 |  | pad4 | u8[] | padding |  |
 
 The receiver adds `pad_len` and `skipped_len` and skips that many bytes, so
-the split between `pad` and `skipped` is not visible on the wire
-**[S `FUN_08085a04`]**.
+the split between `pad` and `skipped` is not visible on the wire.
+<!-- [S `FUN_08085a04`] -->
 
 The field names follow the server's error text: a wrong protocol or
 sub-protocol raises 0x40071, "The network protocol is unknown", and a
 version or sub-version out of range raises 0x40072 or 0x40073, "The
-protocol version of the remote host is too OLD" or "…more recent"
-**[S `FUN_08066d04`]**. The sub-version also tells the peer's role: 0x10 a
+protocol version of the remote host is too OLD" or "…more recent".
+<!-- [S `FUN_08066d04`] --> The sub-version also tells the peer's role: 0x10 a
 client, 0x20 a server, 0x30 a tracker, and 0x40 a GConsole peer.
 
 ## PROOF
@@ -97,15 +97,15 @@ Struct `Proof` (44 bytes):
 |---|---|---|---|---|
 | 0x00 | 20 | u8[20] | auth | the first 4 bytes double as the XOR key for the rest |
 | 0x14 | 20 | u8[20] | response | the 20 bytes of the challenge table at the offset from the **peer's** hello |
-| 0x28 | 1 | u8 | status | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new **[S]** |
-| 0x29 | 3 | u8[3] | ignored | 0 as sent **[S `FUN_08085a04`; O]** |
+| 0x28 | 1 | u8 | status | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new <!-- [S] --> |
+| 0x29 | 3 | u8[3] | ignored | 0 as sent <!-- [S `FUN_08085a04`; O] --> |
 
 Bytes 0x04..0x2b are XORed with the stream keyed by bytes 0..3.
 
 When the status isn't OK, `auth` is all zeros except the key word, which is
-`peer_nonce[4..8] XOR 0x201f7790` **[S `FUN_0808751c`]**.
+`peer_nonce[4..8] XOR 0x201f7790`. <!-- [S `FUN_0808751c`] -->
 
-Verified on both proofs in the capture, reproduced exactly **[O]**:
+Verified on both proofs in the capture, reproduced exactly: <!-- [O] -->
 
 ```
 secret = account_key(password)                 # 32 bytes, below
@@ -116,10 +116,11 @@ auth   = Twofish-256(key = secret).encrypt(d[0:16]) || d[16:20]
 ```
 
 The receiver recomputes `auth` with its own nonce and compares all 20 bytes,
-then compares the 20 challenge bytes with its own table **[S `FUN_08085a04`,
-`FUN_0808584c`]**. A failure is error 0x40070.
+then compares the 20 challenge bytes with its own table. <!-- [S `FUN_08085a04`, `FUN_0808584c`] --> A failure is error 0x40070.
 
-### account_key(password) **[S `FUN_080669cc`; O]**
+### account_key(password)
+
+<!-- [S `FUN_080669cc`; O] -->
 
 ```
 password empty: fixed bytes  da39a3ee caaebe6e 5e6b4b0d ba8e29ba 3255bfef 18a2b5c4 95601890 afd80709
@@ -132,15 +133,14 @@ The empty-password constant isn't what the formula gives for an empty input.
 Words 0, 2, 4, 6 and 7 are the five words of SHA-1(""), and words 1, 3 and 5 are
 other values. Use the bytes exactly as written above. Guest logins use it on
 both sides (the `kdx` CLI on port 40434 in `kdx-news`, and Client 1.620 beta 5
-in `linux-accounts-news`) **[O `captures/kdx-news.pcapng`; O
-`captures/linux-accounts-news.pcapng` frames 94 to 100]**.
+in `linux-accounts-news`). <!-- [O `captures/kdx-news.pcapng`; O `captures/linux-accounts-news.pcapng` frames 94 to 100] -->
 
 The server stores this 32-byte key per account, so the password can't be
-recovered from `Accounts.dat` alone **[I]**.
+recovered from `Accounts.dat` alone. <!-- [I] -->
 
 ## Connection types
 
-The client's Connect dialog has a Type menu **[S `FUN_0804bac0`]**:
+The client's Connect dialog has a Type menu: <!-- [S `FUN_0804bac0`] -->
 
 | Value | Type | Default port |
 |---:|---|---:|
@@ -150,8 +150,8 @@ The client's Connect dialog has a Type menu **[S `FUN_0804bac0`]**:
 | 3 | Tracker | 10800, see [tracker.md](tracker.md) |
 | 4 | GConsole | 10900, see [gconsole.md](gconsole.md) |
 
-The peer's hello decides what kind of connection it is
-**[S `FUN_0804b824`, `FUN_0804b938`]**:
+The peer's hello decides what kind of connection it is:
+<!-- [S `FUN_0804b824`, `FUN_0804b938`] -->
 
 | Sub-protocol | Sub-version | Connection |
 |---|---:|---|
@@ -160,22 +160,24 @@ The peer's hello decides what kind of connection it is
 | `%KDX` | 0x30 | Tracker |
 | `%HGC` (0x25484743) | 0x40 | GConsole |
 
-## Login names **[S `FUN_0805270c`]**
+## Login names
+
+<!-- [S `FUN_0805270c`] -->
 
 - Empty: the server substitutes `guest`.
 - `0x00` followed by a big-endian 32-bit ID (name_len 5): this attaches to the
   existing session with that ID, using that session's key and requiring the
   same peer IP. It opens a file-transfer connection; see
-  [transfers.md](transfers.md) **[S `FUN_0805270c`; O]**.
+  [transfers.md](transfers.md). <!-- [S `FUN_0805270c`; O] -->
 - Anything else: an account login. The account's stored key is used to check
   the proof.
 
 ## Challenge tables
 
 Each connection object holds a pointer to its table at +0xa4 and the table's
-length, a u16, at +0xa0 **[S client `FUN_080ea000`, server `FUN_0808529c`]**.
+length, a u16, at +0xa0. <!-- [S client `FUN_080ea000`, server `FUN_0808529c`] -->
 Everything that touches the table reads those two fields, so every table works
-the same way in the client **[S]**:
+the same way in the client: <!-- [S] -->
 
 - `FUN_080ec058` picks the challenge for our hello: a random offset modulo
   `len - 0x13`.
@@ -192,17 +194,17 @@ There are three tables:
 
 | Table | Length | Used by |
 |---|---:|---|
-| the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create **[S]** |
-| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 **[S `FUN_0804b824`; O]** |
-| `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that **[S `FUN_0808529c`]** |
+| the KDX story, below | 1739 (0x6cb) | every connection the client, server, and tracker create <!-- [S] --> |
+| the GConsole story, below | 3193 (0xc79) | a client connection whose peer says `%HGC` 0x40 <!-- [S `FUN_0804b824`; O] --> |
+| `All your base are belong to us!` | 31 (0x1f) | a connection created with no table; no caller in the client or server does that <!-- [S `FUN_0808529c`] --> |
 
 Every connection starts with the KDX story, passed to the constructor
 (client `FUN_080ea08c`, nine callers; server `FUN_08085328`, one caller in
-`FUN_08052ad0`) **[S]**. The client swaps in the GConsole story after the
+`FUN_08052ad0`). <!-- [S] --> The client swaps in the GConsole story after the
 peer's hello, so the challenge it already sent was drawn from the KDX
 story's length but is answered from the GConsole story. The 31-byte
 default is in every client, server, and tracker build, but no caller in
-Client 1.620 beta 5 or Server 1.620 passes a length of 0 **[S]**.
+Client 1.620 beta 5 or Server 1.620 passes a length of 0. <!-- [S] -->
 
 ### The KDX story
 
@@ -249,7 +251,9 @@ dropped (`kdx.bin` and `hgc.bin`), by `kdx_client::table`:
 
 `kdx table fetch`, `import`, and `path` handle both stories.
 
-## Error codes **[S `FUN_08066fd8`, `FUN_08066c14`]**
+## Error codes
+
+<!-- [S `FUN_08066fd8`, `FUN_08066c14`] -->
 
 Logged as `ID <hi>/<lo> @ <module><line>`. Here `<hi>/<lo>` are the two 16-bit
 halves of the code, and the module tag is three ASCII bytes passed as an
@@ -282,13 +286,13 @@ imported as `re/README.md` describes.
 
 | Sub-protocol | Sub-version | Used by |
 |---|---:|---|
-| `%KDX` | 1 | Client and Server 0.915–0.921 **[S server `FUN_10005b40`, client `FUN_10000a50`]** |
-| `%KDt` | 1 | Tracker 0.900 and 0.902, and Client 0.920 and 0.921 browsing a tracker **[S tracker `0x1000154c`, client `FUN_1001b410`]** |
-| `%NFO` | 1 | NetFone 1.400: the tag and the argument 1 are at the same call shape as in the KDX programs, read from the raw code because Ghidra 12.1.4's PEF loader fails on NetFone's relocations **[I]** |
+| `%KDX` | 1 | Client and Server 0.915–0.921 <!-- [S server `FUN_10005b40`, client `FUN_10000a50`] --> |
+| `%KDt` | 1 | Tracker 0.900 and 0.902, and Client 0.920 and 0.921 browsing a tracker <!-- [S tracker `0x1000154c`, client `FUN_1001b410`] --> |
+| `%NFO` | 1 | NetFone 1.400: the tag and the argument 1 are at the same call shape as in the KDX programs, read from the raw code because Ghidra 12.1.4's PEF loader fails on NetFone's relocations <!-- [I] --> |
 
 A peer must send the same sub-protocol and exactly the same sub-version,
-else 0x40071 or 0x40072 / 0x40073 **[S `FUN_100350b0`]**. Clients
-0.915–0.919 contain `%KDX` but no `%KDt` **[S]**.
+else 0x40071 or 0x40072 / 0x40073. <!-- [S `FUN_100350b0`] --> Clients
+0.915–0.919 contain `%KDX` but no `%KDt`. <!-- [S] -->
 
 ### Sequence
 
@@ -304,10 +308,12 @@ sequenceDiagram
 ```
 
 The client sends its hello first, and the server answers after it has
-checked the client's hello **[S `FUN_10035480`]**. Once the client has the
+checked the client's hello. <!-- [S `FUN_10035480`] --> Once the client has the
 server's hello it sends its proof, and the server replies with one byte.
 
-### HELLO **[S server `FUN_10034fc0`, `FUN_100350b0`, client `FUN_10057db0`, `FUN_10057ea0`]**
+### HELLO
+
+<!-- [S server `FUN_10034fc0`, `FUN_100350b0`, client `FUN_10057db0`, `FUN_10057ea0`] -->
 
 Sent in the clear. Total length: `skipped_len + name_len + 0x63`, at most
 0x800 (else 0x40075).
@@ -321,7 +327,7 @@ Struct `Hello09x` (dynamic):
 | 0x08 | 1 | u8 | version | `1`; other values give 0x40072 / 0x40073 |
 | 0x09 | 1 | u8 | sub_version | `1` |
 | 0x0a | 1 | u8 | second_version | `1`; other values give 0x40072 / 0x40073 |
-| 0x0b | 1 | u8 | name_len | the receiver keeps at most 31 bytes **[S `FUN_10035300`]** |
+| 0x0b | 1 | u8 | name_len | the receiver keeps at most 31 bytes <!-- [S `FUN_10035300`] --> |
 | 0x0c | 4 | u8[4] | ignored | 0 as sent |
 | 0x10 | 2 | u16 | skipped_len | sent as 0 |
 | 0x12 | 2 | u16 | string_len | `0x43`, else 0x40074 |
@@ -335,13 +341,15 @@ The byte that 1.x has at 0x0e is here the second version, and the 1.x
 challenge at 0x16 is here the string length.
 
 The receiver compares the peer's 0x43 bytes with its own and raises 0x40074
-if they differ **[S `FUN_10035300`, `FUN_100351d0`]**. The 0.9x programs
-contain neither story **[S]**. Client 0.921, Server 0.921, Tracker 0.902,
-and NetFone 1.400 each load the string through their hello's TOC slot
-**[S]**, and the 31-byte line that 1.x uses as its default table is the end
+if they differ. <!-- [S `FUN_10035300`, `FUN_100351d0`] --> The 0.9x programs
+contain neither story. <!-- [S] --> Client 0.921, Server 0.921, Tracker 0.902,
+and NetFone 1.400 each load the string through their hello's TOC slot,
+<!-- [S] --> and the 31-byte line that 1.x uses as its default table is the end
 of it.
 
-### PROOF **[S server `FUN_100351d0`, `FUN_10035480`, `FUN_100353a0`]**
+### PROOF
+
+<!-- [S server `FUN_100351d0`, `FUN_10035480`, `FUN_100353a0`] -->
 
 The client sends a 20-byte proof:
 
@@ -361,7 +369,7 @@ Struct `ProofReply09x` (1 bytes):
 | 0x00 | 1 | u8 | status | `0x10` OK, `1` failed |
 
 A client that gets any reply but 0x10 raises 0x40070. Both sides then pass
-the key to `FUN_1000c1f0` **[S]**, probably a cipher's key schedule **[I]**.
+the key to `FUN_1000c1f0`, <!-- [S] --> probably a cipher's key schedule. <!-- [I] -->
 Only Server 0.921's proof code has been read. The client and tracker have
-the same hello code **[S]**, so probably the same proof **[I]**. Whether the
+the same hello code, <!-- [S] --> so probably the same proof. <!-- [I] --> Whether the
 32-byte key matches 1.x's `account_key` is unknown.

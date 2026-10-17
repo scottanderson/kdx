@@ -74,16 +74,15 @@ These apply to every page of the spec.
 
 **Evidence tags.** Each claim carries its evidence in a bold tag:
 
-- **[O]** observed in a capture or lab probe. The lab probes are in
+- <!-- [O] --> observed in a capture or lab probe. The lab probes are in
   `captures/probe.pcapng` (see `captures/probe.md`).
-- **[S]** read in a binary, with the function address when there is one.
-- **[I]** inferred, from neither of the above directly.
+- <!-- [S] --> read in a binary, with the function address when there is one.
+- <!-- [I] --> inferred, from neither of the above directly.
 
 Unmarked rows in a layout table share the tag in the message's heading line.
 
 A tag lists its evidence in the order S, I, O, separated by semicolons, as in
-``**[S `FUN_08085a04`, `FUN_0808584c`; I; O `captures/probe.pcapng` frames 3
-to 9]**``. The S part names the functions, separated by commas; a binary name
+``<!-- [S `FUN_08085a04`, `FUN_0808584c`; I; O `captures/probe.pcapng` frames 3 to 9] -->``. The S part names the functions, separated by commas; a binary name
 (client, server, tracker) may come before a function. Each O part names a
 capture and its frames, written `frame 7`, `frames 7, 9`, or `frames 7 to 9`.
 Leave out the capture when the page already names it, and the frames when the
@@ -153,9 +152,9 @@ for what they are.
 
 `str` is text of variable size. Its Size is `rest`, `pad4` or the Field name
 of a length, counted in bytes, and `kdx-proto` keeps it as bytes. The text is
-UTF-8 in Client 1.2 and later and in the servers of that age **[S]**. Before
+UTF-8 in Client 1.2 and later and in the servers of that age. <!-- [S] --> Before
 1.2 it was in a charset that the archives do not give, probably Mac OS Roman
-from a Mac and a Windows code page from a PC **[I]**. Nothing in the protocol
+from a Mac and a Windows code page from a PC. <!-- [I] --> Nothing in the protocol
 says which one a peer uses. [encodings.md](encodings.md#strings) has the evidence.
 
 ### Special field names
@@ -235,10 +234,10 @@ rejects the rest with 0x40071, 0x40072 or 0x40073
 
 | Port | Transport | Use |
 |---|---|---|
-| 10600 | TCP | client to client (DCC): private chat and voice; the client advertises its port in the user record **[S; O]**; see [dcc.md](dcc.md) |
-| 10700 | TCP | client to server: every message, and file transfers on extra connections **[O]**; see [server.md](server.md) |
-| 10800 | UDP, TCP | tracker: server registration (UDP, see [udp.md](udp.md)) and listing (TCP, see [tracker.md](tracker.md)) **[S]** |
-| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it **[S]**; see [gconsole.md](gconsole.md) |
+| 10600 | TCP | client to client (DCC): private chat and voice; the client advertises its port in the user record; <!-- [S; O] --> see [dcc.md](dcc.md) |
+| 10700 | TCP | client to server: every message, and file transfers on extra connections; <!-- [O] --> see [server.md](server.md) |
+| 10800 | UDP, TCP | tracker: server registration (UDP, see [udp.md](udp.md)) and listing (TCP, see [tracker.md](tracker.md)) <!-- [S] --> |
+| 10900 | TCP | GConsole, a Haxial remote console the client can open; no KDX server or tracker serves it; <!-- [S] --> see [gconsole.md](gconsole.md) |
 
 A connection has two phases, and the second carries every message:
 
@@ -280,30 +279,30 @@ sequenceDiagram
   the flags byte) clear.
 - A **reply** reuses the request's txid and sets the reply bit. The server
   sets it exactly when it answers a request (`FUN_080863b4` receives the
-  request's txid) **[S; O]**.
+  request's txid). <!-- [S; O] -->
 - A **notification** is a message the server sends on its own, with its own txid
   and the reply bit clear. For example,
   [103 User Joined](messages/session.md#m103) goes to everyone else when a user
-  logs in **[O]**.
+  logs in. <!-- [O] -->
 - The server only handles messages with the reply bit clear. Replies
-  arriving from a client are dropped **[S `FUN_080528c8`]**.
+  arriving from a client are dropped. <!-- [S `FUN_080528c8`] -->
 - Every message except [108 Ping](messages/session.md#m108),
   [142 Get Connection Monitor Info](messages/monitoring.md#m142), and
-  [609 Get News Message](messages/news.md#m609) resets the sender's idle timer
-  **[S `FUN_080528c8`]**.
+  [609 Get News Message](messages/news.md#m609) resets the sender's idle timer.
+<!-- [S `FUN_080528c8`] -->
 
 Message types come in pairs: request N gets reply N+1. A request that fails gets
 the generic **[1 Status](messages/status.md#m1)** reply instead. Some requests
-have no reply on success **[S; O]**.
+have no reply on success. <!-- [S; O] -->
 
 ## Message types
 
 [messages/README.md](messages/README.md) lists every message type with the
 connection that carries it, who sends it, and the page that describes it.
 Each message's page gives its handler. The names come from the server's name
-table (`FUN_08049d14`, jump table at 0x080abc6c) **[S]**. In that table, (R)
+table (`FUN_08049d14`, jump table at 0x080abc6c). <!-- [S] --> In that table, (R)
 means reply, (D) data, (C) complete, and (S) status. A type the dispatcher
-doesn't know is ignored without a reply **[S]**. 4000 to 4201 belong to
+doesn't know is ignored without a reply. <!-- [S] --> 4000 to 4201 belong to
 GConsole, not the server, so their names are provisional; see
 [gconsole.md](gconsole.md).
 

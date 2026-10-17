@@ -7,7 +7,7 @@ Message types 300 to 301: a private message to one user. A client also sends
 [dcc.md](../dcc.md#primary-connection).
 
 ## <a id="m300"></a>300 Send Private Message
-Initiator: Client. Privilege: Send Messages (32). **[S `FUN_0804d2d0`; O]**
+Initiator: Client. Privilege: Send Messages (32). <!-- [S `FUN_0804d2d0`; O] -->
 
 Struct `PrivateMessage` (dynamic):
 

@@ -8,7 +8,7 @@ record.
 
 ## <a id="m150"></a>150 Disconnect User
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to ban.
-**[S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159, 161]**
+<!-- [S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159, 161] -->
 
 The target is told:
 
@@ -41,7 +41,7 @@ check passes. The target receives [151 Disconnect Message](#m151).
 
 In `captures/linux-chat-admin.pcapng` the GUI (user 2) disconnected itself
 with the message `test` and no ban: the [150 Disconnect User](#m150) at frame
-159 is 28 bytes **[O]**. `kdx_proto::msg::admin::DisconnectUser` re-encodes it
+159 is 28 bytes. <!-- [O] --> `kdx_proto::msg::admin::DisconnectUser` re-encodes it
 byte for byte.
 
 ## <a id="m151"></a>151 Disconnect Message
@@ -65,12 +65,12 @@ Struct `DisconnectMessage` (dynamic):
 |  | name_len | str | name |  |
 
 In that capture the [151 Disconnect Message](#m151) at frame 161 has user ID 2,
-flags 0, and the name `kdx-lab-linux` **[O]**. Since the sender was also the
+flags 0, and the name `kdx-lab-linux`. <!-- [O] --> Since the sender was also the
 target, the capture doesn't tell the two apart at 0x00.
 `kdx_proto::msg::admin::DisconnectMessage` re-encodes it byte for byte.
 
 ## <a id="m152"></a>152 Get User Info
-Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
+Initiator: Client. Privilege: Get User Info (40). <!-- [S `FUN_0804c8a8`; O] -->
 
 [152 Get User Info](#m152) gets [153 User Info](#m153):
 
@@ -90,10 +90,10 @@ Struct `GetUserInfo` (4 bytes):
 | 0x00 | 4 | u32 | user_id |  |
 
 If the user doesn't exist, the server replies with [1 Status](status.md#m1)
-0x1000c **[O]**. `kdx_proto::msg::user_info::GetUserInfo` encodes the request.
+0x1000c. <!-- [O] --> `kdx_proto::msg::user_info::GetUserInfo` encodes the request.
 
 ## <a id="m153"></a>153 User Info
-Initiator: Server. **[S `FUN_0804c8a8`; O]**
+Initiator: Server. <!-- [S `FUN_0804c8a8`; O] -->
 
 Reply to [152 Get User Info](#m152) (120 bytes for the prober itself), padded
 to 4:
@@ -118,14 +118,13 @@ Struct `UserInfo` (dynamic):
 | 0x42 | 2 | u8[2] | ignored_42 |  |
 | 0x44 | address_len | str | address |  |
 |  | nick_len | str | nick |  |
-|  | name_3f_len | str | name_3f | `Administrator`; the class or the account name **[I]** |
+|  | name_3f_len | str | name_3f | `Administrator`; the class or the account name <!-- [I] --> |
 |  | login_len | str | login |  |
-|  | name_41_len | str | name_41 | `Administrator`; the class or the account name **[I]** |
+|  | name_41_len | str | name_41 | `Administrator`; the class or the account name <!-- [I] --> |
 |  | pad4 | u8[] | padding | uninitialised padding to a multiple of 4 |
 
 ## <a id="m154"></a>154 Send Broadcast Message
-Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`; O
-`captures/linux-chat-admin.pcapng` frames 129, 130, 132]**
+Initiator: Client. Privilege: Broadcast (33). <!-- [S `FUN_0804d1a8`; O `captures/linux-chat-admin.pcapng` frames 129, 130, 132] -->
 
 Everyone receives the broadcast, the sender included:
 
@@ -149,7 +148,7 @@ Struct `SendBroadcast` (dynamic):
 | 0x04 | rest | str | text | ≤ 0x800 |
 
 Everyone receives [155 Rcv Broadcast Message](#m155). The GUI (user 2) sent
-`00 00 00 00` and `test broadcast` (frame 129) **[O]**.
+`00 00 00 00` and `test broadcast` (frame 129). <!-- [O] -->
 `kdx_proto::msg::admin::SendBroadcast` re-encodes it.
 
 ## <a id="m155"></a>155 Rcv Broadcast Message
@@ -167,38 +166,38 @@ Struct `RcvBroadcast` (dynamic):
 | 0x10 | rest | str | text |  |
 
 For the 154 at frame 129, both the peer (130) and the sender (132) got user
-ID 2, 12 zero bytes, and the text **[O]**. `kdx_proto::msg::admin::RcvBroadcast`
+ID 2, 12 zero bytes, and the text. <!-- [O] --> `kdx_proto::msg::admin::RcvBroadcast`
 re-encodes them.
 
 ## <a id="m170"></a>170 Get Server Settings
 Initiator: Client. Privilege: Modify Server Settings (61).
-**[S `FUN_0805f598`; O `captures/linux-server-settings.pcapng`]**
+<!-- [S `FUN_0805f598`; O `captures/linux-server-settings.pcapng`] -->
 
 No payload.
 
 The reply is [171 Server Settings Info](#m171).
 
 ## <a id="m171"></a>171 Server Settings Info
-Initiator: Server. Observed sizes: 216 and 764 bytes. **[S `FUN_0805f598`; O]**
+Initiator: Server. Observed sizes: 216 and 764 bytes. <!-- [S `FUN_0805f598`; O] -->
 
 Reply to [170 Get Server Settings](#m170). The reply is the server's
 settings file. It starts with the protocol `%KDX`, the sub-protocol `SSTG`, and a
 version, followed by a table of section offsets and the sections. The server
-compares the protocol and the sub-protocol as two separate words
-**[S `FUN_08060268`]**.
+compares the protocol and the sub-protocol as two separate words.
+<!-- [S `FUN_08060268`] -->
 
 What the captures show (`captures/linux-server-settings.pcapng` frames 36,
-40, 56, 221, 225) **[O]**:
+40, 56, 221, 225): <!-- [O] -->
 
 Struct `ServerSettings` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | char[4] | protocol | not stored. `"%KDX"` (0x254b4458) **[S `FUN_08060268`]** |
-| 0x04 | 4 | char[4] | sub_protocol | not stored. `"SSTG"` (0x53535447) **[S `FUN_08060268`]** |
+| 0x00 | 4 | char[4] | protocol | not stored. `"%KDX"` (0x254b4458) <!-- [S `FUN_08060268`] --> |
+| 0x04 | 4 | char[4] | sub_protocol | not stored. `"SSTG"` (0x53535447) <!-- [S `FUN_08060268`] --> |
 | 0x08 | 2 | u16 | version | 1 |
 | 0x0a | 2 | u8[2] | ignored |  |
-| 0x0c | 88 | ServerSettingsSection[11] | sections | 11 entries **[I]** |
+| 0x0c | 88 | ServerSettingsSection[11] | sections | 11 entries <!-- [I] --> |
 | 0x64 | 12 | u8[12] | value_64 | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171; 0x6b is 0 in a 172, and 0x69 too in a 172 without the icon |
 | 0x70 | rest | u8[] | body | the sections, at the offsets of the table; entry 0 is a `ServerSettingsMain` |
 
@@ -221,11 +220,11 @@ Struct `ServerSettingsMain` (dynamic):
 | 0x24 | 20 | u8[20] | ignored_24 |  |
 | 0x38 | 4 | u32 | total_outgoing_speed_limit | bytes per second; 0x5000, or 0 when off (0xa8 in the blob) |
 | 0x3c | 22 | u8[22] | ignored_3c |  |
-| 0x52 | 1 | u8 | ignored_52 | 0x0a, the length of both names seen **[I]** (0xc2 in the blob) |
+| 0x52 | 1 | u8 | ignored_52 | 0x0a, the length of both names seen <!-- [I] --> (0xc2 in the blob) |
 | 0x53 | 9 | u8[9] | ignored_53 |  |
 | 0x5c | rest | str | server_name | NUL-terminated, at the end of the main section (0xcc in the blob) |
 
-What the section table holds in the captures **[O]**:
+What the section table holds in the captures: <!-- [O] -->
 
 - Entry 0 (at 0x0c) is the main section: 0x70, 0x68.
 - Entry 3 (at 0x24) is the greeting section: 0xd8, 0x17; length 0 when no
@@ -249,7 +248,7 @@ the 171 at frame 116 of `captures/probe.pcapng` byte for byte.
 
 ## <a id="m172"></a>172 Set Server Settings
 Initiator: Client.
-Handler: **[S `FUN_0805f638`]**.
+Handler:. <!-- [S `FUN_0805f638`] -->
 
 The settings are read, then written back:
 
@@ -272,20 +271,19 @@ Struct `SetServerSettings` (dynamic):
 
 [172 Set Server Settings](#m172) sends the same blob as
 [171 Server Settings Info](#m171) back, and the server answers with
-[173 Set Server Settings Done](#m173) **[O]**.
+[173 Set Server Settings Done](#m173). <!-- [O] -->
 
 ## <a id="m173"></a>173 Set Server Settings Done
 Initiator: Server.
 
-Reply to [172 Set Server Settings](#m172) **[O]**.
+Reply to [172 Set Server Settings](#m172). <!-- [O] -->
 
 No payload.
 
-The reply is empty **[O `captures/linux-server-settings.pcapng` frames 41,
-57]**.
+The reply is empty. <!-- [O `captures/linux-server-settings.pcapng` frames 41, 57] -->
 
 ## <a id="m174"></a>174 Shutdown Server
-Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
+Initiator: Client. Privilege: Shutdown Server (64). <!-- [S `FUN_08061598`] -->
 
 Users are told before the server exits:
 
@@ -311,14 +309,14 @@ Struct `ShutdownServer` (dynamic):
 
 The server broadcasts [151 Disconnect Message](#m151) with flag 4, writes
 history record 0xae, then exits after 5000 ms (`FUN_0806155c`). Mode 1 exits the
-program only **[O `captures/linux-shutdown.pcapng` frames 47, 48]**. Before
+program only. <!-- [O `captures/linux-shutdown.pcapng` frames 47, 48] --> Before
 exiting, mode bit 2 runs `/sbin/shutdown -h now` and bit 1
-`/sbin/shutdown -r now` (`FUN_080916e4`) **[S]**.
+`/sbin/shutdown -r now` (`FUN_080916e4`). <!-- [S] -->
 `kdx_proto::msg::admin::ShutdownServer` re-encodes frame 47.
 
 ## <a id="m175"></a>175 Upgrade Server Software
 Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
-(82). **[S `FUN_0806172c`]**
+(82). <!-- [S `FUN_0806172c`] -->
 
 Users are told before the server restarts:
 
@@ -335,32 +333,28 @@ sequenceDiagram
 
 No payload.
 
-The request has no fields; the handler reads no body **[S]**. The dialog's
+The request has no fields; the handler reads no body. <!-- [S] --> The dialog's
 Restart KDX option doesn't reach the server: the body is empty with it unticked
-and ticked **[O `captures/linux-shutdown.pcapng` frame 19; O
-`captures/linux-upgrade.pcapng` frame 19]**.
+and ticked. <!-- [O `captures/linux-shutdown.pcapng` frame 19; O `captures/linux-upgrade.pcapng` frame 19] -->
 
 Without `KDXServer.lexe` in the server's folder the reply is
 [1 Status](status.md#m1) 0x1000c. The server then opens `KDXServer.lexe` in the
 folder it resolves for `Bases` (`FUN_08092db8`) and `KDXUpgradeHelper.lexe`; a
-missing file gets 0x30067 **[S]**. Without the new program in `Bases` the first
-open fails its `stat`: 0x30067, module 0x46, line 0x198 **[O
-`captures/linux-shutdown.pcapng` frame 20]**.
+missing file gets 0x30067. <!-- [S] --> Without the new program in `Bases` the first
+open fails its `stat`: 0x30067, module 0x46, line 0x198. <!-- [O `captures/linux-shutdown.pcapng` frame 20] -->
 
 On success there is no 1 Status. The server broadcasts
 [151 Disconnect Message](#m151) with flag 4 and "Upgrading server software, be
-back in 5 seconds!" **[O `captures/linux-upgrade.pcapng` frame 20]**, launches
+back in 5 seconds!", <!-- [O `captures/linux-upgrade.pcapng` frame 20] --> launches
 the helper, writes history record 0xaf, and exits after 0xd48 ms with mode 1 of
-[174 Shutdown Server](#m174) **[S]**. The helper moves `Bases/KDXServer.lexe`
+[174 Shutdown Server](#m174). <!-- [S] --> The helper moves `Bases/KDXServer.lexe`
 over the server's program and starts it, whatever its version. In the lab,
 [175 Upgrade Server Software](#m175) downgraded Server 1.620 to 1.600, which was
 back about 5 s after the 151; the next login's
-[105 Server Info](session.md#m105) reports version 1600 **[O
-`captures/linux-upgrade.pcapng` frame 37]**.
+[105 Server Info](session.md#m105) reports version 1600. <!-- [O `captures/linux-upgrade.pcapng` frame 37] -->
 
 ## <a id="m180"></a>180 Server History Join
-Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
-`FUN_080627f8`, `FUN_08061d80`]**
+Initiator: Client. Privilege: View Server History (63). <!-- [S `FUN_08062674`, `FUN_080627f8`, `FUN_08061d80`] -->
 
 A client joins the history, gets new records, and leaves:
 
@@ -377,8 +371,7 @@ sequenceDiagram
 
 No payload.
 
-The request is empty **[O `captures/linux-server-settings.pcapng` frames 32,
-88; O `captures/linux-chat-admin.pcapng` frame 134]**.
+The request is empty. <!-- [O `captures/linux-server-settings.pcapng` frames 32, 88; O `captures/linux-chat-admin.pcapng` frame 134] -->
 
 The reply is [181 Server History Join (R)](#m181). While joined, the client
 receives [183 Server History Added](#m183) for each new record. A record's kind
@@ -386,9 +379,7 @@ is one of 184 to 191 (Login, Disconnected, Abort File Download, …), or the typ
 of the logged request (e.g. [400 Get File List](files.md#m400) for a failed file
 list).
 
-A record, which the 183s in frames 38 to 228 repeat **[O
-`captures/linux-server-settings.pcapng` frames 33, 89; O
-`captures/linux-chat-admin.pcapng` frame 135]**:
+A record, which the 183s in frames 38 to 228 repeat: <!-- [O `captures/linux-server-settings.pcapng` frames 33, 89; O `captures/linux-chat-admin.pcapng` frame 135] -->
 
 Struct `HistoryRecord` (dynamic):
 
@@ -435,17 +426,17 @@ Struct `HistoryList` (dynamic):
 
 ## <a id="m182"></a>182 Server History Leave
 Initiator: Client. Privilege: View Server History (63).
-Handler: **[S `FUN_080627f8`]**.
+Handler:. <!-- [S `FUN_080627f8`] -->
 
 No payload.
 
-The request is empty **[O `captures/linux-chat-admin.pcapng` frame 137]**.
+The request is empty. <!-- [O `captures/linux-chat-admin.pcapng` frame 137] -->
 
 Leaves the history joined with [180 Server History Join](#m180).
 
 ## <a id="m183"></a>183 Server History Added
 Initiator: Server.
-Handler: **[S `FUN_08061d80`]**.
+Handler:. <!-- [S `FUN_08061d80`] -->
 
 Sent while joined with [180 Server History Join](#m180), for each new
 record: one record padded to 4.
@@ -457,7 +448,7 @@ Struct `HistoryAdded` (dynamic):
 | 0x00 |  | HistoryRecord | record |  |
 
 ## <a id="m184"></a><a id="m185"></a><a id="m186"></a><a id="m187"></a><a id="m188"></a><a id="m189"></a><a id="m190"></a><a id="m191"></a>184 to 191 History record kinds
-Initiator: Server. **[S]**
+Initiator: Server. <!-- [S] -->
 
 The kind of a history record in [181 Server History Join (R)](#m181) and
 [183 Server History Added](#m183): [184 Login](#m184),

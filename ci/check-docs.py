@@ -193,7 +193,7 @@ def check_table_columns():
             prev = line
 
 
-TAG = re.compile(r"\*\*\[[OSI][^\]]*\]\*\*")
+TAG = re.compile(r"\*\*\[[OSI][^\]]*\]\*\*|(?<=<!-- )\[[OSI][^\]]*\]")
 TAG_O = r"O(?: `captures/[\w-]+\.pcapng`)?(?: frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*)?"
 
 TAG_S = r"S(?: (?:(?:client|server|tracker) )?`[^`]+`(?:, (?:(?:client|server|tracker) )?`[^`]+`)*)?"
@@ -206,7 +206,8 @@ def check_tags():
             continue
         text = open(path, encoding="utf-8").read()
         for m in TAG.finditer(text):
-            inner = " ".join(m.group(0)[3:-3].split())
+            stars = 2 if m.group(0).startswith("**") else 0
+            inner = " ".join(m.group(0)[stars + 1:-stars - 1].split())
             parts = re.split(r"\s*;\s*", inner)
             kinds = [p[:1] for p in parts]
             good = (

@@ -7,8 +7,8 @@ sequence that uses them is in [dcc.md](../dcc.md#voice).
 
 ## <a id="m1000"></a>1000 Start Voice
 
-Initiator: Client (to client). **[S `FUN_0808f1ac`]**
-Handled by the client, on DCC only **[S `FUN_08094074`]**.
+Initiator: Client (to client). <!-- [S `FUN_0808f1ac`] -->
+Handled by the client, on DCC only. <!-- [S `FUN_08094074`] -->
 
 No payload.
 
@@ -16,7 +16,7 @@ The caller sends it on login to the secondary connection.
 
 ## <a id="m1001"></a>1001 Start Voice (R)
 
-Initiator: Client (to client). **[S `FUN_08094074`]**
+Initiator: Client (to client). <!-- [S `FUN_08094074`] -->
 
 Reply to [1000 Start Voice](#m1000):
 
@@ -33,11 +33,11 @@ The value is:
 
 On [1001 Start Voice (R)](#m1001) the caller sends its 1002 if the value is 0.
 Otherwise it shows "The remote user does not have his/her Voice Controls window
-open." and closes the connection **[S `FUN_08094218`]**.
+open." and closes the connection. <!-- [S `FUN_08094218`] -->
 
 ## <a id="m1002"></a>1002 Set Voice Format
 
-Initiator: Client (to client). **[S `FUN_08093ae0`, `FUN_080943a0`]**
+Initiator: Client (to client). <!-- [S `FUN_08093ae0`, `FUN_080943a0`] -->
 
 Struct `VoiceFormat` (24 bytes):
 
@@ -51,12 +51,11 @@ Struct `VoiceFormat` (24 bytes):
 | 0x17 | 1 | u8 | bits_per_sample | 16 |
 
 Both sides sent 11025 Hz (0x2b11), `ADPC`, 500 ms (0x01f4), 1 channel, and 16
-bits (frames 136, 138) **[O]**.
+bits (frames 136, 138). <!-- [O] -->
 
 ## <a id="m1003"></a>1003 Voice Data
 
-Initiator: Client (to client). **[S `FUN_08093670`, `FUN_0809455c`,
-`FUN_080e15e4`]**
+Initiator: Client (to client). <!-- [S `FUN_08093670`, `FUN_0809455c`, `FUN_080e15e4`] -->
 
 Struct `VoiceData` (dynamic):
 
