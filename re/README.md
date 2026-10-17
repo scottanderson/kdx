@@ -18,9 +18,9 @@ after its directory in `vendor/haxial/`, such as `KDXServer1620-Lnx`,
 `KDXClient1600-Win` or `KDXTrackerServ1110-Win`. The 0.9x builds come from
 StuffIt archives of PowerPC Mac programs, so they are `-Mac`. Scripts write to
 `re/out/<project>/`, so versions never share a directory. `KDXClient1110-Win`
-comes from a Haxial archive that is not in `vendor/haxial/`. The program inside
-each project keeps its original file name, such as `KDXServer.lexe`, and is the
-`-process` argument.
+is named after the folder inside `vendor/haxial/KDXClient-Win/`. The program
+inside each project keeps its original file name, such as `KDXServer.lexe`,
+and is the `-process` argument.
 
 ```sh
 # import + auto-analyze (done once per binary; ~1 min)
@@ -37,6 +37,7 @@ for p in KDXClient1320-Win/KDXClient.exe KDXClient1400-Win/KDXClient.exe \
   d=${p%%/*}
   re/ghidra /work/projects "$d" -import "/work/bin/$d/extracted/$d/${p#*/}"
 done
+re/ghidra /work/projects KDXClient1110-Win -import /work/bin/KDXClient-Win/extracted/KDXClient1110-Win/KDXClient.exe
 re/ghidra /work/projects KDXClient-Lnx-beta4 -import /work/bin/KDXClient-Lnx-beta4/extracted/KDXClientBETA4-Lnx/KDXClient.lexe
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects KDXServer1620-Lnx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \

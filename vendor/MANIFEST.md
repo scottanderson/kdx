@@ -4,8 +4,10 @@ The original Haxial KDX builds used as the reference for protocol work. Haxial
 shut down in 2009. These are the last versions on Haxial's own download server,
 fetched from Wayback Machine captures of `haxial.com/download/` (raw `id_`
 captures, so the bytes are unmodified). `/downloadstatic/KDX*-<platform>`, the
-site's "latest version" links, resolve to the same builds; the Windows server
-archive was byte-identical.
+site's "latest version" links, resolve to the same builds from 2005 on; the
+Windows server archive was byte-identical. Their 2003 captures are older
+builds: `KDXClient-Win.zip` is Client 1.110, and `NetFone-Mac.sit` is
+byte-identical to `NetFone1400-Mac.sit`.
 
 Treat everything here as untrusted, 20-year-old closed-source code. **Never run
 it on the host.** Run it only through `lab/kdx-lab` (see `lab/README.md`).
@@ -44,18 +46,43 @@ still verifies and unpacks the archive.
 | old/KDXClient1400-Win.zip | Client 1.400, Win32 | 20060515145001 | d2adb07d710773d5308e54d88c5bc017b4563076eeaf2a6355dc5aeea3af830b |
 | old/KDXClient1500-Win.zip | Client 1.500, Win32 | 20060515145035 | 8cdd7d1df28730f139acacce9fce3e31a1b2ed4d3a1d6c32b67777e1f0900aa5 |
 | old/KDXClient1520-Win.zip | Client 1.520, Win32 | 20060515145103 | 268f75a070dc29b24cab8bb5d0509d623bf0dd8a5dd3edf046508e2bfcc65ba5 |
+| old/KDXClient1320-Mac.sit | Client 1.320, Mac PEF/Carbon | 20060321235138 | a56ad6f443d086b33dfc575f7841ee4be9cc7f674c93563d9bb5045adf52c879 |
+| old/KDXClient1400-Mac.sit | Client 1.400, Mac PEF/Carbon | 20060321235143 | db12be42d0444ec191bb5d800c8d4ae62e646c844c661656a6d17ea588c22048 |
+| old/KDXClient1500-Mac.sit | Client 1.500, Mac PEF/Carbon | 20060321235215 | d7c587134e1ae73543e71e8a8fb26687f2cd099a3fbb7fb8ca59181a223efe44 |
+| old/KDXClient1520-Mac.sit | Client 1.520, Mac PEF/Carbon | 20060321235205 | e3aa21e596023352ef4c190cf5cc26faf7b3e75f8290548a7950629e26c0c140 |
+| old/KDXServer1300-Mac.sit | Server 1.300, Mac PEF/Carbon | 20060321235150 | 89a437fbfb2deb4a9481f3f2baf138967401f2773b3995c699203cc6f2869f79 |
+| old/KDXServer1500-Mac.sit | Server 1.500, Mac PEF/Carbon | 20060321235221 | a4b09767cb7030765b1b0049e3e7a331fa5a5075cac736ae5ba905e8df2d3d75 |
+| old/KDXServer1520-Mac.sit | Server 1.520, Mac PEF/Carbon | 20060321235045 | 355d6facc7f347e9403b99d125084076c650e178d375879ed635482eeb72525c |
+| old/KDXServer1520-MacUnix.zip | Server 1.520, Mach-O ppc | 20060515144742 | 0269b7933b1570ccb0547957bb2b2f6dcff728c5e630bf0a3cba89f78dd95320 |
+| ../downloadstatic/KDXClient-Win.zip | Client 1.110, Win32 (unpacks to `KDXClient1110-Win/`) | 20031215224532 | ca81ce0a8a0cf1e550fb953f676cef3fe34d7acf755fbee0c6ef9fb7901c8d4a |
 | KDXClient-Lnx-beta4.zip | Client 1.620 beta 4, Linux i386/X11 | 20051014064518 | 943d7c3c85a5a8af26f33fcbf9de00fd3c43f12edb0869cfcc0ce6fa868ff3f9 |
+| KDX0915.sit.bin | Client 0.915, Mac PEF | 20010723053143 | 2c47b13ee4570272132d93f5b3641b683e3b04ec83404494a9651befd2fa2fd7 |
+| KDX0916.sit.bin | Client 0.916, Mac PEF | 20010723044626 | d7d6b7bc7c644c678607ba65acccc98288007cdfc619077f7a1a927c15be416a |
+| KDX0918.sit.bin | Client 0.918, Mac PEF | 20010723045056 | e08718acd5636017a8cf4638940ba1ee48ad0dde4963be91714a2aaa3e61ebd7 |
+| KDX0919.sit.bin | Client 0.919, Mac PEF | 20010723045704 | 1f0c525ee0bd9b04754e388e96aee0e95c7e3e9f0874395390b3487a1805c853 |
+| KDX0920.sit.bin | Client 0.920, Mac PEF | 20010810110141 | 560fe2d86718cd8596dafe6b859fc0edd8173d0ed9cbcf6268b36df215af2801 |
 | KDX0921.sit.bin | Client and Server 0.921, Mac PEF (2001 handshake, see handshake.md) | 20010810111341 | 3bf2570c208ee0e82f35c2c23aebfea028c68cf4adc57b222fdd58d0b75226f1 |
+| KDXTrackerServ0900.sit.bin | Tracker 0.900, Mac PEF | 20010810110838 | e0507fa9f31c518c18be7aabbed1d164ef780a27a79bf49a175ae54031e4e06f |
 | KDXTrackerServ0902.sit.bin | Tracker 0.902, Mac PEF (2001 handshake) | 20010810112345 | cc627c5c2be519e9d317d0befdd849cd0c68e96649f82ee3d7ee55bf44ab1283 |
+| KDXLogView1120-Win.zip | LogView 1.120, Win32 | 20051014064043 | 698bb5914da524f2b39311206e1cdddcbbe50e09caaf55356a6676f60e24bec6 |
+| KDXLogView1120-Mac.sit | LogView 1.120, Mac PEF | 20051014064009 | 4e6938d6dcd76687b66f0b04deeefab2b2275b5da535768b304c36b89d33b6f8 |
+| KDXSoundListEdit1000-Win.zip | SoundListEdit 1.000, Win32 | 20051014065758 | 7c03f446e34e7a0af6af5343cebfbdf9c323497523b90a1052ca333c1a3fa26b |
+| KDXSoundListEdit1000-Mac.sit | SoundListEdit 1.000, Mac PEF | 20051014065718 | 736c6057f13c2a6f228b9e4873d51f34d196af8c9a40738a86f6b7e8fdddd636 |
 | NetFone1400-Mac.sit | NetFone 1.400, Mac PEF (`%NFO` over the 2001 handshake) | 20030403191716 | 1cffb26f1b49d8fcd1ef927e1f509acdc9a35d382946a31ad6111d8c2d7da57c |
 
 URL pattern:
 `https://web.archive.org/web/<timestamp>id_/http://www.haxial.com:80/download/<archive>`
 
-Older builds (client 1.320–1.520, server 1.300–1.600 Linux) are in Wayback under
+Older builds (client 1.320–1.520, server 1.300–1.600) are in Wayback under
 `haxial.com/download/old/`. Use them to diff protocol versions if needed. A
-row for one names it with the `old/` prefix, and `vendor/fetch` keeps it in
-`vendor/haxial/<name>/` like the others.
+row for one names it with the `old/` prefix, and a `/downloadstatic/` row
+with `../downloadstatic/`. `vendor/fetch` keeps each in
+`vendor/haxial/<name>/` like the others, so Client 1.110 lands in
+`vendor/haxial/KDXClient-Win/`.
+
+Haxial's 2002 directory listings also name Client and Server 0.933–0.942,
+Tracker 0.904–0.905, and NetFone 1.000–1.221, but Wayback has no successful
+capture of any of them.
 
 Version notes: some download sites list a "1.65 (2008)", but no such build was
 on Haxial's server, so treat it as unverified. The Linux binaries are stripped,
