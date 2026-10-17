@@ -19,15 +19,6 @@ primary screen with `BitBlt` from the desktop window into a 24-bit DIB **[S
 Initiator: Client, on a transfer connection. Privilege: View Display (66).
 **[S `FUN_0805c0f0`, client `FUN_0806f9d8`]**
 
-No payload.
-
-A connection already busy gets 0x10003. The reply is
-[902 View Display Params](#m902), then a full [903 View Display Update](#m903)
-frame. After that the server sends a 903 to every viewer every 1500 ms when the
-screen has changed.
-
-A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
-
 The viewer opens the display and then receives screen updates:
 
 ```mermaid
@@ -40,6 +31,15 @@ sequenceDiagram
     S-->>C: 903 View Display Update (full frame)
     S-->>C: 903 View Display Update (each change)
 ```
+
+No payload.
+
+A connection already busy gets 0x10003. The reply is
+[902 View Display Params](#m902), then a full [903 View Display Update](#m903)
+frame. After that the server sends a 903 to every viewer every 1500 ms when the
+screen has changed.
+
+A viewer whose send queue passes 0x800000 bytes is dropped with 0x40076.
 
 ## <a id="m901"></a>901 Close View Display
 Initiator: Client. It has no handler: the client closes the connection, and
@@ -120,6 +120,18 @@ never changed, so no later 903 came **[O]**.
 Initiator: Client, on the view display connection. Privilege: Control
 Display (67). **[S `FUN_0805c344`, client `FUN_0806fc68`]**
 
+After a click the server sends the next update within 100 ms:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 904 View Display Mouse (kind 1)
+    C->>S: 904 View Display Mouse (kind 2)
+    S-->>C: 903 View Display Update
+```
+
 Struct `ViewDisplayMouse` (12 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -143,18 +155,6 @@ become events 9, 10, 13, 14) **[S `FUN_0805c344`, `FUN_00418fc0`]**. Server
 absolute range 0-0xffff by its screen size **[S `FUN_00420270`]**. Modifier
 bit 0x10 turns any button into the right one. It ignores kind 4, the
 wheel. The Linux server ignores all of it.
-
-After a click the server sends the next update within 100 ms:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: 904 View Display Mouse (kind 1)
-    C->>S: 904 View Display Mouse (kind 2)
-    S-->>C: 903 View Display Update
-```
 
 ## <a id="m905"></a>905 View Display Keyboard
 Initiator: Client, on the view display connection. Privilege: Control

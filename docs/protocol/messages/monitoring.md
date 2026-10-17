@@ -8,8 +8,6 @@ Message types 140 to 143: watching the list of connections to the server.
 Initiator: Client. **[S]**
 Handled inline in the dispatcher **[S]**.
 
-No payload.
-
 The monitor is one open, any number of polls, and one close:
 
 ```mermaid
@@ -24,6 +22,8 @@ sequenceDiagram
     end
     C->>S: 141 Close Connection Monitor
 ```
+
+No payload.
 
 [140 Open Connection Monitor](#m140) and [141 Close Connection Monitor](#m141)
 need Get User Info (bit 40) and turn a per-user flag on or off. There is no

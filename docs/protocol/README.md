@@ -206,6 +206,8 @@ exempt from the payload check.
 
 **Diagrams.** Sequence diagrams are for an exchange of messages. A solid arrow
 is a request or its reply, and a dashed arrow is a notification or file data.
+On a message page, the diagram of a message's exchange comes first in its
+section, right after the `Initiator:` paragraph and before the struct table.
 
 ## Protocol overview
 

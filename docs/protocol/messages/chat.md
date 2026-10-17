@@ -9,11 +9,6 @@ voice flags. Private messages are on [their own page](private-messages.md).
 Initiator: Client. Privilege: Create Private Chat (34). **[S `FUN_08058420`; O
 `captures/linux-chat-admin.pcapng` frames 84 to 85]**
 
-No payload.
-
-A user can have at most 10 private chats. The server
-answers with [216 Create Private Chat (R)](#m216).
-
 A new private chat is one request and one reply:
 
 ```mermaid
@@ -25,9 +20,28 @@ sequenceDiagram
     S->>C: 216 Create Private Chat (R)
 ```
 
+No payload.
+
+A user can have at most 10 private chats. The server
+answers with [216 Create Private Chat (R)](#m216).
+
 ## <a id="m201"></a>201 Delete Chat
 Initiator: Client. Privilege: Create/Modify Chats (37). **[S `FUN_08059774`;
 O]**
+
+Every member gets 221 Chat Deleted before the requester gets 1 Status:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 201 Delete Chat
+    S-->>C: 221 Chat Deleted
+    S-->>O: 221 Chat Deleted
+    S->>C: 1 Status (success)
+```
 
 Struct `ChatId` (4 bytes):
 
@@ -47,33 +61,9 @@ Deleting the empty `lab-room` sent no 221 to a user in Public Chat (frames
 re-encodes [201 Delete Chat](#m201) (frames 77, 122) byte for byte (test
 `linux_chat_rooms`).
 
-Every member gets 221 Chat Deleted before the requester gets 1 Status:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant O as Client
-    C->>S: 201 Delete Chat
-    S-->>C: 221 Chat Deleted
-    S-->>O: 221 Chat Deleted
-    S->>C: 1 Status (success)
-```
-
 ## <a id="m202"></a>202 Join Chat
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
 **[S `FUN_08058710`; O]**
-
-Struct `JoinChat` (8 bytes):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | 4 | u32 | chat_id |  |
-| 0x04 | 4 | u32 | key | needed for private chats |
-
-The server answers with [203 Chat Window Info](#m203), and the other members
-receive [205 Chat User Joined](#m205).
 
 Joining a chat, with the other members told:
 
@@ -87,6 +77,16 @@ sequenceDiagram
     S->>C: 203 Chat Window Info
     S-->>O: 205 Chat User Joined
 ```
+
+Struct `JoinChat` (8 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | chat_id |  |
+| 0x04 | 4 | u32 | key | needed for private chats |
+
+The server answers with [203 Chat Window Info](#m203), and the other members
+receive [205 Chat User Joined](#m205).
 
 ## <a id="m203"></a>203 Chat Window Info
 Initiator: Server. Reply to [202 Join Chat](#m202).
@@ -133,16 +133,6 @@ set; the payload is not padded.
 Initiator: Client. **[S `FUN_08058c0c`; O `captures/linux-chat-rooms.pcapng`
 frame 75; O `captures/kdx-cli.pcapng` frames 423 to 424]**
 
-Struct `LeaveChat` (4 bytes):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | 4 | ChatId | chat |  |
-
-The other members receive [206 Chat User Departed](#m206). A private chat that
-becomes empty is deleted. `ChatId` in `kdx_proto::msg::chat` re-encodes
-[204 Leave Chat](#m204) byte for byte (tests `linux_chat_rooms`, `kdx_cli`).
-
 Leaving a chat tells the other members:
 
 ```mermaid
@@ -154,6 +144,16 @@ sequenceDiagram
     C->>S: 204 Leave Chat
     S-->>O: 206 Chat User Departed
 ```
+
+Struct `LeaveChat` (4 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | ChatId | chat |  |
+
+The other members receive [206 Chat User Departed](#m206). A private chat that
+becomes empty is deleted. `ChatId` in `kdx_proto::msg::chat` re-encodes
+[204 Leave Chat](#m204) byte for byte (tests `linux_chat_rooms`, `kdx_cli`).
 
 ## <a id="m205"></a>205 Chat User Joined
 Initiator: Server. Sent to the other members after
@@ -193,17 +193,6 @@ unknown; [205 Chat User Joined](#m205) has 0 there. `ChatUserChange` in
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
 **[S `FUN_08058d74`; O]**
 
-Struct `ChatText` (dynamic):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | 4 | u32 | chat_id |  |
-| 0x04 | 4 | u32 | user_id | the server fills in the sender |
-| 0x08 | 4 | u8[4] | ignored |  |
-| 0x0c | rest | str | text | at most 0x1000 bytes |
-
-The server forwards it as [208 Receive Chat Text](#m208).
-
 The server forwards the text to every member, the sender included:
 
 ```mermaid
@@ -216,6 +205,17 @@ sequenceDiagram
     S-->>C: 208 Receive Chat Text
     S-->>O: 208 Receive Chat Text
 ```
+
+Struct `ChatText` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | chat_id |  |
+| 0x04 | 4 | u32 | user_id | the server fills in the sender |
+| 0x08 | 4 | u8[4] | ignored |  |
+| 0x0c | rest | str | text | at most 0x1000 bytes |
+
+The server forwards it as [208 Receive Chat Text](#m208).
 
 ## <a id="m208"></a>208 Receive Chat Text
 Initiator: Server. Forwarded from [207 Send Chat Text](#m207).
@@ -233,6 +233,19 @@ Struct `ReceiveChatText` (dynamic):
 Initiator: Client. Privilege: Set Chat Topic (35) and the chat's topic
 classes. **[S `FUN_08058eac`; O]**
 
+Members receive the new topic:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 209 Set Chat Topic
+    S-->>C: 210 Chat Topic Changed
+    S-->>O: 210 Chat Topic Changed
+```
+
 Struct `SetChatTopic` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -249,19 +262,6 @@ Struct `SetChatTopic` (dynamic):
 frames 73-74).
 
 Members receive [210 Chat Topic Changed](#m210).
-
-Members receive the new topic:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant O as Client
-    C->>S: 209 Set Chat Topic
-    S-->>C: 210 Chat Topic Changed
-    S-->>O: 210 Chat Topic Changed
-```
 
 ## <a id="m210"></a>210 Chat Topic Changed
 Initiator: Server. Sent to members after [209 Set Chat Topic](#m209).
@@ -284,6 +284,18 @@ Struct `ChatTopicChanged` (dynamic):
 Initiator: Client. **[S `FUN_080591ac`; O `captures/linux-chat-admin.pcapng`
 frames 87 to 88, 118 to 120]**
 
+Each invitee receives an invitation:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 211 Chat Invite
+    S-->>O: 212 Chat Invitation
+```
+
 Struct `ChatInvite` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -303,18 +315,6 @@ users 1 and 4 (frame 118, 24 bytes), with no message. User 4 had left, so
 only user 1 got a 212 each time (frames 88 and 120). `ChatInvite` in
 `kdx_proto::msg::chat` re-encodes it byte for byte (test
 `linux_chat_admin`).
-
-Each invitee receives an invitation:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant O as Client
-    C->>S: 211 Chat Invite
-    S-->>O: 212 Chat Invitation
-```
 
 ## <a id="m212"></a>212 Chat Invitation
 Initiator: Server. Sent to each invitee of [211 Chat Invite](#m211).
@@ -346,6 +346,18 @@ although [216 Create Private Chat (R)](#m216) gave the chat flags 0.
 ## <a id="m213"></a>213 Must Join Chat
 Initiator: Server. **[S `FUN_0804b114`; O]**
 
+After login the server asks for the join, and the client joins chat 1:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    S-->>C: 213 Must Join Chat
+    C->>S: 202 Join Chat
+    S->>C: 203 Chat Window Info
+```
+
 No payload.
 
 The payload is empty **[O `captures/linux-chat-rooms.pcapng` frame 167]**. Sent
@@ -362,24 +374,8 @@ class ([504 Set Account Class](accounts.md#m504) at frame 145), 213 arrived
 after [106 Server Icon](session.md#m106) (frame 167), and the client sent 202
 for chat 1 (frame 175).
 
-After login the server asks for the join, and the client joins chat 1:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    S-->>C: 213 Must Join Chat
-    C->>S: 202 Join Chat
-    S->>C: 203 Chat Window Info
-```
-
 ## <a id="m214"></a>214 Get Chat List
 Initiator: Client. **[S `FUN_080594dc`; O]**
-
-No payload.
-
-The server answers with [215 Chat List](#m215).
 
 The chat list is one request and one reply:
 
@@ -391,6 +387,10 @@ sequenceDiagram
     C->>S: 214 Get Chat List
     S->>C: 215 Chat List
 ```
+
+No payload.
+
+The server answers with [215 Chat List](#m215).
 
 ## <a id="m215"></a>215 Chat List
 Initiator: Server. Reply to [214 Get Chat List](#m214).
@@ -448,6 +448,21 @@ Initiator: Client. Privilege: Create/Modify Chats (37) for
 `captures/linux-chat-rooms.pcapng` frames 42 to 62, 85, 136 to 137]** Handler:
 **[S `FUN_08059944`]**.
 
+Creating, reading, and changing a chat record:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 217 Create Chat
+    S->>C: 1 Status (success 0xd9)
+    C->>S: 218 Get Chat
+    S->>C: 219 Chat Info
+    C->>S: 220 Set Chat
+    S->>C: 1 Status (success 0xdc)
+```
+
 217 Create Chat and 220 Set Chat carry a chat record.
 [218 Get Chat](#m218) is a u32 chat ID, and [219 Chat Info](#m219) is a chat
 record. 220 Set Chat refuses private chats. 217 and 220 get
@@ -472,21 +487,6 @@ left at the default. Their bits are probably account classes, MSB first
 window (frame 39). 217 gets 1 Status success 0xd9 and 220 gets 0xdc (frames 45,
 55). `ChatRecord` and `ChatId` in `kdx_proto::msg::chat` re-encode 217 to 220
 byte for byte (test `linux_chat_rooms`).
-
-Creating, reading, and changing a chat record:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: 217 Create Chat
-    S->>C: 1 Status (success 0xd9)
-    C->>S: 218 Get Chat
-    S->>C: 219 Chat Info
-    C->>S: 220 Set Chat
-    S->>C: 1 Status (success 0xdc)
-```
 
 ## <a id="m218"></a>218 Get Chat
 Initiator: Client. **[S; O]**
@@ -544,6 +544,17 @@ sent `e8 df 4d 29 00 00 00 02` to both members (frames 125, 127).
 ## <a id="m222"></a>222 Get Chat DCC Addresses
 Initiator: Client. **[S `FUN_0805a110`; O]**
 
+A voice chat member asks where the others listen:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 222 Get Chat DCC Addresses
+    S->>C: 223 Chat DCC Addresses
+```
+
 Struct `GetChatDccAddresses` (4 bytes):
 
 | Off | Size | Type | Field | Notes |
@@ -562,17 +573,6 @@ The client then opens a TCP connection to each address for voice; see
 [222 Get Chat DCC Addresses](#m222) right after joining a voice chat. `ChatId`
 re-encodes 222 byte for byte (tests `linux_chat_rooms`,
 `linux_dcc_voice_failed`).
-
-A voice chat member asks where the others listen:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: 222 Get Chat DCC Addresses
-    S->>C: 223 Chat DCC Addresses
-```
 
 ## <a id="m223"></a>223 Chat DCC Addresses
 Initiator: Server. Reply to [222 Get Chat DCC Addresses](#m222).

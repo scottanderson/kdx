@@ -59,6 +59,8 @@ Put details in those files. Keep this file to rules.
   arrows with the message, as in `412 Download File`. Use a solid arrow for a
   request or its reply and a dashed arrow for a notification or file data.
   Keep labels short enough to read at phone width, and add no styling.
+  In `docs/protocol/messages/`, put a message's diagram right after its
+  `Initiator:` paragraph, before the struct table.
 - Describe each message payload with struct tables in the one shape set out
   under Structs in the
   [protocol conventions](docs/protocol/README.md#conventions).

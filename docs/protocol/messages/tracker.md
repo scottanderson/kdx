@@ -16,10 +16,6 @@ also sends [1 Status](status.md#tracker-form) in its short form, and answers
 
 Initiator: Client. **[S `FUN_0804abf4`; O frame 34]**
 
-No payload.
-
-The reply is [701 Tracker Group List](#m701).
-
 The group list is one request and one reply:
 
 ```mermaid
@@ -30,6 +26,10 @@ sequenceDiagram
     C->>T: 700 Get Tracker Group List
     T->>C: 701 Tracker Group List
 ```
+
+No payload.
+
+The reply is [701 Tracker Group List](#m701).
 
 ## <a id="m701"></a>701 Tracker Group List
 
@@ -64,6 +64,17 @@ Initiator: Client, where the sender is client `FUN_08069ac4` and the handler
 is `FUN_0804adcc`. **[S `FUN_0804adcc`, client `FUN_08069ac4`; O frames 36,
 37]**
 
+A group's server list is one request and one reply:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant T as Tracker
+    C->>T: 702 Get Tracker Server List
+    T->>C: 703 Tracker Server List
+```
+
 Struct `GetServerList` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -76,17 +87,6 @@ Struct `GetServerList` (dynamic):
 A payload shorter than 4 bytes plus the name gives 0x10002, and an unknown group
 0x1000c **[O `captures/kdx-cli-tracker.pcapng` frame 39]**; group names match
 byte for byte **[S]**. The reply is [703 Tracker Server List](#m703).
-
-A group's server list is one request and one reply:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant T as Tracker
-    C->>T: 702 Get Tracker Server List
-    T->>C: 703 Tracker Server List
-```
 
 ## <a id="m703"></a>703 Tracker Server List
 
@@ -399,10 +399,6 @@ can't read.
 
 Initiator: Client. **[S `FUN_0804b180`]**
 
-No payload.
-
-The reply is [721 TrackerServ Statistics](#m721).
-
 [720 Get TrackerServ Statistics](#m720) gets 721 TrackerServ Statistics:
 
 ```mermaid
@@ -413,6 +409,10 @@ sequenceDiagram
     C->>T: 720 Get TrackerServ Statistics
     T->>C: 721 TrackerServ Statistics
 ```
+
+No payload.
+
+The reply is [721 TrackerServ Statistics](#m721).
 
 ## <a id="m721"></a>721 TrackerServ Statistics
 

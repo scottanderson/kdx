@@ -10,6 +10,18 @@ record.
 Initiator: Client. Privilege: Disconnect Users (41), and Ban Users (43) to ban.
 **[S `FUN_0804c42c`; O `captures/linux-chat-admin.pcapng` frames 159, 161]**
 
+The target is told:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 150 Disconnect User
+    S-->>O: 151 Disconnect Message
+```
+
 Struct `DisconnectUser` (dynamic):
 
 | Off | Size | Type | Field | Notes |
@@ -31,18 +43,6 @@ In `captures/linux-chat-admin.pcapng` the GUI (user 2) disconnected itself
 with the message `test` and no ban: the [150 Disconnect User](#m150) at frame
 159 is 28 bytes **[O]**. `kdx_proto::msg::admin::DisconnectUser` re-encodes it
 byte for byte.
-
-The target is told:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    participant O as Client
-    C->>S: 150 Disconnect User
-    S-->>O: 151 Disconnect Message
-```
 
 ## <a id="m151"></a>151 Disconnect Message
 Initiator: Server.
@@ -72,15 +72,6 @@ target, the capture doesn't tell the two apart at 0x00.
 ## <a id="m152"></a>152 Get User Info
 Initiator: Client. Privilege: Get User Info (40). **[S `FUN_0804c8a8`; O]**
 
-Struct `GetUserInfo` (4 bytes):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | 4 | u32 | user_id |  |
-
-If the user doesn't exist, the server replies with [1 Status](status.md#m1)
-0x1000c **[O]**. `kdx_proto::msg::user_info::GetUserInfo` encodes the request.
-
 [152 Get User Info](#m152) gets [153 User Info](#m153):
 
 ```mermaid
@@ -91,6 +82,15 @@ sequenceDiagram
     C->>S: 152 Get User Info
     S->>C: 153 User Info
 ```
+
+Struct `GetUserInfo` (4 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | u32 | user_id |  |
+
+If the user doesn't exist, the server replies with [1 Status](status.md#m1)
+0x1000c **[O]**. `kdx_proto::msg::user_info::GetUserInfo` encodes the request.
 
 ## <a id="m153"></a>153 User Info
 Initiator: Server. **[S `FUN_0804c8a8`; O]**
@@ -127,18 +127,6 @@ Struct `UserInfo` (dynamic):
 Initiator: Client. Privilege: Broadcast (33). **[S `FUN_0804d1a8`; O
 `captures/linux-chat-admin.pcapng` frames 129, 130, 132]**
 
-Struct `SendBroadcast` (dynamic):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | 2 | u16 | value_0 | unknown; 0 in the lab |
-| 0x02 | 2 | u16 | value_2 | copied through to 0x0e of [155 Rcv Broadcast Message](#m155) |
-| 0x04 | rest | str | text | ≤ 0x800 |
-
-Everyone receives [155 Rcv Broadcast Message](#m155). The GUI (user 2) sent
-`00 00 00 00` and `test broadcast` (frame 129) **[O]**.
-`kdx_proto::msg::admin::SendBroadcast` re-encodes it.
-
 Everyone receives the broadcast, the sender included:
 
 ```mermaid
@@ -151,6 +139,18 @@ sequenceDiagram
     S-->>C: 155 Rcv Broadcast Message
     S-->>O: 155 Rcv Broadcast Message
 ```
+
+Struct `SendBroadcast` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 2 | u16 | value_0 | unknown; 0 in the lab |
+| 0x02 | 2 | u16 | value_2 | copied through to 0x0e of [155 Rcv Broadcast Message](#m155) |
+| 0x04 | rest | str | text | ≤ 0x800 |
+
+Everyone receives [155 Rcv Broadcast Message](#m155). The GUI (user 2) sent
+`00 00 00 00` and `test broadcast` (frame 129) **[O]**.
+`kdx_proto::msg::admin::SendBroadcast` re-encodes it.
 
 ## <a id="m155"></a>155 Rcv Broadcast Message
 Initiator: Server.
@@ -248,16 +248,6 @@ the 171 at frame 116 of `captures/probe.pcapng` byte for byte.
 Initiator: Client.
 Handler: **[S `FUN_0805f638`]**.
 
-Struct `SetServerSettings` (dynamic):
-
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 |  | ServerSettings | settings | the blob of [171 Server Settings Info](#m171) |
-
-[172 Set Server Settings](#m172) sends the same blob as
-[171 Server Settings Info](#m171) back, and the server answers with
-[173 Set Server Settings Done](#m173) **[O]**.
-
 The settings are read, then written back:
 
 ```mermaid
@@ -271,6 +261,16 @@ sequenceDiagram
     S->>C: 173 Set Server Settings Done
 ```
 
+Struct `SetServerSettings` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 |  | ServerSettings | settings | the blob of [171 Server Settings Info](#m171) |
+
+[172 Set Server Settings](#m172) sends the same blob as
+[171 Server Settings Info](#m171) back, and the server answers with
+[173 Set Server Settings Done](#m173) **[O]**.
+
 ## <a id="m173"></a>173 Set Server Settings Done
 Initiator: Server.
 
@@ -283,6 +283,19 @@ The reply is empty **[O `captures/linux-server-settings.pcapng` frames 41,
 
 ## <a id="m174"></a>174 Shutdown Server
 Initiator: Client. Privilege: Shutdown Server (64). **[S `FUN_08061598`]**
+
+Users are told before the server exits:
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    participant O as Client
+    C->>S: 174 Shutdown Server
+    S-->>C: 151 Disconnect Message (flag 4)
+    S-->>O: 151 Disconnect Message (flag 4)
+```
 
 Struct `ShutdownServer` (dynamic):
 
@@ -300,7 +313,11 @@ exiting, mode bit 2 runs `/sbin/shutdown -h now` and bit 1
 `/sbin/shutdown -r now` (`FUN_080916e4`) **[S]**.
 `kdx_proto::msg::admin::ShutdownServer` re-encodes frame 47.
 
-Users are told before the server exits:
+## <a id="m175"></a>175 Upgrade Server Software
+Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
+(82). **[S `FUN_0806172c`]**
+
+Users are told before the server restarts:
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -308,14 +325,10 @@ sequenceDiagram
     participant C as Client
     participant S as Server
     participant O as Client
-    C->>S: 174 Shutdown Server
+    C->>S: 175 Upgrade Server Software
     S-->>C: 151 Disconnect Message (flag 4)
     S-->>O: 151 Disconnect Message (flag 4)
 ```
-
-## <a id="m175"></a>175 Upgrade Server Software
-Initiator: Client. Privileges: Shutdown Server (64) and Launch Programs
-(82). **[S `FUN_0806172c`]**
 
 No payload.
 
@@ -342,22 +355,22 @@ back about 5 s after the 151; the next login's
 [105 Server Info](session.md#m105) reports version 1600 **[O
 `captures/linux-upgrade.pcapng` frame 37]**.
 
-Users are told before the server restarts:
+## <a id="m180"></a>180 Server History Join
+Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
+`FUN_080627f8`, `FUN_08061d80`]**
+
+A client joins the history, gets new records, and leaves:
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
 sequenceDiagram
     participant C as Client
     participant S as Server
-    participant O as Client
-    C->>S: 175 Upgrade Server Software
-    S-->>C: 151 Disconnect Message (flag 4)
-    S-->>O: 151 Disconnect Message (flag 4)
+    C->>S: 180 Server History Join
+    S->>C: 181 Server History Join (R)
+    S-->>C: 183 Server History Added (each new record)
+    C->>S: 182 Server History Leave
 ```
-
-## <a id="m180"></a>180 Server History Join
-Initiator: Client. Privilege: View Server History (63). **[S `FUN_08062674`,
-`FUN_080627f8`, `FUN_08061d80`]**
 
 No payload.
 
@@ -402,19 +415,6 @@ Download](#m188) (frames 108, 190). Saving the settings logs [170 Get Server
 Settings](#m170) and [172 Set Server Settings](#m172) (frames 38, 43).
 `kdx_proto::msg::admin::HistoryList` (181) and `HistoryRecord` (183) re-encode
 every payload byte for byte, the unnamed bytes and padding included.
-
-A client joins the history, gets new records, and leaves:
-
-```mermaid
-%%{init: {"sequence": {"mirrorActors": false}}}%%
-sequenceDiagram
-    participant C as Client
-    participant S as Server
-    C->>S: 180 Server History Join
-    S->>C: 181 Server History Join (R)
-    S-->>C: 183 Server History Added (each new record)
-    C->>S: 182 Server History Leave
-```
 
 ## <a id="m181"></a>181 Server History Join (R)
 Initiator: Server.
