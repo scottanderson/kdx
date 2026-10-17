@@ -19,7 +19,7 @@ refman = prog.getReferenceManager()
 mem = prog.getMemory()
 monitor = ConsoleTaskMonitor()
 
-OUT = os.path.join("/work/out", prog.getName().replace(".", "-"))
+OUT = os.path.join("/work/out", prog.getDomainFile().getProjectLocator().getName())
 os.makedirs(os.path.join(OUT, "decomp"), exist_ok=True)
 
 CONSTANTS = {
