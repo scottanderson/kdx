@@ -27,6 +27,7 @@ each project keeps its original file name, such as `KDXServer.lexe`, and is the
 re/ghidra /work/projects KDXServer1620-Lnx -import /work/bin/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
 re/ghidra /work/projects KDXClient1600-Win -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
 re/ghidra /work/projects KDXServer1600-Win -import /work/bin/KDXServer1600-Win/extracted/KDXServer1600-Win/KDXServer.exe
+re/ghidra /work/projects KDXServer0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXServer Folder/KDXServer"
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects KDXServer1620-Lnx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \
   -postScript decompile.py 0x08085a04 -postScript callers.py 0x08085328
@@ -174,7 +175,9 @@ Message types the protocol reference does not cover yet are listed in
 | `0x0805a110` | [222 Get Chat DCC Addresses](../docs/protocol/messages/chat.md#m222) |
 | `0x0804a310` | "Unknown!" stub of the name table at `0x080abc6c` |
 
-Other binaries, by Ghidra project:
+Other binaries, by Ghidra project. The 0.9x Mac builds are PowerPC PEF;
+their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
+12.1.4's PEF loader fails on NetFone 1.400's relocations.
 
 | Project | Address | What |
 |---|---|---|
@@ -232,3 +235,12 @@ Other binaries, by Ghidra project:
 | `KDXTrackerServ1110-Lnx` | `0x0804d63c` | parse a `%KDXTSTG` settings blob (712 and the settings file) |
 | `KDXTrackerServ1110-Lnx` | `0x0804df70` | register with upstream trackers (flags bit 0) |
 | `KDXTrackerServ1110-Lnx` | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |
+| `KDXServer0921-Mac` | `0x10034560` | create connection object (sub-protocol, sub-version) |
+| `KDXServer0921-Mac` | `0x10035480` | 0.9x handshake state machine |
+| `KDXServer0921-Mac` | `0x10034fc0` / `0x100350b0` | send 0.9x HELLO / validate its header and return its length |
+| `KDXServer0921-Mac` | `0x10035300` / `0x100351d0` | check the peer's 67-byte string, then send our HELLO / send the SHA-1 PROOF |
+| `KDXServer0921-Mac` | `0x100353a0` | send the one-byte login reply (0x10 OK, 1 failed) |
+| `KDXServer0921-Mac` | `0x1000a820` | SHA-1 (one-shot) |
+| `KDXClient0921-Mac` | `0x10057db0` / `0x10057ea0` | send 0.9x HELLO / validate its header |
+| `KDXClient0921-Mac` | `0x1001b410` | connect to a tracker (`%KDt`) |
+| `KDXTrackerServ0902-Mac` | `0x10021c10` / `0x10021d00` | send 0.9x HELLO / validate its header |

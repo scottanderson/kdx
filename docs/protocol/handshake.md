@@ -258,3 +258,100 @@ These are the codes the handshake raises:
 | 0x40074 | invalid protocol data; the handshake raises it for a nonce echo (a connection to ourselves) |
 | 0x40075 | protocol limit exceeded; the handshake raises it for a hello over 0x800 bytes |
 
+## Version 0.9x
+
+The 2001 Mac builds and NetFone 1.400 use an older handshake with no XOR
+layer, no Twofish, and no challenge table. A 0.9x peer can't talk to a 1.x
+one. These are PowerPC PEF files from `KDX0921.sit.bin`,
+`KDXTrackerServ0902.sit.bin`, and `NetFone1400-Mac.sit` in
+`vendor/MANIFEST.md`. Addresses are in the Ghidra projects
+`KDXServer0921-Mac`, `KDXClient0921-Mac`, and `KDXTrackerServ0902-Mac`,
+imported as `re/README.md` describes.
+
+### Sub-protocols
+
+| Sub-protocol | Sub-version | Used by |
+|---|---:|---|
+| `%KDX` | 1 | Client and Server 0.915–0.921 **[S server `FUN_10005b40`, client `FUN_10000a50`]** |
+| `%KDt` | 1 | Tracker 0.900 and 0.902, and Client 0.920 and 0.921 browsing a tracker **[S tracker `0x1000154c`, client `FUN_1001b410`]** |
+| `%NFO` | 1 | NetFone 1.400: the tag and the argument 1 are at the same call shape as in the KDX programs, read from the raw code because Ghidra 12.1.4's PEF loader fails on NetFone's relocations **[I]** |
+
+A peer must send the same sub-protocol and exactly the same sub-version,
+else 0x40071 or 0x40072 / 0x40073 **[S `FUN_100350b0`]**. Clients
+0.915–0.919 contain `%KDX` but no `%KDt` **[S]**.
+
+### Sequence
+
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: HELLO (login name)
+    S->>C: HELLO
+    C->>S: PROOF
+    S->>C: login reply
+```
+
+The client sends its hello first, and the server answers after it has
+checked the client's hello **[S `FUN_10035480`]**. Once the client has the
+server's hello it sends its proof, and the server replies with one byte.
+
+### HELLO **[S server `FUN_10034fc0`, `FUN_100350b0`, client `FUN_10057db0`, `FUN_10057ea0`]**
+
+Sent in the clear. Total length: `skipped_len + name_len + 0x63`, at most
+0x800 (else 0x40075).
+
+Struct `Hello09x` (dynamic):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 4 | char[4] | protocol | `"%TXP"`, else 0x40071 |
+| 0x04 | 4 | char[4] | sub_protocol | see Sub-protocols |
+| 0x08 | 1 | u8 | version | `1`; other values give 0x40072 / 0x40073 |
+| 0x09 | 1 | u8 | sub_version | `1` |
+| 0x0a | 1 | u8 | second_version | `1`; other values give 0x40072 / 0x40073 |
+| 0x0b | 1 | u8 | name_len | the receiver keeps at most 31 bytes **[S `FUN_10035300`]** |
+| 0x0c | 4 | u8[4] | ignored | 0 as sent |
+| 0x10 | 2 | u16 | skipped_len | sent as 0 |
+| 0x12 | 2 | u16 | string_len | `0x43`, else 0x40074 |
+| 0x14 | 12 | u8[12] | nonce |  |
+| 0x20 | skipped_len | u8[] | skipped | bytes the receiver skips before the string |
+|  | string_len | str | string | `(c)2001 KDX.  All rights reserved.\r\rAll your base are belong to us!` |
+|  | name_len | str | name | login name |
+
+Each field sits 4 bytes before its 1.x place, where 1.x has the XOR key.
+The byte that 1.x has at 0x0e is here the second version, and the 1.x
+challenge at 0x16 is here the string length.
+
+The receiver compares the peer's 0x43 bytes with its own and raises 0x40074
+if they differ **[S `FUN_10035300`, `FUN_100351d0`]**. The 0.9x programs
+contain neither story **[S]**. Client 0.921, Server 0.921, Tracker 0.902,
+and NetFone 1.400 each load the string through their hello's TOC slot
+**[S]**, and the 31-byte line that 1.x uses as its default table is the end
+of it.
+
+### PROOF **[S server `FUN_100351d0`, `FUN_10035480`, `FUN_100353a0`]**
+
+The client sends a 20-byte proof:
+
+Struct `Proof09x` (20 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 20 | u8[20] | proof | SHA-1 of the key followed by the receiver's nonce |
+
+The key is the account's 32-byte key, which the server gets from its login
+callback. The server answers with one byte:
+
+Struct `ProofReply09x` (1 bytes):
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 1 | u8 | status | `0x10` OK, `1` failed |
+
+A client that gets any reply but 0x10 raises 0x40070. Both sides then pass
+the key to `FUN_1000c1f0` **[S]**, probably a cipher's key schedule **[I]**.
+Only Server 0.921's proof code has been read. The client and tracker have
+the same hello code **[S]**, so probably the same proof **[I]**. Whether the
+32-byte key matches 1.x's `account_key` is unknown.
