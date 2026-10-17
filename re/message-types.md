@@ -7,8 +7,8 @@ move each one into `docs/protocol/` once a capture or test confirms it.
 
 ## Server 1.620: session dispatcher
 
-`FUN_0804fdac` is a compare tree on the message type **[S]**. Its cases match
-the Handler column of the catalog exactly. Inline cases:
+`FUN_0804fdac` is a compare tree on the message type. <!-- [S] --> Its cases
+match the Handler column of the catalog exactly. Inline cases:
 
 | Type | Inline action |
 |---:|---|
@@ -18,7 +18,7 @@ the Handler column of the catalog exactly. Inline cases:
 | [140 Open Connection Monitor](../docs/protocol/messages/monitoring.md#m140) / [141 Close Connection Monitor](../docs/protocol/messages/monitoring.md#m141) | set / clear conn byte +0x3c, then log a history record |
 | [421 Empty Trash](../docs/protocol/messages/files.md#m421) | needs privilege bit at conn +0x45 & 4; replies [1 Status](../docs/protocol/messages/status.md#m1) success 0x1a5 |
 
-Named types with no case, so the server ignores them on a session **[S]**:
+Named types with no case, so the server ignores them on a session: <!-- [S] -->
 [117 SKPK](../docs/protocol/messages/session.md#m117),
 [404 Delete File/Folder](../docs/protocol/messages/files.md#m404),
 [406 Rename File/Folder](../docs/protocol/messages/files.md#m406),
@@ -27,7 +27,7 @@ Named types with no case, so the server ignores them on a session **[S]**:
 
 ## Server 1.620: transfer dispatcher
 
-`FUN_08052194` handles a transfer connection's requests **[S]**:
+`FUN_08052194` handles a transfer connection's requests: <!-- [S] -->
 
 | Type | Handler |
 |---:|---|
@@ -41,7 +41,7 @@ Named types with no case, so the server ignores them on a session **[S]**:
 
 So View Display runs on a transfer connection, not on the session.
 
-The Linux build cannot serve it **[S]**. 900 checks the View Display
+The Linux build cannot serve it. <!-- [S] --> 900 checks the View Display
 privilege (conn +0x4c & 0x20), then `FUN_0805bb54` asks `FUN_080996d8` for
 the screen, and that only raises 0x10004 (unimplemented). The mouse and keyboard
 injectors behind 904 and 905 (`FUN_080996f4`, `FUN_080996fc`) are empty. So
@@ -52,8 +52,8 @@ need a Windows or Mac server.
 ## Server 1.620: name table
 
 `FUN_08049d14` looks up types below 0x454 in the jump table at 0x080abc6c;
-944 of its 1108 entries go to the "Unknown!" stub at 0x0804a310 **[S]**. The
-named entries are exactly the catalog's types, so no named type is missing
+944 of its 1108 entries go to the "Unknown!" stub at 0x0804a310. <!-- [S] -->
+The named entries are exactly the catalog's types, so no named type is missing
 from the catalog. [112 (unnamed)](../docs/protocol/messages/session.md#m112) and
 [118 (unnamed)](../docs/protocol/messages/session.md#m118) are handled but
 unnamed. `re/scripts/jumptable.py 0x080abc6c 0x454` dumps it.
@@ -62,14 +62,14 @@ unnamed. `re/scripts/jumptable.py 0x080abc6c 0x454` dumps it.
 
 The client's copy indexes its jump table at 0x08126aac by type − 8 (entry for
 [100 Set Identity](../docs/protocol/messages/session.md#m100) at 0x08126c1c,
-string at 0x08127be2) **[S]**. Its names and types match the server's table
+string at 0x08127be2). <!-- [S] --> Its names and types match the server's table
 exactly.
 
 ## Tracker 1.110 (Linux)
 
 The tracker's name table has the same names (entry for
-[100 Set Identity](../docs/protocol/messages/session.md#m100) at 0x080c5b1c)
-**[S]**. Its TCP dispatcher `FUN_0804b378` handles **[S]**:
+[100 Set Identity](../docs/protocol/messages/session.md#m100) at 0x080c5b1c).
+<!-- [S] --> Its TCP dispatcher `FUN_0804b378` handles: <!-- [S] -->
 
 | Type | Handler |
 |---:|---|
@@ -80,12 +80,12 @@ The tracker's name table has the same names (entry for
 | [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) | `FUN_0804cc10` |
 | [720 Get TrackerServ Statistics](../docs/protocol/messages/tracker.md#m720) | `FUN_0804b180` |
 
-Servers register with the tracker over UDP, not through this dispatcher
-**[S `FUN_0804c048`]**. See `docs/protocol/udp.md`.
+Servers register with the tracker over UDP, not through this dispatcher.
+<!-- [S `FUN_0804c048`] --> See `docs/protocol/udp.md`.
 
 ## Client 1.620 beta 5 (Linux): dispatcher
 
-`FUN_0804d7b4` handles these from a server **[S]**:
+`FUN_0804d7b4` handles these from a server: <!-- [S] -->
 
 - notifications:
   [101 User List](../docs/protocol/messages/session.md#m101)-[108 Ping](../docs/protocol/messages/session.md#m108),
@@ -158,7 +158,7 @@ the voice connection handles 1000-1003. See `docs/protocol/dcc.md`.
 
 ## Other behaviour found in the sweep
 
-Not protocol, but worth knowing when running the originals **[S]**:
+Not protocol, but worth knowing when running the originals: <!-- [S] -->
 
 - Server console: besides `exit`, `quit`, `about`, `info`, and `setport`,
   there is an unlisted `prod` command. It marks every socket readable and

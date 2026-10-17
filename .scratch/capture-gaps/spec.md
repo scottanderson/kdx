@@ -60,5 +60,5 @@ Message..., Connection Monitor, Empty Trash, Generate File Catalog, Process
 Monitor, Server History, Server Settings, Shutdown Server..., Upgrade Server
 Software..., View/Control Display, and Disconnect.
 
-Steps whose result is a guess are marked **[I]** in the issues; the capture
+Steps whose result is a guess are marked `[I]` in the issues; the capture
 decides.

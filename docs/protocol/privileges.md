@@ -1,25 +1,26 @@
 # Access privileges
 
-Tags, hex, and field notation: see [Conventions](README.md#conventions).
+For hex and field notation, see [Conventions](README.md#conventions).
 
-The privilege bits of account classes and accounts.
+This page lists the privilege bits of account classes and accounts.
 
-An account's privileges are a bit string of at least 11 bytes. It is stored at
-user +0x44 and sent in the class records
-([506 Account Class List](messages/accounts.md#m506)). Bit n is byte n/8, mask
-0x80 >> (n % 8) **[S]**.
+An account's privileges are a bit string of at least 11 bytes. The server stores
+it at user +0x44, and sends it in the class records of [506 Account Class
+List](messages/accounts.md#m506). Bit n is in byte n/8, with the mask 0x80 >> (n
+% 8). <!-- [S] -->
 
-Bits that server handlers test, found by scanning every handler for tests of
-user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
-[105 Server Info](messages/session.md#m105),
-[107 Server Greeting](messages/session.md#m107), and
-[213 Must Join Chat](messages/chat.md#m213).
+The table gives the bits that server handlers test, found by a scan of all
+handlers for tests of user +0x44 to +0x4e. <!-- [S] --> "Login" is
+`FUN_0804b114`, the step after login that sends [105 Server
+Info](messages/session.md#m105), [107 Server
+Greeting](messages/session.md#m107), and [213 Must Join
+Chat](messages/chat.md#m213).
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
-| 0 | override: bypasses chat class lists and news/account restrictions; not in the client's list | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
+| 0 | Override. It overrides the class lists of chats, and the limits on news and accounts. It is not in the client's list. | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
 | 3 | Color Overrides Class | `FUN_08054900` account lookup |
-| 4 | Can Login | set in every lab class |
+| 4 | Can Login | set in all lab classes |
 | 10 | Download | [412 Download File](messages/files.md#m412) |
 | 11 | Upload | [402 Create Folder](messages/files.md#m402), [415 Upload File](messages/files.md#m415) |
 | 13 | Empty Trash | [421 Empty Trash](messages/files.md#m421) |
@@ -57,9 +58,9 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 62 | Don't Show Greeting | login |
 | 63 | View Server History | [180 Server History Join](messages/administration.md#m180) |
 | 64 | Shutdown Server | [174 Shutdown Server](messages/administration.md#m174), [175 Upgrade Server Software](messages/administration.md#m175) |
-| 65 | Disable Encryption |
+| 65 | Disable Encryption | 412 Download File, 415 Upload File (plain mode) |
 | 66 | View Display | [900 Open View Display](messages/view-display.md#m900) |
-| 67 | Control Display | [902 View Display Params](messages/view-display.md#m902), [904 View Display Mouse](messages/view-display.md#m904), [905 View Display Keyboard](messages/view-display.md#m905) | 412 Download File, 415 Upload File (plain mode) |
+| 67 | Control Display | [902 View Display Params](messages/view-display.md#m902), [904 View Display Mouse](messages/view-display.md#m904), [905 View Display Keyboard](messages/view-display.md#m905) |
 | 70 | View News | [605 Get Newsgroup List](messages/news.md#m605), 607 Get News Messages, 609 Get News Message |
 | 71 | Post News | 607 Get News Messages, 611 Post News Message |
 | 72 | Delete News Messages | 607 Get News Messages, 612 Delete News Message |
@@ -69,15 +70,16 @@ user +0x44..+0x4e **[S]**. `FUN_0804b114` is the post-login step that sends
 | 81 | Terminate Processes | [804 Exit/Terminate Process](messages/processes.md#m804) |
 | 82 | Launch Programs | 175 Upgrade Server Software, [420 Launch File](messages/files.md#m420) |
 
-Bits 2 and 4 (0x44&0x20, 0x44&0x08) are set in every class. Bit 4 is Can Login;
-bit 2 has no name in the client's table **[S]**. Answering no to guest access at
-the server's first-run setup clears Can Login on the `guest` account and sets it
-in that account's mask **[S `FUN_08054394`]**. The client never appends the
-0x17-byte info trailer that sets user flag bit 1 (see User record), so whatever
-sends it is not Client 1.620 beta 5 **[S client `FUN_0804d654`]**.
+All classes have bits 2 and 4 set (0x44&0x20 and 0x44&0x08). Bit 4 is Can Login,
+and bit 2 has no name in the client's table. <!-- [S] --> If the administrator
+answers no to guest access in the server's first-run setup, the server clears
+Can Login on the `guest` account and sets it in that account's mask. <!-- [S
+`FUN_08054394`] --> The client never adds the 0x17-byte info trailer that sets
+user flag bit 1 (see [User record](encodings.md#user-record)), so the program
+that sends it is not Client 1.620 beta 5. <!-- [S client `FUN_0804d654`] -->
 
 The client's account editor lists 50 privileges in this order, from the
-resources of KDXClient.exe **[S]**:
+resources of KDXClient.exe: <!-- [S] -->
 
 1. Download, Upload, Create Aliases, Move, Rename, Delete, Empty Trash, Set
    Attributes, Has Custom Base Folder, See All Bases, See All Volumes, Allow
@@ -91,12 +93,11 @@ resources of KDXClient.exe **[S]**:
    Protected Account
 6. View News, Post News, Delete News Messages, Create/Modify Newsgroups, See
    Logins In News
-7. View Processes, Terminate Processes, Launch Programs, View Display,
-   Control Display
-8. Can Login, Color Overrides Class, Use Any Name, Modify Server Settings,
-   Don't Show Greeting, View Server History, Shutdown Server, Disable
-   Encryption
+7. View Processes, Terminate Processes, Launch Programs, View Display, Control
+   Display
+8. Can Login, Color Overrides Class, Use Any Name, Modify Server Settings, Don't
+   Show Greeting, View Server History, Shutdown Server, Disable Encryption
 
-The client's editor table at 0x0812c760 (file offset 0xe4760) pairs each
-label with its bit number **[S]**, which gives the names in the table
-above. The other bits have no label.
+The client's editor table at 0x0812c760 (file offset 0xe4760) pairs each label
+with its bit number. <!-- [S] --> The names in the table above come from it. The
+other bits have no label.

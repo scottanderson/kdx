@@ -14,20 +14,20 @@ the main section are named, and most sections are unexplained.
 The tracker's settings blob (`%KDXTSTG`, `tracker.md` 711) has the same
 shape and is fully read: a section table of 11 entries, then one "present"
 byte per section at 0x6c. The server's 12 bytes at 0x64 may be the same
-kind of table **[I]**.
+kind of table. <!-- [I] -->
 
 ## Gaps
 
-- [ ] 0x0c, the section table: "11 entries of u32 offset, u32 length" **[I]**.
-  Confirm from the parser.
+- [ ] 0x0c, the section table: "11 entries of u32 offset, u32 length".
+  <!-- [I] --> Confirm from the parser.
 - [ ] Name every section. Entry 0 is the main section, 3 the greeting, 5
   the icon; entries 1, 2, 4, 6, and 8–10 are empty in every capture; entry
   7 points at the end of the blob with length 0 in a 171 and is 0 in a 172.
 - [ ] 0x64, 12 bytes: `01 01 01 01 00 01 00 02 00 00 00 00` in a 171, and 0
   at 0x69 and 0x6b in some 172s.
 - [ ] The main section from 0x70 to its end. Named so far: 0x93 bit 1
-  (greeting enabled), 0xa8 (total outgoing speed limit), 0xc2 (a length,
-  **[I]**), and the server name at 0xcc. Map the server's in-memory settings
+  (greeting enabled), 0xa8 (total outgoing speed limit), 0xc2 (a length,),
+<!-- [I] --> and the server name at 0xcc. Map the server's in-memory settings
   (port at +0x258, File Transfer port at +0x260, Register with Trackers at
   +0x27c, …) to blob offsets through the parser and writer, and match each
   to a control in the client's Server Settings window.

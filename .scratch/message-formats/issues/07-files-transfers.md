@@ -30,17 +30,17 @@ Docs: `messages/files.md` and `transfers.md`.
 - [ ] 412 Download File and 415 Upload File: 0x10, 7 bytes. The options bit
   0 (plain transfer) needs privilege bit 65, which the privilege table now
   names Disable Encryption; and bit 25, now Allow Simultaneous Downloads,
-  is still marked **[I]** under 412. Update both, and capture a plain transfer
+  is still marked `[I]` under 412. Update both, and capture a plain transfer
   on Linux if the client can ask for one. All 16 captured 412s and 415s
   have options 0.
 - [ ] 413 Download File (R): 0x10 (8 bytes of 0), 0x28 (0xc bytes: 0, 0,
   1; `DownloadInfo::unknown_30` holds the 1), 0x34 (0x14 bytes of 0).
   Strings 2–4: the second is "probably a type the server derives from the
-  extension" **[I]** (`exttype/bin`); the third and fourth are empty. Name
+  extension" <!-- [I] --> (`exttype/bin`); the third and fourth are empty. Name
   them (`FileStrings::second`, `third`).
 - [ ] 415 Upload File: 0x18, 0x2e bytes; strings 2–4 "probably carry type
-  and comment information" **[I]**. Read what the Linux server does with them
-  at the end of an upload.
+  and comment information". <!-- [I] --> Read what the Linux server does with
+  them at the end of an upload.
 - [ ] 416 Upload File (R): 0x10, 8 bytes of 0.
 - [ ] Resource forks: the Linux server always sends size 0 and expects 0.
   Read whether the Windows server 1.600 can send a nonzero resource fork

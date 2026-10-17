@@ -1,8 +1,8 @@
 # Message formats
 
 Goal: every byte of every message payload, on the server, the tracker, and
-client-to-client connections, has a name and a meaning backed by **[S]** or
-**[O]** evidence, or is proven unused. Then `kdx-dissect` can print each
+client-to-client connections, has a name and a meaning backed by `[S]` or
+`[O]` evidence, or is proven unused. Then `kdx-dissect` can print each
 payload as its struct, in wire order, and fall back to a hexdump only when
 a payload doesn't fit (issue 15).
 
@@ -10,16 +10,16 @@ a payload doesn't fit (issue 15).
 
 A field is understood when the protocol docs give it one of these:
 
-- a name and meaning, tagged **[S]** with a function address or **[O]**
+- a name and meaning, tagged `[S]` with a function address or `[O]`
   with a capture and frame;
-- "unused", with **[S]** evidence that no reader in Server 1.620, Client
+- "unused", with `[S]` evidence that no reader in Server 1.620, Client
   1.620 beta 5, or Tracker 1.110 looks at it, and what the writer puts
   there (zero, a copy, or uninitialised memory);
 - "not decidable from the Linux builds", with the reason, when only a
   Windows or Mac build could say more and that build can't be run or read
   usefully.
 
-An **[I]** alone does not count. Unnamed table rows (an empty Field
+An `[I]` alone does not count. Unnamed table rows (an empty Field
 column), rows that are just `0`, and offsets missing from a table are gaps.
 
 ## Which builds
@@ -75,7 +75,7 @@ A capture needs the operator, so it goes to `.scratch/capture-gaps/`:
   `Origin: message-formats NN`.
 - Give the setup the agent does, then numbered GUI steps with the types
   each step should produce, as the other capture-gaps issues do. Mark
-  guessed results **[I]**.
+  guessed results. <!-- [I] -->
 - Prefer one scenario per issue here, with as many gaps as fit in one
   session.
 
@@ -113,13 +113,13 @@ strike it here.
 
 | Issue | Where | One says | The other says |
 |---|---|---|---|
-| 03 | 105 Server Info 0x00 | Session table: "probably a session ID for transfer connections" **[I]** | Transfer connections: the account key for an attached login |
-| 03 | 105 Server Info 0x20 | Session table: File Transfer port **[S client `FUN_08052cc0`]** | `ServerInfo::server_value`: "unknown meaning" |
+| 03 | 105 Server Info 0x00 | Session table: "probably a session ID for transfer connections" <!-- [I] --> | Transfer connections: the account key for an attached login |
+| 03 | 105 Server Info 0x20 | Session table: File Transfer port <!-- [S client `FUN_08052cc0`] --> | `ServerInfo::server_value`: "unknown meaning" |
 | 06 | chat record 0x04..0x13 | Chat record table: key at 0x04, then 0xc bytes at 0x08 | 217 Create Chat table: 0x10 bytes of 0 at 0x04 |
 | 06 | chat record 0x2c..0x2d | Chat record table: IRC server and channel lengths | 217 Create Chat table: a u32 0 |
-| 07 | 412 Download File options | 412: privilege bits 25 and 65 **[I]** | Access Privileges table: Allow Simultaneous Downloads (25) and Disable Encryption (65) |
+| 07 | 412 Download File options | 412: privilege bits 25 and 65 <!-- [I] --> | Access Privileges table: Allow Simultaneous Downloads (25) and Disable Encryption (65) |
 | 08 | 503 Account Class Info 0x25 | Doc: flood protection | `AccountClass::unknown_25` |
-| ~~11~~ | ~~1107 Folder Access List 0x00, 0x04~~ | ~~Doc: flags **[S]**, icon **[S]**~~ | ~~`FolderAccessItem::unknown_00`, `item_id`~~; renamed `flags`, `icon` |
+| ~~11~~ | ~~1107 Folder Access List 0x00, 0x04~~ | ~~Doc: flags, <!-- [S] --> icon <!-- [S] -->~~ | ~~`FolderAccessItem::unknown_00`, `item_id`~~; renamed `flags`, `icon` |
 
 Types never captured: 404, 406, 408, 514, 901, and 1003. 184 to 191 are
 history record kinds, not messages.

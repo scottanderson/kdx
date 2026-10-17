@@ -33,12 +33,16 @@ cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-p
 
 Facts go in `docs/protocol/`. Tag each claim with its evidence:
 
-- **[O]** observed in a capture; cite the file and frame number.
-- **[S]** read in a binary; cite the function address, as in `FUN_08085a04`.
-- **[I]** inferred.
+- `[O]` observed in a capture; cite the file and frame number.
+- `[S]` read in a binary; cite the function address, as in `FUN_08085a04`.
+- `[I]` inferred.
 
-Write each tag in bold, in tables and headings too, as in
-`**[S FUN_08085a04]**`. Leave tags in code blocks plain.
+Put each tag in an HTML comment after its claim, as in
+`<!-- [S FUN_08085a04] -->`. Readers of the rendered page do not see it, so
+say "probably" in the text when a claim is a guess.
+
+Write in ASD-STE100 style where it reads naturally. Write the simplest
+version that keeps the nuance.
 
 Name a message by its type and title, as in 412 Download File. Write
 multi-byte fields as big-endian.

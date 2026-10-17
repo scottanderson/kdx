@@ -10,8 +10,9 @@ blob (170-173) is issue 05.
 ## Gaps
 
 - [ ] 140/141: confirm the payload is empty or ignored.
-- [ ] 143 record 0x38: "a per-transfer value" **[S]**, 0x5000 (the speed limit)
-  in every record **[O]**. Name it (`MonitoredConnection::value_38`).
+- [ ] 143 record 0x38: "a per-transfer value", <!-- [S] --> 0x5000 (the speed
+  limit) in every record. <!-- [O] --> Name it
+  (`MonitoredConnection::value_38`).
 - [ ] 143 0x3c state: name the values (0x90 queued, 0x19c for a download).
 - [ ] 143 0x40 (u16 0), 0x43..0x5f, and 0x64..0x65 are not in the table.
 - [ ] 150 Disconnect User: 0x04..0x07, 0x0c..0x10, 0x12..0x13, and
@@ -21,8 +22,8 @@ blob (170-173) is issue 05.
   (`DisconnectMessage::value_0e`, `value_10`); the flags besides 2 and 4.
 - [ ] 153 User Info: 0x04 u32; the two times at 0x10 and 0x18; 0x20, 0x1b
   bytes; 0x3c, 0x3e, 0x42, 0x43.
-- [ ] 153 0x3f and 0x41 are both "name": "the class or the account name"
-  **[I]**. A Linux capture of Get User Info on a user whose account name
+- [ ] 153 0x3f and 0x41 are both "name": "the class or the account name".
+<!-- [I] --> A Linux capture of Get User Info on a user whose account name
   differs from its class name settles it. Both 153s on record
   (`linux-chat-admin` frame 124, `probe` frame 230) are for `admin`, whose
   account name and class are both `Administrator` (`kdx-accounts` frame
@@ -47,4 +48,4 @@ blob (170-173) is issue 05.
   is `6e 88` (`probe` 239). Fixed: `MonitoredConnection::padding` keeps
   them.
 - [ ] Are those bytes uninitialised padding? `messages/monitoring.md` says so
-  from the captures **[O]**; confirm in the builder.
+  from the captures; <!-- [O] --> confirm in the builder.

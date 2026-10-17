@@ -193,7 +193,7 @@ def check_table_columns():
             prev = line
 
 
-TAG = re.compile(r"\*\*\[[OSI][^\]]*\]\*\*")
+TAG = re.compile(r"(?<=<!-- )\[[OSI][^\]]*\]")
 TAG_O = r"O(?: `captures/[\w-]+\.pcapng`)?(?: frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*)?"
 
 TAG_S = r"S(?: (?:(?:client|server|tracker) )?`[^`]+`(?:, (?:(?:client|server|tracker) )?`[^`]+`)*)?"
@@ -201,12 +201,15 @@ TAG_S = r"S(?: (?:(?:client|server|tracker) )?`[^`]+`(?:, (?:(?:client|server|tr
 
 def check_tags():
     # Evidence tags: S, I, O in that order, joined by "; ", no remarks.
-    for path in tracked_markdown():
+    for path in markdown_files():
+        text = open(path, encoding="utf-8").read()
+        for m in re.finditer(r"\*\*\[[OSI][^\]]*\]\*\*", text):
+            line = text.count("\n", 0, m.start()) + 1
+            errors.append(f"{path}:{line}: put the evidence tag in an HTML comment: {m.group(0)!r}")
         if not path.startswith("docs/"):
             continue
-        text = open(path, encoding="utf-8").read()
         for m in TAG.finditer(text):
-            inner = " ".join(m.group(0)[3:-3].split())
+            inner = " ".join(m.group(0)[1:-1].split())
             parts = re.split(r"\s*;\s*", inner)
             kinds = [p[:1] for p in parts]
             good = (

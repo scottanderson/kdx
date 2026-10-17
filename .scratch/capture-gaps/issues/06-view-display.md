@@ -18,7 +18,7 @@ Steps, either way:
 2. Commands → 127.0.0.1 → View/Control Display (900, then 902/903 or an
    error).
 3. Click inside the view (904), then type `abc` (905).
-4. Close the View/Control Display window (901 **[I]**).
+4. Close the View/Control Display window (901). <!-- [I] -->
 
 ## Comments
 
@@ -45,6 +45,6 @@ character and key code fields; see View display in
 `kdxwinserver`); its grab and codec match Server 1.620. It plays 904 back with
 `mouse_event` and 905 with `keybd_event`, through a key code table that Client
 1.620 beta 5's HID usages don't match, so the keys typed in the capture most
-likely did nothing **[I]**. See View display in
+likely did nothing. <!-- [I] --> See View display in
 `docs/protocol/messages/view-display.md`. Issue 12 covers what the black screen
 left untested.

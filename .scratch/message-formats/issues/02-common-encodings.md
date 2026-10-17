@@ -27,7 +27,7 @@ User record (`FUN_0804af04`, `FUN_0804b304`; client `FUN_0804d654`):
   others or show they are unused.
 - [ ] 0x1b, listed as 0.
 - [ ] The 0x17-byte info trailer behind flag bit 1 is "probably a
-  client-identification trailer" **[I]**. The Linux client never sends it;
+  client-identification trailer". <!-- [I] --> The Linux client never sends it;
   check the Windows client 1.600 (`kdxclient`) for the sender. Its only
   capture, `first-connect` frame 22, has flags 0 and no trailer.
 
@@ -42,18 +42,18 @@ Handshake (`handshake.md`):
 
 - [ ] Hello 0x10, 4 reserved bytes: the reader, or proof that none reads
   them.
-- [ ] The nonce "looks time-based" **[O]**: read how each side makes it.
+- [ ] The nonce "looks time-based": <!-- [O] --> read how each side makes it.
 - [ ] "Login names": the `00`+ID login is "probably used for file-transfer
-  connections" **[I]**. Transfer connections and view display confirm it
+  connections". <!-- [I] --> Transfer connections and view display confirm it
   (`transfers.md`; `win-view-display` frame 99).
   Update the doc.
 
 Session (`session.md`):
 
 - [ ] The header-only send path (`FUN_080868b4`, `FUN_08086a9c`) is
-  "probably used for large or streamed payloads" **[I]**. 414 and 417 send a
-  whole fork under one header **[O `kdx-cli` frames 133, 190, 244]**; confirm
-  they use it.
+  "probably used for large or streamed payloads". <!-- [I] --> 414 and 417 send
+  a whole fork under one header; <!-- [O `kdx-cli` frames 133, 190, 244] -->
+  confirm they use it.
 - [ ] The server pads the data after a 414 header with "a repeated 32-bit
   value that is not this fill". Find where it comes from.
 - [x] Audit (01): 102 and 103 records come with zero bytes after the record

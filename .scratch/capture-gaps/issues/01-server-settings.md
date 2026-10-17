@@ -21,11 +21,11 @@ peer that watches for 102 and 111; a 2 MB file `speed.bin` in
 5. Commands → 127.0.0.1 → Get Server Info (113/114).
 6. Commands → 127.0.0.1 → Disconnect, then connect again as in step 1
    (expect 105, 106 and 107 after login).
-7. Files button, right-click `speed.bin`, Download (expect 419 **[I]**).
+7. Files button, right-click `speed.bin`, Download (expect 419). <!-- [I] -->
 8. Settings button, Identity panel: change the name to `lab-linux`, click
    Save (100; the peer gets 102).
 9. Chat button, join Public Chat, type `/away`, Enter, then `/back`, Enter
-   (expect 110/111 **[I]**).
+   (expect 110/111). <!-- [I] -->
 10. Undo step 3's speed limit: Server Settings, untick Total Outgoing Speed
     Limit, Save.
 
