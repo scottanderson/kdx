@@ -272,9 +272,9 @@ These are the codes the handshake raises:
 
 The 2001 Mac builds and NetFone 1.400 use an older handshake with no XOR
 layer, no Twofish, and no challenge table. A 0.9x peer can't talk to a 1.x
-one. These are PowerPC PEF files from `KDX0921.sit.bin`,
-`KDXTrackerServ0902.sit.bin`, and `NetFone1400-Mac.sit` in
-`vendor/MANIFEST.md`. Addresses are in the Ghidra projects
+one. These are PowerPC PEF files from `KDX0915.sit.bin` to `KDX0921.sit.bin`,
+`KDXTrackerServ0900.sit.bin`, `KDXTrackerServ0902.sit.bin`, and
+`NetFone1400-Mac.sit` in `vendor/MANIFEST.md`. Addresses are in the Ghidra projects
 `KDXServer0921-Mac`, `KDXClient0921-Mac`, and `KDXTrackerServ0902-Mac`,
 imported as `re/README.md` describes.
 

@@ -56,11 +56,11 @@ still verifies and unpacks the archive.
 | old/KDXServer1520-MacUnix.zip | Server 1.520, Mach-O ppc | 20060515144742 | 0269b7933b1570ccb0547957bb2b2f6dcff728c5e630bf0a3cba89f78dd95320 |
 | ../downloadstatic/KDXClient-Win.zip | Client 1.110, Win32 (unpacks to `KDXClient1110-Win/`) | 20031215224532 | ca81ce0a8a0cf1e550fb953f676cef3fe34d7acf755fbee0c6ef9fb7901c8d4a |
 | KDXClient-Lnx-beta4.zip | Client 1.620 beta 4, Linux i386/X11 | 20051014064518 | 943d7c3c85a5a8af26f33fcbf9de00fd3c43f12edb0869cfcc0ce6fa868ff3f9 |
-| KDX0915.sit.bin | Client 0.915, Mac PEF | 20010723053143 | 2c47b13ee4570272132d93f5b3641b683e3b04ec83404494a9651befd2fa2fd7 |
-| KDX0916.sit.bin | Client 0.916, Mac PEF | 20010723044626 | d7d6b7bc7c644c678607ba65acccc98288007cdfc619077f7a1a927c15be416a |
-| KDX0918.sit.bin | Client 0.918, Mac PEF | 20010723045056 | e08718acd5636017a8cf4638940ba1ee48ad0dde4963be91714a2aaa3e61ebd7 |
-| KDX0919.sit.bin | Client 0.919, Mac PEF | 20010723045704 | 1f0c525ee0bd9b04754e388e96aee0e95c7e3e9f0874395390b3487a1805c853 |
-| KDX0920.sit.bin | Client 0.920, Mac PEF | 20010810110141 | 560fe2d86718cd8596dafe6b859fc0edd8173d0ed9cbcf6268b36df215af2801 |
+| KDX0915.sit.bin | Client and Server 0.915, Mac PEF | 20010723053143 | 2c47b13ee4570272132d93f5b3641b683e3b04ec83404494a9651befd2fa2fd7 |
+| KDX0916.sit.bin | Client and Server 0.916, Mac PEF | 20010723044626 | d7d6b7bc7c644c678607ba65acccc98288007cdfc619077f7a1a927c15be416a |
+| KDX0918.sit.bin | Client and Server 0.918, Mac PEF | 20010723045056 | e08718acd5636017a8cf4638940ba1ee48ad0dde4963be91714a2aaa3e61ebd7 |
+| KDX0919.sit.bin | Client and Server 0.919, Mac PEF | 20010723045704 | 1f0c525ee0bd9b04754e388e96aee0e95c7e3e9f0874395390b3487a1805c853 |
+| KDX0920.sit.bin | Client and Server 0.920, Mac PEF | 20010810110141 | 560fe2d86718cd8596dafe6b859fc0edd8173d0ed9cbcf6268b36df215af2801 |
 | KDX0921.sit.bin | Client and Server 0.921, Mac PEF (2001 handshake, see handshake.md) | 20010810111341 | 3bf2570c208ee0e82f35c2c23aebfea028c68cf4adc57b222fdd58d0b75226f1 |
 | KDXTrackerServ0900.sit.bin | Tracker 0.900, Mac PEF | 20010810110838 | e0507fa9f31c518c18be7aabbed1d164ef780a27a79bf49a175ae54031e4e06f |
 | KDXTrackerServ0902.sit.bin | Tracker 0.902, Mac PEF (2001 handshake) | 20010810112345 | cc627c5c2be519e9d317d0befdd849cd0c68e96649f82ee3d7ee55bf44ab1283 |
