@@ -175,6 +175,24 @@ def check_one_h1():
             errors.append(f"{path}: {count} H1 headings, expected 1")
 
 
+def cells(line):
+    return len(re.split(r"(?<!\\)\|", line.strip().strip("|")))
+
+
+def check_table_columns():
+    # GFM renders a table only when the delimiter row matches the header.
+    for path in tracked_markdown():
+        fence = False
+        prev = ""
+        for n, line in enumerate(open(path, encoding="utf-8"), 1):
+            if line.startswith("```"):
+                fence = not fence
+            elif not fence and re.fullmatch(r"\|(?: *:?-+:? *\|)+\s*", line) and prev.startswith("|"):
+                if cells(line) != cells(prev):
+                    errors.append(f"{path}:{n}: delimiter row has {cells(line)} columns, header has {cells(prev)}")
+            prev = line
+
+
 TAG = re.compile(r"\*\*\[[OSI][^\]]*\]\*\*")
 TAG_O = r"O(?: `captures/[\w-]+\.pcapng`)?(?: frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*)?"
 
@@ -510,6 +528,7 @@ def main():
     check_message_anchors()
     check_conventions_link()
     check_one_h1()
+    check_table_columns()
     check_tags()
     check_open_questions()
     check_message_sections(check_structs())
