@@ -59,21 +59,21 @@ Struct `Hello` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | key | not stored. The random XOR key, sent in the clear. |
-| 0x04 | 4 | char[4] | protocol | not stored. `"%TXP"` (0x25545850). Any other value gives error 0x40071 at TRN line 941. <!-- [S; O] lab probe --> |
-| 0x08 | 4 | char[4] | sub_protocol | `"%KDX"` (0x254b4458) between a client and a server. <!-- [S; O] --> A GConsole peer sends `"%HGC"` (0x25484743), which a client accepts with sub-version 0x40; see [gconsole.md](gconsole.md#handshake). <!-- [S `FUN_0804b824`; O] --> |
-| 0x0c | 1 | u8 | version | `1`. 0 means that the peer is too old (0x40072), and more than 1 means that it is too new (0x40073). <!-- [S] --> |
-| 0x0d | 1 | u8 | sub_version | Client 1.600 and Client 1.620 beta 5 send `0x10`, and Server 1.620 sends `0x20`. <!-- [O `captures/linux-first-connect.pcapng` frames 8, 10] --> Tracker 1.110 sends `0x30`, <!-- [S] --> and a GConsole peer sends `0x40`. <!-- [S; O] --> Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (else 0x40072 below, 0x40073 above). <!-- [S server `0x080526e0`, tracker `FUN_0804bb4c`] version callback at +0x88 --> |
-| 0x0e | 1 | u8 | pad_len | 0 as sent. <!-- [S; O] --> |
-| 0x0f | 1 | u8 | name_len | 0 to 31. The receiver keeps at most 31 bytes. <!-- [S `FUN_08085a04`] --> |
-| 0x10 | 4 | u8[4] | ignored | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
-| 0x14 | 2 | u16 | skipped_len | 0 as sent. <!-- [S; O] --> |
-| 0x16 | 2 | u16 | challenge | The offset of the 0x14 bytes in the receiver's challenge table that the receiver's proof must echo; see [Challenge tables](#challenge-tables). <!-- [S; O] --> |
-| 0x18 | 12 | u8[12] | nonce | A value for each connection. It seems to come from the time, because the two sides' nonces share bytes. <!-- [O] --> If the peer echoes our own nonce, we have connected to ourselves, and we reject the connection with 0x40074. <!-- [S] --> |
-| 0x24 | pad_len | u8[] | pad | not stored. Bytes that the receiver skips before the name. <!-- [S `FUN_08085a04`] --> |
-|  | skipped_len | u8[] | skipped | not stored. More bytes that the receiver skips before the name. <!-- [S `FUN_08085a04`] --> |
-|  | name_len | str | name | The login name from a client. Server 1.620 sends it empty. <!-- [O] --> See [Login names](#login-names). |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 4 | u32 | `key` | not stored. The random XOR key, sent in the clear. |
+| 0x04 | 4 | char[4] | `protocol` | not stored. `"%TXP"` (0x25545850). Any other value gives error 0x40071 at TRN line 941. <!-- [S; O] lab probe --> |
+| 0x08 | 4 | char[4] | `sub_protocol` | `"%KDX"` (0x254b4458) between a client and a server. <!-- [S; O] --> A GConsole peer sends `"%HGC"` (0x25484743), which a client accepts with sub-version 0x40; see [gconsole.md](gconsole.md#handshake). <!-- [S `FUN_0804b824`; O] --> |
+| 0x0c | 1 | u8 | `version` | `1`. 0 means that the peer is too old (0x40072), and more than 1 means that it is too new (0x40073). <!-- [S] --> |
+| 0x0d | 1 | u8 | `sub_version` | Client 1.600 and Client 1.620 beta 5 send `0x10`, and Server 1.620 sends `0x20`. <!-- [O `captures/linux-first-connect.pcapng` frames 8, 10] --> Tracker 1.110 sends `0x30`, <!-- [S] --> and a GConsole peer sends `0x40`. <!-- [S; O] --> Server 1.620 and Tracker 1.110 accept only sub-protocol `%KDX` (else 0x40071) with sub-version exactly `0x10` (else 0x40072 below, 0x40073 above). <!-- [S server `0x080526e0`, tracker `FUN_0804bb4c`] version callback at +0x88 --> |
+| 0x0e | 1 | u8 | `pad_len` | 0 as sent. <!-- [S; O] --> |
+| 0x0f | 1 | u8 | `name_len` | 0 to 31. The receiver keeps at most 31 bytes. <!-- [S `FUN_08085a04`] --> |
+| 0x10 | 4 | u8[4] | `ignored` | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
+| 0x14 | 2 | u16 | `skipped_len` | 0 as sent. <!-- [S; O] --> |
+| 0x16 | 2 | u16 | `challenge` | The offset of the 0x14 bytes in the receiver's challenge table that the receiver's proof must echo; see [Challenge tables](#challenge-tables). <!-- [S; O] --> |
+| 0x18 | 12 | u8[12] | `nonce` | A value for each connection. It seems to come from the time, because the two sides' nonces share bytes. <!-- [O] --> If the peer echoes our own nonce, we have connected to ourselves, and we reject the connection with 0x40074. <!-- [S] --> |
+| 0x24 | `pad_len` | u8[] | `pad` | not stored. Bytes that the receiver skips before the name. <!-- [S `FUN_08085a04`] --> |
+|  | `skipped_len` | u8[] | `skipped` | not stored. More bytes that the receiver skips before the name. <!-- [S `FUN_08085a04`] --> |
+|  | `name_len` | str | `name` | The login name from a client. Server 1.620 sends it empty. <!-- [O] --> See [Login names](#login-names). |
+|  | pad4 | u8[] | `padding` |  |
 
 The receiver adds `pad_len` and `skipped_len` and skips that many bytes, so the
 wire does not show how the bytes split between `pad` and `skipped`. <!-- [S
@@ -92,10 +92,10 @@ Struct `Proof` (44 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 20 | u8[20] | auth | The first 4 bytes are also the XOR key for the rest. |
-| 0x14 | 20 | u8[20] | response | The 20 bytes of the challenge table at the offset that the **peer's** hello gives. |
-| 0x28 | 1 | u8 | status | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new. <!-- [S] --> |
-| 0x29 | 3 | u8[3] | ignored | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
+| 0x00 | 20 | u8[20] | `auth` | The first 4 bytes are also the XOR key for the rest. |
+| 0x14 | 20 | u8[20] | `response` | The 20 bytes of the challenge table at the offset that the **peer's** hello gives. |
+| 0x28 | 1 | u8 | `status` | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new. <!-- [S] --> |
+| 0x29 | 3 | u8[3] | `ignored` | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
 
 Bytes 0x04 to 0x2b are XORed with the stream whose key is bytes 0 to 3.
 
@@ -320,19 +320,19 @@ Struct `Hello09x` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | char[4] | protocol | `"%TXP"`, else 0x40071 |
-| 0x04 | 4 | char[4] | sub_protocol | See [Sub-protocols](#sub-protocols). |
-| 0x08 | 1 | u8 | version | `1`. Other values give 0x40072 or 0x40073. |
-| 0x09 | 1 | u8 | sub_version | `1` |
-| 0x0a | 1 | u8 | second_version | `1`. Other values give 0x40072 or 0x40073. |
-| 0x0b | 1 | u8 | name_len | The receiver keeps at most 31 bytes. <!-- [S `FUN_10035300`] --> |
-| 0x0c | 4 | u8[4] | ignored | 0 as sent |
-| 0x10 | 2 | u16 | skipped_len | 0 as sent |
-| 0x12 | 2 | u16 | string_len | `0x43`, else 0x40074 |
-| 0x14 | 12 | u8[12] | nonce |  |
-| 0x20 | skipped_len | u8[] | skipped | Bytes that the receiver skips before the string. |
-|  | string_len | str | string | `(c)2001 KDX.  All rights reserved.\r\rAll your base are belong to us!` |
-|  | name_len | str | name | The login name. |
+| 0x00 | 4 | char[4] | `protocol` | `"%TXP"`, else 0x40071 |
+| 0x04 | 4 | char[4] | `sub_protocol` | See [Sub-protocols](#sub-protocols). |
+| 0x08 | 1 | u8 | `version` | `1`. Other values give 0x40072 or 0x40073. |
+| 0x09 | 1 | u8 | `sub_version` | `1` |
+| 0x0a | 1 | u8 | `second_version` | `1`. Other values give 0x40072 or 0x40073. |
+| 0x0b | 1 | u8 | `name_len` | The receiver keeps at most 31 bytes. <!-- [S `FUN_10035300`] --> |
+| 0x0c | 4 | u8[4] | `ignored` | 0 as sent |
+| 0x10 | 2 | u16 | `skipped_len` | 0 as sent |
+| 0x12 | 2 | u16 | `string_len` | `0x43`, else 0x40074 |
+| 0x14 | 12 | u8[12] | `nonce` |  |
+| 0x20 | `skipped_len` | u8[] | `skipped` | Bytes that the receiver skips before the string. |
+|  | `string_len` | str | `string` | `(c)2001 KDX.  All rights reserved.\r\rAll your base are belong to us!` |
+|  | `name_len` | str | `name` | The login name. |
 
 Each field is 4 bytes before its place in 1.x, where 1.x has the XOR key. The
 byte at 0x0e in 1.x is the second version here, and the 1.x challenge at 0x16 is
@@ -355,7 +355,7 @@ Struct `Proof09x` (20 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 20 | u8[20] | proof | SHA-1 of the key, then the receiver's nonce. |
+| 0x00 | 20 | u8[20] | `proof` | SHA-1 of the key, then the receiver's nonce. |
 
 The key is the account's 32-byte key, which the server gets from its login
 callback. The server answers with one byte:
@@ -364,7 +364,7 @@ Struct `ProofReply09x` (1 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | status | `0x10` OK, `1` failed |
+| 0x00 | 1 | u8 | `status` | `0x10` OK, `1` failed |
 
 If the client gets any reply other than 0x10, it gives 0x40070. Then both sides
 give the key to `FUN_1000c1f0`, <!-- [S] --> which is probably a cipher's key

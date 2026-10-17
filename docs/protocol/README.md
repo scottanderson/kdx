@@ -101,15 +101,15 @@ field:
   - `rest`: the field runs to the end of the payload.
   - `pad4`: zero to three bytes, up to a multiple of 4 from the start of the
     struct.
-  - The name of an earlier field that holds the length. A `str`, a `u8[]`, or a
-    single struct has a `<field>_len` that counts bytes. Any other array has a
-    `<field>_count` that counts elements.
+  - The name of an earlier field that holds the length, in backticks. A `str`,
+    a `u8[]`, or a single struct has a `<field>_len` that counts bytes. Any
+    other array has a `<field>_count` that counts elements.
 - **Type** is a primitive or the name of a struct. `[N]` after it makes an array
   of N elements, as in `u8[12]`, and `[]` makes an array of variable size. `str`
   is text of variable size. `str[N]` is N strings, whose lengths are the N
   elements of an earlier `u8[N]` field, as in `groups_len`.
-- **Field** is the name of the field, the same as in `kdx-proto` where it has
-  one.
+- **Field** is the name of the field in backticks, the same as in `kdx-proto`
+  where it has one.
 - **Notes** holds anything else. "Rust `field`" names the `kdx-proto` field that
   a row is part of, and "not stored" marks a constant that `kdx-proto` checks
   but does not keep.
@@ -150,12 +150,12 @@ Struct `ExampleRecord` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | user_id |  |
-| 0x04 | 2 | u8[2] | ignored |  |
-| 0x06 | 2 | u8[2] | reserved |  |
-| 0x08 | 1 | u8 | name_len |  |
-| 0x09 | name_len | str | name |  |
-|  | pad4 | u8[] | padding |  |
+| 0x00 | 4 | u32 | `user_id` |  |
+| 0x04 | 2 | u8[2] | `ignored` |  |
+| 0x06 | 2 | u8[2] | `reserved` |  |
+| 0x08 | 1 | u8 | `name_len` |  |
+| 0x09 | `name_len` | str | `name` |  |
+|  | pad4 | u8[] | `padding` |  |
 
 **Diagrams.** A sequence diagram shows an exchange of messages. A solid arrow is
 a request or its reply. A dashed arrow is a notification or file data.

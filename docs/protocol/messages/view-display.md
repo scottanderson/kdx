@@ -51,7 +51,7 @@ Struct `CloseViewDisplay` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | ignored | Unknown, because nothing sends or handles it. |
+| 0x00 | rest | u8[] | `ignored` | Unknown, because nothing sends or handles it. |
 
 ## <a id="m902"></a>902 View Display Params
 Initiator: Server. Reply to [900 Open View Display](#m900).
@@ -60,8 +60,8 @@ Struct `ViewDisplayParams` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | flags | Bit 0 is set if the viewer can control the display (Control Display, 67). Admin gets 1. <!-- [O frame 107] --> |
-| 0x04 | 12 | u8[12] | ignored | 0 as sent. |
+| 0x00 | 4 | u32 | `flags` | Bit 0 is set if the viewer can control the display (Control Display, 67). Admin gets 1. <!-- [O frame 107] --> |
+| 0x04 | 12 | u8[12] | `ignored` | 0 as sent. |
 
 ## <a id="m903"></a>903 View Display Update
 Initiator: Server. It comes after [902 View Display Params](#m902) in reply to [900 Open View Display](#m900), and then each time the screen changes.
@@ -70,13 +70,13 @@ Struct `ViewDisplayUpdate` (dynamic):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | screen_width |  |
-| 0x02 | 2 | u16 | screen_height |  |
-| 0x04 | 2 | u16 | left | The changed rectangle. |
-| 0x06 | 2 | u16 | top |  |
-| 0x08 | 2 | u16 | right | Not included. |
-| 0x0a | 2 | u16 | bottom | Not included. |
-| 0x0c | rest | u8[] | pixels | The stream for the whole screen, row by row, in u16 words. |
+| 0x00 | 2 | u16 | `screen_width` |  |
+| 0x02 | 2 | u16 | `screen_height` |  |
+| 0x04 | 2 | u16 | `left` | The changed rectangle. |
+| 0x06 | 2 | u16 | `top` |  |
+| 0x08 | 2 | u16 | `right` | Not included. |
+| 0x0a | 2 | u16 | `bottom` | Not included. |
+| 0x0c | rest | u8[] | `pixels` | The stream for the whole screen, row by row, in u16 words. |
 
 A pixel is a u16 in RGB555 (0RRRRRGGGGGBBBBB), with the top 5 bits of each
 channel. <!-- [S `FUN_0805bb54`] --> The value 0x6c59 means that the pixel has
@@ -140,12 +140,12 @@ Struct `ViewDisplayMouse` (12 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | modifiers | As in [905 View Display Keyboard](#m905). The bits of Client 1.620 beta 5 are unknown. <!-- [I] --> |
-| 0x04 | 2 | u16 | x | In screen pixels. |
-| 0x06 | 2 | u16 | y |  |
-| 0x08 | 2 | u16 | wheel | The event field that [4201 Mouse](gconsole.md#m4201) sends as its wheel. 0 for clicks and moves. <!-- [O] --> |
-| 0x0a | 1 | u8 | button | 1 left, 2 right, 3 middle <!-- [S `FUN_00420270`] --> |
-| 0x0b | 1 | u8 | kind | 1 down, 2 up, 3 move, 4 wheel <!-- [S `FUN_0805c344`] --> |
+| 0x00 | 4 | u32 | `modifiers` | As in [905 View Display Keyboard](#m905). The bits of Client 1.620 beta 5 are unknown. <!-- [I] --> |
+| 0x04 | 2 | u16 | `x` | In screen pixels. |
+| 0x06 | 2 | u16 | `y` |  |
+| 0x08 | 2 | u16 | `wheel` | The event field that [4201 Mouse](gconsole.md#m4201) sends as its wheel. 0 for clicks and moves. <!-- [O] --> |
+| 0x0a | 1 | u8 | `button` | 1 left, 2 right, 3 middle <!-- [S `FUN_00420270`] --> |
+| 0x0b | 1 | u8 | `kind` | 1 down, 2 up, 3 move, 4 wheel <!-- [S `FUN_0805c344`] --> |
 
 A click is kind 1, then kind 2, both with button 1. Moves have button 0. <!-- [O
 frames 307 to 310] --> The server ignores other kinds. After kind 2, it sends
@@ -168,11 +168,11 @@ Struct `ViewDisplayKeyboard` (12 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | modifiers | From Client 1.600: Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30. <!-- [S client `FUN_00463870`] --> The bits of Client 1.620 beta 5 are unknown. <!-- [I] --> |
-| 0x04 | 2 | u16 | character | <!-- [O] --> |
-| 0x06 | 2 | u16 | key_code | From Client 1.620, `a` is 4, `b` 5, and `c` 6. <!-- [O] --> |
-| 0x08 | 3 | u8[3] | ignored | 0 as sent. |
-| 0x0b | 1 | u8 | kind | 1 key down, 2 key up, 3 key repeat. <!-- [S `FUN_0805c498`] --> |
+| 0x00 | 4 | u32 | `modifiers` | From Client 1.600: Ctrl 0x21, Alt 2, Shift 8, Caps Lock 4, Windows 0x30. <!-- [S client `FUN_00463870`] --> The bits of Client 1.620 beta 5 are unknown. <!-- [I] --> |
+| 0x04 | 2 | u16 | `character` | <!-- [O] --> |
+| 0x06 | 2 | u16 | `key_code` | From Client 1.620, `a` is 4, `b` 5, and `c` 6. <!-- [O] --> |
+| 0x08 | 3 | u8[3] | `ignored` | 0 as sent. |
+| 0x0b | 1 | u8 | `kind` | 1 key down, 2 key up, 3 key repeat. <!-- [S `FUN_0805c498`] --> |
 
 When the user types `abc`, the client sends `0061 0004`, `0062 0005`, and `0063
 0006` with kind 1. After each one comes a kind 2 that is zero except for the

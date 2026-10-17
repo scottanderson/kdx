@@ -58,11 +58,11 @@ Struct `Header` (16 bytes):
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | txid | Not zero. Each side counts up from a random start on each connection. A reply has the txid of its request. <!-- [S; O] --> |
-| 0x04 | 4 | u32 | kind | Not zero. See [messages/README.md](messages/README.md). |
-| 0x08 | 1 | u8 | reserved | 0 as sent. The original server does not check it, but `kdx-proto` rejects a byte that is not zero. <!-- [S `FUN_08086108`] --> |
-| 0x09 | 1 | u8 | flags | Bit 0 is set in a reply. <!-- [S; O] --> |
-| 0x0a | 6 | u48 | len | The payload length in bytes, before padding. See [Length limits](#length-limits). <!-- [S `FUN_080868b4`, `FUN_08086108`] --> |
+| 0x00 | 4 | u32 | `txid` | Not zero. Each side counts up from a random start on each connection. A reply has the txid of its request. <!-- [S; O] --> |
+| 0x04 | 4 | u32 | `kind` | Not zero. See [messages/README.md](messages/README.md). |
+| 0x08 | 1 | u8 | `reserved` | 0 as sent. The original server does not check it, but `kdx-proto` rejects a byte that is not zero. <!-- [S `FUN_08086108`] --> |
+| 0x09 | 1 | u8 | `flags` | Bit 0 is set in a reply. <!-- [S; O] --> |
+| 0x0a | 6 | u48 | `len` | The payload length in bytes, before padding. See [Length limits](#length-limits). <!-- [S `FUN_080868b4`, `FUN_08086108`] --> |
 
 The length is one 48-bit number, a `u48`. The software applies all limits on it,
 and the limits are different for each type of connection; none of them is part

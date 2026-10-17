@@ -407,6 +407,14 @@ def check_struct(path, n, name, size, rows, blank, structs):
             err(line, "a row needs exactly 5 cells")
             continue
         off, sz, typ, field, notes = cells
+        if re.fullmatch(r"`[^`]+`", field):
+            field = field[1:-1]
+        else:
+            err(line, f"wrap Field {field!r} in backticks")
+        if re.fullmatch(r"`[^`]+`", sz):
+            sz = sz[1:-1]
+        elif re.fullmatch(r"[a-z][a-z0-9_]*", sz) and sz not in ("rest", "pad4"):
+            err(line, f"wrap Size {sz!r} in backticks")
         named.append((field, notes))
         if seen_rest:
             err(line, "no row may follow a rest row")
