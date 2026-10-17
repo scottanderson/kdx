@@ -17,8 +17,9 @@ Each program has its own Ghidra project, named `<Program><Version>-<Platform>`
 after its directory in `vendor/haxial/`, such as `KDXServer1620-Lnx`,
 `KDXClient1600-Win` or `KDXTrackerServ1110-Win`. The 0.9x builds come from
 StuffIt archives of PowerPC Mac programs, so they are `-Mac`. Scripts write to
-`re/out/<project>/`, so versions never share a directory. `KDXClient1110-Win`
-is named after the folder inside `vendor/haxial/KDXClient-Win/`. The program
+`re/out/<project>/`, so versions never share a directory. `KDXClient1110-Win`,
+`KDXClientBETA4-Lnx` and `KDXClientBETA5-Lnx` are named after the folder inside
+their archive, whose name has no version or puts it last. The program
 inside each project keeps its original file name, such as `KDXServer.lexe`,
 and is the `-process` argument.
 
@@ -38,7 +39,7 @@ for p in KDXClient1320-Win/KDXClient.exe KDXClient1400-Win/KDXClient.exe \
   re/ghidra /work/projects "$d" -import "/work/bin/$d/extracted/$d/${p#*/}"
 done
 re/ghidra /work/projects KDXClient1110-Win -import /work/bin/KDXClient-Win/extracted/KDXClient1110-Win/KDXClient.exe
-re/ghidra /work/projects KDXClient-Lnx-beta4 -import /work/bin/KDXClient-Lnx-beta4/extracted/KDXClientBETA4-Lnx/KDXClient.lexe
+re/ghidra /work/projects KDXClientBETA4-Lnx -import /work/bin/KDXClient-Lnx-beta4/extracted/KDXClientBETA4-Lnx/KDXClient.lexe
 # run scripts against the analyzed program without re-analysis
 re/ghidra /work/projects KDXServer1620-Lnx -process KDXServer.lexe -noanalysis -readOnly -scriptPath /work/scripts \
   -postScript decompile.py 0x08085a04 -postScript callers.py 0x08085328
@@ -200,33 +201,33 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 
 | Project | Address | What |
 |---|---|---|
-| `KDXClient-Lnx-beta5` | `0x08126aac` | message name jump table, indexed by type − 8 |
-| `KDXClient-Lnx-beta5` | `0x0804d7b4` | message dispatcher (type → handler) |
-| `KDXClient-Lnx-beta5` | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send [202 Join Chat](../docs/protocol/messages/chat.md#m202) |
-| `KDXClient-Lnx-beta5` | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
-| `KDXClient-Lnx-beta5` | `0x0812c760` | account editor privilege table: {label, bit} pairs |
-| `KDXClient-Lnx-beta5` | `0x0804c01c` | send 118 (licence report) on a timer |
-| `KDXClient-Lnx-beta5` | `0x0804d654` | build the [100 Set Identity](../docs/protocol/messages/session.md#m100) user record |
-| `KDXClient-Lnx-beta5` | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
-| `KDXClient-Lnx-beta5` | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send [117 SKPK](../docs/protocol/messages/session.md#m117) / handle 117 |
-| `KDXClient-Lnx-beta5` | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle [1000 Start Voice](../docs/protocol/messages/voice.md#m1000) / handle [1001 Start Voice (R)](../docs/protocol/messages/voice.md#m1001) |
-| `KDXClient-Lnx-beta5` | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send [1002 Set Voice Format](../docs/protocol/messages/voice.md#m1002) / send [1003 Voice Data](../docs/protocol/messages/voice.md#m1003) / receive 1003 (IMA ADPCM) |
-| `KDXClient-Lnx-beta5` | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
-| `KDXClient-Lnx-beta5` | `0x0806f864` | 903 handler: resize the frame buffer, decode, redraw the rectangle |
-| `KDXClient-Lnx-beta5` | `0x0811667c` | X key event: keysym to USB HID usage through the tables at `0x081681e0` (Latin-1) and `0x081680e0` (0xff00 keysyms) |
-| `KDXClient-Lnx-beta5` | `0x080758dc` / `0x08074420` | 422 Volume Info handler / send 423 Set Volume Info with a bit per edited field |
-| `KDXClient-Lnx-beta5` | `0x080a0410` | make a text field read-only when its bit is clear |
-| `KDXClient-Lnx-beta5` | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
-| `KDXClient-Lnx-beta5` | `0x0806b1b0` / `0x0806b68c` | tracker settings: read [711 TrackerServ Settings Info](../docs/protocol/messages/tracker.md#m711) / build [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) |
-| `KDXClient-Lnx-beta5` | `0x08095c84` | GConsole connection ([4000 Open Window](../docs/protocol/messages/gconsole.md#m4000), [4001 Draw](../docs/protocol/messages/gconsole.md#m4001)) |
-| `KDXClient-Lnx-beta5` | `0x0804b824` / `0x0804b938` | Connect dialog: check the peer's hello (`%HGC` switches table and scramble) / pick the connection kind by its version |
-| `KDXClient-Lnx-beta5` | `0x0809aefc` | GConsole header scramble |
-| `KDXClient-Lnx-beta5` | `0x080ea08c` / `0x080ea000` | create connection object (KDX story) / set challenge table at +0xa4, length at +0xa0 |
-| `KDXClient-Lnx-beta5` | `0x080ec058` / `0x080ec280` / `0x080ea768` | challenge table: pick our challenge / answer the peer's / check the peer's response |
-| `KDXClient-Lnx-beta5` | `0x08094be8` / `0x08095ac4` | GConsole: handle 4000 / 4001 draw records |
-| `KDXClient-Lnx-beta5` | `0x0809607c` / `0x08096188` | GConsole: send [4200 Key](../docs/protocol/messages/gconsole.md#m4200) / [4201 Mouse](../docs/protocol/messages/gconsole.md#m4201) |
-| `KDXClient-Lnx-beta5` | `0x08069578` | tracker connection: sends [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), dispatches [1 Status](../docs/protocol/messages/status.md#m1), 107, [116 Your Address](../docs/protocol/messages/session.md#m116), [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701), [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703), 711, [713 Set TrackerServ Settings Done](../docs/protocol/messages/tracker.md#m713), [721 TrackerServ Statistics](../docs/protocol/messages/tracker.md#m721) |
-| `KDXClient-Lnx-beta5` | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) |
+| `KDXClientBETA5-Lnx` | `0x08126aac` | message name jump table, indexed by type − 8 |
+| `KDXClientBETA5-Lnx` | `0x0804d7b4` | message dispatcher (type → handler) |
+| `KDXClientBETA5-Lnx` | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send [202 Join Chat](../docs/protocol/messages/chat.md#m202) |
+| `KDXClientBETA5-Lnx` | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
+| `KDXClientBETA5-Lnx` | `0x0812c760` | account editor privilege table: {label, bit} pairs |
+| `KDXClientBETA5-Lnx` | `0x0804c01c` | send 118 (licence report) on a timer |
+| `KDXClientBETA5-Lnx` | `0x0804d654` | build the [100 Set Identity](../docs/protocol/messages/session.md#m100) user record |
+| `KDXClientBETA5-Lnx` | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
+| `KDXClientBETA5-Lnx` | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send [117 SKPK](../docs/protocol/messages/session.md#m117) / handle 117 |
+| `KDXClientBETA5-Lnx` | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle [1000 Start Voice](../docs/protocol/messages/voice.md#m1000) / handle [1001 Start Voice (R)](../docs/protocol/messages/voice.md#m1001) |
+| `KDXClientBETA5-Lnx` | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send [1002 Set Voice Format](../docs/protocol/messages/voice.md#m1002) / send [1003 Voice Data](../docs/protocol/messages/voice.md#m1003) / receive 1003 (IMA ADPCM) |
+| `KDXClientBETA5-Lnx` | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
+| `KDXClientBETA5-Lnx` | `0x0806f864` | 903 handler: resize the frame buffer, decode, redraw the rectangle |
+| `KDXClientBETA5-Lnx` | `0x0811667c` | X key event: keysym to USB HID usage through the tables at `0x081681e0` (Latin-1) and `0x081680e0` (0xff00 keysyms) |
+| `KDXClientBETA5-Lnx` | `0x080758dc` / `0x08074420` | 422 Volume Info handler / send 423 Set Volume Info with a bit per edited field |
+| `KDXClientBETA5-Lnx` | `0x080a0410` | make a text field read-only when its bit is clear |
+| `KDXClientBETA5-Lnx` | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
+| `KDXClientBETA5-Lnx` | `0x0806b1b0` / `0x0806b68c` | tracker settings: read [711 TrackerServ Settings Info](../docs/protocol/messages/tracker.md#m711) / build [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) |
+| `KDXClientBETA5-Lnx` | `0x08095c84` | GConsole connection ([4000 Open Window](../docs/protocol/messages/gconsole.md#m4000), [4001 Draw](../docs/protocol/messages/gconsole.md#m4001)) |
+| `KDXClientBETA5-Lnx` | `0x0804b824` / `0x0804b938` | Connect dialog: check the peer's hello (`%HGC` switches table and scramble) / pick the connection kind by its version |
+| `KDXClientBETA5-Lnx` | `0x0809aefc` | GConsole header scramble |
+| `KDXClientBETA5-Lnx` | `0x080ea08c` / `0x080ea000` | create connection object (KDX story) / set challenge table at +0xa4, length at +0xa0 |
+| `KDXClientBETA5-Lnx` | `0x080ec058` / `0x080ec280` / `0x080ea768` | challenge table: pick our challenge / answer the peer's / check the peer's response |
+| `KDXClientBETA5-Lnx` | `0x08094be8` / `0x08095ac4` | GConsole: handle 4000 / 4001 draw records |
+| `KDXClientBETA5-Lnx` | `0x0809607c` / `0x08096188` | GConsole: send [4200 Key](../docs/protocol/messages/gconsole.md#m4200) / [4201 Mouse](../docs/protocol/messages/gconsole.md#m4201) |
+| `KDXClientBETA5-Lnx` | `0x08069578` | tracker connection: sends [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), dispatches [1 Status](../docs/protocol/messages/status.md#m1), 107, [116 Your Address](../docs/protocol/messages/session.md#m116), [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701), [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703), 711, [713 Set TrackerServ Settings Done](../docs/protocol/messages/tracker.md#m713), [721 TrackerServ Statistics](../docs/protocol/messages/tracker.md#m721) |
+| `KDXClientBETA5-Lnx` | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) |
 | `KDXClient1600-Win` | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
 | `KDXClient1600-Win` | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
 | `KDXClient1600-Win` | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
@@ -259,8 +260,8 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClient1400-Win` | `0x004677f0` / `0x00467d00` / `0x004663c0` | session: receive and validate header / send header only / set receive cap |
 | `KDXClient1500-Win` | `0x0046d530` / `0x0046da40` / `0x0046c100` | session: receive and validate header / send header only / set receive cap |
 | `KDXClient1520-Win` | `0x0046d7f0` / `0x0046dd00` / `0x0046c3c0` | session: receive and validate header / send header only / set receive cap |
-| `KDXClient-Lnx-beta4` | `0x080e94a4` / `0x080e9c50` / `0x080e8a68` | session: receive and validate header / send header only / set receive cap |
-| `KDXClient-Lnx-beta5` | `0x080eae6c` / `0x080eb618` / `0x080ea430` | session: receive and validate header / send header only / set receive cap |
+| `KDXClientBETA4-Lnx` | `0x080e94a4` / `0x080e9c50` / `0x080e8a68` | session: receive and validate header / send header only / set receive cap |
+| `KDXClientBETA5-Lnx` | `0x080eae6c` / `0x080eb618` / `0x080ea430` | session: receive and validate header / send header only / set receive cap |
 | `KDXServer1300-Win` | `0x0042cf20` / `0x0042d450` / `0x0042ba90` | session: receive and validate header / send header only / set receive cap |
 | `KDXServer1500-Win` | `0x004300e0` / `0x004305f0` / `0x0042ec90` | session: receive and validate header / send header only / set receive cap |
 | `KDXServer1520-Win` | `0x00430240` / `0x00430750` / `0x0042edf0` | session: receive and validate header / send header only / set receive cap |

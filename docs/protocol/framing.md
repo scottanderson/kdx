@@ -134,8 +134,8 @@ Function addresses by Ghidra project (`re/README.md`):
 | `KDXClient1500-Win` | `FUN_0046d530` | `FUN_0046da40` | `FUN_0046c100` |
 | `KDXClient1520-Win` | `FUN_0046d7f0` | `FUN_0046dd00` | `FUN_0046c3c0` |
 | `KDXClient1600-Win` | `FUN_0046e860` | `FUN_0046ed70` | `FUN_0046d430` |
-| `KDXClient-Lnx-beta4` | `FUN_080e94a4` | `FUN_080e9c50` | `FUN_080e8a68` |
-| `KDXClient-Lnx-beta5` | `FUN_080eae6c` | `FUN_080eb618` | `FUN_080ea430` |
+| `KDXClientBETA4-Lnx` | `FUN_080e94a4` | `FUN_080e9c50` | `FUN_080e8a68` |
+| `KDXClientBETA5-Lnx` | `FUN_080eae6c` | `FUN_080eb618` | `FUN_080ea430` |
 | `KDXServer1300-Win` | `FUN_0042cf20` | `FUN_0042d450` | `FUN_0042ba90` |
 | `KDXServer1500-Win` | `FUN_004300e0` | `FUN_004305f0` | `FUN_0042ec90` |
 | `KDXServer1520-Win` | `FUN_00430240` | `FUN_00430750` | `FUN_0042edf0` |
