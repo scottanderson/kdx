@@ -54,7 +54,9 @@ Scripts (PyGhidra / Python 3):
   such as `send` or `connect`.
 - `decompile_all.py` decompiles every function into one file,
   `re/out/<project>/all.c`, with a `//// <address> <name>` line before each,
-  for grepping.
+  for grepping. Both decompile scripts share `decomp_util.py`, which retries a
+  function that fails on an indirect call with guessed `cdecl` prototypes and
+  marks the result with a `NOTE` comment.
 - `dump_bytes.py <addr> <count>` prints the program's bytes at an address,
   such as a lookup table.
 

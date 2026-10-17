@@ -3,17 +3,17 @@
 # @runtime PyGhidra
 
 import os
+import sys
 
-from ghidra.app.decompiler import DecompInterface
-from ghidra.util.task import ConsoleTaskMonitor
+sys.path.insert(0, "/work/scripts")
+from decomp_util import Decompiler  # noqa: E402
 
 prog = currentProgram  # noqa: F821
 fm = prog.getFunctionManager()
 OUT = os.path.join("/work/out", prog.getDomainFile().getProjectLocator().getName(), "decomp")
 os.makedirs(OUT, exist_ok=True)
 
-dec = DecompInterface()
-dec.openProgram(prog)
+dec = Decompiler(prog)
 for arg in getScriptArgs():  # noqa: F821
     f = None
     try:
@@ -25,8 +25,7 @@ for arg in getScriptArgs():  # noqa: F821
     if f is None:
         print("decompile: no function for %s" % arg)
         continue
-    res = dec.decompileFunction(f, 120, ConsoleTaskMonitor())
     path = os.path.join(OUT, "%s_%s.c" % (f.getEntryPoint(), f.getName()))
     with open(path, "w") as out:
-        out.write(res.getDecompiledFunction().getC() if res.decompileCompleted() else "// failed: " + res.getErrorMessage())
+        out.write(dec.decompile(f, 120))
     print("decompile: %s -> %s" % (arg, os.path.basename(path)))
