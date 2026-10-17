@@ -6,6 +6,7 @@
 
 pub mod admin;
 pub mod chat;
+pub mod color;
 pub mod dcc;
 pub mod file;
 pub mod gconsole;
@@ -20,6 +21,7 @@ pub mod transfer;
 pub mod user;
 pub mod user_info;
 
+pub use color::Color;
 pub use path::FilePath;
 pub use private_message::PrivateMessage;
 pub use privileges::{Privilege, Privileges};

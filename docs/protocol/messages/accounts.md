@@ -42,7 +42,7 @@ Struct `AccountClassInfo` (dynamic):
 | 0x26 | 2 | u16 | `speed_limit` | Download speed limit in KiB per second for each download, unless the user has Ignore Speed Limits (26). 0 means no limit for the class. <!-- [S `FUN_08054900`, `FUN_08052440`] --> |
 | 0x28 | 8 | u8[8] | `ignored_28` | 0 as sent. 504 does not store them. <!-- [S `FUN_080553c8`] --> |
 | 0x30 | 1 | u8 | `class_index` | 0, 2 |
-| 0x31 | 3 | u8[3] | `color` | The color of the class's users, unless an account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> `ff 00 00` for Administrator, and 0 for Guest. <!-- [O] --> The order red, green, blue is probable. |
+| 0x31 | 3 | Color | `color` | The [color](../encodings.md#colors) of the class's users, unless an account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> `ff 00 00` for Administrator, and 0 for Guest. <!-- [O] --> |
 | 0x34 | 1 | u8 | `name_len` |  |
 | 0x35 | 1 | u8 | `second_string_len` |  |
 | 0x36 | 1 | u8 | `editor_login_len` |  |
@@ -138,7 +138,7 @@ Struct `AccountClassListEntry` (dynamic):
 | 0x25 | 1 | u8 | `flood_protection` | 0 in this list. <!-- [S] --> |
 | 0x26 | 2 | u16 | `speed_limit` | 0 in this list. <!-- [S] --> |
 | 0x28 | 1 | u8 | `class_index` | 0 to 11, in list order. |
-| 0x29 | 3 | u8[3] | `color` | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
+| 0x29 | 3 | Color | `color` | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
 | 0x2c | 1 | u8 | `name_len` |  |
 | 0x2d | 2 | u8[2] | `ignored_2d` | 0 as sent. The server sends no second string or editor login. <!-- [S] --> |
 | 0x2f | 1 | u8 | `ignored_2f` | 0 as sent. <!-- [S] --> |
@@ -181,7 +181,7 @@ Struct `Account` (dynamic):
 | 0x50 | 8 | u64 | `last_login` | 0 if never. |
 | 0x58 | 30 | u8[30] | `ignored_58` | 0 as sent. |
 | 0x76 | 1 | u8 | `class_index` | Must be a class that exists, or the server gives 0x10002. |
-| 0x77 | 3 | u8[3] | `color` | Used instead of the class's color if the account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> |
+| 0x77 | 3 | Color | `color` | Used instead of the class's color if the account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> |
 | 0x7a | 1 | u8 | `login_len` |  |
 | 0x7b | 1 | u8 | `name_len` |  |
 | 0x7c | 1 | u8 | `third_len` |  |

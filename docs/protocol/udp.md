@@ -64,7 +64,7 @@ Struct `Registration` (dynamic):
 | 0x04 | 2 | u16 | `version` | not stored. 0x0010. The tracker drops any other value. <!-- [S tracker `FUN_0804c048`; O frame 23] --> |
 | 0x06 | 2 | u16 | `flags` | Bit 0 is set if the sender is a tracker. Server 1.620 sends 0, and Tracker 1.110 sends 1. <!-- [O frames 23, 78] --> |
 | 0x08 | 4 | u32 | `checksum` | not stored. See [Checksum](#checksum). |
-| 0x0c | 12 | u8[12] | `server_id` | The first time Server 1.620 runs, it fills this with three random words, and keeps them in its settings. <!-- [S server `FUN_080535b4`] --> Tracker 1.110 ignores it. |
+| 0x0c | 12 | u96 | `server_id` | The first time Server 1.620 runs, it fills this with three random words, and keeps them in its settings. <!-- [S server `FUN_080535b4`] --> Tracker 1.110 ignores it. |
 | 0x18 | 4 | u32 | `server_port` | The server's TCP port, which a tracker forwards without change. In Server 1.620, it is at settings +0x258, and 10700 by default. |
 | 0x1c | 8 | u8[8] | `ignored_1c` | 0 as sent |
 | 0x24 | 2 | u16 | `users` | The number of users logged in. The server keeps it XORed with 0x2ba9 in memory, and sends it plain. <!-- [S server `FUN_080528c8`, `FUN_0804a930`] --> |

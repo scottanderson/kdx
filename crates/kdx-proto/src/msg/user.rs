@@ -1,7 +1,9 @@
 //! The user record of 100 Set Identity, 101 User List, 102 User Changed and
 //! 103 User Joined, and the small user messages 104, 110, 111 and 118.
 
-use super::{len_u8, need, pad4, padding, strings, u16_at, u32_at, DecodeError, EncodeError};
+use super::{
+    len_u8, need, pad4, padding, strings, u16_at, u32_at, Color, DecodeError, EncodeError,
+};
 
 /// One user, as the client describes itself and as the server lists it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -14,15 +16,13 @@ pub struct UserRecord {
     pub ignored_05: [u8; 5],
     /// TCP port of the client's client-to-client (DCC) listener; 0 if it has none.
     pub client_port: u16,
-    /// Six bytes the client chooses, probably two RGB colours.
-    pub colors: [u8; 6],
-    /// Set by the server from the account; 0xff for admin in the lab.
-    pub server_14: u8,
-    /// Set by the server; meaning unknown.
-    pub server_15: u8,
-    /// Set by the server; meaning unknown.
-    pub server_16: u8,
-    /// Flag bits: bit 2 comes from the client, bit 1 is the server's hidden-marker flag.
+    /// Colour of the nick and info text in the user list; the client chooses it.
+    pub text_color: Color,
+    /// Background of the user's row in the user list; the client chooses it.
+    pub background_color: Color,
+    /// Colour of the strip at the left of the row; the server sets it from the class or account.
+    pub account_color: Color,
+    /// Flag bits: bit 2 (from the client) fades the background to the text colour, bit 1 is the server's hidden-marker flag.
     pub flags: u8,
     /// Byte 0x1b; meaning unknown.
     pub ignored_1b: u8,
@@ -60,10 +60,9 @@ impl UserRecord {
             status: buf[4],
             ignored_05: buf[5..0x0a].try_into().expect("5 bytes"),
             client_port: u16_at(buf, 0x0a),
-            colors: buf[0x0e..0x14].try_into().expect("6 bytes"),
-            server_14: buf[0x14],
-            server_15: buf[0x15],
-            server_16: buf[0x16],
+            text_color: Color::decode_at(buf, 0x0e),
+            background_color: Color::decode_at(buf, 0x11),
+            account_color: Color::decode_at(buf, 0x14),
             flags: buf[0x17],
             ignored_1b: buf[0x1b],
             icon,
@@ -97,10 +96,9 @@ impl UserRecord {
         out[5..0x0a].copy_from_slice(&self.ignored_05);
         out[0x0a..0x0c].copy_from_slice(&self.client_port.to_be_bytes());
         out[0x0c..0x0e].copy_from_slice(&(self.icon.len() as u16).to_be_bytes());
-        out[0x0e..0x14].copy_from_slice(&self.colors);
-        out[0x14] = self.server_14;
-        out[0x15] = self.server_15;
-        out[0x16] = self.server_16;
+        out[0x0e..0x11].copy_from_slice(&self.text_color.encode());
+        out[0x11..0x14].copy_from_slice(&self.background_color.encode());
+        out[0x14..0x17].copy_from_slice(&self.account_color.encode());
         out[0x17] = self.flags;
         out[0x18] = len_u8(&self.extra, "extra data")?;
         out[0x19] = len_u8(&self.nick, "nick")?;
