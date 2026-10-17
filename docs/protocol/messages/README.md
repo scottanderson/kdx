@@ -41,13 +41,13 @@ from is in [its message types section](../README.md#message-types).
 ### [Status](status.md), 1
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 1 | [Status](status.md#m1) | Reply that carries a result code | Either | Server | Tracker |  |
 
 ### [Session](session.md), 100 to 118
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 100 | [Set Identity](session.md#m100) | Request | Either | Client |  |  |
 | 101 | [User List](session.md#m101) | Notification after login |  | Server |  |  |
 | 102 | [User Changed](session.md#m102) | Notification: a user changed their identity |  | Server |  |  |
@@ -71,7 +71,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Connection monitor](monitoring.md), 140 to 143
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 140 | [Open Connection Monitor](monitoring.md#m140) | Request |  | Client |  |  |
 | 141 | [Close Connection Monitor](monitoring.md#m141) | Request |  | Client |  |  |
 | 142 | [Get Connection Monitor Info](monitoring.md#m142) | Request, reply [143](monitoring.md#m143) |  | Client |  |  |
@@ -80,7 +80,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Administration](administration.md), 150 to 191
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 150 | [Disconnect User](administration.md#m150) | Request |  | Client |  |  |
 | 151 | [Disconnect Message](administration.md#m151) | Notification to the target of [150](administration.md#m150), and broadcast by [174](administration.md#m174) and [175](administration.md#m175) |  | Server |  |  |
 | 152 | [Get User Info](administration.md#m152) | Request, reply [153](administration.md#m153) |  | Client |  |  |
@@ -102,7 +102,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Chat](chat.md), 200 to 223
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 200 | [Create Private Chat](chat.md#m200) | Request, reply [216](chat.md#m216) |  | Client |  |  |
 | 201 | [Delete Chat](chat.md#m201) | Request |  | Client |  |  |
 | 202 | [Join Chat](chat.md#m202) | Request, reply [203](chat.md#m203) |  | Client |  |  |
@@ -131,14 +131,14 @@ from is in [its message types section](../README.md#message-types).
 ### [Private messages](private-messages.md), 300 to 301
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 300 | [Send Private Message](private-messages.md#m300) | Request | Either | Client |  |  |
 | 301 | [Incoming Private Message](private-messages.md#m301) | Notification: a message from [300](private-messages.md#m300) |  | Server |  |  |
 
 ### [Files, transfers, volumes and search](files.md), 400 to 453
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 400 | [Get File List](files.md#m400) | Request, reply [401](files.md#m401) |  | Client |  |  |
 | 401 | ↳ [File List](files.md#m401) | Reply to [400](files.md#m400) |  | Server |  |  |
 | 402 | [Create Folder](files.md#m402) | Request |  | Client |  |  |
@@ -171,7 +171,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Accounts](accounts.md), 502 to 551
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 502 | [Get Account Class](accounts.md#m502) | Request, reply [503](accounts.md#m503) |  | Client |  |  |
 | 503 | ↳ [Account Class Info](accounts.md#m503) | Reply to [502](accounts.md#m502) |  | Server |  |  |
 | 504 | [Set Account Class](accounts.md#m504) | Request |  | Client |  |  |
@@ -192,7 +192,7 @@ from is in [its message types section](../README.md#message-types).
 ### [News](news.md), 600 to 614
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 600 | [Create Newsgroup](news.md#m600) | Request |  | Client |  |  |
 | 601 | [Delete Newsgroup](news.md#m601) | Request |  | Client |  |  |
 | 602 | [Get Newsgroup](news.md#m602) | Request, reply [603](news.md#m603) |  | Client |  |  |
@@ -212,7 +212,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Tracker](tracker.md), 700 to 721
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 700 | [Get Tracker Group List](tracker.md#m700) | Request, reply [701](tracker.md#m701) |  |  | Client |  |
 | 701 | ↳ [Tracker Group List](tracker.md#m701) | Reply to [700](tracker.md#m700) |  |  | Tracker |  |
 | 702 | [Get Tracker Server List](tracker.md#m702) | Request, reply [703](tracker.md#m703) |  |  | Client |  |
@@ -227,7 +227,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Processes](processes.md), 800 to 804
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 800 | [Open Process Monitor](processes.md#m800) | Request |  | Client |  |  |
 | 801 | [Close Process Monitor](processes.md#m801) | Request |  | Client |  |  |
 | 802 | [Get Process List](processes.md#m802) | Request, reply [803](processes.md#m803) |  | Client |  |  |
@@ -237,7 +237,7 @@ from is in [its message types section](../README.md#message-types).
 ### [View display](view-display.md), 900 to 905
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 900 | [Open View Display](view-display.md#m900) | Request, reply [902](view-display.md#m902) |  | Client |  |  |
 | 901 | [Close View Display](view-display.md#m901) | Request |  | Client |  |  |
 | 902 | ↳ [View Display Params](view-display.md#m902) | Reply to [900](view-display.md#m900) |  | Server |  |  |
@@ -248,7 +248,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Voice](voice.md), 1000 to 1003
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 1000 | [Start Voice](voice.md#m1000) | Request, reply [1001](voice.md#m1001) | Caller |  |  |  |
 | 1001 | ↳ [Start Voice (R)](voice.md#m1001) | Reply to [1000](voice.md#m1000) | Callee |  |  |  |
 | 1002 | [Set Voice Format](voice.md#m1002) | Sent by either side | Either |  |  |  |
@@ -257,7 +257,7 @@ from is in [its message types section](../README.md#message-types).
 ### [Folder access](folder-access.md), 1100 to 1107
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 1100 | [Create Folder Access](folder-access.md#m1100) | Request |  | Client |  |  |
 | 1101 | [Delete Folder Access](folder-access.md#m1101) | Request |  | Client |  |  |
 | 1102 | [Folder Access Deleted](folder-access.md#m1102) | Notification after [1101](folder-access.md#m1101) |  | Server |  |  |
@@ -270,7 +270,7 @@ from is in [its message types section](../README.md#message-types).
 ### [GConsole](gconsole.md), 4000 to 4201
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
-|---:|---|---|---|:---:|:---:|:---:|:---:|---|
+|---:|---|---|:---:|:---:|:---:|:---:|
 | 4000 | [Open Window](gconsole.md#m4000) | Opens a window |  |  |  | GConsole |
 | 4001 | [Draw](gconsole.md#m4001) | Draws in the window |  |  |  | GConsole |
 | 4200 | [Key](gconsole.md#m4200) | A key event |  |  |  | Client |
