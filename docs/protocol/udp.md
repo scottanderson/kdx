@@ -60,32 +60,32 @@ Struct `Registration` (dynamic):<a id="sRegistration"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | char[4] | `protocol` | not stored. `"%KDX"` (0x254b4458) <!-- [S tracker `FUN_0804c048`; O frame 23] --> |
-| 0x04 | 2 | u16 | `version` | not stored. 0x0010. The tracker drops any other value. <!-- [S tracker `FUN_0804c048`; O frame 23] --> |
-| 0x06 | 2 | u16 | `flags` | Bit 0 is set if the sender is a tracker. Server 1.620 sends 0, and Tracker 1.110 sends 1. <!-- [O frames 23, 78] --> |
-| 0x08 | 4 | u32 | `checksum` | not stored. See [Checksum](#checksum). |
-| 0x0c | 12 | u96 | `server_id` | The first time Server 1.620 runs, it fills this with three random words, and keeps them in its settings. <!-- [S server `FUN_080535b4`] --> Tracker 1.110 ignores it. |
-| 0x18 | 4 | u32 | `server_port` | The server's TCP port, which a tracker forwards without change. In Server 1.620, it is at settings +0x258, and 10700 by default. |
-| 0x1c | 8 | u8[8] | `ignored_1c` | 0 as sent |
-| 0x24 | 2 | u16 | `users` | The number of users logged in. The server keeps it XORed with 0x2ba9 in memory, and sends it plain. <!-- [S server `FUN_080528c8`, `FUN_0804a930`] --> |
-| 0x26 | 13 | u8[13] | `ignored_26` | 0 as sent |
-| 0x33 | 1 | u8 | `string0_len` |  |
-| 0x34 | 1 | u8 | `login_len` |  |
-| 0x35 | 1 | u8 | `name_len` |  |
-| 0x36 | 1 | u8 | `description_len` |  |
-| 0x37 | 1 | u8 | `string4_len` |  |
-| 0x38 | 6 | u8[6] | `groups_len` |  |
-| 0x3e | 1 | u8 | `string11_len` |  |
-| 0x3f | 1 | u8 | `string12_len` |  |
-| 0x40 | `string0_len` | str | `string0` | Empty from Server 1.620 |
-|  | `login_len` | str | `login` | The Login of the tracker entry in the server's settings. The tracker skips it. |
-|  | `name_len` | str | `name` | The server name. |
-|  | `description_len` | str | `description` | The server description. |
-|  | `string4_len` | str | `string4` | Empty from Server 1.620 |
-|  | `groups_len` | str[6] | `groups` | The group names of the tracker entry. Server 1.620 sends its Groups field as group 0, as typed. |
-|  | `string11_len` | str | `string11` | not stored. Empty from Server 1.620 |
-|  | `string12_len` | str | `string12` | not stored. Empty from Server 1.620 |
-|  | pad4 | u8[] | `padding` | The datagram is padded to a multiple of 4. Server 1.620 does not clear the padding. |
+| 0x00 | 4 | `char[4]` | `protocol` | not stored. `"%KDX"` (0x254b4458) <!-- [S tracker `FUN_0804c048`; O frame 23] --> |
+| 0x04 | 2 | `u16` | `version` | not stored. 0x0010. The tracker drops any other value. <!-- [S tracker `FUN_0804c048`; O frame 23] --> |
+| 0x06 | 2 | `u16` | `flags` | Bit 0 is set if the sender is a tracker. Server 1.620 sends 0, and Tracker 1.110 sends 1. <!-- [O frames 23, 78] --> |
+| 0x08 | 4 | `u32` | `checksum` | not stored. See [Checksum](#checksum). |
+| 0x0c | 12 | `u96` | `server_id` | The first time Server 1.620 runs, it fills this with three random words, and keeps them in its settings. <!-- [S server `FUN_080535b4`] --> Tracker 1.110 ignores it. |
+| 0x18 | 4 | `u32` | `server_port` | The server's TCP port, which a tracker forwards without change. In Server 1.620, it is at settings +0x258, and 10700 by default. |
+| 0x1c | 8 | `u8[8]` | `ignored_1c` | 0 as sent |
+| 0x24 | 2 | `u16` | `users` | The number of users logged in. The server keeps it XORed with 0x2ba9 in memory, and sends it plain. <!-- [S server `FUN_080528c8`, `FUN_0804a930`] --> |
+| 0x26 | 13 | `u8[13]` | `ignored_26` | 0 as sent |
+| 0x33 | 1 | `u8` | `string0_len` |  |
+| 0x34 | 1 | `u8` | `login_len` |  |
+| 0x35 | 1 | `u8` | `name_len` |  |
+| 0x36 | 1 | `u8` | `description_len` |  |
+| 0x37 | 1 | `u8` | `string4_len` |  |
+| 0x38 | 6 | `u8[6]` | `groups_len` |  |
+| 0x3e | 1 | `u8` | `string11_len` |  |
+| 0x3f | 1 | `u8` | `string12_len` |  |
+| 0x40 | `string0_len` | `str` | `string0` | Empty from Server 1.620 |
+|  | `login_len` | `str` | `login` | The Login of the tracker entry in the server's settings. The tracker skips it. |
+|  | `name_len` | `str` | `name` | The server name. |
+|  | `description_len` | `str` | `description` | The server description. |
+|  | `string4_len` | `str` | `string4` | Empty from Server 1.620 |
+|  | `groups_len` | `str[6]` | `groups` | The group names of the tracker entry. Server 1.620 sends its Groups field as group 0, as typed. |
+|  | `string11_len` | `str` | `string11` | not stored. Empty from Server 1.620 |
+|  | `string12_len` | `str` | `string12` | not stored. Empty from Server 1.620 |
+|  | pad4 | `u8[]` | `padding` | The datagram is padded to a multiple of 4. Server 1.620 does not clear the padding. |
 
 ## Checksum
 

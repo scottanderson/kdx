@@ -126,9 +126,9 @@ Struct `Color` (3 bytes):<a id="sColor"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | `r` |  |
-| 0x01 | 1 | u8 | `g` |  |
-| 0x02 | 1 | u8 | `b` |  |
+| 0x00 | 1 | `u8` | `r` |  |
+| 0x01 | 1 | `u8` | `g` |  |
+| 0x02 | 1 | `u8` | `b` |  |
 
 ## File paths
 
@@ -139,16 +139,16 @@ Struct `FilePath` (dynamic):<a id="sFilePath"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | `names_count` |  |
-| 0x02 | `names_count` | [PathName](#sPathName)[] | `names` | 1 to 0x400 |
+| 0x00 | 2 | `u16` | `names_count` |  |
+| 0x02 | `names_count` | [`PathName`](#sPathName)`[]` | `names` | 1 to 0x400 |
 
 Struct `PathName` (dynamic):<a id="sPathName"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | `ignored` | 0 as sent. |
-| 0x02 | 1 | u8 | `name_len` |  |
-| 0x03 | `name_len` | str | `name` | nonzero |
+| 0x00 | 2 | `u16` | `ignored` | 0 as sent. |
+| 0x02 | 1 | `u8` | `name_len` |  |
+| 0x03 | `name_len` | `str` | `name` | nonzero |
 
 The root is an empty payload, not a count of 0. A path with names must be at
 least 6 bytes; if not, the server gives 0x1000a. A [400 Get File
@@ -162,8 +162,8 @@ Struct `DelimitedFilePath` (dynamic):<a id="sDelimitedFilePath"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | `names_count` |  |
-| 0x02 | `names_count` | [PathName](#sPathName)[] | `names` | 0 for the root, otherwise 1 to 0x400 |
+| 0x00 | 2 | `u16` | `names_count` |  |
+| 0x02 | `names_count` | [`PathName`](#sPathName)`[]` | `names` | 0 for the root, otherwise 1 to 0x400 |
 
 A `DelimitedFilePath` is a `FilePath` with more fields after it in the same
 payload, so it must show where it ends. Its root is `00 00`, not an empty
@@ -182,24 +182,24 @@ Struct `UserRecord` (dynamic):<a id="sUserRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` | The server assigns it. 0 in 100 Set Identity. |
-| 0x04 | 1 | u8 | `status` | The value that [110 Set Mini User Icon](messages/session.md#m110) sets. |
-| 0x05 | 5 | u8[5] | `ignored_05` | 0 as sent. |
-| 0x0a | 2 | u16 | `client_port` | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
-| 0x0c | 2 | u16 | `icon_len` |  |
-| 0x0e | 3 | [Color](#sColor) | `text_color` | The [color](#colors) of the nick and info text in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `00 00 00` in the capture. <!-- [O] --> |
-| 0x11 | 3 | [Color](#sColor) | `background_color` | The background of the user's row in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `ff cc 00` in the capture. <!-- [O] --> |
-| 0x14 | 3 | [Color](#sColor) | `account_color` | The strip at the left of the user's row. The server sets it to the color of the user's class, or of the account under Color Overrides Class. <!-- [S `FUN_0804af04`, `FUN_08054900`, client `FUN_080542b4`] --> 0 from the client, and `ff 00 00` for admin. <!-- [O] --> |
-| 0x17 | 1 | u8 | `flags` | Bit 2 comes from the client, and makes the right part of the row a gradient from `background_color` to `text_color`. <!-- [S client `FUN_080542b4`] --> The server sets bit 1; see below. |
-| 0x18 | 1 | u8 | `extra_len` |  |
-| 0x19 | 1 | u8 | `nick_len` |  |
-| 0x1a | 1 | u8 | `info_len` |  |
-| 0x1b | 1 | u8 | `ignored_1b` | 0 as sent. |
-| 0x1c | `icon_len` | u8[] | `icon` | Less than 0x709 bytes. |
-|  | `extra_len` | u8[] | `extra` | The server skips it. |
-|  | `nick_len` | str | `nick` |  |
-|  | `info_len` | str | `info` | At most 0x7f bytes. |
-|  | pad4 | u8[] | `padding` | The server adds it in 101 User List. The client sends none. |
+| 0x00 | 4 | `u32` | `user_id` | The server assigns it. 0 in 100 Set Identity. |
+| 0x04 | 1 | `u8` | `status` | The value that [110 Set Mini User Icon](messages/session.md#m110) sets. |
+| 0x05 | 5 | `u8[5]` | `ignored_05` | 0 as sent. |
+| 0x0a | 2 | `u16` | `client_port` | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
+| 0x0c | 2 | `u16` | `icon_len` |  |
+| 0x0e | 3 | [`Color`](#sColor) | `text_color` | The [color](#colors) of the nick and info text in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `00 00 00` in the capture. <!-- [O] --> |
+| 0x11 | 3 | [`Color`](#sColor) | `background_color` | The background of the user's row in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `ff cc 00` in the capture. <!-- [O] --> |
+| 0x14 | 3 | [`Color`](#sColor) | `account_color` | The strip at the left of the user's row. The server sets it to the color of the user's class, or of the account under Color Overrides Class. <!-- [S `FUN_0804af04`, `FUN_08054900`, client `FUN_080542b4`] --> 0 from the client, and `ff 00 00` for admin. <!-- [O] --> |
+| 0x17 | 1 | `u8` | `flags` | Bit 2 comes from the client, and makes the right part of the row a gradient from `background_color` to `text_color`. <!-- [S client `FUN_080542b4`] --> The server sets bit 1; see below. |
+| 0x18 | 1 | `u8` | `extra_len` |  |
+| 0x19 | 1 | `u8` | `nick_len` |  |
+| 0x1a | 1 | `u8` | `info_len` |  |
+| 0x1b | 1 | `u8` | `ignored_1b` | 0 as sent. |
+| 0x1c | `icon_len` | `u8[]` | `icon` | Less than 0x709 bytes. |
+|  | `extra_len` | `u8[]` | `extra` | The server skips it. |
+|  | `nick_len` | `str` | `nick` |  |
+|  | `info_len` | `str` | `info` | At most 0x7f bytes. |
+|  | pad4 | `u8[]` | `padding` | The server adds it in 101 User List. The client sends none. |
 
 - The client sends 100 Set Identity without padding: 565 bytes in the capture.
   The server pads each record of 101 User List with zeros to a multiple of 4:
@@ -224,23 +224,23 @@ Struct `ChatRecord` (dynamic):<a id="sChatRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `key` |  |
-| 0x08 | 12 | u8[12] | `ignored_08` |  |
-| 0x14 | 4 | u32 | `join_classes` | A bitmap of account classes. The MSB is class 0. |
-| 0x18 | 4 | u32 | `send_classes` |  |
-| 0x1c | 4 | u32 | `topic_classes` |  |
-| 0x20 | 8 | u8[8] | `ignored_20` |  |
-| 0x28 | 2 | u16 | `flags` | Bit 0 is private, and bit 1 is voice. |
-| 0x2a | 1 | u8 | `name_len` |  |
-| 0x2b | 1 | u8 | `description_len` |  |
-| 0x2c | 1 | u8 | `irc_server_len` |  |
-| 0x2d | 1 | u8 | `irc_channel_len` |  |
-| 0x2e | 2 | u8[2] | `ignored_2e` |  |
-| 0x30 | `name_len` | str | `name` | At most 0x3f bytes. |
-|  | `description_len` | str | `description` | At most 0x7f bytes. |
-|  | `irc_server_len` | str | `irc_server` | At most 0x7f bytes. `host:port`; if there is no port, the client adds `:6667`. <!-- [S client `FUN_080823a0`] --> |
-|  | `irc_channel_len` | str | `irc_channel` | At most 0x3f bytes. If the name has no channel prefix, the client adds `#`. <!-- [S] --> |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `key` |  |
+| 0x08 | 12 | `u8[12]` | `ignored_08` |  |
+| 0x14 | 4 | `u32` | `join_classes` | A bitmap of account classes. The MSB is class 0. |
+| 0x18 | 4 | `u32` | `send_classes` |  |
+| 0x1c | 4 | `u32` | `topic_classes` |  |
+| 0x20 | 8 | `u8[8]` | `ignored_20` |  |
+| 0x28 | 2 | `u16` | `flags` | Bit 0 is private, and bit 1 is voice. |
+| 0x2a | 1 | `u8` | `name_len` |  |
+| 0x2b | 1 | `u8` | `description_len` |  |
+| 0x2c | 1 | `u8` | `irc_server_len` |  |
+| 0x2d | 1 | `u8` | `irc_channel_len` |  |
+| 0x2e | 2 | `u8[2]` | `ignored_2e` |  |
+| 0x30 | `name_len` | `str` | `name` | At most 0x3f bytes. |
+|  | `description_len` | `str` | `description` | At most 0x7f bytes. |
+|  | `irc_server_len` | `str` | `irc_server` | At most 0x7f bytes. `host:port`; if there is no port, the client adds `:6667`. <!-- [S client `FUN_080823a0`] --> |
+|  | `irc_channel_len` | `str` | `irc_channel` | At most 0x3f bytes. If the name has no channel prefix, the client adds `#`. <!-- [S] --> |
 
 The two IRC strings make the chat an IRC gateway. The client's chat editor calls
 them Make IRC Gateway: IRC Server, Channel. The server only stores them. Each

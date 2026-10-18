@@ -13,9 +13,9 @@ Struct `PrivateMessage` (dynamic):<a id="sPrivateMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` | The target's ID in 300, and the sender's in [301](#m301). |
-| 0x04 | 12 | u8[12] | `ignored` |  |
-| 0x10 | rest | str | `text` |  |
+| 0x00 | 4 | `u32` | `user_id` | The target's ID in 300, and the sender's in [301](#m301). |
+| 0x04 | 12 | `u8[12]` | `ignored` |  |
+| 0x10 | rest | `str` | `text` |  |
 
 The payload must be at least 0x11 bytes. The server forwards it to the target as
 [301 Incoming Private Message](#m301).
@@ -30,4 +30,4 @@ Struct `IncomingPrivateMessage` (dynamic):<a id="sIncomingPrivateMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [PrivateMessage](#sPrivateMessage) | `message` | `user_id` is the sender's. |
+| 0x00 |  | [`PrivateMessage`](#sPrivateMessage) | `message` | `user_id` is the sender's. |

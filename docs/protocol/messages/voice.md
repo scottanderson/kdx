@@ -24,7 +24,7 @@ Struct `StartVoiceReply` (4 bytes):<a id="sStartVoiceReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `result` | See below. |
+| 0x00 | 4 | `u32` | `result` | See below. |
 
 The value is:
 
@@ -43,12 +43,12 @@ Struct `VoiceFormat` (24 bytes):<a id="sVoiceFormat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 12 | u8[12] | `ignored` | 0 as sent. |
-| 0x0c | 4 | u32 | `sample_rate` | Hz |
-| 0x10 | 4 | char[4] | `codec` | `ADPC` |
-| 0x14 | 2 | u16 | `buffer` | In ms. The receiver divides it by 10, and clamps it to 35 to 500. |
-| 0x16 | 1 | u8 | `channels` | 1 |
-| 0x17 | 1 | u8 | `bits_per_sample` | 16 |
+| 0x00 | 12 | `u8[12]` | `ignored` | 0 as sent. |
+| 0x0c | 4 | `u32` | `sample_rate` | Hz |
+| 0x10 | 4 | `char[4]` | `codec` | `ADPC` |
+| 0x14 | 2 | `u16` | `buffer` | In ms. The receiver divides it by 10, and clamps it to 35 to 500. |
+| 0x16 | 1 | `u8` | `channels` | 1 |
+| 0x17 | 1 | `u8` | `bits_per_sample` | 16 |
 
 Both sides sent 11025 Hz (0x2b11), `ADPC`, 500 ms (0x01f4), 1 channel, and 16
 bits. <!-- [O `captures/linux-dcc-voice-failed.pcapng` frames 136, 138] -->
@@ -61,7 +61,7 @@ Struct `VoiceData` (dynamic):<a id="sVoiceData"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | `audio` | IMA ADPCM |
+| 0x00 | rest | `u8[]` | `audio` | IMA ADPCM |
 
 The payload is IMA ADPCM, with two samples in each byte, high nibble first. The
 decoder starts again from zero for each message. It decodes to signed 16-bit

@@ -15,7 +15,7 @@ Struct `Privileges` (16 bytes):<a id="sPrivileges"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u128 | `bits` | A bit set. The table below names the bits. |
+| 0x00 | 16 | `u128` | `bits` | A bit set. The table below names the bits. |
 
 The table gives the bits that server handlers test, found by a scan of all
 handlers for tests of user +0x44 to +0x4e. <!-- [S] --> "Login" is

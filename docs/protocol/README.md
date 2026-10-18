@@ -105,11 +105,12 @@ field:
   - The name of an earlier field that holds the length, in backticks. A `str`,
     a `u8[]`, or a single struct has a `<field>_len` that counts bytes. Any
     other array has a `<field>_count` that counts elements.
-- **Type** is a primitive or the name of a struct. A struct name links to the
-  struct's caption, and the link covers the name only, not `[N]` or `[]`. `[N]` after it makes an array
-  of N elements, as in `u8[12]`, and `[]` makes an array of variable size. `str`
-  is text of variable size. `str[N]` is N strings, whose lengths are the N
-  elements of an earlier `u8[N]` field, as in `groups_len`.
+- **Type** is a primitive or the name of a struct, in backticks. A struct name
+  links to the struct's caption, and the link covers the name only, not `[N]` or
+  `[]`. `[N]` after it makes an array of N elements, as in `u8[12]`, and `[]`
+  makes an array of variable size. `str` is text of variable size. `str[N]` is
+  N strings, whose lengths are the N elements of an earlier `u8[N]` field, as in
+  `groups_len`.
 - **Field** is the name of the field in backticks, the same as in `kdx-proto`
   where it has one.
 - **Notes** holds anything else. "Rust `field`" names the `kdx-proto` field that
@@ -156,12 +157,12 @@ Struct `ExampleRecord` (dynamic):<a id="sExampleRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` |  |
-| 0x04 | 2 | u8[2] | `ignored` |  |
-| 0x06 | 2 | u8[2] | `reserved` |  |
-| 0x08 | 1 | u8 | `name_len` |  |
-| 0x09 | `name_len` | str | `name` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 4 | `u32` | `user_id` |  |
+| 0x04 | 2 | `u8[2]` | `ignored` |  |
+| 0x06 | 2 | `u8[2]` | `reserved` |  |
+| 0x08 | 1 | `u8` | `name_len` |  |
+| 0x09 | `name_len` | `str` | `name` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 **Diagrams.** A sequence diagram shows an exchange of messages. A solid arrow is
 a request or its reply. A dashed arrow is a notification or file data.
@@ -324,7 +325,7 @@ shares the tag of its message's `Initiator:` line.
   `(dynamic)` has one.
 - Each type name has a caption somewhere. A caption ends with an anchor
   `<a id="sName"></a>`, and each struct name in a Type cell links to it, as in
-  `[FilePath](encodings.md#sFilePath)[]`. A primitive is never linked.
+  ``[`FilePath`](encodings.md#sFilePath)`[]` ``. A primitive is never linked.
 - Each field name is unique in its table. If `kdx-proto` defines the struct,
   each Rust field is a field or is named in a Notes cell. Each field is a Rust
   field, a length, `ignored_NN`, `reserved_NN`, or `padding`, or its Notes say
