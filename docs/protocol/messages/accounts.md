@@ -83,13 +83,13 @@ second string and the editor login empty. It is 69 bytes for Administrator
 (`captures/linux-catalog-volumes.pcapng` frames 40 and 59), and 61 bytes for
 Guest (`captures/linux-accounts-news.pcapng` frames 20 and 30).
 
-The server filters the name (`FUN_08081ffc`), writes the requester's login as
-the editor, sets the time at 0x10, and saves the class. A requester cannot give
-privileges that it does not have itself (`FUN_080551b0`). If it tries, the reply
-is [1 Status](status.md#m1) 0x640005. If it succeeds, the reply is [1
-Status](status.md#m1) 0x1f8 (frames 43 and 62), and the history record 0x1f8
-holds the old class name. Users of that class who are logged in get the new
-privileges at once (`FUN_08054900`).
+The server filters the name, writes the requester's login as the editor, sets
+the time at 0x10, and saves the class. <!-- [S `FUN_08081ffc`] --> A requester
+cannot give privileges that it does not have itself. <!-- [S `FUN_080551b0`] -->
+If it tries, the reply is [1 Status](status.md#m1) 0x640005. If it succeeds, the
+reply is [1 Status](status.md#m1) 0x1f8 (frames 43 and 62), and the history
+record 0x1f8 holds the old class name. Users of that class who are logged in get
+the new privileges at once. <!-- [S `FUN_08054900`] -->
 
 ## <a id="m505"></a>505 Get Account Class List
 Initiator: Client. Privilege: View Folder Access (27), Create/Modify Chats
@@ -188,7 +188,7 @@ Struct `Account` (dynamic):<a id="sAccount"></a>
 | 0x7d | 1 | `u8` | `editor_len` |  |
 | 0x7e | 2 | `u8[2]` | `ignored_7e` |  |
 | 0x80 | `login_len` | `str` | `login` |  |
-|  | `name_len` | `str` | `name` | The server filters the name (`FUN_08081ffc`). |
+|  | `name_len` | `str` | `name` | The server filters the name. <!-- [S `FUN_08081ffc`] --> |
 |  | `third_len` | `str` | `third` | Stored as given. 0 in the lab. |
 |  | `editor_len` | `str` | `editor` | See below. |
 |  | pad4 | `u8[]` | `padding` |  |
@@ -201,8 +201,9 @@ The key field holds:
 - In [511 Set Account](#m511), the new key. A key of all zeros keeps the current
   key.
 - In [510 Account Info](#m510), a flag in byte 0: 1 if the account has a
-  password, which means that its key is not the key of the empty password
-  (`FUN_08066a90`), and 0 if not. The other bytes are zero (frames 253 and 590).
+  password, which means that its key is not the key of the empty password, and 0
+  if not. <!-- [S `FUN_08066a90`] --> The other bytes are zero (frames 253 and
+  590).
 
 The editor field holds:
 
@@ -222,15 +223,15 @@ The server sets the times and the editor, and replies with [1
 Status](status.md#m1) success 0x1fb (frame 235). These are the errors:
 
 - 0x1000d if the login already exists (frame 289).
-- 0x10002 for an invalid login (`FUN_08057f88`) or class.
-- 0x640005 if the account would get a privilege that the requester does not have
-  (`FUN_080551b0`, below).
+- 0x10002 for an invalid login or class. <!-- [S `FUN_08057f88`] -->
+- 0x640005 if the account would get a privilege that the requester does not
+  have; see below.
 
-This is the privilege check of `FUN_080551b0`: <!-- [S] --> the account's
-effective privileges are the bits of its class, except that the bits in the mask
-come from the record. Bits 3 and 36 are ignored, and so is bit 23 if the
-requester has bit 24. The request fails if the requester does not have one of
-the other bits. A requester with bit 0 always passes.
+This is the privilege check: <!-- [S `FUN_080551b0`] --> the account's effective
+privileges are the bits of its class, except that the bits in the mask come from
+the record. Bits 3 and 36 are ignored, and so is bit 23 if the requester has
+bit 24. The request fails if the requester does not have one of the other bits.
+A requester with bit 0 always passes.
 
 ## <a id="m508"></a>508 Delete Account
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_08055d50`; O] -->

@@ -50,13 +50,12 @@ The login works like this: <!-- [S `FUN_0804bb78`] -->
 
 - For an empty login, the tracker checks the proof against the key of the empty
   password (guest).
-- Any other login must be the tracker's admin login, compared without case
-  (`FUN_0808244c` with its case flag set), with the admin password. It sets
-  admin bit 0 at connection +0x2e. [710 Get TrackerServ
-  Settings](messages/tracker.md#m710), [712 Set TrackerServ
-  Settings](messages/tracker.md#m712), and [720 Get TrackerServ
-  Statistics](messages/tracker.md#m720) need this bit, and give 0x10014 without
-  it. <!-- [O] frames 61 and 164, for a guest's 710 and 720 -->
+- Any other login must be the tracker's admin login, compared without case, with
+  the admin password. <!-- [S `FUN_0808244c`] --> It sets admin bit 0 at
+  connection +0x2e. [710 Get TrackerServ Settings](messages/tracker.md#m710),
+  [712 Set TrackerServ Settings](messages/tracker.md#m712), and [720 Get
+  TrackerServ Statistics](messages/tracker.md#m720) need this bit, and give
+  0x10014 without it. <!-- [O] frames 61 and 164, for a guest's 710 and 720 -->
 - With a wrong password, the proof fails with status 1, in the error form that
   [handshake.md](handshake.md#proof) describes: `auth` is zero except for its
   key word. <!-- [O] frame 104 -->
@@ -85,13 +84,12 @@ sequenceDiagram
     T->>C: 703 Tracker Server List
 ```
 
-The tracker's dispatcher, `FUN_0804b378`, handles [115 Get My
-Address](messages/session.md#m115), [700 Get Tracker Group
-List](messages/tracker.md#m700), [702 Get Tracker Server
+The tracker's dispatcher handles [115 Get My Address](messages/session.md#m115),
+[700 Get Tracker Group List](messages/tracker.md#m700), [702 Get Tracker Server
 List](messages/tracker.md#m702), [710 Get TrackerServ
 Settings](messages/tracker.md#m710), [712 Set TrackerServ
 Settings](messages/tracker.md#m712), and 720. It ignores all other types, and
-sends no reply. <!-- [S] --> The client's tracker connection, `FUN_08069578`,
+sends no reply. <!-- [S `FUN_0804b378`] --> The client's tracker connection
 sends [700 Get Tracker Group List](messages/tracker.md#m700) as soon as it logs
 in. It handles [1 Status](messages/status.md#m1), [107 Server
 Greeting](messages/session.md#m107), [116 Your
@@ -100,7 +98,8 @@ List](messages/tracker.md#m701), [703 Tracker Server
 List](messages/tracker.md#m703), [711 TrackerServ Settings
 Info](messages/tracker.md#m711), [713 Set TrackerServ Settings
 Done](messages/tracker.md#m713), and [721 TrackerServ
-Statistics](messages/tracker.md#m721). <!-- [S; O frames 33, 75] -->
+Statistics](messages/tracker.md#m721). <!-- [S `FUN_08069578`; O frames 33, 75]
+-->
 
 `kdx-tracker` replays the requests of the `linux-tracker` capture, and its
 replies match those of Tracker 1.110 byte for byte, except for the times when a

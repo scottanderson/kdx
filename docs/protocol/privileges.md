@@ -8,7 +8,7 @@ A set of privileges is a 128-bit big-endian number. Bit n has the mask
 `1 << 127 >> n`, so bit 0 is the high bit of the first byte, and bit n is in
 byte n/8 with the mask `0x80 >> (n % 8)`. The server stores a user's privileges
 at user +0x44 to +0x53. It tests one privilege as a single byte, and combines
-sets with AND, OR, and NOT over all 16 bytes (`FUN_080551b0`). <!-- [S] --> Bits
+sets with AND, OR, and NOT over all 16 bytes. <!-- [S `FUN_080551b0`] --> Bits
 83 to 127 have no known use.
 
 Struct `Privileges` (16 bytes):<a id="sPrivileges"></a>
@@ -21,12 +21,13 @@ The table gives the bits that server handlers test, found by a scan of all
 handlers for tests of user +0x44 to +0x4e. <!-- [S] --> The server tests the
 privileges of [105 Server Info](messages/session.md#m105), [107 Server
 Greeting](messages/session.md#m107), and [213 Must Join
-Chat](messages/chat.md#m213) in `FUN_0804b114`, the step after login.
+Chat](messages/chat.md#m213) in the step after login. <!-- [S `FUN_0804b114`]
+-->
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
 | 0 | Override | [202 Join Chat](messages/chat.md#m202)<br>[207 Send Chat Text](messages/chat.md#m207)<br>[209 Set Chat Topic](messages/chat.md#m209)<br>[400 Get File List](messages/files.md#m400)<br>[508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511)<br>[607 Get News Messages](messages/news.md#m607)<br>[609 Get News Message](messages/news.md#m609)<br>[611 Post News Message](messages/news.md#m611)<br>[612 Delete News Message](messages/news.md#m612) |
-| 3 | Color Overrides Class | `FUN_08054900` account lookup |
+| 3 | Color Overrides Class | the account lookup at login <!-- [S `FUN_08054900`] --> |
 | 4 | Can Login | set in all lab classes |
 | 10 | Download | [412 Download File](messages/files.md#m412) |
 | 11 | Upload | [402 Create Folder](messages/files.md#m402)<br>[415 Upload File](messages/files.md#m415) |
@@ -108,6 +109,6 @@ resources of KDXClient.exe: <!-- [S] -->
 8. Can Login, Color Overrides Class, Use Any Name, Modify Server Settings, Don't
    Show Greeting, View Server History, Shutdown Server, Disable Encryption
 
-The client's editor table at 0x0812c760 (file offset 0xe4760) pairs each label
-with its bit number. <!-- [S] --> The names in the table above come from it. The
-other bits have no label.
+The client's account editor has a table that pairs each label with its bit
+number. <!-- [S] at 0x0812c760, file offset 0xe4760 --> The names in the table
+above come from it. The other bits have no label.

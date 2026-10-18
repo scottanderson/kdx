@@ -148,6 +148,7 @@ Message types the protocol reference does not cover yet are listed in
 | `0x08052ad0` | server accept: creates the connection with `%KDX`, sub-version 0x20, story table |
 | `0x080863b4` / `0x080868b4` / `0x08086a9c` | session: send message / send header only / send encrypted chunk |
 | `0x08086108` / `0x080879c4` | session: receive and validate header / ECB-decrypt buffered data |
+| `0x080856cc` | set the connection's receive cap |
 | `0x0804a510` | header scramble hook, installed by `0x08052ad0` |
 | `0x08066024` | Twofish decrypt block |
 | `0x080669cc` | account_key(password): SHA-1 + FNV-1 |
@@ -235,7 +236,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClientBETA5-Lnx` | `0x08069578` | tracker connection: sends [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), dispatches [1 Status](../docs/protocol/messages/status.md#m1), [107 Server Greeting](../docs/protocol/messages/session.md#m107), [116 Your Address](../docs/protocol/messages/session.md#m116), [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701), [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703), [711 TrackerServ Settings Info](../docs/protocol/messages/tracker.md#m711), [713 Set TrackerServ Settings Done](../docs/protocol/messages/tracker.md#m713), [721 TrackerServ Statistics](../docs/protocol/messages/tracker.md#m721) |
 | `KDXClientBETA5-Lnx` | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701) handler / [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703) handler / send [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) |
 | `KDXClient1600-Win` | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
-| `KDXClient1600-Win` | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
+| `KDXClient1600-Win` | `0x0046e860` / `0x0046ed70` | session: receive and validate header (0x40075 if over the limit) / send header only |
 | `KDXClient1600-Win` | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
 | `KDXClient1600-Win` | `0x0041b970` / `0x00448830` | send [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard / GConsole [4200 Key](../docs/protocol/messages/gconsole.md#m4200) |
 | `KDXClient1600-Win` | `0x00463870` / `0x00463970` | modifier bits from the key state / key code to character; both index the key code table at `0x004ff1e8` |

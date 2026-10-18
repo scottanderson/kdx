@@ -82,17 +82,18 @@ of the wire format. <!-- [S `FUN_080868b4`, `FUN_08086108`] -->
 | Hello in the handshake | 0x800 <!-- [S `FUN_080876e8`] --> | 0x40075 | [handshake.md](handshake.md#hello) |
 | Chat text in [207 Send Chat Text](messages/chat.md#m207) | 0x1000 <!-- [S `FUN_08058d74`] --> | The server cuts the message, which can split a multi-byte character. | [encodings.md](encodings.md#strings) |
 
-The sender also has a path that sends only a header (`FUN_080868b4`), and then
-chunks that are encrypted separately (`FUN_08086a9c`). The server sends each
-[414 Download File (D)](messages/files.md#m414) through this path, with the
-fork's remaining length as a 64-bit value. <!-- [S `FUN_08050984`,
+The sender also has a path that sends only a header, and then chunks that are
+encrypted separately. <!-- [S `FUN_080868b4`, `FUN_08086a9c`] --> The server
+sends each [414 Download File (D)](messages/files.md#m414) through this path,
+with the fork's remaining length as a 64-bit value. <!-- [S `FUN_08050984`,
 `FUN_080512b4`] FUN_08050984 at 0x0805101f -->
 
 ## Across versions
 
 The header has the same layout and checks in all builds with `%KDX`, from Server
-0.921 to Server 1.620. Each x86 build below has one receive function that gives
-both 0x40074 and 0x40075, and they all agree: <!-- [S] -->
+0.921 to Server 1.620. Each x86 build has one receive function that gives both
+0x40074 and 0x40075, and they all agree: <!-- [S] re/README.md lists the
+function in each build -->
 
 - 0x40075 if the length is past the cap, or bytes 0x0a and 0x0b are not zero.
 - 0x40074 if the txid or the type is 0.
@@ -109,10 +110,10 @@ the constants in the same scramble. The Mac builds are not decompiled, but
 probably do the same. <!-- [I] -->
 
 Server 0.921 (Mac PEF) has the same 16-byte header, with no scramble hook. Its
-receive function `FUN_10035790` makes the same checks, and its function that
-sends only a header, `FUN_10035b20`, makes the same 48-bit check. It encrypts
-with a cipher at connection offset 0x12a that is not yet identified. <!-- [S]
--->
+receive function makes the same checks, and its function that sends only a
+header makes the same 48-bit check. <!-- [S `FUN_10035790`, `FUN_10035b20`] -->
+It encrypts with a cipher at connection offset 0x12a that is not yet
+identified. <!-- [S] -->
 
 All builds except Tracker 1.110 for Windows can send a header alone, with the
 48-bit length check. <!-- [S] -->
@@ -127,29 +128,7 @@ build: <!-- [S] -->
 | Client, 1.110 to beta 5 | 0x100000 | connection to a server |
 | Client, 1.110 to beta 5 | 0x8000 | transfer connection (sends [402 Create Folder](messages/files.md#m402), [412 Download File](messages/files.md#m412), [415 Upload File](messages/files.md#m415), or [417 Upload File (D)](messages/files.md#m417)) |
 | Client, 1.110 to beta 5 | 0x80000 | DCC listener (see [dcc.md](dcc.md)) |
-| Client 1.600, beta 5 | 0x1000000 | one caller, not identified (`FUN_0041bde0`, `FUN_0806f61c`) |
-
-These are the function addresses in each Ghidra project; see `re/README.md`:
-
-| Project | Receive header | Send header only | Set receive cap |
-|---|---|---|---|
-| `KDXClient1110-Win` | `FUN_00460320` | `FUN_00460850` | `FUN_0045ef70` |
-| `KDXClient1320-Win` | `FUN_00464cf0` | `FUN_00465220` | `FUN_00463870` |
-| `KDXClient1400-Win` | `FUN_004677f0` | `FUN_00467d00` | `FUN_004663c0` |
-| `KDXClient1500-Win` | `FUN_0046d530` | `FUN_0046da40` | `FUN_0046c100` |
-| `KDXClient1520-Win` | `FUN_0046d7f0` | `FUN_0046dd00` | `FUN_0046c3c0` |
-| `KDXClient1600-Win` | `FUN_0046e860` | `FUN_0046ed70` | `FUN_0046d430` |
-| `KDXClientBETA4-Lnx` | `FUN_080e94a4` | `FUN_080e9c50` | `FUN_080e8a68` |
-| `KDXClientBETA5-Lnx` | `FUN_080eae6c` | `FUN_080eb618` | `FUN_080ea430` |
-| `KDXServer1300-Win` | `FUN_0042cf20` | `FUN_0042d450` | `FUN_0042ba90` |
-| `KDXServer1500-Win` | `FUN_004300e0` | `FUN_004305f0` | `FUN_0042ec90` |
-| `KDXServer1520-Win` | `FUN_00430240` | `FUN_00430750` | `FUN_0042edf0` |
-| `KDXServer1520-Lnx` | `FUN_0808ac04` | `FUN_0808b108` | `FUN_0808a248` |
-| `KDXServer1600-Win` | `FUN_004317a0` | `FUN_00431cb0` | `FUN_00430350` |
-| `KDXServer1600-Lnx` | `FUN_0808b71c` | `FUN_0808bc20` | `FUN_0808ad60` |
-| `KDXServer1620-Lnx` | `FUN_08086108` | `FUN_080868b4` | `FUN_080856cc` |
-| `KDXTrackerServ1110-Win` | `FUN_00414d00` | none | `FUN_00413990` |
-| `KDXTrackerServ1110-Lnx` | `FUN_080885dc` | `FUN_08088ae0` | `FUN_08087c20` |
+| Client 1.600, beta 5 | 0x1000000 | one caller, not identified <!-- [S `FUN_0041bde0`, `FUN_0806f61c`] --> |
 
 Client 1.110 is `KDXClient-Win.zip`, from a Wayback capture of Haxial's
 downloadstatic folder on 2003-12-15; see `vendor/MANIFEST.md`.

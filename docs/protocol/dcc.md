@@ -28,7 +28,7 @@ connections from one address.
 
 ## Logins
 
-The login callback is `FUN_0808efcc`: <!-- [S] -->
+The listener handles a login in one of two ways: <!-- [S `FUN_0808efcc`] -->
 
 - **An empty login makes a primary connection.** The listener checks the proof
   with the key of the empty password. Then it makes the connection's own key K:
@@ -54,12 +54,12 @@ Set Identity](messages/session.md#m100) with a normal user record. <!-- [S
 `FUN_0808f3e0`; O frames 22 to 26] --> Then the primary connection handles these
 messages: <!-- [S] -->
 
-| Type | Handler | Action |
-|---:|---|---|
-| [1 Status](messages/status.md#m1) | | status |
-| [100 Set Identity](messages/session.md#m100) | `FUN_0808fbc0` | the peer's nick, icon, and info |
-| [117 SKPK](messages/session.md#m117) | `FUN_0808ff64` | see [117 SKPK](messages/session.md#m117) |
-| [300 Send Private Message](messages/private-messages.md#m300) | | a chat line: a u32, 12 bytes, then the text, more than 0x10 bytes in all |
+| Type | Action |
+|---:|---|
+| [1 Status](messages/status.md#m1) | status |
+| [100 Set Identity](messages/session.md#m100) | the peer's nick, icon, and info <!-- [S `FUN_0808fbc0`] --> |
+| [117 SKPK](messages/session.md#m117) | see [117 SKPK](messages/session.md#m117) <!-- [S `FUN_0808ff64`] --> |
+| [300 Send Private Message](messages/private-messages.md#m300) | a chat line: a u32, 12 bytes, then the text, more than 0x10 bytes in all |
 
 The [300 Send Private Message](messages/private-messages.md#m300) in frame 28 is
 u32 1, 12 zero bytes, and then "dcc message body". <!-- [O] -->

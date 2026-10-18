@@ -15,10 +15,10 @@ each name, a u16 0, a u8 length, and the name. When a request holds paths back
 to back, each one carries its own length, and the root is written as a count of
 0 (`00 00`), not left empty (`captures/linux-files.pcapng` frames 206 and
 241). <!-- [O] --> `kdx_proto::msg::FilePath::decode_delimited` reads such a
-path. Each request also passes the folder access check (`FUN_08057e5c`) with an
-access kind. If the check fails, the reply is [1 Status](status.md#m1) 0x10014.
-`kdx_proto::msg::file` re-encodes each request below byte for byte (test
-`linux_files`).
+path. Each request also passes the folder access check with an access kind. If
+the check fails, the reply is [1 Status](status.md#m1) 0x10014. <!-- [S
+`FUN_08057e5c`] --> `kdx_proto::msg::file` re-encodes each request below byte
+for byte (test `linux_files`).
 
 ## 400 to 409: Listings, folders and deletion
 
@@ -44,9 +44,9 @@ Struct `GetFileList` (dynamic):<a id="sGetFileList"></a>
 
 The server replies with [401 File List](#m401).
 
-If the folder access check (`FUN_08057e5c`) fails, or the server cannot read the
-folder, the server also replies with an empty [401 File List](#m401). It then
-writes a history record of kind [400 Get File List](#m400).
+If the folder access check fails, or the server cannot read the folder, the
+server also replies with an empty [401 File List](#m401). It then writes a
+history record of kind [400 Get File List](#m400).
 
 ### <a id="m401"></a>401 File List
 Initiator: Server. Reply to [400 Get File List](#m400).
@@ -511,15 +511,15 @@ Struct `VolumeInfo` (dynamic):<a id="sVolumeInfo"></a>
 |  | `format_len` | `str` | `format` | The file system name, such as `tmpfs` at frame 51. <!-- [O] --> |
 |  | `comments_len` | `str` | `comments` |  |
 
-On Linux, the sizes and the item count are all ones, and the times are
-0. <!-- [O] --> `kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for
-byte. The client's labels are Free Size, Used Size, Total Size, Item Count, Disk
-Type, Format, Created, Modified, and Comments. The client makes the name or
-comments field read-only when its bit is clear (`FUN_080a0410`).
+On Linux, the sizes and the item count are all ones, and the times are 0. <!--
+[O] --> `kdx_proto::msg::file::VolumeInfo` re-encodes the reply byte for byte.
+The client's labels are Free Size, Used Size, Total Size, Item Count, Disk Type,
+Format, Created, Modified, and Comments. The client makes the name or comments
+field read-only when its bit is clear. <!-- [S client `FUN_080a0410`] -->
 
 Server 1.620 for Linux writes `caps & 2 | 1` to both 0x44 and 0x48, where `caps`
-is the constant 0x39 from `FUN_08096780`. So the name can always be edited, and
-the comments never can. <!-- [S `FUN_0804ef00`] --> Both words are `00000001` in
+is the constant 0x39. So the name can always be edited, and the comments never
+can. <!-- [S `FUN_0804ef00`, `FUN_08096780`] --> Both words are `00000001` in
 frame 51 of `captures/linux-catalog-volumes.pcapng`, which also ends with the
 format, `tmpfs`. <!-- [O] -->
 
@@ -552,15 +552,15 @@ Struct `SetVolumeInfo` (dynamic):<a id="sSetVolumeInfo"></a>
 If it succeeds, there is no reply, and the server writes history record
 0x1a7. <!-- [S] -->
 
-In Server 1.620 for Linux, both setters are stubs. <!-- [S] --> Renaming
-(`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the server
-writes the history record, and the client gets a [1 Status](status.md#m1) error
-with it. In frame 53 of `captures/linux-catalog-volumes.pcapng`, [423 Set Volume
-Info](#m423) has flags `00000001`, the name `/tmp`, and the new name
+In Server 1.620 for Linux, both setters are stubs. <!-- [S `FUN_08096530`,
+`FUN_08094e6c`] --> Renaming throws 0x10005 (module 0x46, line 0x87f) before the
+server writes the history record, and the client gets a [1 Status](status.md#m1)
+error with it. In frame 53 of `captures/linux-catalog-volumes.pcapng`, [423 Set
+Volume Info](#m423) has flags `00000001`, the name `/tmp`, and the new name
 `/tmp-renamed`. Frame 54 is the error, at module 0x46, line 2175. <!-- [O] -->
-Setting the comments (`FUN_08094e6c`) does nothing. Frame 53 is 100 bytes, with
-no padding, and every field except the flags and the string lengths is 0. <!--
-[O] --> `kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
+Setting the comments does nothing. Frame 53 is 100 bytes, with no padding, and
+every field except the flags and the string lengths is 0. <!-- [O] -->
+`kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
 `linux_catalog_volumes`).
 
 ## 450 to 459: Catalog and search
