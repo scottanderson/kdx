@@ -15,7 +15,8 @@ The peer sends [4000 Open Window](#m4000) and [4001 Draw](#m4001). <!-- [S
 
 ## <a id="m4000"></a>4000 Open Window
 
-Initiator: GConsole peer. <!-- [S `FUN_08094be8`] -->
+Initiator: GConsole peer. <!-- [S `FUN_08094be8`] --> Part of the [GConsole
+exchange](../gconsole.md#messages).
 
 The payload is at least 0x18 bytes. If the peer sends more, the payload is
 longer than the struct.
@@ -35,7 +36,8 @@ A second 4000 Open Window fails with 0x10003. Frame 10 opened a window of 0x200
 
 ## <a id="m4001"></a>4001 Draw
 
-Initiator: GConsole peer. <!-- [S `FUN_08095ac4`] -->
+Initiator: GConsole peer. <!-- [S `FUN_08095ac4`] --> Part of the [GConsole
+exchange](../gconsole.md#messages).
 
 The payload is a stream of draw records. Each record starts with a u32: the top
 10 bits give the kind, and the low 22 bits give the body length. The next record
@@ -86,7 +88,8 @@ to 30] a drag -->
 
 ## <a id="m4200"></a>4200 Key
 
-Initiator: Client, to the GConsole peer. <!-- [S `FUN_0809607c`] -->
+Initiator: Client, to the GConsole peer. <!-- [S `FUN_0809607c`] --> Part of the
+[GConsole exchange](../gconsole.md#messages).
 
 Struct `Key` (16 bytes):<a id="sKey"></a>
 
@@ -107,7 +110,8 @@ opened the client's window menu, and did not go to the peer.
 
 ## <a id="m4201"></a>4201 Mouse
 
-Initiator: Client, to the GConsole peer. <!-- [S `FUN_08096188`] -->
+Initiator: Client, to the GConsole peer. <!-- [S `FUN_08096188`] --> Part of the
+[GConsole exchange](../gconsole.md#messages).
 
 Struct `Mouse` (16 bytes):<a id="sMouse"></a>
 

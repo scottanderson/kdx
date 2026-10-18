@@ -256,8 +256,9 @@ Downloads and uploads use their own connection; see
 [transfers.md](../transfers.md).
 
 ### <a id="m412"></a>412 Download File
-Initiator: Client, on a transfer connection. Privilege: Download (10).
-<!-- [S `FUN_08050984`, `FUN_080512b4`; O] -->
+Initiator: Client, on a transfer connection. Privilege: Download (10). <!-- [S
+`FUN_08050984`, `FUN_080512b4`; O] --> Part of the [download
+sequence](../transfers.md#download).
 
 Struct `DownloadFile` (dynamic):<a id="sDownloadFile"></a>
 
@@ -302,7 +303,8 @@ At the end, the server writes a [188 Finished File
 Download](administration.md#m188) history record.
 
 ### <a id="m413"></a>413 Download File (R)
-Initiator: Server. Reply to [412 Download File](#m412).
+Initiator: Server. Reply to [412 Download File](#m412). Part of the [download
+sequence](../transfers.md#download).
 
 Struct `FileStrings` (dynamic):<a id="sFileStrings"></a>
 
@@ -334,8 +336,9 @@ Struct `DownloadInfo` (dynamic):<a id="sDownloadInfo"></a>
 | 0x48 |  | [`FileStrings`](#sFileStrings) | `strings` | The name and its three strings. |
 
 ### <a id="m414"></a>414 Download File (D)
-Initiator: Server. The data for [412 Download File](#m412), sent after
-[413 Download File (R)](#m413), once for each fork.
+Initiator: Server. The data for [412 Download File](#m412), sent after [413
+Download File (R)](#m413), once for each fork. Part of the [download
+sequence](../transfers.md#download).
 
 Struct `FileData` (dynamic):<a id="sFileData"></a>
 
@@ -352,8 +355,9 @@ for byte, and a resume from 300000 came as one 414 of 300992 bytes from 299008
 grow to 0x80000. With a speed limit, the chunks are multiples of 0x1000.
 
 ### <a id="m415"></a>415 Upload File
-Initiator: Client, on a transfer connection. Privilege: Upload (11).
-<!-- [S `FUN_08051750`, `FUN_08051dec`; O] -->
+Initiator: Client, on a transfer connection. Privilege: Upload (11). <!-- [S
+`FUN_08051750`, `FUN_08051dec`; O] --> Part of the [upload
+sequence](../transfers.md#upload).
 
 Struct `UploadFile` (dynamic):<a id="sUploadFile"></a>
 
@@ -389,7 +393,8 @@ When both forks are complete, the server renames the file into place, writes a
 [418 Upload File (C)](#m418).
 
 ### <a id="m416"></a>416 Upload File (R)
-Initiator: Server. Reply to [415 Upload File](#m415).
+Initiator: Server. Reply to [415 Upload File](#m415). Part of the [upload
+sequence](../transfers.md#upload).
 
 The reply is 24 bytes:
 
@@ -402,8 +407,9 @@ Struct `UploadReply` (24 bytes):<a id="sUploadReply"></a>
 | 0x10 | 8 | `u8[8]` | `ignored` | 0 as sent. |
 
 ### <a id="m417"></a>417 Upload File (D)
-Initiator: Client. The data for [415 Upload File](#m415), sent after
-[416 Upload File (R)](#m416), once for each fork.
+Initiator: Client. The data for [415 Upload File](#m415), sent after [416 Upload
+File (R)](#m416), once for each fork. Part of the [upload
+sequence](../transfers.md#upload).
 
 Struct `UploadFileData` (dynamic):<a id="sUploadFileData"></a>
 
@@ -417,7 +423,8 @@ Struct `UploadFileData` (dynamic):<a id="sUploadFileData"></a>
 Download File (D)](#m414).
 
 ### <a id="m418"></a>418 Upload File (C)
-Initiator: Server. It completes [415 Upload File](#m415).
+Initiator: Server. It completes [415 Upload File](#m415). Part of the [upload
+sequence](../transfers.md#upload).
 
 No payload.
 

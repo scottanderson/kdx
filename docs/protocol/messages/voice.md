@@ -7,8 +7,9 @@ Message types 1000 to 1003 carry voice between two clients on a DCC connection.
 
 ## <a id="m1000"></a>1000 Start Voice
 
-Initiator: Client (to client). <!-- [S `FUN_0808f1ac`] -->
-Only the client handles it, and only on DCC. <!-- [S `FUN_08094074`] -->
+Initiator: Client (to client). <!-- [S `FUN_0808f1ac`] --> Only the client
+handles it, and only on DCC. <!-- [S `FUN_08094074`] --> Part of the [voice call
+sequence](../dcc.md#voice).
 
 No payload.
 
@@ -16,7 +17,8 @@ The caller sends it on the secondary connection, after the login.
 
 ## <a id="m1001"></a>1001 Start Voice (R)
 
-Initiator: Client (to client). <!-- [S `FUN_08094074`] -->
+Initiator: Client (to client). <!-- [S `FUN_08094074`] --> Part of the [voice
+call sequence](../dcc.md#voice).
 
 This is the reply to [1000 Start Voice](#m1000):
 
@@ -37,7 +39,8 @@ connection. <!-- [S `FUN_08094218`] -->
 
 ## <a id="m1002"></a>1002 Set Voice Format
 
-Initiator: Client (to client). <!-- [S `FUN_08093ae0`, `FUN_080943a0`] -->
+Initiator: Client (to client). <!-- [S `FUN_08093ae0`, `FUN_080943a0`] --> Part
+of the [voice call sequence](../dcc.md#voice).
 
 Struct `VoiceFormat` (24 bytes):<a id="sVoiceFormat"></a>
 
@@ -55,7 +58,8 @@ bits. <!-- [O `captures/linux-dcc-voice-failed.pcapng` frames 136, 138] -->
 
 ## <a id="m1003"></a>1003 Voice Data
 
-Initiator: Client (to client). <!-- [S `FUN_08093670`, `FUN_0809455c`, `FUN_080e15e4`] -->
+Initiator: Client (to client). <!-- [S `FUN_08093670`, `FUN_0809455c`,
+`FUN_080e15e4`] --> Part of the [voice call sequence](../dcc.md#voice).
 
 Struct `VoiceData` (dynamic):<a id="sVoiceData"></a>
 

@@ -155,7 +155,7 @@ Everyone receives [155 Rcv Broadcast Message](#m155). The GUI (user 2) sent `00
 `kdx_proto::msg::admin::SendBroadcast` re-encodes it.
 
 ## <a id="m155"></a>155 Rcv Broadcast Message
-Initiator: Server.
+Initiator: Server. Part of the [flood ban sequence](../sequences.md#flood-ban).
 
 The server sends this to everyone for a [154 Send Broadcast Message](#m154):
 

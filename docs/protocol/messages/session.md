@@ -6,7 +6,9 @@ Message types 100 to 118 cover setup, identity, the user list, server
 information, the greeting, ping, and the key exchange between clients.
 
 ## <a id="m100"></a>100 Set Identity
-Initiator: Client. <!-- [S `FUN_0804b304`; O] -->
+Initiator: Client. <!-- [S `FUN_0804b304`; O] --> Part of the [login
+sequence](../sequences.md#login) and the [DCC connection
+sequence](../dcc.md#primary-connection).
 
 This is the client's first message after the handshake. The client sends it
 again each time the user changes nick, icon, or info. The payload is a user
@@ -38,7 +40,8 @@ Struct `SetIdentity` (dynamic):<a id="sSetIdentity"></a>
   frames 196, 199, 201] -->
 
 ## <a id="m101"></a>101 User List
-Initiator: Server. <!-- [S `FUN_0804af04`; O] -->
+Initiator: Server. <!-- [S `FUN_0804af04`; O] --> Part of the [login
+sequence](../sequences.md#login).
 
 The payload is a series of user records, one for each user who is logged in.
 After a login, it holds all of them.
@@ -74,7 +77,9 @@ Struct `UserJoined` (dynamic):<a id="sUserJoined"></a>
 | 0x00 |  | [`UserRecord`](../encodings.md#sUserRecord) | `user` |  |
 
 ## <a id="m104"></a>104 User Departed
-Initiator: Server. <!-- [O `captures/kdx-cli.pcapng` frames 398, 429; O `captures/linux-chat-admin.pcapng` frames 59, 116] -->
+Initiator: Server. <!-- [O `captures/kdx-cli.pcapng` frames 398, 429; O
+`captures/linux-chat-admin.pcapng` frames 59, 116] --> Part of the [logout
+sequence](../sequences.md#logout).
 
 Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 
@@ -88,7 +93,8 @@ Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 `linux_chat_admin`).
 
 ## <a id="m105"></a>105 Server Info
-Initiator: Server. 86 bytes as seen. <!-- [S `FUN_0804b304`; O] -->
+Initiator: Server. 86 bytes as seen. <!-- [S `FUN_0804b304`; O] --> Part of the
+[login sequence](../sequences.md#login).
 
 Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
 
@@ -112,7 +118,8 @@ Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
 The whole message is at most 0x400 bytes.
 
 ## <a id="m106"></a>106 Server Icon
-Initiator: Server. <!-- [O] -->
+Initiator: Server. <!-- [O] --> Part of the [login
+sequence](../sequences.md#login).
 
 The payload is the server's icon bitmap, the same bytes as the icon section of
 the settings blob; see [171 Server Settings Info](administration.md#m171). For a
@@ -128,7 +135,8 @@ Struct `ServerIcon` (dynamic):<a id="sServerIcon"></a>
 | 0x00 | rest | `u8[]` | `icon` | The bitmap. |
 
 ## <a id="m107"></a>107 Server Greeting
-Initiator: Server. <!-- [S `FUN_0804b738`; O] -->
+Initiator: Server. <!-- [S `FUN_0804b738`; O] --> Part of the [login
+sequence](../sequences.md#login).
 
 Struct `ServerGreeting` (dynamic):<a id="sServerGreeting"></a>
 
@@ -252,7 +260,9 @@ Struct `ExtraServerInfo` (dynamic):<a id="sExtraServerInfo"></a>
 | 0x30 | `os_len` | `str` | `os` | As `uname` gives it. |
 
 ## <a id="m115"></a>115 Get My Address
-Initiator: Client. The dispatcher handles it itself. <!-- [S; O] -->
+Initiator: Client. The dispatcher handles it itself. <!-- [S; O] --> Part of the
+[flood ban sequence](../sequences.md#flood-ban) and the [news posting
+sequence](../sequences.md#posting-news).
 
 The reply is [116 Your Address](#m116):
 
@@ -268,7 +278,9 @@ sequenceDiagram
 No payload.
 
 ## <a id="m116"></a>116 Your Address
-Initiator: Server. Reply to [115 Get My Address](#m115). <!-- [S; O] -->
+Initiator: Server. Reply to [115 Get My Address](#m115). <!-- [S; O] --> Part of
+the [flood ban sequence](../sequences.md#flood-ban) and the [news posting
+sequence](../sequences.md#posting-news).
 
 The payload is the client's address as the server sees it, as a u8 length and
 then `"a.b.c.d:port"`.
@@ -281,7 +293,8 @@ Struct `YourAddress` (dynamic):<a id="sYourAddress"></a>
 | 0x01 | `address_len` | `str` | `address` | `a.b.c.d:port` |
 
 ## <a id="m117"></a>117 SKPK
-Initiator: Client, to a client. <!-- [S `FUN_0808eefc`, `FUN_0808ff64`] -->
+Initiator: Client, to a client. <!-- [S `FUN_0808eefc`, `FUN_0808ff64`] --> Part
+of the [DCC connection sequence](../dcc.md#primary-connection).
 
 Struct `Skpk` (48 bytes):<a id="sSkpk"></a>
 
