@@ -27,7 +27,8 @@ Private Chat (R)](#m216).
 ## <a id="m201"></a>201 Delete Chat
 Initiator: Client. Privilege: Create/Modify Chats (37). <!-- [S `FUN_08059774`; O] -->
 
-Every member gets 221 Chat Deleted before the requester gets 1 Status:
+Every member gets [221 Chat Deleted](#m221) before the requester gets [1
+Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -52,12 +53,12 @@ requester's [1 Status](status.md#m1) success. Users outside the chat receive
 nothing.
 
 In `captures/linux-chat-rooms.pcapng`, deleting `lab-chat` (0xe8df4d29) with two
-members sent 221 to both (frames 125 and 127), then the Status at frame
-129. Deleting the empty `lab-room` sent no 221 to a user in Public Chat (frames
-     77 to 83). The client deleted a chat whose window was open without sending
-     [204 Leave Chat](#m204) first (frame 122). <!-- [O] --> `ChatId` in
-     `kdx_proto::msg::chat` re-encodes 201 Delete Chat (frames 77 and 122) byte
-     for byte (test `linux_chat_rooms`).
+members sent [221 Chat Deleted](#m221) to both (frames 125 and 127), then the
+Status at frame 129. Deleting the empty `lab-room` sent no [221 Chat
+Deleted](#m221) to a user in Public Chat (frames 77 to 83). The client deleted a
+chat whose window was open without sending [204 Leave Chat](#m204) first (frame
+122). <!-- [O] --> `ChatId` in `kdx_proto::msg::chat` re-encodes [201 Delete
+Chat](#m201) (frames 77 and 122) byte for byte (test `linux_chat_rooms`).
 
 ## <a id="m202"></a>202 Join Chat
 Initiator: Client. Privilege: Join Chat (30) and the chat's join classes.
@@ -150,7 +151,7 @@ Struct `LeaveChat` (4 bytes):<a id="sLeaveChat"></a>
 
 The other members receive [206 Chat User Departed](#m206). The server deletes a
 private chat when it becomes empty. `ChatId` in `kdx_proto::msg::chat`
-re-encodes 204 Leave Chat byte for byte (tests `linux_chat_rooms` and
+re-encodes [204 Leave Chat](#m204) byte for byte (tests `linux_chat_rooms` and
 `kdx_cli`).
 
 ## <a id="m205"></a>205 Chat User Joined
@@ -163,12 +164,12 @@ Struct `ChatUserChange` (12 bytes):<a id="sChatUserChange"></a>
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `chat_id` |  |
 | 0x04 | 4 | `u32` | `user_id` | The user who joined or left. |
-| 0x08 | 1 | `u8` | `ignored_08` | 0 in 205, and 1 in [206](#m206). |
+| 0x08 | 1 | `u8` | `ignored_08` | 0 in [205 Chat User Joined](#m205), and 1 in [206 Chat User Departed](#m206). |
 | 0x09 | 3 | `u8[3]` | `ignored_09` |  |
 
-In 205, the last four bytes are 0 (`captures/kdx-cli.pcapng` frame 417,
-`captures/linux-chat-rooms.pcapng` frames 117 and 177, and
-`captures/linux-chat-admin.pcapng` frame 68). <!-- [O] -->
+In [205 Chat User Joined](#m205), the last four bytes are 0
+(`captures/kdx-cli.pcapng` frame 417, `captures/linux-chat-rooms.pcapng` frames
+117 and 177, and `captures/linux-chat-admin.pcapng` frame 68). <!-- [O] -->
 `kdx_proto::msg::chat::ChatUserChange` re-encodes it byte for byte.
 
 ## <a id="m206"></a>206 Chat User Departed
@@ -184,8 +185,8 @@ Struct `ChatUserDeparted` (12 bytes):<a id="sChatUserDeparted"></a>
 The payload is a u32 chat ID, a u32 user ID, a byte 1, and 3 zero bytes
 (`captures/kdx-cli.pcapng` frame 424). <!-- [O] --> The meaning of the 1 is
 unknown; [205 Chat User Joined](#m205) has 0 there. `ChatUserChange` in
-`kdx_proto::msg::chat` re-encodes 206 Chat User Departed byte for byte (tests
-`linux_chat_rooms` and `kdx_cli`).
+`kdx_proto::msg::chat` re-encodes [206 Chat User Departed](#m206) byte for byte
+(tests `linux_chat_rooms` and `kdx_cli`).
 
 ## <a id="m207"></a>207 Send Chat Text
 Initiator: Client. Privilege: Send Chat (31) and the chat's send classes.
@@ -218,7 +219,8 @@ The server forwards it as [208 Receive Chat Text](#m208).
 ## <a id="m208"></a>208 Receive Chat Text
 Initiator: Server. Forwarded from [207 Send Chat Text](#m207).
 
-The server forwards the 207 layout to every member, the sender too.
+The server forwards the [207 Send Chat Text](#m207) layout to every member, the
+sender too.
 
 Struct `ReceiveChatText` (dynamic):<a id="sReceiveChatText"></a>
 
@@ -307,9 +309,9 @@ Struct `ChatInvite` (dynamic):<a id="sChatInvite"></a>
 
 Each invitee receives [212 Chat Invitation](#m212). The client invited user 1 to
 `Private 1` (frame 87, 20 bytes), then users 1 and 4 (frame 118, 24 bytes), with
-no message. User 4 had left, so only user 1 got a 212 each time (frames 88 and
-120). <!-- [O] --> `ChatInvite` in `kdx_proto::msg::chat` re-encodes it byte for
-byte (test `linux_chat_admin`).
+no message. User 4 had left, so only user 1 got a [212 Chat Invitation](#m212)
+each time (frames 88 and 120). <!-- [O] --> `ChatInvite` in
+`kdx_proto::msg::chat` re-encodes it byte for byte (test `linux_chat_admin`).
 
 ## <a id="m212"></a>212 Chat Invitation
 Initiator: Server. The server sends this to each invitee of
@@ -360,16 +362,16 @@ No payload.
 The payload is empty. <!-- [O `captures/linux-chat-rooms.pcapng` frame 167] -->
 The server sends it after login when the account has Join Chat (30) and Join
 Chat On Connect (36). It names no chat. The client always joins chat 1, Public
-Chat. In Client 1.620 beta 5, its 213 Must Join Chat handler ignores the payload
-and calls the join helper with chat ID 1 and key 0. The helper opens the chat
-window and sends [202 Join Chat](#m202) with chat 1 and key 0. <!-- [S
+Chat. In Client 1.620 beta 5, its [213 Must Join Chat](#m213) handler ignores
+the payload and calls the join helper with chat ID 1 and key 0. The helper opens
+the chat window and sends [202 Join Chat](#m202) with chat 1 and key 0. <!-- [S
 `FUN_08084020`, `FUN_08080734`] --> If the window for chat 1 is already open,
 the helper only brings it to the front and sends nothing.
 
 In `captures/linux-chat-rooms.pcapng`, bit 36 was set in the Administrator class
-([504 Set Account Class](accounts.md#m504) at frame 145). The 213 arrived after
-[106 Server Icon](session.md#m106) (frame 167), and the client sent 202 for chat
-1 (frame 175). <!-- [O] -->
+([504 Set Account Class](accounts.md#m504) at frame 145). The [213 Must Join
+Chat](#m213) arrived after [106 Server Icon](session.md#m106) (frame 167), and
+the client sent [202 Join Chat](#m202) for chat 1 (frame 175). <!-- [O] -->
 
 ## <a id="m214"></a>214 Get Chat List
 Initiator: Client. <!-- [S `FUN_080594dc`; O] -->
@@ -437,13 +439,13 @@ Struct `CreatePrivateChatReply` (dynamic):<a id="sCreatePrivateChatReply"></a>
 
 The 49-byte reply at frame 85 holds time 0, chat ID 0xb06d05e6, key 0x4ca93520,
 1 member, user 2, and `Private 1`. <!-- [O] --> The u32 at 0x24 is the member
-list of 203, not a separate creator field.
+list of [203 Chat Window Info](#m203), not a separate creator field.
 `kdx_proto::msg::chat::ChatWindowInfo` re-encodes it byte for byte (test
 `linux_chat_admin`).
 
 ## <a id="m217"></a>217 Create Chat
-Initiator: Client. Privilege: Create/Modify Chats (37), for 217 Create Chat
-and [220 Set Chat](#m220). <!-- [S `FUN_08059944`; O
+Initiator: Client. Privilege: Create/Modify Chats (37), for [217 Create
+Chat](#m217) and [220 Set Chat](#m220). <!-- [S `FUN_08059944`; O
 `captures/linux-chat-rooms.pcapng` frames 42 to 62, 85, 136 to 137] -->
 
 A client creates, reads, and changes a chat record:
@@ -461,9 +463,10 @@ sequenceDiagram
     S->>C: 1 Status (success 0xdc)
 ```
 
-217 Create Chat and 220 Set Chat hold a chat record. [218 Get Chat](#m218) is a
-u32 chat ID, and [219 Chat Info](#m219) is a chat record. 220 Set Chat refuses
-private chats. 217 and 220 get [1 Status](status.md#m1) success.
+[217 Create Chat](#m217) and [220 Set Chat](#m220) hold a chat record. [218 Get
+Chat](#m218) is a u32 chat ID, and [219 Chat Info](#m219) is a chat record. [220
+Set Chat](#m220) refuses private chats. [217 Create Chat](#m217) and [220 Set
+Chat](#m220) get [1 Status](status.md#m1) success.
 
 The chat record is not padded. It is `ChatRecord` in
 [encodings.md](../encodings.md#chat-record).
@@ -476,19 +479,21 @@ Struct `CreateChat` (dynamic):<a id="sCreateChat"></a>
 
 In `captures/linux-chat-rooms.pcapng`: <!-- [O] -->
 
-- 217 creates `lab-room` with the description `lab` (frame 42).
-- 219 and 220 show the edit to `lab edited` (frames 50 and 52).
-- 220 ticks Voice Chat, which sets flags 2 (frame 62).
-- 219 reads Public Chat (frame 137).
+- [217 Create Chat](#m217) creates `lab-room` with the description `lab` (frame
+  42).
+- [219 Chat Info](#m219) and [220 Set Chat](#m220) show the edit to `lab edited`
+  (frames 50 and 52).
+- [220 Set Chat](#m220) ticks Voice Chat, which sets flags 2 (frame 62).
+- [219 Chat Info](#m219) reads Public Chat (frame 137).
 
 The three class masks are `ff ff ff ff` for Public Chat, and `80 00 00 00` for a
 chat whose Access was left at the default. Their bits are probably account
-classes, MSB first (Administrator is class 0), for join, send, and
-topic. <!-- [I] --> The client sends [505 Get Account Class
-List](accounts.md#m505) before it opens the new-chat window (frame 39). 217 gets
-1 Status success 0xd9, and 220 gets 0xdc (frames 45 and 55). `ChatRecord` and
-`ChatId` in `kdx_proto::msg::chat` re-encode 217 to 220 byte for byte (test
-`linux_chat_rooms`).
+classes, MSB first (Administrator is class 0), for join, send, and topic. <!--
+[I] --> The client sends [505 Get Account Class List](accounts.md#m505) before
+it opens the new-chat window (frame 39). [217 Create Chat](#m217) gets [1
+Status](status.md#m1) success 0xd9, and [220 Set Chat](#m220) gets 0xdc (frames
+45 and 55). `ChatRecord` and `ChatId` in `kdx_proto::msg::chat` re-encode 217 to
+220 byte for byte (test `linux_chat_rooms`).
 
 ## <a id="m218"></a>218 Get Chat
 Initiator: Client. <!-- [S `FUN_08059be8`; O] -->
@@ -569,9 +574,10 @@ not, the reply is [1 Status](status.md#m1) 0x10014. An unknown chat gets
 The client then opens a TCP connection to each address for voice; see
 [dcc.md](../dcc.md).
 
-In `captures/linux-chat-rooms.pcapng`, the client sends 222 Get Chat DCC
-Addresses right after it joins a voice chat. <!-- [O] --> `ChatId` re-encodes
-222 byte for byte (tests `linux_chat_rooms` and `linux_dcc_voice_failed`).
+In `captures/linux-chat-rooms.pcapng`, the client sends [222 Get Chat DCC
+Addresses](#m222) right after it joins a voice chat. <!-- [O] --> `ChatId`
+re-encodes 222 byte for byte (tests `linux_chat_rooms` and
+`linux_dcc_voice_failed`).
 
 ## <a id="m223"></a>223 Chat DCC Addresses
 Initiator: Server. Reply to [222 Get Chat DCC Addresses](#m222). Part of the
@@ -605,5 +611,6 @@ out. <!-- [S] -->
 In `captures/linux-dcc-voice-failed.pcapng`, the reply has one entry: user 1,
 length 0xf, and `127.0.0.1:10600`, padded with 0x22 rather than 0 (frames 109
 and 155). <!-- [O] --> The padding byte is probably uninitialized. <!-- [I] -->
-`DccAddress::padding` keeps it. `DccAddress` re-encodes 223 Chat DCC Addresses
-byte for byte (tests `linux_chat_rooms` and `linux_dcc_voice_failed`).
+`DccAddress::padding` keeps it. `DccAddress` re-encodes [223 Chat DCC
+Addresses](#m223) byte for byte (tests `linux_chat_rooms` and
+`linux_dcc_voice_failed`).

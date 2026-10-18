@@ -51,14 +51,15 @@ as `NewsgroupInfo`. The server ignores the ID at 0x00, and picks one. The name
 must be 1 to 0x3f bytes, and the description at most 0x7f. If it succeeds, the
 reply is [1 Status](status.md#m1) 0x258, and the server writes a history record.
 The client's editor has Name, Description, Archive Size, and the class access
-list. It sends 600 Create Newsgroup or [604 Set Newsgroup](#m604), and then [605
-Get Newsgroup List](#m605).
+list. It sends [600 Create Newsgroup](#m600) or [604 Set Newsgroup](#m604), and
+then [605 Get Newsgroup List](#m605).
 
 Frame 58 makes `test newsgroup`, with the description `desc`, archive size
 0x1a4, and read and post classes `80000000`, so Administrator only. It is 82
 bytes with no padding, and the ID, time, message count, and the bitmap at 0x20
 are all 0. The server gives it ID 2 (frame 63). <!-- [O] --> `NewsgroupInfo`
-encodes 600, 603, and 604 again byte for byte (test `linux_accounts_news`).
+encodes [600 Create Newsgroup](#m600), [603 Newsgroup Info](#m603), and [604 Set
+Newsgroup](#m604) again byte for byte (test `linux_accounts_news`).
 
 When the stored messages of a group reach 1.5 times the archive size, the server
 moves the oldest ones into a file under `News Archives`, named for the
@@ -67,7 +68,7 @@ group. <!-- [S `FUN_0805ed88`] -->
 ## <a id="m601"></a>601 Delete Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). <!-- [S `FUN_0805caf4`; O `captures/linux-accounts-news.pcapng` frames 81 to 84] -->
 
-If it succeeds, the reply is 1 Status:
+If it succeeds, the reply is [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -125,8 +126,8 @@ Struct `NewsgroupInfoReply` (dynamic):<a id="sNewsgroupInfoReply"></a>
 |---|---|---|---|---|
 | 0x00 |  | [`NewsgroupInfo`](#sNewsgroupInfo) | `group` |  |
 
-[607 Get News Messages](#m607) and 611 Post News Message check the read and post
-class bitmaps. <!-- [S] -->
+[607 Get News Messages](#m607) and [611 Post News Message](#m611) check the read
+and post class bitmaps. <!-- [S] -->
 
 ## <a id="m604"></a>604 Set Newsgroup
 Initiator: Client. Privilege: Create/Modify Newsgroups (73). <!-- [S `FUN_0805ce60`; O `captures/linux-accounts-news.pcapng` frames 71 to 74] -->
@@ -251,8 +252,8 @@ header, with permissions 1 and count 0. <!-- [S] -->
 ## <a id="m609"></a>609 Get News Message
 Initiator: Client. <!-- [S `FUN_0805d54c`; O] -->
 
-The client reads one message with 609 Get News Message, and the reply is [610
-News Message](#m610):
+The client reads one message with [609 Get News Message](#m609), and the reply
+is [610 News Message](#m610):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -273,7 +274,7 @@ Struct `GetNewsMessage` (8 bytes):<a id="sGetNewsMessage"></a>
 | 0x00 | 4 | `u32` | `group_id` |  |
 | 0x04 | 4 | `u32` | `message_id` |  |
 
-609 Get News Message does not reset the idle timer.
+[609 Get News Message](#m609) does not reset the idle timer.
 
 ## <a id="m610"></a>610 News Message
 Initiator: Server. Reply to [609 Get News Message](#m609).
@@ -294,7 +295,7 @@ the user's class must also be in the group's post classes. <!-- [S
 sequence](../sequences.md#posting-news).
 
 A post gets no reply. Each user whose class can read the group, the poster too,
-gets 613 News Message Posted:
+gets [613 News Message Posted](#m613):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -333,14 +334,14 @@ frames 35 and 115. <!-- [O] -->
 
 If the post succeeds, there is no reply (frames 356 to 361). The server stores a
 [610 News Message](#m610) record, with the user's nick and login, under the
-group's next message ID. Then it sends 613 News Message Posted to each user
-whose class can read the group, the poster too. An unknown group gets 0x1000c
-(frame 160), and a guest gets 0x10014 (frame 182). <!-- [O] -->
+group's next message ID. Then it sends [613 News Message Posted](#m613) to each
+user whose class can read the group, the poster too. An unknown group gets
+0x1000c (frame 160), and a guest gets 0x10014 (frame 182). <!-- [O] -->
 
 ## <a id="m612"></a>612 Delete News Message
 Initiator: Client. <!-- [S `FUN_0805db44`; O] -->
 
-A delete gets no reply. All users get 614 News Message Deleted:
+A delete gets no reply. All users get [614 News Message Deleted](#m614):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%

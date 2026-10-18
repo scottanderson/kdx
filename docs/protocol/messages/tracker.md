@@ -127,8 +127,9 @@ Struct `ServerListEntry` (dynamic):<a id="sServerListEntry"></a>
 |  | `extra_len` | `u8[]` | `extra` | Length 0. |
 |  | pad4 | `u8[]` | `padding` |  |
 
-`kdx-proto` re-encodes [701 Tracker Group List](#m701), 702, and 703 from frames
-34, 36, 37, 57, 58, 247, and 257 byte for byte. <!-- [O] -->
+`kdx-proto` re-encodes [701 Tracker Group List](#m701), [702 Get Tracker Server
+List](#m702), and [703 Tracker Server List](#m703) from frames 34, 36, 37, 57,
+58, 247, and 257 byte for byte. <!-- [O] -->
 
 ## <a id="m710"></a>710 Get TrackerServ Settings
 
@@ -292,7 +293,7 @@ Struct `AdminSettings` (dynamic):<a id="sAdminSettings"></a>
 |---|---|---|---|---|
 | 0x00 | 7 | `u8[7]` | `ignored_00` |  |
 | 0x07 | 1 | `u8` | `flags_07` | Bit 0: a key follows. |
-| 0x08 | 32 | `u8[32]` | `key` | The `AccountKey` of the password. 711 leaves it out. |
+| 0x08 | 32 | `u8[32]` | `key` | The `AccountKey` of the password. [711 TrackerServ Settings Info](#m711) leaves it out. |
 | 0x28 | 104 | `u8[104]` | `ignored_28` |  |
 | 0x90 | 1 | `u8` | `login_len` |  |
 | 0x91 | 3 | `u8[3]` | `ignored_91` |  |
@@ -305,16 +306,18 @@ holds the key of `lab-tracker-pw!2`. <!-- [O] -->
 ### Greeting
 
 The section is a [107 Server Greeting](session.md#m107) payload: a u32 0, then
-the text. The tracker sends it as 107 after login when Enable Greeting is on and
-the section is longer than 4 bytes. <!-- [S `FUN_0804bbf8`] -->
+the text. The tracker sends it as [107 Server Greeting](session.md#m107) after
+login when Enable Greeting is on and the section is longer than 4 bytes. <!-- [S
+`FUN_0804bbf8`] -->
 
 The client's settings window shows Tracker Name, Description, Port Number, Admin
 Login, and Change Admin Password (Password, Confirm). It has a Groups panel
 (Group Name, Description), a Trackers panel with Register with Trackers, and a
 Greeting panel with Enable Greeting. <!-- [S client `FUN_0806b1b0`] -->
 
-710 Get TrackerServ Settings gets 711 TrackerServ Settings Info, and 712 Set
-TrackerServ Settings gets [713 Set TrackerServ Settings Done](#m713):
+[710 Get TrackerServ Settings](#m710) gets [711 TrackerServ Settings
+Info](#m711), and [712 Set TrackerServ Settings](#m712) gets [713 Set
+TrackerServ Settings Done](#m713):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -338,10 +341,11 @@ Struct `TrackerSettingsInfo` (dynamic):<a id="sTrackerSettingsInfo"></a>
 | 0x00 |  | [`TrackerSettings`](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 This is the reply to [710 Get TrackerServ Settings](#m710), in the format that
-710 describes. The tracker sets every present byte, and sends the limits and the
-server ID as 0. A new tracker is named `New TrackerServ`. 711 does not send a
-group's flag: the `Trackers` group has 0 there. <!-- [O frame 80] --> It leaves
-out the admin key.
+[710 Get TrackerServ Settings](#m710) describes. The tracker sets every present
+byte, and sends the limits and the server ID as 0. A new tracker is named `New
+TrackerServ`. [711 TrackerServ Settings Info](#m711) does not send a group's
+flag: the `Trackers` group has 0 there. <!-- [O frame 80] --> It leaves out the
+admin key.
 
 The client reads it in `FUN_0806b1b0` with the same checks as the tracker's
 parser. A blob under 0x78 bytes, or without the protocol, the sub-protocol, and
@@ -366,16 +370,16 @@ Get TrackerServ Settings](#m710) describes. `FUN_0804d63c` parses it. <!-- [S]
 0, or above 0xfffe, means 10800. A new port takes effect at once
 (`FUN_0804ca60`).
 
-Client 1.620 beta 5 builds 712 Set TrackerServ Settings in `FUN_0806b68c`. It
-sets the present bytes for general, trackers, groups, and greeting, but not for
-admin (0x71). It puts the sections in the order general, trackers, groups,
-admin, greeting, and takes the general flags from the Register with Trackers and
-Enable Greeting checkboxes. <!-- [S `FUN_0806b68c`] --> It writes the groups
-section only when the user has edited the group list (bit 12 at list +0x24). If
-not, the section has offset 0 and size 0, and the tracker keeps its
-groups. <!-- [S `FUN_0806b68c`; O frames 82, 240] --> It always writes the
-greeting section, as a u32 0 and the text. So an empty greeting is 4 bytes, and
-the tracker clears its greeting. <!-- [S `FUN_0806b68c`, `FUN_0804d63c`] -->
+Client 1.620 beta 5 builds [712 Set TrackerServ Settings](#m712) in
+`FUN_0806b68c`. It sets the present bytes for general, trackers, groups, and
+greeting, but not for admin (0x71). It puts the sections in the order general,
+trackers, groups, admin, greeting, and takes the general flags from the Register
+with Trackers and Enable Greeting checkboxes. <!-- [S `FUN_0806b68c`] --> It
+writes the groups section only when the user has edited the group list (bit 12
+at list +0x24). If not, the section has offset 0 and size 0, and the tracker
+keeps its groups. <!-- [S `FUN_0806b68c`; O frames 82, 240] --> It always writes
+the greeting section, as a u32 0 and the text. So an empty greeting is 4 bytes,
+and the tracker clears its greeting. <!-- [S `FUN_0806b68c`, `FUN_0804d63c`] -->
 
 It also writes the admin section: 0x94 zero bytes, then the login. The client
 allows a login of up to 0xff bytes, and the tracker keeps up to 0x3f. When the

@@ -55,7 +55,7 @@ on the page for its area, linked below.
 | Voice between clients (1000 to 1003) | [messages/voice.md](messages/voice.md) |
 | Folder access rules (1100 to 1107) | [messages/folder-access.md](messages/folder-access.md) |
 | The [1 Status](messages/status.md#m1) reply, on every connection (1) | [messages/status.md](messages/status.md) |
-| Error codes carried by 1 Status | [Error codes](messages/status.md#error-codes) |
+| Error codes carried by [1 Status](messages/status.md#m1) | [Error codes](messages/status.md#error-codes) |
 | Tracker messages (700 to 721) | [messages/tracker.md](messages/tracker.md) |
 | GConsole messages (4000 to 4201) | [messages/gconsole.md](messages/gconsole.md) |
 

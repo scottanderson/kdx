@@ -10,8 +10,8 @@ Initiator: Server. A tracker and a DCC peer send it too. It is always a
 reply. <!-- [S `FUN_08086640`, `FUN_080865c0`; O] -->
 
 The dispatcher (`FUN_0804fdac`) runs each handler in a C++ `try`. The catch at
-0x0805090c changes the exception into a 1 Status reply to the request's txid.
-Some handlers also send 1 Status when they succeed.
+0x0805090c changes the exception into a [1 Status](#m1) reply to the request's
+txid. Some handlers also send [1 Status](#m1) when they succeed.
 
 Each form starts with two u32 words. The server's error form adds 16 more bytes,
 so the payload is 8 or 24 bytes.

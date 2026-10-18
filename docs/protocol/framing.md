@@ -78,15 +78,15 @@ of the wire format. <!-- [S `FUN_080868b4`, `FUN_08086108`] -->
 | Tracker receiving on a TCP browse connection | 0x10000 <!-- [S `FUN_0804bd9c`] --> | unknown | [tracker.md](tracker.md#connection) |
 | Receive path, bits 32 to 47 of the length | must be zero <!-- [S `FUN_08086108`] --> | 0x40075, as for any length past the cap |  |
 | Transfer data header, bits 32 to 47 of the length | set when a fork has more than 4 GiB left. A [414 Download File (D)](messages/files.md#m414) from `kdx.erb.pw` had byte 0x0b = 0x01. <!-- [O] not captured --> | unknown |  |
-| Transfer data (414, 417) | one header covers the whole fork, past the normal caps <!-- [O `captures/kdx-cli.pcapng` frames 133, 190] --> | none seen | [files.md](messages/files.md#m414) |
+| Transfer data ([414 Download File (D)](messages/files.md#m414), [417 Upload File (D)](messages/files.md#m417)) | one header covers the whole fork, past the normal caps <!-- [O `captures/kdx-cli.pcapng` frames 133, 190] --> | none seen | [files.md](messages/files.md#m414) |
 | Hello in the handshake | 0x800 <!-- [S `FUN_080876e8`] --> | 0x40075 | [handshake.md](handshake.md#hello) |
-| Chat text in 207 Send Chat Text | 0x1000 <!-- [S `FUN_08058d74`] --> | The server cuts the message, which can split a multi-byte character. | [encodings.md](encodings.md#strings) |
+| Chat text in [207 Send Chat Text](messages/chat.md#m207) | 0x1000 <!-- [S `FUN_08058d74`] --> | The server cuts the message, which can split a multi-byte character. | [encodings.md](encodings.md#strings) |
 
 The sender also has a path that sends only a header (`FUN_080868b4`), and then
-chunks that are encrypted separately (`FUN_08086a9c`). The server sends each 414
-Download File (D) through this path, with the fork's remaining length as a
-64-bit value. <!-- [S `FUN_08050984`, `FUN_080512b4`] FUN_08050984 at 0x0805101f
--->
+chunks that are encrypted separately (`FUN_08086a9c`). The server sends each
+[414 Download File (D)](messages/files.md#m414) through this path, with the
+fork's remaining length as a 64-bit value. <!-- [S `FUN_08050984`,
+`FUN_080512b4`] FUN_08050984 at 0x0805101f -->
 
 ## Across versions
 
@@ -125,7 +125,7 @@ build: <!-- [S] -->
 | Server, 1.300 to 1.620 | 0x20000 | each accepted connection |
 | Tracker 1.110 | 0x10000 | each accepted connection |
 | Client, 1.110 to beta 5 | 0x100000 | connection to a server |
-| Client, 1.110 to beta 5 | 0x8000 | transfer connection (sends 402, 412, 415, or 417) |
+| Client, 1.110 to beta 5 | 0x8000 | transfer connection (sends [402 Create Folder](messages/files.md#m402), [412 Download File](messages/files.md#m412), [415 Upload File](messages/files.md#m415), or [417 Upload File (D)](messages/files.md#m417)) |
 | Client, 1.110 to beta 5 | 0x80000 | DCC listener (see [dcc.md](dcc.md)) |
 | Client 1.600, beta 5 | 0x1000000 | one caller, not identified (`FUN_0041bde0`, `FUN_0806f61c`) |
 

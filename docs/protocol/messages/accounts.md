@@ -8,8 +8,8 @@ passwords.
 ## <a id="m502"></a>502 Get Account Class
 Initiator: Client. Privilege: View Accounts (50). <!-- [S `FUN_080552b8`; O] -->
 
-The client reads a class with 502 Get Account Class, and the server replies with
-[503 Account Class Info](#m503):
+The client reads a class with [502 Get Account Class](#m502), and the server
+replies with [503 Account Class Info](#m503):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -37,10 +37,10 @@ Struct `AccountClassInfo` (dynamic):<a id="sAccountClassInfo"></a>
 |---|---|---|---|---|
 | 0x00 | 16 | [`Privileges`](../privileges.md#sPrivileges) | `privileges` | See [privileges.md](../privileges.md). |
 | 0x10 | 8 | `u64` | `time` |  |
-| 0x18 | 13 | `u8[13]` | `ignored_18` | 0 as sent. 504 does not store them. <!-- [S `FUN_080553c8`] --> |
+| 0x18 | 13 | `u8[13]` | `ignored_18` | 0 as sent. [504 Set Account Class](#m504) does not store them. <!-- [S `FUN_080553c8`] --> |
 | 0x25 | 1 | `u8` | `flood_protection` | Commands per 2 minutes: 0x50 (Relaxed) for Administrator, and 0x28 (Strict) for Guest; see [Flood ban](../sequences.md#flood-ban). <!-- [S] --> 0x3c (Average) for User, which [504 Set Account Class](#m504) sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43. <!-- [O] --> |
 | 0x26 | 2 | `u16` | `speed_limit` | Download speed limit in KiB per second for each download, unless the user has Ignore Speed Limits (26). 0 means no limit for the class. <!-- [S `FUN_08054900`, `FUN_08052440`] --> |
-| 0x28 | 8 | `u8[8]` | `ignored_28` | 0 as sent. 504 does not store them. <!-- [S `FUN_080553c8`] --> |
+| 0x28 | 8 | `u8[8]` | `ignored_28` | 0 as sent. [504 Set Account Class](#m504) does not store them. <!-- [S `FUN_080553c8`] --> |
 | 0x30 | 1 | `u8` | `class_index` | 0, 2 |
 | 0x31 | 3 | [`Color`](../encodings.md#sColor) | `color` | The [color](../encodings.md#colors) of the class's users, unless an account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> `ff 00 00` for Administrator, and 0 for Guest. <!-- [O] --> |
 | 0x34 | 1 | `u8` | `name_len` |  |
@@ -58,7 +58,7 @@ lab. <!-- [O] --> `kdx-proto` keeps it on a round trip.
 ## <a id="m504"></a>504 Set Account Class
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_080553c8`; O] -->
 
-The server answers with 1 Status:
+The server answers with [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -86,10 +86,10 @@ Guest (`captures/linux-accounts-news.pcapng` frames 20 and 30).
 The server filters the name (`FUN_08081ffc`), writes the requester's login as
 the editor, sets the time at 0x10, and saves the class. A requester cannot give
 privileges that it does not have itself (`FUN_080551b0`). If it tries, the reply
-is [1 Status](status.md#m1) 0x640005. If it succeeds, the reply is 1 Status
-0x1f8 (frames 43 and 62), and the history record 0x1f8 holds the old class name.
-Users of that class who are logged in get the new privileges at once
-(`FUN_08054900`).
+is [1 Status](status.md#m1) 0x640005. If it succeeds, the reply is [1
+Status](status.md#m1) 0x1f8 (frames 43 and 62), and the history record 0x1f8
+holds the old class name. Users of that class who are logged in get the new
+privileges at once (`FUN_08054900`).
 
 ## <a id="m505"></a>505 Get Account Class List
 Initiator: Client. Privilege: View Folder Access (27), Create/Modify Chats
@@ -154,7 +154,7 @@ These are the privilege bytes in the lab: <!-- [O] -->
 ## <a id="m507"></a>507 Create Account
 Initiator: Client. Privilege: Create Accounts (51). <!-- [S `FUN_08055928`; O] -->
 
-If it succeeds, the reply is 1 Status:
+If it succeeds, the reply is [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -165,9 +165,9 @@ sequenceDiagram
     S->>C: 1 Status (success 0x1fb)
 ```
 
-The request is an account record. 507 Create Account, [510 Account Info](#m510),
-and [511 Set Account](#m511) use the same layout. <!-- [S `FUN_08055928`,
-`FUN_08055ff4`; O] -->
+The request is an account record. [507 Create Account](#m507), [510 Account
+Info](#m510), and [511 Set Account](#m511) use the same layout. <!-- [S
+`FUN_08055928`, `FUN_08055ff4`; O] -->
 
 Struct `Account` (dynamic):<a id="sAccount"></a>
 
@@ -195,21 +195,22 @@ Struct `Account` (dynamic):<a id="sAccount"></a>
 
 The key field holds:
 
-- In 507 Create Account, the new account's key; see
+- In [507 Create Account](#m507), the new account's key; see
   [handshake.md](../handshake.md). For an account with no password, the CLI
   sends the key of the empty password.
-- In 511 Set Account, the new key. A key of all zeros keeps the current key.
-- In 510 Account Info, a flag in byte 0: 1 if the account has a password, which
-  means that its key is not the key of the empty password (`FUN_08066a90`), and
-  0 if not. The other bytes are zero (frames 253 and 590).
+- In [511 Set Account](#m511), the new key. A key of all zeros keeps the current
+  key.
+- In [510 Account Info](#m510), a flag in byte 0: 1 if the account has a
+  password, which means that its key is not the key of the empty password
+  (`FUN_08066a90`), and 0 if not. The other bytes are zero (frames 253 and 590).
 
 The editor field holds:
 
-- In a request, nothing for 507, which ignores it. In 511, the account to
-  change.
-- In the stored record, the requester's login. 510 shows `admin` for the
-  accounts that admin made (frame 253). The `admin` account that setup made has
-  an empty editor.
+- In a request, nothing for [507 Create Account](#m507), which ignores it. In
+  [511 Set Account](#m511), the account to change.
+- In the stored record, the requester's login. [510 Account Info](#m510) shows
+  `admin` for the accounts that admin made (frame 253). The `admin` account that
+  setup made has an empty editor.
 
 Struct `CreateAccount` (dynamic):<a id="sCreateAccount"></a>
 
@@ -234,7 +235,7 @@ the other bits. A requester with bit 0 always passes.
 ## <a id="m508"></a>508 Delete Account
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_08055d50`; O] -->
 
-There is no reply, only 515 Account Deleted to the requester:
+There is no reply, only [515 Account Deleted](#m515) to the requester:
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -307,7 +308,7 @@ Struct `AccountInfo` (dynamic):<a id="sAccountInfo"></a>
 ## <a id="m511"></a>511 Set Account
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_08055ff4`; O] -->
 
-If it succeeds, the reply is 1 Status:
+If it succeeds, the reply is [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%

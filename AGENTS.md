@@ -74,9 +74,10 @@ Put details in those files. Keep this file to rules.
   anchor such as `<a id="m100"></a>`, in ascending type order on its page, and
   list it in `docs/protocol/messages/README.md`. `ci/check-docs.py` checks the
   anchors and the links.
-- Link a message by number and name to its heading, such as
-  [412 Download File](docs/protocol/messages/files.md#m412), the first time it
-  appears in each section of a page.
+- Write a message by number and name, and link it to its heading, such as [412
+  Download File](docs/protocol/messages/files.md#m412), every time it appears
+  outside code and a capture note. Never write a bare number such as "the [412
+  Download File](docs/protocol/messages/files.md#m412)".
 
 ## Code
 

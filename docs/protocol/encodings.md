@@ -60,19 +60,21 @@ Text](messages/chat.md#m208) after it cuts the message to 0x1000 bytes, which
 can split a multi-byte character. <!-- [S] FUN_08058d74 -->
 
 The Linux client and server confirm this. Client 1.620 beta 5 sends UTF-8 in
-207, [300 Send Private Message](messages/private-messages.md#m300), [611 Post
-News Message](messages/news.md#m611), [100 Set
-Identity](messages/session.md#m100), [402 Create
-Folder](messages/files.md#m402), and [415 Upload File](messages/files.md#m415).
-Server 1.620 stores the bytes on disk and relays them without change in 208,
-[301 Incoming Private Message](messages/private-messages.md#m301), [610 News
+[207 Send Chat Text](messages/chat.md#m207), [300 Send Private
+Message](messages/private-messages.md#m300), [611 Post News
+Message](messages/news.md#m611), [100 Set Identity](messages/session.md#m100),
+[402 Create Folder](messages/files.md#m402), and [415 Upload
+File](messages/files.md#m415). Server 1.620 stores the bytes on disk and relays
+them without change in [208 Receive Chat Text](messages/chat.md#m208), [301
+Incoming Private Message](messages/private-messages.md#m301), [610 News
 Message](messages/news.md#m610), and [102 User
 Changed](messages/session.md#m102). <!-- [O
 `captures/linux-text-encoding.pcapng` frames 90, 103, 118 to 121, 249 to 250,
 319 to 325, 327 to 330] --> String lengths count bytes. A name matches only its
-own bytes: with `caf\xc3\xa9.txt` and `caf\x8e.txt` in one folder, 401 lists
-both, and [412 Download File](messages/files.md#m412) gets each one by its own
-spelling. <!-- [O frames 41, 52, 71] -->
+own bytes: with `caf\xc3\xa9.txt` and `caf\x8e.txt` in one folder, [401 File
+List](messages/files.md#m401) lists both, and [412 Download
+File](messages/files.md#m412) gets each one by its own spelling. <!-- [O frames
+41, 52, 71] -->
 
 The decoders never fail. Each invalid sequence becomes one U+FFFD:
 
@@ -182,7 +184,7 @@ Struct `UserRecord` (dynamic):<a id="sUserRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | `u32` | `user_id` | The server assigns it. 0 in 100 Set Identity. |
+| 0x00 | 4 | `u32` | `user_id` | The server assigns it. 0 in [100 Set Identity](messages/session.md#m100). |
 | 0x04 | 1 | `u8` | `status` | The value that [110 Set Mini User Icon](messages/session.md#m110) sets. |
 | 0x05 | 5 | `u8[5]` | `ignored_05` | 0 as sent. |
 | 0x0a | 2 | `u16` | `client_port` | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
@@ -199,11 +201,12 @@ Struct `UserRecord` (dynamic):<a id="sUserRecord"></a>
 |  | `extra_len` | `u8[]` | `extra` | The server skips it. |
 |  | `nick_len` | `str` | `nick` |  |
 |  | `info_len` | `str` | `info` | At most 0x7f bytes. |
-|  | pad4 | `u8[]` | `padding` | The server adds it in 101 User List. The client sends none. |
+|  | pad4 | `u8[]` | `padding` | The server adds it in [101 User List](messages/session.md#m101). The client sends none. |
 
-- The client sends 100 Set Identity without padding: 565 bytes in the capture.
-  The server pads each record of 101 User List with zeros to a multiple of 4:
-  568 bytes. <!-- [O] --> `kdx_proto::msg::UserRecord` encodes both again.
+- The client sends [100 Set Identity](messages/session.md#m100) without padding:
+  565 bytes in the capture. The server pads each record of [101 User
+  List](messages/session.md#m101) with zeros to a multiple of 4: 568 bytes. <!--
+  [O] --> `kdx_proto::msg::UserRecord` encodes both again.
 - The icon is a bitmap with 2 bits per pixel, about 0x200 bytes in the
   capture. <!-- [O] -->
 - The server removes `\r`, `\n`, and `\t` from the info text.

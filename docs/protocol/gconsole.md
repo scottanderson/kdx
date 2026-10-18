@@ -73,16 +73,22 @@ window, and send input back. They have little else in common: <!-- [S] -->
 | Keyboard | [905 View Display Keyboard](messages/view-display.md#m905): kinds 1, 2, 3 | [4200 Key](messages/gconsole.md#m4200): kinds 1, 2, 3 |
 
 The input messages carry the same client input event. <!-- [S `FUN_0806fc68`,
-`FUN_0806f1f4`, `FUN_08096188`, `FUN_0809607c`] --> 904 and 4201 send its
-modifiers, x, y, button, and wheel. 905 and 4200 send its modifiers, character,
-and key code. GConsole adds the client's clock and a 4-byte character, and
-leaves out moves. The servers make the event again from 904 and 905. <!-- [S
-`FUN_0805c344`, `FUN_0805c498`] --> No GConsole record uses the 903 decoder,
-which only the 903 handler calls. <!-- [S `FUN_0806f864`] -->
+`FUN_0806f1f4`, `FUN_08096188`, `FUN_0809607c`] --> [904 View Display
+Mouse](messages/view-display.md#m904) and [4201
+Mouse](messages/gconsole.md#m4201) send its modifiers, x, y, button, and wheel.
+[905 View Display Keyboard](messages/view-display.md#m905) and [4200
+Key](messages/gconsole.md#m4200) send its modifiers, character, and key code.
+GConsole adds the client's clock and a 4-byte character, and leaves out moves.
+The servers make the event again from 904 and 905. <!-- [S `FUN_0805c344`,
+`FUN_0805c498`] --> No GConsole record uses the [903 View Display
+Update](messages/view-display.md#m903) decoder, which only the [903 View Display
+Update](messages/view-display.md#m903) handler calls. <!-- [S `FUN_0806f864`]
+-->
 
 The servers grab the screen into 32-bit pixels: a zero byte, then red, green,
-and blue. <!-- [S `FUN_0041ffd0`] --> This is the layout of a 4001 color, so
-both are probably Haxial's one image format. <!-- [I] -->
+and blue. <!-- [S `FUN_0041ffd0`] --> This is the layout of a [4001
+Draw](messages/gconsole.md#m4001) color, so both are probably Haxial's one image
+format. <!-- [I] -->
 
 ## Open questions
 

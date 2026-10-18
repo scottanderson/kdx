@@ -12,7 +12,7 @@ List](files.md#m401) entry is the item's icon, not an ID. <!-- [S] -->
 ## <a id="m1100"></a>1100 Create Folder Access
 Initiator: Client. Privilege: Modify Folder Access (28). <!-- [S `FUN_080572f0`; O `captures/linux-files.pcapng` frames 231 to 234] -->
 
-If it succeeds, the reply is 1 Status:
+If it succeeds, the reply is [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -24,15 +24,15 @@ sequenceDiagram
 ```
 
 The request is a folder access record, which the client's folder access editor
-also reads. 1100 Create Folder Access, [1104 Folder Access Info](#m1104), and
-[1105 Set Folder Access](#m1105) use it. <!-- [S `FUN_080572f0`, `FUN_08057634`;
-O `captures/linux-files.pcapng` frames 226, 229, 231; O
-`captures/linux-accounts-folder-access.pcapng`; O
+also reads. [1100 Create Folder Access](#m1100), [1104 Folder Access
+Info](#m1104), and [1105 Set Folder Access](#m1105) use it. <!-- [S
+`FUN_080572f0`, `FUN_08057634`; O `captures/linux-files.pcapng` frames 226, 229,
+231; O `captures/linux-accounts-folder-access.pcapng`; O
 `captures/linux-folder-access-guest.pcapng`] --> The last two captures show the
-record in 1105 Set Folder Access. Its total length, padded to a multiple of 4,
-must equal the payload length. `kdx_proto::msg::admin::FolderAccess` encodes the
-three captured records again byte for byte, with their padding (test
-`linux_files`).
+record in [1105 Set Folder Access](#m1105). Its total length, padded to a
+multiple of 4, must equal the payload length.
+`kdx_proto::msg::admin::FolderAccess` encodes the three captured records again
+byte for byte, with their padding (test `linux_files`).
 
 Struct `FolderAccess` (dynamic):<a id="sFolderAccess"></a>
 
@@ -53,7 +53,7 @@ Struct `FolderAccess` (dynamic):<a id="sFolderAccess"></a>
 | 0xb8 | `name_len` | `str` | `name` | The tag, such as `DB`. |
 |  | `owner_len` | `str` | `owner` |  |
 |  | `description_len` | `str` | `description` |  |
-|  | `current_name_len` | `str` | `current_name` | Only in 1105: the item to change. |
+|  | `current_name_len` | `str` | `current_name` | Only in [1105 Set Folder Access](#m1105): the item to change. |
 |  | pad4 | `u8[]` | `padding` |  |
 
 Struct `FolderAccessRule` (4 bytes):<a id="sFolderAccessRule"></a>
@@ -138,8 +138,8 @@ Struct `FolderAccessDeleted` (dynamic):<a id="sFolderAccessDeleted"></a>
 |---|---|---|---|---|
 | 0x00 |  | [`FolderAccessName`](#sFolderAccessName) | `name` |  |
 
-1102 Folder Access Deleted has the server's own next txid, not the request's:
-`f2cfecc3` in frame 71. <!-- [O] -->
+[1102 Folder Access Deleted](#m1102) has the server's own next txid, not the
+request's: `f2cfecc3` in frame 71. <!-- [O] -->
 
 ## <a id="m1103"></a>1103 Get Folder Access
 Initiator: Client. Privilege: View Folder Access (27). <!-- [S `FUN_08057534`; O `captures/linux-files.pcapng` frames 225 to 229] -->
@@ -187,7 +187,7 @@ frames 30, 38] -->
 ## <a id="m1105"></a>1105 Set Folder Access
 Initiator: Client. Privilege: Modify Folder Access (28). <!-- [S `FUN_08057634`; O `captures/linux-accounts-folder-access.pcapng` frames 63, 66] -->
 
-If it succeeds, the reply is 1 Status:
+If it succeeds, the reply is [1 Status](status.md#m1):
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%

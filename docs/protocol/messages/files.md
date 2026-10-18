@@ -45,8 +45,8 @@ Struct `GetFileList` (dynamic):<a id="sGetFileList"></a>
 The server replies with [401 File List](#m401).
 
 If the folder access check (`FUN_08057e5c`) fails, or the server cannot read the
-folder, the server also replies with an empty 401 File List. It then writes a
-history record of kind 400 Get File List.
+folder, the server also replies with an empty [401 File List](#m401). It then
+writes a history record of kind [400 Get File List](#m400).
 
 ### <a id="m401"></a>401 File List
 Initiator: Server. Reply to [400 Get File List](#m400).
@@ -274,8 +274,9 @@ The payload must be at least 0x1a bytes. The server rounds each offset down to a
 multiple of 0x1000. An offset at or past the end still gets its [414 Download
 File (D)](#m414), with length 0. An offset of 5000 resumed at 4096, and the
 65904 bytes that came back match the full download from 0x1000. An offset of
-70000 on the 70000-byte file got an empty 414 (`captures/probe.pcapng` frames
-271 to 281, 383 to 389, and 348 to 351; test `downloads`). <!-- [O] -->
+70000 on the 70000-byte file got an empty [414 Download File (D)](#m414)
+(`captures/probe.pcapng` frames 271 to 281, 383 to 389, and 348 to 351; test
+`downloads`). <!-- [O] -->
 
 Offsets and sizes are 64-bit everywhere. The server rounds the offset down
 within its 64-bit value, seeks to it with `lseek64`, and sends the remaining
@@ -285,7 +286,8 @@ Server 1.600 for Windows seeks with the high half too. <!-- [S `FUN_0042c600`]
 But once, a download from `kdx.erb.pw` with an offset above 4 GiB began 0xF000
 bytes past the rounded offset. It was not captured. <!-- [O] --> That server's
 build is unknown, and the cause is open. A client should take the start as the
-data fork size minus the 414 length, not as the rounded offset. <!-- [I] -->
+data fork size minus the [414 Download File (D)](#m414) length, not as the
+rounded offset. <!-- [I] -->
 
 The server refuses a file over 0x40000 bytes with code 0x640003 while the same
 user already has a download running, unless the user has privilege bit 25. That
@@ -295,9 +297,9 @@ The server replies with [413 Download File (R)](#m413). Then it streams:
 
 1. [414 Download File (D)](#m414) with the request's txid and the reply bit set.
    The length is the number of data fork bytes that remain. The data follows.
-2. **414 Download File (D)** with the server's own txid and the reply bit clear.
-   The length is the number of resource fork bytes that remain (0 here). The
-   data follows.
+2. **[414 Download File (D)](#m414)** with the server's own txid and the reply
+   bit clear. The length is the number of resource fork bytes that remain (0
+   here). The data follows.
 
 At the end, the server writes a [188 Finished File
 Download](administration.md#m188) history record.
@@ -346,13 +348,15 @@ Struct `FileData` (dynamic):<a id="sFileData"></a>
 |---|---|---|---|---|
 | 0x00 | rest | `u8[]` | `data` | The bytes of one fork, with no framing. |
 
-One 414 Download File (D) header covers the whole fork, even past the limits on
-normal payloads. A 600000-byte file came as a single 414 of length 600000, byte
-for byte, and a resume from 300000 came as one 414 of 300992 bytes from 299008
+One [414 Download File (D)](#m414) header covers the whole fork, even past the
+limits on normal payloads. A 600000-byte file came as a single [414 Download
+File (D)](#m414) of length 600000, byte for byte, and a resume from 300000 came
+as one [414 Download File (D)](#m414) of 300992 bytes from 299008
 (`captures/kdx-cli.pcapng` frames 133 and 190). <!-- [O] -->
-`kdx_proto::msg::file::FileData` holds the payload of 414 and [417 Upload File
-(D)](#m417) unchanged. The server reads data in chunks that start at 0x10000 and
-grow to 0x80000. With a speed limit, the chunks are multiples of 0x1000.
+`kdx_proto::msg::file::FileData` holds the payload of [414 Download File
+(D)](#m414) and [417 Upload File (D)](#m417) unchanged. The server reads data in
+chunks that start at 0x10000 and grow to 0x80000. With a speed limit, the chunks
+are multiples of 0x1000.
 
 ### <a id="m415"></a>415 Upload File
 Initiator: Client, on a transfer connection. Privilege: Upload (11). <!-- [S
@@ -367,7 +371,7 @@ Struct `UploadFile` (dynamic):<a id="sUploadFile"></a>
 | 0x08 | 8 | `u64` | `rsrc_size` |  |
 | 0x10 | 7 | `u8[7]` | `ignored_10` |  |
 | 0x17 | 1 | `u8` | `options` | Bit 0: plain (unencrypted) transfer. |
-| 0x18 | 24 | `u8[24]` | `ignored_18` | Probably times, as at the same offsets of [413](#m413). <!-- [I] --> |
+| 0x18 | 24 | `u8[24]` | `ignored_18` | Probably times, as at the same offsets of [413 Download File (R)](#m413). <!-- [I] --> |
 | 0x30 | 22 | `u8[22]` | `ignored_30` |  |
 | 0x46 | 2 | `u16` | `folder_len` |  |
 | 0x48 |  | [`FileStrings`](#sFileStrings) | `strings` | The name must not be empty. |
@@ -385,8 +389,8 @@ The server replies with [416 Upload File (R)](#m416). The client then sends:
 1. A [417 Upload File (D)](#m417) header. Its length must equal the number of
    data fork bytes that remain, or the server fails with 0x40074. The data
    follows.
-2. A **417 Upload File (D)** header for the resource fork, then its data. This
-   build expects length 0 here. <!-- [S] -->
+2. A **[417 Upload File (D)](#m417)** header for the resource fork, then its
+   data. This build expects length 0 here. <!-- [S] -->
 
 When both forks are complete, the server renames the file into place, writes a
 [189 Finished File Upload](administration.md#m189) history record, and sends
@@ -417,8 +421,8 @@ Struct `UploadFileData` (dynamic):<a id="sUploadFileData"></a>
 |---|---|---|---|---|
 | 0x00 |  | [`FileData`](#sFileData) | `data` | See [414 Download File (D)](#m414). |
 
-300000 bytes sent under one 417 Upload File (D) header arrived byte for byte
-(`captures/kdx-cli.pcapng` frame 244). <!-- [O] -->
+300000 bytes sent under one [417 Upload File (D)](#m417) header arrived byte for
+byte (`captures/kdx-cli.pcapng` frame 244). <!-- [O] -->
 `kdx_proto::msg::file::FileData` holds the payload unchanged, as for [414
 Download File (D)](#m414).
 
@@ -499,7 +503,7 @@ Struct `VolumeInfo` (dynamic):<a id="sVolumeInfo"></a>
 | 0x48 | 4 | `u32` | `flags_mask` | The client ANDs it with 0x44. |
 | 0x4c | 2 | `u8[2]` | `ignored_4c` |  |
 | 0x4e | 1 | `u8` | `name_len` |  |
-| 0x4f | 1 | `u8` | `ignored_4f` | The new name's length in [423](#m423). |
+| 0x4f | 1 | `u8` | `ignored_4f` | The new name's length in [423 Set Volume Info](#m423). |
 | 0x50 | 1 | `u8` | `format_len` |  |
 | 0x51 | 1 | `u8` | `comments_len` |  |
 | 0x52 | 2 | `u8[2]` | `ignored_52` |  |
@@ -551,12 +555,12 @@ If it succeeds, there is no reply, and the server writes history record
 In Server 1.620 for Linux, both setters are stubs. <!-- [S] --> Renaming
 (`FUN_08096530`) throws 0x10005 (module 0x46, line 0x87f) before the server
 writes the history record, and the client gets a [1 Status](status.md#m1) error
-with it. In frame 53 of `captures/linux-catalog-volumes.pcapng`, 423 Set Volume
-Info has flags `00000001`, the name `/tmp`, and the new name `/tmp-renamed`.
-Frame 54 is the error, at module 0x46, line 2175. <!-- [O] --> Setting the
-comments (`FUN_08094e6c`) does nothing. Frame 53 is 100 bytes, with no padding,
-and every field except the flags and the string lengths is 0. <!-- [O] -->
-`kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
+with it. In frame 53 of `captures/linux-catalog-volumes.pcapng`, [423 Set Volume
+Info](#m423) has flags `00000001`, the name `/tmp`, and the new name
+`/tmp-renamed`. Frame 54 is the error, at module 0x46, line 2175. <!-- [O] -->
+Setting the comments (`FUN_08094e6c`) does nothing. Frame 53 is 100 bytes, with
+no padding, and every field except the flags and the string lengths is 0. <!--
+[O] --> `kdx_proto::msg::file::SetVolumeInfo` re-encodes it byte for byte (test
 `linux_catalog_volumes`).
 
 ## 450 to 459: Catalog and search
@@ -574,8 +578,8 @@ Struct `GenerateCatalog` (4 bytes):<a id="sGenerateCatalog"></a>
 | 0x00 | 4 | `u32` | `flags` | Bit 0 cancels. The client can leave out the whole payload for 0. |
 
 A second start while a catalog is running gets [1 Status](status.md#m1) 0x30075.
-The server writes history record 0x1c2 and builds an index of all files. 450
-Generate Catalog itself gets no reply. The server sends progress in [451
+The server writes history record 0x1c2 and builds an index of all files. [450
+Generate Catalog](#m450) itself gets no reply. The server sends progress in [451
 Generate Catalog (S)](#m451) to the user who started it.
 
 ### <a id="m451"></a>451 Generate Catalog (S)
@@ -591,9 +595,9 @@ Struct `CatalogStatus` (8 bytes):<a id="sCatalogStatus"></a>
 | 0x00 | 4 | `u32` | `flags` | 0x00000001: done. |
 | 0x04 | 4 | `u32` | `items` | The number of items indexed so far. |
 
-In `captures/linux-catalog-volumes.pcapng`, the empty 450 at frame 23 gets
-`00000000 00000002` (frame 24), then `00000001 0000000b` (frame 26). <!-- [O]
--->
+In `captures/linux-catalog-volumes.pcapng`, the empty [450 Generate
+Catalog](#m450) at frame 23 gets `00000000 00000002` (frame 24), then `00000001
+0000000b` (frame 26). <!-- [O] -->
 
 ### <a id="m452"></a>452 File Search
 Initiator: Client. <!-- [S `FUN_0805abc0`; O `captures/linux-catalog-volumes.pcapng` frames 28 to 29] -->
@@ -660,11 +664,11 @@ Struct `FileSearchEntry` (dynamic):<a id="sFileSearchEntry"></a>
 |  | pad4 | `u8[]` | `padding` |  |
 
 The server leaves out the items that the user cannot see through folder access.
-If nothing matches, the reply is an empty 453 File Search (R).
+If nothing matches, the reply is an empty [453 File Search (R)](#m453).
 
 Frame 29 of `captures/linux-catalog-volumes.pcapng` has one match for `a.txt`:
 size 6, attributes 1, name length 0, and a path length of 0x16 for the path
 `lab-files`, `a.txt`. <!-- [O] --> So the name can be empty, with the item's
 name only in its path. `kdx_proto::msg::file` re-encodes [420 Launch
-File](#m420) and 450 Generate Catalog to 453 byte for byte (test
+File](#m420) and [450 Generate Catalog](#m450) to 453 byte for byte (test
 `linux_catalog_volumes`).

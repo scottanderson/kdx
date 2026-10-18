@@ -11,11 +11,11 @@ Linux cannot capture its screen (`FUN_080996d8` gives 0x10004). So on that
 server, [900 Open View Display](#m900) only gets an error, and the input
 functions do nothing. The layouts below come from the server's code and the
 client's decoder. <!-- [S] --> Server 1.600 for Windows has the same code at
-other addresses (`FUN_00418dc0` for 900, `FUN_00418850` for the grab). It grabs
-the primary screen with `BitBlt` from the desktop window into a 24-bit
-DIB. <!-- [S `FUN_0041ffd0`] --> In `captures/win-view-display.pcapng`, it
-serves Client 1.620 beta 5 under Wine. <!-- [O] --> Frame numbers on this page
-are from that capture.
+other addresses (`FUN_00418dc0` for [900 Open View Display](#m900),
+`FUN_00418850` for the grab). It grabs the primary screen with `BitBlt` from the
+desktop window into a 24-bit DIB. <!-- [S `FUN_0041ffd0`] --> In
+`captures/win-view-display.pcapng`, it serves Client 1.620 beta 5 under Wine.
+<!-- [O] --> Frame numbers on this page are from that capture.
 
 ## <a id="m900"></a>900 Open View Display
 Initiator: Client, on a transfer connection. Privilege: View Display (66).
@@ -38,14 +38,16 @@ No payload.
 
 If the connection is already busy, the reply is 0x10003. If not, the reply is
 [902 View Display Params](#m902), then a full frame in [903 View Display
-Update](#m903). After that, every 1500 ms, the server sends a 903 to each viewer
-if the screen has changed.
+Update](#m903). After that, every 1500 ms, the server sends a [903 View Display
+Update](#m903) to each viewer if the screen has changed.
 
 If a viewer's send queue grows past 0x800000 bytes, the server drops the viewer
 with 0x40076.
 
 ## <a id="m901"></a>901 Close View Display
-Initiator: Client. It has no handler. To close the display, the client closes the connection, and sends no 901 Close View Display. <!-- [O frame 420] -->
+Initiator: Client. It has no handler. To close the display, the client closes
+the connection, and sends no [901 Close View Display](#m901). <!-- [O frame 420]
+-->
 
 Struct `CloseViewDisplay` (dynamic):<a id="sCloseViewDisplay"></a>
 
