@@ -26,57 +26,60 @@ Chat](messages/chat.md#m213).
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
-| 0 | Override. It overrides the class lists of chats, and the limits on news and accounts. It is not in the client's list. | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
+| 0 | Override | [202 Join Chat](messages/chat.md#m202)<br>[207 Send Chat Text](messages/chat.md#m207)<br>[209 Set Chat Topic](messages/chat.md#m209)<br>[400 Get File List](messages/files.md#m400)<br>[508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511)<br>[607 Get News Messages](messages/news.md#m607)<br>[609 Get News Message](messages/news.md#m609)<br>[611 Post News Message](messages/news.md#m611)<br>[612 Delete News Message](messages/news.md#m612) |
 | 3 | Color Overrides Class | `FUN_08054900` account lookup |
 | 4 | Can Login | set in all lab classes |
 | 10 | Download | [412 Download File](messages/files.md#m412) |
-| 11 | Upload | [402 Create Folder](messages/files.md#m402), [415 Upload File](messages/files.md#m415) |
+| 11 | Upload | [402 Create Folder](messages/files.md#m402)<br>[415 Upload File](messages/files.md#m415) |
 | 13 | Empty Trash | [421 Empty Trash](messages/files.md#m421) |
 | 15 | Create Aliases | [403 Create Alias](messages/files.md#m403) |
 | 16 | Move | [407 Move File/Folder](messages/files.md#m407) |
-| 17 | Rename | [409 Get File/Folder Info](messages/files.md#m409), [411 Set File/Folder Info](messages/files.md#m411) |
+| 17 | Rename | [409 Get File/Folder Info](messages/files.md#m409)<br>[411 Set File/Folder Info](messages/files.md#m411) |
 | 18 | Delete | [405 Move To Trash](messages/files.md#m405) |
-| 20 | Set File/Folder Attributes | [409 Get File/Folder Info](messages/files.md#m409), [411 Set File/Folder Info](messages/files.md#m411) |
-| 22 | See All Volumes | [400 Get File List](messages/files.md#m400), [423 Set Volume Info](messages/files.md#m423) |
+| 20 | Set File/Folder Attributes | [409 Get File/Folder Info](messages/files.md#m409)<br>[411 Set File/Folder Info](messages/files.md#m411) |
+| 22 | See All Volumes | [400 Get File List](messages/files.md#m400)<br>[423 Set Volume Info](messages/files.md#m423) |
 | 23 | Has Custom Base Folder | |
 | 24 | See All Bases | |
 | 25 | Allow Simultaneous Downloads | [412 Download File](messages/files.md#m412) (large files) |
 | 26 | Ignore Speed Limits | |
-| 27 | View Folder Access | [505 Get Account Class List](messages/accounts.md#m505), [1103 Get Folder Access](messages/folder-access.md#m1103), [1106 Get Folder Access List](messages/folder-access.md#m1106) |
-| 28 | Modify Folder Access | [402 Create Folder](messages/files.md#m402), [403 Create Alias](messages/files.md#m403), [411 Set File/Folder Info](messages/files.md#m411), [1100 Create Folder Access](messages/folder-access.md#m1100), [1101 Delete Folder Access](messages/folder-access.md#m1101), [1105 Set Folder Access](messages/folder-access.md#m1105) |
-| 30 | Join Chat | [202 Join Chat](messages/chat.md#m202), [214 Get Chat List](messages/chat.md#m214), login |
+| 27 | View Folder Access | [505 Get Account Class List](messages/accounts.md#m505)<br>[1103 Get Folder Access](messages/folder-access.md#m1103)<br>[1106 Get Folder Access List](messages/folder-access.md#m1106) |
+| 28 | Modify Folder Access | [402 Create Folder](messages/files.md#m402)<br>[403 Create Alias](messages/files.md#m403)<br>[411 Set File/Folder Info](messages/files.md#m411)<br>[1100 Create Folder Access](messages/folder-access.md#m1100)<br>[1101 Delete Folder Access](messages/folder-access.md#m1101)<br>[1105 Set Folder Access](messages/folder-access.md#m1105) |
+| 30 | Join Chat | [202 Join Chat](messages/chat.md#m202)<br>[214 Get Chat List](messages/chat.md#m214)<br>login |
 | 31 | Send Chat | [207 Send Chat Text](messages/chat.md#m207) |
 | 32 | Send Messages | [300 Send Private Message](messages/private-messages.md#m300) |
 | 33 | Broadcast | [154 Send Broadcast Message](messages/administration.md#m154) |
 | 34 | Create Private Chat | [200 Create Private Chat](messages/chat.md#m200) |
 | 35 | Set Chat Topic | [209 Set Chat Topic](messages/chat.md#m209) |
 | 36 | Join Chat On Connect | login |
-| 37 | Create/Modify Chats | [201 Delete Chat](messages/chat.md#m201), [217 Create Chat](messages/chat.md#m217), [218 Get Chat](messages/chat.md#m218), [220 Set Chat](messages/chat.md#m220), [505 Get Account Class List](messages/accounts.md#m505) |
-| 40 | Get User Info | [140 Open Connection Monitor](messages/monitoring.md#m140), [141 Close Connection Monitor](messages/monitoring.md#m141), [142 Get Connection Monitor Info](messages/monitoring.md#m142), [152 Get User Info](messages/administration.md#m152) |
+| 37 | Create/Modify Chats | [201 Delete Chat](messages/chat.md#m201)<br>[217 Create Chat](messages/chat.md#m217)<br>[218 Get Chat](messages/chat.md#m218)<br>[220 Set Chat](messages/chat.md#m220)<br>[505 Get Account Class List](messages/accounts.md#m505) |
+| 40 | Get User Info | [140 Open Connection Monitor](messages/monitoring.md#m140)<br>[141 Close Connection Monitor](messages/monitoring.md#m141)<br>[142 Get Connection Monitor Info](messages/monitoring.md#m142)<br>[152 Get User Info](messages/administration.md#m152) |
 | 41 | Disconnect Users | [150 Disconnect User](messages/administration.md#m150) |
 | 42 | Cannot Be Disconnected | [150 Disconnect User](messages/administration.md#m150) (target) |
 | 43 | Ban Users | [150 Disconnect User](messages/administration.md#m150) |
-| 50 | View Accounts | [502 Get Account Class](messages/accounts.md#m502), [505 Get Account Class List](messages/accounts.md#m505), [509 Get Account](messages/accounts.md#m509), [512 Get Account List](messages/accounts.md#m512) |
+| 50 | View Accounts | [502 Get Account Class](messages/accounts.md#m502)<br>[505 Get Account Class List](messages/accounts.md#m505)<br>[509 Get Account](messages/accounts.md#m509)<br>[512 Get Account List](messages/accounts.md#m512) |
 | 51 | Create Accounts | [507 Create Account](messages/accounts.md#m507) |
-| 52 | Modify Accounts | [504 Set Account Class](messages/accounts.md#m504), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511) |
+| 52 | Modify Accounts | [504 Set Account Class](messages/accounts.md#m504)<br>[508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511) |
 | 53 | Change Own Password | [550 Change Own Password](messages/accounts.md#m550) |
-| 54 | Protected Account | [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511) (target) |
-| 60 | Use Any Name | [100 Set Identity](messages/session.md#m100), login |
-| 61 | Modify Server Settings | [113 Get Extra Server Info](messages/session.md#m113), [170 Get Server Settings](messages/administration.md#m170), [172 Set Server Settings](messages/administration.md#m172), [450 Generate Catalog](messages/files.md#m450), login ([105 Server Info](messages/session.md#m105)) |
+| 54 | Protected Account | [508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511) (target) |
+| 60 | Use Any Name | [100 Set Identity](messages/session.md#m100)<br>login |
+| 61 | Modify Server Settings | [113 Get Extra Server Info](messages/session.md#m113)<br>[170 Get Server Settings](messages/administration.md#m170)<br>[172 Set Server Settings](messages/administration.md#m172)<br>[450 Generate Catalog](messages/files.md#m450)<br>login ([105 Server Info](messages/session.md#m105)) |
 | 62 | Don't Show Greeting | login |
 | 63 | View Server History | [180 Server History Join](messages/administration.md#m180) |
-| 64 | Shutdown Server | [174 Shutdown Server](messages/administration.md#m174), [175 Upgrade Server Software](messages/administration.md#m175) |
-| 65 | Disable Encryption | [412 Download File](messages/files.md#m412), [415 Upload File](messages/files.md#m415) (plain mode) |
+| 64 | Shutdown Server | [174 Shutdown Server](messages/administration.md#m174)<br>[175 Upgrade Server Software](messages/administration.md#m175) |
+| 65 | Disable Encryption | [412 Download File](messages/files.md#m412)<br>[415 Upload File](messages/files.md#m415) (plain mode) |
 | 66 | View Display | [900 Open View Display](messages/view-display.md#m900) |
-| 67 | Control Display | [902 View Display Params](messages/view-display.md#m902), [904 View Display Mouse](messages/view-display.md#m904), [905 View Display Keyboard](messages/view-display.md#m905) |
-| 70 | View News | [605 Get Newsgroup List](messages/news.md#m605), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609) |
-| 71 | Post News | [607 Get News Messages](messages/news.md#m607), [611 Post News Message](messages/news.md#m611) |
-| 72 | Delete News Messages | [607 Get News Messages](messages/news.md#m607), [612 Delete News Message](messages/news.md#m612) |
-| 73 | Create/Modify Newsgroups | [505 Get Account Class List](messages/accounts.md#m505), [600 Create Newsgroup](messages/news.md#m600), [601 Delete Newsgroup](messages/news.md#m601), [602 Get Newsgroup](messages/news.md#m602), [604 Set Newsgroup](messages/news.md#m604) |
+| 67 | Control Display | [902 View Display Params](messages/view-display.md#m902)<br>[904 View Display Mouse](messages/view-display.md#m904)<br>[905 View Display Keyboard](messages/view-display.md#m905) |
+| 70 | View News | [605 Get Newsgroup List](messages/news.md#m605)<br>[607 Get News Messages](messages/news.md#m607)<br>[609 Get News Message](messages/news.md#m609) |
+| 71 | Post News | [607 Get News Messages](messages/news.md#m607)<br>[611 Post News Message](messages/news.md#m611) |
+| 72 | Delete News Messages | [607 Get News Messages](messages/news.md#m607)<br>[612 Delete News Message](messages/news.md#m612) |
+| 73 | Create/Modify Newsgroups | [505 Get Account Class List](messages/accounts.md#m505)<br>[600 Create Newsgroup](messages/news.md#m600)<br>[601 Delete Newsgroup](messages/news.md#m601)<br>[602 Get Newsgroup](messages/news.md#m602)<br>[604 Set Newsgroup](messages/news.md#m604) |
 | 74 | See Logins In News | [609 Get News Message](messages/news.md#m609) |
-| 80 | View Processes | [800 Open Process Monitor](messages/processes.md#m800), [802 Get Process List](messages/processes.md#m802) |
+| 80 | View Processes | [800 Open Process Monitor](messages/processes.md#m800)<br>[802 Get Process List](messages/processes.md#m802) |
 | 81 | Terminate Processes | [804 Exit/Terminate Process](messages/processes.md#m804) |
-| 82 | Launch Programs | [175 Upgrade Server Software](messages/administration.md#m175), [420 Launch File](messages/files.md#m420) |
+| 82 | Launch Programs | [175 Upgrade Server Software](messages/administration.md#m175)<br>[420 Launch File](messages/files.md#m420) |
+
+Override (bit 0) overrides the class lists of chats, and the limits on news
+and accounts. It is not in the client's list.
 
 All classes have bits 2 and 4 set (0x44&0x20 and 0x44&0x08). Bit 4 is Can Login,
 and bit 2 has no name in the client's table. <!-- [S] --> If the administrator
