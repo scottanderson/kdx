@@ -20,7 +20,7 @@ Initiator: Client (to client). <!-- [S `FUN_08094074`] -->
 
 This is the reply to [1000 Start Voice](#m1000):
 
-Struct `StartVoiceReply` (4 bytes):
+Struct `StartVoiceReply` (4 bytes):<a id="sStartVoiceReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -39,7 +39,7 @@ connection. <!-- [S `FUN_08094218`] -->
 
 Initiator: Client (to client). <!-- [S `FUN_08093ae0`, `FUN_080943a0`] -->
 
-Struct `VoiceFormat` (24 bytes):
+Struct `VoiceFormat` (24 bytes):<a id="sVoiceFormat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -57,7 +57,7 @@ bits. <!-- [O `captures/linux-dcc-voice-failed.pcapng` frames 136, 138] -->
 
 Initiator: Client (to client). <!-- [S `FUN_08093670`, `FUN_0809455c`, `FUN_080e15e4`] -->
 
-Struct `VoiceData` (dynamic):
+Struct `VoiceData` (dynamic):<a id="sVoiceData"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

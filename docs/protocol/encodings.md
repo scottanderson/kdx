@@ -122,7 +122,7 @@ makes it as (tv_sec + 2208988800) × 1000 + ms, <!-- [S `FUN_08090eb0`] --> so
 
 A color is three bytes: red, green, then blue. <!-- [S client `FUN_0804d654`] -->
 
-Struct `Color` (3 bytes):
+Struct `Color` (3 bytes):<a id="sColor"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -135,14 +135,14 @@ Struct `Color` (3 bytes):
 A path is a list of names. Each name is one folder level below the user's base
 folder. <!-- [S `FUN_08069880`, `FUN_08096b4c`; O] -->
 
-Struct `FilePath` (dynamic):
+Struct `FilePath` (dynamic):<a id="sFilePath"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 2 | u16 | `names_count` |  |
-| 0x02 | `names_count` | PathName[] | `names` | 1 to 0x400 |
+| 0x02 | `names_count` | [PathName](#sPathName)[] | `names` | 1 to 0x400 |
 
-Struct `PathName` (dynamic):
+Struct `PathName` (dynamic):<a id="sPathName"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -158,12 +158,12 @@ The server joins the names with `/` and checks each one with
 `FUN_08094084`. <!-- [S] --> For example, `00 01 00 00 0c "Uploads [UL]"` is the
 folder `Uploads [UL]` at the root. <!-- [O] -->
 
-Struct `DelimitedFilePath` (dynamic):
+Struct `DelimitedFilePath` (dynamic):<a id="sDelimitedFilePath"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 2 | u16 | `names_count` |  |
-| 0x02 | `names_count` | PathName[] | `names` | 0 for the root, otherwise 1 to 0x400 |
+| 0x02 | `names_count` | [PathName](#sPathName)[] | `names` | 0 for the root, otherwise 1 to 0x400 |
 
 A `DelimitedFilePath` is a `FilePath` with more fields after it in the same
 payload, so it must show where it ends. Its root is `00 00`, not an empty
@@ -178,7 +178,7 @@ payload. `kdx_proto::msg::FilePath::decode_delimited` reads it.
 Changed](messages/session.md#m102), and [103 User
 Joined](messages/session.md#m103) use this record.
 
-Struct `UserRecord` (dynamic):
+Struct `UserRecord` (dynamic):<a id="sUserRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -187,9 +187,9 @@ Struct `UserRecord` (dynamic):
 | 0x05 | 5 | u8[5] | `ignored_05` | 0 as sent. |
 | 0x0a | 2 | u16 | `client_port` | The port of the client's DCC listener, 10600 by default, or 0 if it has none. <!-- [S client `FUN_0804d654`; O] 10600 in the capture --> |
 | 0x0c | 2 | u16 | `icon_len` |  |
-| 0x0e | 3 | Color | `text_color` | The [color](#colors) of the nick and info text in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `00 00 00` in the capture. <!-- [O] --> |
-| 0x11 | 3 | Color | `background_color` | The background of the user's row in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `ff cc 00` in the capture. <!-- [O] --> |
-| 0x14 | 3 | Color | `account_color` | The strip at the left of the user's row. The server sets it to the color of the user's class, or of the account under Color Overrides Class. <!-- [S `FUN_0804af04`, `FUN_08054900`, client `FUN_080542b4`] --> 0 from the client, and `ff 00 00` for admin. <!-- [O] --> |
+| 0x0e | 3 | [Color](#sColor) | `text_color` | The [color](#colors) of the nick and info text in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `00 00 00` in the capture. <!-- [O] --> |
+| 0x11 | 3 | [Color](#sColor) | `background_color` | The background of the user's row in the user list. The client chooses it. <!-- [S client `FUN_0804d654`, `FUN_080542b4`] --> `ff cc 00` in the capture. <!-- [O] --> |
+| 0x14 | 3 | [Color](#sColor) | `account_color` | The strip at the left of the user's row. The server sets it to the color of the user's class, or of the account under Color Overrides Class. <!-- [S `FUN_0804af04`, `FUN_08054900`, client `FUN_080542b4`] --> 0 from the client, and `ff 00 00` for admin. <!-- [O] --> |
 | 0x17 | 1 | u8 | `flags` | Bit 2 comes from the client, and makes the right part of the row a gradient from `background_color` to `text_color`. <!-- [S client `FUN_080542b4`] --> The server sets bit 1; see below. |
 | 0x18 | 1 | u8 | `extra_len` |  |
 | 0x19 | 1 | u8 | `nick_len` |  |
@@ -220,7 +220,7 @@ Struct `UserRecord` (dynamic):
 Info](messages/chat.md#m219), and [220 Set Chat](messages/chat.md#m220) use this
 record.
 
-Struct `ChatRecord` (dynamic):
+Struct `ChatRecord` (dynamic):<a id="sChatRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

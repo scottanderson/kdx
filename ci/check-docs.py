@@ -261,7 +261,7 @@ def primitive_size(base):
 
 STRUCT_HEAD = "| Off | Size | Type | Field | Notes |"
 STRUCT_SEP = "|---|---|---|---|---|"
-CAPTION = re.compile(r"^Struct `([A-Z][A-Za-z0-9]*)` \((?:(\d+) bytes|dynamic)\):$")
+CAPTION = re.compile(r'^Struct `([A-Z][A-Za-z0-9]*)` \((?:(\d+) bytes|dynamic)\):<a id="s\1"></a>$')
 TYPE = re.compile(r"^([A-Za-z][A-Za-z0-9]*)(?:\[([^\]]*)\])?$")
 INT = re.compile(r"^(?:\d+|0x[0-9a-fA-F]+)$")
 
@@ -449,7 +449,17 @@ def check_struct(path, n, name, size, rows, blank, structs):
                 err(line, f"Off {off} should be {hex(expect)}")
         if typ == "char[]":
             err(line, "use str for text of variable size")
+        link = re.fullmatch(r"\[(\w+)\]\(([^)]*)\)(.*)", typ)
+        if link:
+            typ = link.group(1) + link.group(3)
+            want = os.path.relpath(structs[link.group(1)][0].split(":")[0], os.path.dirname(path)) if link.group(1) in structs else None
+            if want is not None and link.group(2) != (f"#s{link.group(1)}" if want == os.path.basename(path) else f"{want}#s{link.group(1)}"):
+                err(line, f"link for {link.group(1)} should point to its caption")
         m = TYPE.match(typ)
+        if m and m.group(1) in structs and not link:
+            err(line, f"link struct type {m.group(1)} to its caption")
+        if m and link and m.group(1) not in structs:
+            err(line, f"{m.group(1)!r} is not a struct; leave it unlinked")
         if not m:
             err(line, f"bad Type {typ!r}")
             fields.append(field)

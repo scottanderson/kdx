@@ -20,13 +20,13 @@ sequenceDiagram
     S->>C: 606 Newsgroup List
 ```
 
-Struct `CreateNewsgroup` (dynamic):
+Struct `CreateNewsgroup` (dynamic):<a id="sCreateNewsgroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | NewsgroupInfo | `group` |  |
+| 0x00 |  | [NewsgroupInfo](#sNewsgroupInfo) | `group` |  |
 
-Struct `NewsgroupInfo` (dynamic):
+Struct `NewsgroupInfo` (dynamic):<a id="sNewsgroupInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ sequenceDiagram
     S->>C: 1 Status (success 0x259)
 ```
 
-Struct `DeleteNewsgroup` (4 bytes):
+Struct `DeleteNewsgroup` (4 bytes):<a id="sDeleteNewsgroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -104,7 +104,7 @@ sequenceDiagram
     S->>C: 603 Newsgroup Info
 ```
 
-Struct `GetNewsgroup` (4 bytes):
+Struct `GetNewsgroup` (4 bytes):<a id="sGetNewsgroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -119,11 +119,11 @@ The reply is the `NewsgroupInfo` record of [600 Create Newsgroup](#m600), with
 no padding. Frame 69 of `captures/linux-accounts-news.pcapng` is 82 bytes, for
 the 14-byte name `test newsgroup` and the description `desc`. <!-- [O] -->
 
-Struct `NewsgroupInfoReply` (dynamic):
+Struct `NewsgroupInfoReply` (dynamic):<a id="sNewsgroupInfoReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | NewsgroupInfo | `group` |  |
+| 0x00 |  | [NewsgroupInfo](#sNewsgroupInfo) | `group` |  |
 
 [607 Get News Messages](#m607) and 611 Post News Message check the read and post
 class bitmaps. <!-- [S] -->
@@ -133,11 +133,11 @@ Initiator: Client. Privilege: Create/Modify Newsgroups (73). <!-- [S `FUN_0805ce
 
 The request is a [603 Newsgroup Info](#m603) record, with the group ID at 0x00.
 
-Struct `SetNewsgroup` (dynamic):
+Struct `SetNewsgroup` (dynamic):<a id="sSetNewsgroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | NewsgroupInfo | `group` |  |
+| 0x00 |  | [NewsgroupInfo](#sNewsgroupInfo) | `group` |  |
 
 If it succeeds, the reply is [1 Status](status.md#m1) 0x25c (frame 74). Frame 71
 renames group 2 to `Lab Group`, with the description `edited description` and
@@ -165,14 +165,14 @@ Initiator: Server. Reply to [605 Get Newsgroup List](#m605).
 The payload is a u32 count, then one entry for each group, each padded to a
 multiple of 4:
 
-Struct `NewsgroupList` (dynamic):
+Struct `NewsgroupList` (dynamic):<a id="sNewsgroupList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `groups_count` |  |
-| 0x04 | `groups_count` | NewsgroupEntry[] | `groups` |  |
+| 0x04 | `groups_count` | [NewsgroupEntry](#sNewsgroupEntry)[] | `groups` |  |
 
-Struct `NewsgroupEntry` (dynamic):
+Struct `NewsgroupEntry` (dynamic):<a id="sNewsgroupEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -201,7 +201,7 @@ sequenceDiagram
     S->>C: 608 News Messages
 ```
 
-Struct `GetNewsMessages` (4 bytes):
+Struct `GetNewsMessages` (4 bytes):<a id="sGetNewsMessages"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -210,7 +210,7 @@ Struct `GetNewsMessages` (4 bytes):
 ## <a id="m608"></a>608 News Messages
 Initiator: Server. Reply to [607 Get News Messages](#m607).
 
-Struct `NewsMessages` (dynamic):
+Struct `NewsMessages` (dynamic):<a id="sNewsMessages"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -218,9 +218,9 @@ Struct `NewsMessages` (dynamic):
 | 0x04 | 4 | u32 | `permissions` | 1 post, 2 delete any message, 4 read. 7 for admin, and 4 for guest. |
 | 0x08 | 4 | u8[4] | `ignored` |  |
 | 0x0c | 4 | u32 | `messages_count` |  |
-| 0x10 | `messages_count` | NewsMessage[] | `messages` | Each as in [610 News Message](#m610). |
+| 0x10 | `messages_count` | [NewsMessage](#sNewsMessage)[] | `messages` | Each as in [610 News Message](#m610). |
 
-Struct `NewsMessage` (dynamic):
+Struct `NewsMessage` (dynamic):<a id="sNewsMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -266,7 +266,7 @@ sequenceDiagram
 `NewsMessageId` encodes the request: <!-- [O `captures/kdx-news.pcapng` frame
 137; O `captures/linux-first-connect.pcapng` frames 99, 112] -->
 
-Struct `GetNewsMessage` (8 bytes):
+Struct `GetNewsMessage` (8 bytes):<a id="sGetNewsMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -281,11 +281,11 @@ Initiator: Server. Reply to [609 Get News Message](#m609).
 The payload is one news message record, the `NewsMessage` of [608 News
 Messages](#m608), padded to a multiple of 4:
 
-Struct `NewsMessageReply` (dynamic):
+Struct `NewsMessageReply` (dynamic):<a id="sNewsMessageReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | NewsMessage | `message` |  |
+| 0x00 |  | [NewsMessage](#sNewsMessage) | `message` |  |
 
 ## <a id="m611"></a>611 Post News Message
 Initiator: Client. Privilege: Post News (71). Unless the user has privilege
@@ -306,7 +306,7 @@ sequenceDiagram
     S-->>O: 613 News Message Posted
 ```
 
-Struct `PostNewsMessage` (dynamic):
+Struct `PostNewsMessage` (dynamic):<a id="sPostNewsMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -356,7 +356,7 @@ sequenceDiagram
 `captures/linux-first-connect.pcapng` frame 102; O `captures/kdx-news.pcapng`
 frames 225, 406] -->
 
-Struct `DeleteNewsMessage` (8 bytes):
+Struct `DeleteNewsMessage` (8 bytes):<a id="sDeleteNewsMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -377,7 +377,7 @@ gets no reply, and no 614 (frame 435).
 Initiator: Server. It follows a successful
 [611 Post News Message](#m611). <!-- [S; O] -->
 
-Struct `NewsMessageChange` (12 bytes):
+Struct `NewsMessageChange` (12 bytes):<a id="sNewsMessageChange"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -391,8 +391,8 @@ Initiator: Server. It goes to all users after a
 
 The layout is the same as [613 News Message Posted](#m613):
 
-Struct `NewsMessageDeleted` (12 bytes):
+Struct `NewsMessageDeleted` (12 bytes):<a id="sNewsMessageDeleted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 12 | NewsMessageChange | `change` | The message ID is that of the deleted message. |
+| 0x00 | 12 | [NewsMessageChange](#sNewsMessageChange) | `change` | The message ID is that of the deleted message. |

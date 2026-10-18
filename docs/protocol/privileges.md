@@ -11,7 +11,7 @@ the mask 0x80 >> (n % 8). The server stores a user's privileges at user +0x44 to
 and NOT over all 16 bytes (`FUN_080551b0`). <!-- [S] --> Bits 83 to 127 have no
 known use.
 
-Struct `Privileges` (16 bytes):
+Struct `Privileges` (16 bytes):<a id="sPrivileges"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

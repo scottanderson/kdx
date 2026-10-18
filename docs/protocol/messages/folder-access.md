@@ -34,15 +34,15 @@ must equal the payload length. `kdx_proto::msg::admin::FolderAccess` encodes the
 three captured records again byte for byte, with their padding (test
 `linux_files`).
 
-Struct `FolderAccess` (dynamic):
+Struct `FolderAccess` (dynamic):<a id="sFolderAccess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u8[4] | `ignored_00` | 0 in the lab. |
 | 0x04 | 4 | u32 | `flags` | In byte 7, bit 0 is built-in, and bit 1 is Owner Login In Folder Name. |
 | 0x08 | 4 | u32 | `icon` | 0x28 Normal, 0x2b Uploads, 0x2c Dropbox, 0x34 Pictures, 0x35 Audio |
-| 0x0c | 128 | FolderAccessRule[32] | `class_rules` | One rule for each class, at 0x0c + 4 × class index. User (class 1) is at 0x10, and Guest (class 2) at 0x14. <!-- [O] --> The first rule is 0xfffe0000 (all permissions) in both lab items, so it is probably Administrator's. <!-- [I] --> |
-| 0x8c | 4 | FolderAccessRule | `rule` | 0xfffe0000 in `DB`, and 0 in `[Default]`. Probably the owner's rule. <!-- [I] --> |
+| 0x0c | 128 | [FolderAccessRule](#sFolderAccessRule)[32] | `class_rules` | One rule for each class, at 0x0c + 4 × class index. User (class 1) is at 0x10, and Guest (class 2) at 0x14. <!-- [O] --> The first rule is 0xfffe0000 (all permissions) in both lab items, so it is probably Administrator's. <!-- [I] --> |
+| 0x8c | 4 | [FolderAccessRule](#sFolderAccessRule) | `rule` | 0xfffe0000 in `DB`, and 0 in `[Default]`. Probably the owner's rule. <!-- [I] --> |
 | 0x90 | 29 | u8[29] | `ignored_90` | 0 as sent. |
 | 0xad | 1 | u8 | `name_len` |  |
 | 0xae | 1 | u8 | `owner_len` |  |
@@ -56,7 +56,7 @@ Struct `FolderAccess` (dynamic):
 |  | `current_name_len` | str | `current_name` | Only in 1105: the item to change. |
 |  | pad4 | u8[] | `padding` |  |
 
-Struct `FolderAccessRule` (4 bytes):
+Struct `FolderAccessRule` (4 bytes):<a id="sFolderAccessRule"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -88,11 +88,11 @@ In the lab, `DB` gives 0x9d40 (bits 0, 3, 4, 5, 7, and 9: a drop box), and
 frames 226, 229] --> The client's editor shows Name, Description, Owner Login,
 Owner Login In Folder Name, the Access Privileges table, and Icon.
 
-Struct `CreateFolderAccess` (dynamic):
+Struct `CreateFolderAccess` (dynamic):<a id="sCreateFolderAccess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | `item` |  |
+| 0x00 |  | [FolderAccess](#sFolderAccess) | `item` |  |
 
 An invalid name gets 0x1001e, and a name that already exists gets 0x1000d. If it
 succeeds, the reply is [1 Status](status.md#m1) 0x44c. Frame 231 makes `test`
@@ -114,7 +114,7 @@ sequenceDiagram
 
 The request is the item name, with no length byte:
 
-Struct `FolderAccessName` (dynamic):
+Struct `FolderAccessName` (dynamic):<a id="sFolderAccessName"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -132,11 +132,11 @@ Initiator: Server. It follows a successful
 
 The payload is the name:
 
-Struct `FolderAccessDeleted` (dynamic):
+Struct `FolderAccessDeleted` (dynamic):<a id="sFolderAccessDeleted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccessName | `name` |  |
+| 0x00 |  | [FolderAccessName](#sFolderAccessName) | `name` |  |
 
 1102 Folder Access Deleted has the server's own next txid, not the request's:
 `f2cfecc3` in frame 71. <!-- [O] -->
@@ -158,11 +158,11 @@ sequenceDiagram
 The request is the item name, with no length byte, such as `DB` in frame 225 and
 `[Default]` in frame 228:
 
-Struct `GetFolderAccess` (dynamic):
+Struct `GetFolderAccess` (dynamic):<a id="sGetFolderAccess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccessName | `name` |  |
+| 0x00 |  | [FolderAccessName](#sFolderAccessName) | `name` |  |
 
 The request has no padding: 2 bytes and 9 bytes in `captures/linux-files.pcapng`
 frames 225 and 228. <!-- [O] --> `kdx_proto::msg::admin::FolderAccessName`
@@ -174,11 +174,11 @@ Initiator: Server. Reply to [1103 Get Folder Access](#m1103).
 
 The payload is the stored folder access record:
 
-Struct `FolderAccessInfo` (dynamic):
+Struct `FolderAccessInfo` (dynamic):<a id="sFolderAccessInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | `item` |  |
+| 0x00 |  | [FolderAccess](#sFolderAccess) | `item` |  |
 
 After a [1105 Set Folder Access](#m1105), this is the record from 1105 as sent,
 with its current name. <!-- [O `captures/linux-folder-access-guest.pcapng`
@@ -200,11 +200,11 @@ sequenceDiagram
 
 The request is a folder access record:
 
-Struct `SetFolderAccess` (dynamic):
+Struct `SetFolderAccess` (dynamic):<a id="sSetFolderAccess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FolderAccess | `item` | `current_name` selects the item. |
+| 0x00 |  | [FolderAccess](#sFolderAccess) | `item` | `current_name` selects the item. |
 
 The current name (0xb1) selects the item. If the name is different, the server
 renames the item. If it succeeds, the reply is [1 Status](status.md#m1) 0x451.
@@ -231,7 +231,7 @@ sequenceDiagram
 
 The request is empty, or a u32 of flags:
 
-Struct `GetFolderAccessList` (dynamic):
+Struct `GetFolderAccessList` (dynamic):<a id="sGetFolderAccessList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -253,14 +253,14 @@ Initiator: Server. Reply to [1106 Get Folder Access List](#m1106).
 The payload is a u32 count, then one entry for each item, each padded to a
 multiple of 4:
 
-Struct `FolderAccessList` (dynamic):
+Struct `FolderAccessList` (dynamic):<a id="sFolderAccessList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `items_count` |  |
-| 0x04 | `items_count` | FolderAccessItem[] | `items` |  |
+| 0x04 | `items_count` | [FolderAccessItem](#sFolderAccessItem)[] | `items` |  |
 
-Struct `FolderAccessItem` (dynamic):
+Struct `FolderAccessItem` (dynamic):<a id="sFolderAccessItem"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

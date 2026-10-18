@@ -56,7 +56,7 @@ as typed. The server does not send Comments, Address, or the password. <!-- [O]
 --> Server 1.620 does not clear the padding: frame 255 is 86 bytes of header and
 strings, then `12 22`. <!-- [O] -->
 
-Struct `Registration` (dynamic):
+Struct `Registration` (dynamic):<a id="sRegistration"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

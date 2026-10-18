@@ -55,7 +55,7 @@ hello first. <!-- [S] -->
 The total length is `(name_len + pad_len + skipped_len + 0x27) & ~3`, and it
 must be at most 0x800. <!-- [S `FUN_080876e8`] -->
 
-Struct `Hello` (dynamic):
+Struct `Hello` (dynamic):<a id="sHello"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -88,7 +88,7 @@ a GConsole peer.
 
 ## PROOF
 
-Struct `Proof` (44 bytes):
+Struct `Proof` (44 bytes):<a id="sProof"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -316,7 +316,7 @@ hello, it sends its proof, and the server replies with one byte.
 The hello is sent in the clear. The total length is `skipped_len + name_len +
 0x63`, and it must be at most 0x800 (else 0x40075).
 
-Struct `Hello09x` (dynamic):
+Struct `Hello09x` (dynamic):<a id="sHello09x"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -351,7 +351,7 @@ end of this string.
 
 The client sends a proof of 20 bytes:
 
-Struct `Proof09x` (20 bytes):
+Struct `Proof09x` (20 bytes):<a id="sProof09x"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -360,7 +360,7 @@ Struct `Proof09x` (20 bytes):
 The key is the account's 32-byte key, which the server gets from its login
 callback. The server answers with one byte:
 
-Struct `ProofReply09x` (1 bytes):
+Struct `ProofReply09x` (1 bytes):<a id="sProofReply09x"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

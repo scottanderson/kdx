@@ -54,13 +54,13 @@ for each connection, and after each, one record for each file transfer of that
 user. There is no count, and each record is padded to a multiple of 4: <!-- [S
 `FUN_0804b9b0`] -->
 
-Struct `ConnectionMonitorInfo` (dynamic):
+Struct `ConnectionMonitorInfo` (dynamic):<a id="sConnectionMonitorInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | MonitoredConnection[] | `records` |  |
+| 0x00 | rest | [MonitoredConnection](#sMonitoredConnection)[] | `records` |  |
 
-Struct `MonitoredConnection` (dynamic):
+Struct `MonitoredConnection` (dynamic):<a id="sMonitoredConnection"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -88,7 +88,7 @@ Struct `MonitoredConnection` (dynamic):
 |  | `login_len` | str | `login` | `admin` <!-- [O] --> |
 |  | `account_len` | str | `account` | `Administrator`. <!-- [O] --> `?` if the class no longer exists. <!-- [S] --> |
 |  | `address_len` | str | `address` | `127.0.0.1:50984`. <!-- [O] --> The peer address of the connection, or of the transfer connection in a transfer record. <!-- [S] --> |
-|  | `path_len` | FilePath | `path` | Transfer record only. In a connection record, it is the root, as in the file messages. <!-- [S; O] --> |
+|  | `path_len` | [FilePath](../encodings.md#sFilePath) | `path` | Transfer record only. In a connection record, it is the root, as in the file messages. <!-- [S; O] --> |
 |  | pad4 | u8[] | `padding` | Padding to a multiple of 4. |
 
 The padding after the strings is uninitialized memory. <!-- [O] --> `kdx-proto`

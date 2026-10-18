@@ -16,15 +16,15 @@ Some handlers also send 1 Status when they succeed.
 Each form starts with two u32 words. The server's error form adds 16 more bytes,
 so the payload is 8 or 24 bytes.
 
-Struct `Status` (dynamic):
+Struct `Status` (dynamic):<a id="sStatus"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `code` | 0 in the success form. If not, an error code; see [Error codes](#error-codes). |
 | 0x04 | 4 | u32 | `request_type_or_value` | In an error, the request type, such as 0x98 for a failed [152 Get User Info](administration.md#m152). <!-- [O] --> In the success form, the value. |
-| 0x08 | rest | StatusDetail[] | `detail` | Only in the server's 24-byte error form, not in the success form or the tracker form. It holds at most one `StatusDetail`. |
+| 0x08 | rest | [StatusDetail](#sStatusDetail)[] | `detail` | Only in the server's 24-byte error form, not in the success form or the tracker form. It holds at most one `StatusDetail`. |
 
-Struct `StatusDetail` (16 bytes):
+Struct `StatusDetail` (16 bytes):<a id="sStatusDetail"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
