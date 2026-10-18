@@ -26,7 +26,7 @@ Chat](messages/chat.md#m213).
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
-| 0 | Override. It overrides the class lists of chats, and the limits on news and accounts. It is not in the client's list. | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
+| 0 | Override | [202 Join Chat](messages/chat.md#m202), [207 Send Chat Text](messages/chat.md#m207), [209 Set Chat Topic](messages/chat.md#m209), [400 Get File List](messages/files.md#m400), [508 Delete Account](messages/accounts.md#m508), [511 Set Account](messages/accounts.md#m511), [607 Get News Messages](messages/news.md#m607), [609 Get News Message](messages/news.md#m609), [611 Post News Message](messages/news.md#m611), [612 Delete News Message](messages/news.md#m612) |
 | 3 | Color Overrides Class | `FUN_08054900` account lookup |
 | 4 | Can Login | set in all lab classes |
 | 10 | Download | [412 Download File](messages/files.md#m412) |
@@ -77,6 +77,9 @@ Chat](messages/chat.md#m213).
 | 80 | View Processes | [800 Open Process Monitor](messages/processes.md#m800), [802 Get Process List](messages/processes.md#m802) |
 | 81 | Terminate Processes | [804 Exit/Terminate Process](messages/processes.md#m804) |
 | 82 | Launch Programs | [175 Upgrade Server Software](messages/administration.md#m175), [420 Launch File](messages/files.md#m420) |
+
+Override (bit 0) overrides the class lists of chats, and the limits on news
+and accounts. It is not in the client's list.
 
 All classes have bits 2 and 4 set (0x44&0x20 and 0x44&0x08). Bit 4 is Can Login,
 and bit 2 has no name in the client's table. <!-- [S] --> If the administrator
