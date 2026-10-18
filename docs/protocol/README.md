@@ -90,8 +90,9 @@ little-endian; see [udp.md](udp.md).
 inside one. A message with no payload says `No payload.` instead.
 
 A caption names each struct and gives its size: ``Struct `Name` (N bytes):`` for
-a fixed size, or ``Struct `Name` (dynamic):`` otherwise. Where `kdx-proto` has a
-type for the struct, the two names are the same. Each row of the table is one
+a fixed size, or ``Struct `Name` (dynamic):`` otherwise, each followed by the
+anchor `<a id="sName"></a>`. Where `kdx-proto` has a type for the struct, the
+two names are the same. Each row of the table is one
 field:
 
 - **Off** is the offset from the start of the struct, in hex. After the first
@@ -104,7 +105,8 @@ field:
   - The name of an earlier field that holds the length, in backticks. A `str`,
     a `u8[]`, or a single struct has a `<field>_len` that counts bytes. Any
     other array has a `<field>_count` that counts elements.
-- **Type** is a primitive or the name of a struct. `[N]` after it makes an array
+- **Type** is a primitive or the name of a struct. A struct name links to the
+  struct's caption, and the link covers the name only, not `[N]` or `[]`. `[N]` after it makes an array
   of N elements, as in `u8[12]`, and `[]` makes an array of variable size. `str`
   is text of variable size. `str[N]` is N strings, whose lengths are the N
   elements of an earlier `u8[N]` field, as in `groups_len`.
@@ -150,7 +152,7 @@ Bytes that `kdx-proto` does not keep as a field have one of these names:
 
 This example is a record with ignored and reserved bytes, a name, and padding:
 
-Struct `ExampleRecord` (dynamic):
+Struct `ExampleRecord` (dynamic):<a id="sExampleRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -320,7 +322,9 @@ shares the tag of its message's `Initiator:` line.
 - The last offset plus size of a fixed struct equals N in its caption. A struct
   with a row of variable size says `(dynamic)`, and a struct that says
   `(dynamic)` has one.
-- Each type name has a caption somewhere.
+- Each type name has a caption somewhere. A caption ends with an anchor
+  `<a id="sName"></a>`, and each struct name in a Type cell links to it, as in
+  `[FilePath](encodings.md#sFilePath)[]`. A primitive is never linked.
 - Each field name is unique in its table. If `kdx-proto` defines the struct,
   each Rust field is a field or is named in a Notes cell. Each field is a Rust
   field, a length, `ignored_NN`, `reserved_NN`, or `padding`, or its Notes say

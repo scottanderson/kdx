@@ -36,11 +36,11 @@ sequenceDiagram
     S->>C: 401 File List
 ```
 
-Struct `GetFileList` (dynamic):
+Struct `GetFileList` (dynamic):<a id="sGetFileList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FilePath | `path` | Empty for the root. |
+| 0x00 |  | [FilePath](../encodings.md#sFilePath) | `path` | Empty for the root. |
 
 The server replies with [401 File List](#m401).
 
@@ -54,14 +54,14 @@ Initiator: Server. Reply to [400 Get File List](#m400).
 A folder with no entries gets an empty reply. Otherwise, the reply is a u32
 count, then one entry for each item, each padded to a multiple of 4:
 
-Struct `FileList` (dynamic):
+Struct `FileList` (dynamic):<a id="sFileList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `entries_count` |  |
-| 0x04 | `entries_count` | FileListEntry[] | `entries` |  |
+| 0x04 | `entries_count` | [FileListEntry](#sFileListEntry)[] | `entries` |  |
 
-Struct `FileListEntry` (dynamic):
+Struct `FileListEntry` (dynamic):<a id="sFileListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -89,7 +89,7 @@ In `captures/kdx-cli.pcapng`, a 600000-byte `cli-big.bin` is listed with size
 ### <a id="m402"></a>402 Create Folder
 Initiator: Client. Privilege: Upload (11). <!-- [S `FUN_0804e0f8`; O `captures/linux-files.pcapng` frames 26 to 29] -->
 
-Struct `CreateFolder` (dynamic):
+Struct `CreateFolder` (dynamic):<a id="sCreateFolder"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -101,7 +101,7 @@ Struct `CreateFolder` (dynamic):
 | 0x18 | `name_len` | str | `name` | If empty, the last name in the path is the new folder. |
 |  | `access_len` | str | `access` | The tag, such as `DB`. Needs Modify Folder Access (28). |
 |  | `owner_len` | str | `owner` |  |
-|  | `path_len` | FilePath | `path` | The parent folder. |
+|  | `path_len` | [FilePath](../encodings.md#sFilePath) | `path` | The parent folder. |
 
 The strings come in the order name, access, owner, but the access length comes
 first. <!-- [S `FUN_0804e0f8`] -->
@@ -121,13 +121,13 @@ list of items in the source folder. Frame 95 holds `Uploads [UL]`, `Uploads
 [UL]`, and `upload2.txt`. If it succeeds, the reply is [1 Status](status.md#m1)
 0x193 (frame 98). It has the layout of [407 Move File/Folder](#m407).
 
-Struct `MoveItems` (dynamic):
+Struct `MoveItems` (dynamic):<a id="sMoveItems"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | DelimitedFilePath | `destination` | The folder that the items, or their aliases, go to. |
-|  |  | DelimitedFilePath | `source` | The folder that holds the items. |
-|  |  | DelimitedFilePath | `names` | The items' names, as a name list. An empty list is `00 00`. |
+| 0x00 |  | [DelimitedFilePath](../encodings.md#sDelimitedFilePath) | `destination` | The folder that the items, or their aliases, go to. |
+|  |  | [DelimitedFilePath](../encodings.md#sDelimitedFilePath) | `source` | The folder that holds the items. |
+|  |  | [DelimitedFilePath](../encodings.md#sDelimitedFilePath) | `names` | The items' names, as a name list. An empty list is `00 00`. |
 
 ### Unhandled requests
 
@@ -139,7 +139,7 @@ Info](#m411) do the same jobs. <!-- [S `FUN_0804fdac`] -->
 ### <a id="m404"></a>404 Delete File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
 
-Struct `DeleteFileFolder` (dynamic):
+Struct `DeleteFileFolder` (dynamic):<a id="sDeleteFileFolder"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -152,17 +152,17 @@ The request is a folder path, then a name list. Frame 241 holds the root, then
 `lab-folder`. Each item gets a history record. If it succeeds, the reply is [1
 Status](status.md#m1) 0x195 (frame 244).
 
-Struct `MoveToTrash` (dynamic):
+Struct `MoveToTrash` (dynamic):<a id="sMoveToTrash"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | DelimitedFilePath | `folder` | The folder that holds the items. |
-|  |  | DelimitedFilePath | `names` | The items' names, as a name list. An empty list is `00 00`. |
+| 0x00 |  | [DelimitedFilePath](../encodings.md#sDelimitedFilePath) | `folder` | The folder that holds the items. |
+|  |  | [DelimitedFilePath](../encodings.md#sDelimitedFilePath) | `names` | The items' names, as a name list. An empty list is `00 00`. |
 
 ### <a id="m406"></a>406 Rename File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
 
-Struct `RenameFileFolder` (dynamic):
+Struct `RenameFileFolder` (dynamic):<a id="sRenameFileFolder"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -177,16 +177,16 @@ list. Frame 76 moves `upload.txt` from `Uploads [UL]/lab-folder` to `Uploads
 `lab-folder` to the root. If it succeeds, the reply is [1 Status](status.md#m1)
 0x197 (frames 80, 131, and 210).
 
-Struct `MoveFileFolder` (dynamic):
+Struct `MoveFileFolder` (dynamic):<a id="sMoveFileFolder"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | MoveItems | `items` | See [403 Create Alias](#m403). |
+| 0x00 |  | [MoveItems](#sMoveItems) | `items` | See [403 Create Alias](#m403). |
 
 ### <a id="m408"></a>408 Copy File/Folder
 Initiator: Client. Unhandled; see [Unhandled requests](#unhandled-requests).
 
-Struct `CopyFileFolder` (dynamic):
+Struct `CopyFileFolder` (dynamic):<a id="sCopyFileFolder"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -195,11 +195,11 @@ Struct `CopyFileFolder` (dynamic):
 ### <a id="m409"></a>409 Get File/Folder Info
 Initiator: Client. <!-- [S `FUN_0804ef00`; O] -->
 
-Struct `GetFileFolderInfo` (dynamic):
+Struct `GetFileFolderInfo` (dynamic):<a id="sGetFileFolderInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FilePath | `path` |  |
+| 0x00 |  | [FilePath](../encodings.md#sFilePath) | `path` |  |
 
 The server replies with [410 File/Folder Info](#m410). If the path is a single
 name that is a volume, and the user can see all volumes, it replies with [422
@@ -212,7 +212,7 @@ Initiator: Server. Reply to [409 Get File/Folder Info](#m409).
 
 The reply is 82 bytes for `Uploads [UL]`:
 
-Struct `FileInfo` (dynamic):
+Struct `FileInfo` (dynamic):<a id="sFileInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -234,7 +234,7 @@ Struct `FileInfo` (dynamic):
 ### <a id="m411"></a>411 Set File/Folder Info
 Initiator: Client. <!-- [S `FUN_0804f684`; O `captures/linux-files.pcapng` frame 89] -->
 
-Struct `SetFileInfo` (dynamic):
+Struct `SetFileInfo` (dynamic):<a id="sSetFileInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -245,7 +245,7 @@ Struct `SetFileInfo` (dynamic):
 | 0x30 | 1 | u8 | `ignored_30` | 0 as sent. |
 | 0x31 | 1 | u8 | `name_len` |  |
 | 0x32 | 2 | u8[2] | `ignored_32` | Other lengths. 0 from the client. |
-| 0x34 | `path_len` | FilePath | `path` | Frame 89 renames `Uploads [UL]/upload.txt` to `upload2.txt`. |
+| 0x34 | `path_len` | [FilePath](../encodings.md#sFilePath) | `path` | Frame 89 renames `Uploads [UL]/upload.txt` to `upload2.txt`. |
 |  | `name_len` | str | `name` |  |
 
 Without Modify Folder Access (28), a new name must keep the folder's ` [tag]`
@@ -259,7 +259,7 @@ Downloads and uploads use their own connection; see
 Initiator: Client, on a transfer connection. Privilege: Download (10).
 <!-- [S `FUN_08050984`, `FUN_080512b4`; O] -->
 
-Struct `DownloadFile` (dynamic):
+Struct `DownloadFile` (dynamic):<a id="sDownloadFile"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -267,7 +267,7 @@ Struct `DownloadFile` (dynamic):
 | 0x08 | 8 | u64 | `rsrc_offset` |  |
 | 0x10 | 7 | u8[7] | `ignored` |  |
 | 0x17 | 1 | u8 | `options` | Bit 0: plain (unencrypted) transfer. |
-| 0x18 |  | FilePath | `path` |  |
+| 0x18 |  | [FilePath](../encodings.md#sFilePath) | `path` |  |
 
 The payload must be at least 0x1a bytes. The server rounds each offset down to a
 multiple of 0x1000. An offset at or past the end still gets its [414 Download
@@ -304,7 +304,7 @@ Download](administration.md#m188) history record.
 ### <a id="m413"></a>413 Download File (R)
 Initiator: Server. Reply to [412 Download File](#m412).
 
-Struct `FileStrings` (dynamic):
+Struct `FileStrings` (dynamic):<a id="sFileStrings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -319,7 +319,7 @@ Struct `FileStrings` (dynamic):
 
 The reply is 99 bytes for a plain Linux file:
 
-Struct `DownloadInfo` (dynamic):
+Struct `DownloadInfo` (dynamic):<a id="sDownloadInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -331,13 +331,13 @@ Struct `DownloadInfo` (dynamic):
 | 0x28 | 8 | u8[8] | `ignored_28` | 0 |
 | 0x30 | 4 | u32 | `ignored_30` | 1 |
 | 0x34 | 20 | u8[20] | `ignored_34` | 0 as sent. |
-| 0x48 |  | FileStrings | `strings` | The name and its three strings. |
+| 0x48 |  | [FileStrings](#sFileStrings) | `strings` | The name and its three strings. |
 
 ### <a id="m414"></a>414 Download File (D)
 Initiator: Server. The data for [412 Download File](#m412), sent after
 [413 Download File (R)](#m413), once for each fork.
 
-Struct `FileData` (dynamic):
+Struct `FileData` (dynamic):<a id="sFileData"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -355,7 +355,7 @@ grow to 0x80000. With a speed limit, the chunks are multiples of 0x1000.
 Initiator: Client, on a transfer connection. Privilege: Upload (11).
 <!-- [S `FUN_08051750`, `FUN_08051dec`; O] -->
 
-Struct `UploadFile` (dynamic):
+Struct `UploadFile` (dynamic):<a id="sUploadFile"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -366,8 +366,8 @@ Struct `UploadFile` (dynamic):
 | 0x18 | 24 | u8[24] | `ignored_18` | Probably times, as at the same offsets of [413](#m413). <!-- [I] --> |
 | 0x30 | 22 | u8[22] | `ignored_30` |  |
 | 0x46 | 2 | u16 | `folder_len` |  |
-| 0x48 |  | FileStrings | `strings` | The name must not be empty. |
-|  | `folder_len` | FilePath | `folder` | The destination folder. |
+| 0x48 |  | [FileStrings](#sFileStrings) | `strings` | The name must not be empty. |
+|  | `folder_len` | [FilePath](../encodings.md#sFilePath) | `folder` | The destination folder. |
 |  | rest | u8[] | `rest` | Any bytes after the folder path. |
 
 The server writes to a temporary name until the upload is complete. If the name
@@ -393,7 +393,7 @@ Initiator: Server. Reply to [415 Upload File](#m415).
 
 The reply is 24 bytes:
 
-Struct `UploadReply` (24 bytes):
+Struct `UploadReply` (24 bytes):<a id="sUploadReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -405,11 +405,11 @@ Struct `UploadReply` (24 bytes):
 Initiator: Client. The data for [415 Upload File](#m415), sent after
 [416 Upload File (R)](#m416), once for each fork.
 
-Struct `UploadFileData` (dynamic):
+Struct `UploadFileData` (dynamic):<a id="sUploadFileData"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | FileData | `data` | See [414 Download File (D)](#m414). |
+| 0x00 |  | [FileData](#sFileData) | `data` | See [414 Download File (D)](#m414). |
 
 300000 bytes sent under one 417 Upload File (D) header arrived byte for byte
 (`captures/kdx-cli.pcapng` frame 244). <!-- [O] -->
@@ -428,7 +428,7 @@ complete. <!-- [O `captures/linux-files.pcapng` frame 51] --> In that capture,
 ### <a id="m419"></a>419 Notify Speed Limit
 Initiator: Server. <!-- [O] -->
 
-Struct `NotifySpeedLimit` (4 bytes):
+Struct `NotifySpeedLimit` (4 bytes):<a id="sNotifySpeedLimit"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -445,12 +445,12 @@ second set in the server settings, and came right after the [413 Download File
 ### <a id="m420"></a>420 Launch File
 Initiator: Client. Privilege: Launch Programs (82). <!-- [S `FUN_0804fa90`, client `FUN_0807455c`; O `captures/linux-catalog-volumes.pcapng` frames 31 to 32] -->
 
-Struct `LaunchFile` (dynamic):
+Struct `LaunchFile` (dynamic):<a id="sLaunchFile"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 8 | u8[8] | `ignored` | 0 as sent. |
-| 0x08 |  | FilePath | `path` | The payload is at least 9 bytes. |
+| 0x08 |  | [FilePath](../encodings.md#sFilePath) | `path` | The payload is at least 9 bytes. |
 
 If it succeeds, the reply is [1 Status](status.md#m1) 0x1a4, and the server runs
 the file. Frames 31 and 32 of `captures/linux-catalog-volumes.pcapng` launch
@@ -473,7 +473,7 @@ frames 50 to 51] -->
 
 The reply is not padded. It is 93 bytes at frame 51:
 
-Struct `VolumeInfo` (dynamic):
+Struct `VolumeInfo` (dynamic):<a id="sVolumeInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -521,7 +521,7 @@ the comments. In the flags at 0x44, bit 0 renames the volume, and bit 1 sets the
 comments. The client sets a bit only for a field that the user edited, and sends
 nothing if the user edited neither. <!-- [S client `FUN_08074420`] -->
 
-Struct `SetVolumeInfo` (dynamic):
+Struct `SetVolumeInfo` (dynamic):<a id="sSetVolumeInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -560,7 +560,7 @@ Initiator: Client. Privilege: Modify Server Settings (61). <!-- [S `FUN_0805a728
 The request is empty, or a u32 of flags. Bit 0 cancels a running catalog, and
 only the user who started it can cancel it.
 
-Struct `GenerateCatalog` (4 bytes):
+Struct `GenerateCatalog` (4 bytes):<a id="sGenerateCatalog"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -577,7 +577,7 @@ Initiator: Server. Progress for [450 Generate Catalog](#m450).
 The server sends this to the user who started the catalog, at most every 2000
 ms, and a final one when it is done:
 
-Struct `CatalogStatus` (8 bytes):
+Struct `CatalogStatus` (8 bytes):<a id="sCatalogStatus"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -605,7 +605,7 @@ sequenceDiagram
 The request is at least 0x58 bytes. Byte 0x54 is the query length, which must be
 at least 3; the client checks this too. The query starts at 0x58.
 
-Struct `FileSearch` (dynamic):
+Struct `FileSearch` (dynamic):<a id="sFileSearch"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -624,14 +624,14 @@ Initiator: Server. Reply to [452 File Search](#m452).
 The reply is a u32 count and at most 100 entries, each padded to a multiple of
 4:
 
-Struct `FileSearchReply` (dynamic):
+Struct `FileSearchReply` (dynamic):<a id="sFileSearchReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `entries_count` |  |
-| 0x04 | `entries_count` | FileSearchEntry[] | `entries` |  |
+| 0x04 | `entries_count` | [FileSearchEntry](#sFileSearchEntry)[] | `entries` |  |
 
-Struct `FileSearchEntry` (dynamic):
+Struct `FileSearchEntry` (dynamic):<a id="sFileSearchEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -649,7 +649,7 @@ Struct `FileSearchEntry` (dynamic):
 | 0x36 | 1 | u8 | `name_len` |  |
 | 0x37 | 1 | u8 | `ignored_37` |  |
 | 0x38 | `name_len` | str | `name` |  |
-|  | `path_len` | FilePath | `path` | The item's full file path, root first. |
+|  | `path_len` | [FilePath](../encodings.md#sFilePath) | `path` | The item's full file path, root first. |
 |  | pad4 | u8[] | `padding` |  |
 
 The server leaves out the items that the user cannot see through folder access.

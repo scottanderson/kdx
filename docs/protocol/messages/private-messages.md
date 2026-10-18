@@ -9,7 +9,7 @@ see [dcc.md](../dcc.md#primary-connection).
 ## <a id="m300"></a>300 Send Private Message
 Initiator: Client. Privilege: Send Messages (32). <!-- [S `FUN_0804d2d0`; O] -->
 
-Struct `PrivateMessage` (dynamic):
+Struct `PrivateMessage` (dynamic):<a id="sPrivateMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -26,8 +26,8 @@ Initiator: Server. Forwarded from [300 Send Private Message](#m300).
 The server sends the layout of 300 on to the target, with the sender's ID in
 place of the target's.
 
-Struct `IncomingPrivateMessage` (dynamic):
+Struct `IncomingPrivateMessage` (dynamic):<a id="sIncomingPrivateMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | PrivateMessage | `message` | `user_id` is the sender's. |
+| 0x00 |  | [PrivateMessage](#sPrivateMessage) | `message` | `user_id` is the sender's. |

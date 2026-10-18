@@ -20,7 +20,7 @@ Initiator: GConsole peer. <!-- [S `FUN_08094be8`] -->
 The payload is at least 0x18 bytes. If the peer sends more, the payload is
 longer than the struct.
 
-Struct `OpenWindow` (24 bytes):
+Struct `OpenWindow` (24 bytes):<a id="sOpenWindow"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -42,13 +42,13 @@ The payload is a stream of draw records. Each record starts with a u32: the top
 starts at the length plus 4, rounded up to a multiple of 4. Frame 14 holds 21
 records. <!-- [O] -->
 
-Struct `Draw` (dynamic):
+Struct `Draw` (dynamic):<a id="sDraw"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | DrawRecord[] | `records` | Rust `padding`: the padding after each record. |
+| 0x00 | rest | [DrawRecord](#sDrawRecord)[] | `records` | Rust `padding`: the padding after each record. |
 
-Struct `DrawRecord` (dynamic):
+Struct `DrawRecord` (dynamic):<a id="sDrawRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -88,7 +88,7 @@ to 30] a drag -->
 
 Initiator: Client, to the GConsole peer. <!-- [S `FUN_0809607c`] -->
 
-Struct `Key` (16 bytes):
+Struct `Key` (16 bytes):<a id="sKey"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -109,7 +109,7 @@ opened the client's window menu, and did not go to the peer.
 
 Initiator: Client, to the GConsole peer. <!-- [S `FUN_08096188`] -->
 
-Struct `Mouse` (16 bytes):
+Struct `Mouse` (16 bytes):<a id="sMouse"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

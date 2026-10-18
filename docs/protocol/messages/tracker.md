@@ -38,14 +38,14 @@ This is the reply to [700 Get Tracker Group List](#m700). A new Tracker 1.110
 has eight groups, all with no description: Business, Chat, Education, Games,
 General, Macintosh, Trackers, and Windows. <!-- [O] -->
 
-Struct `TrackerGroupList` (dynamic):
+Struct `TrackerGroupList` (dynamic):<a id="sTrackerGroupList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `groups_count` |  |
-| 0x04 | `groups_count` | GroupListEntry[] | `groups` |  |
+| 0x04 | `groups_count` | [GroupListEntry](#sGroupListEntry)[] | `groups` |  |
 
-Struct `GroupListEntry` (dynamic):
+Struct `GroupListEntry` (dynamic):<a id="sGroupListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -72,7 +72,7 @@ sequenceDiagram
     T->>C: 703 Tracker Server List
 ```
 
-Struct `GetServerList` (dynamic):
+Struct `GetServerList` (dynamic):<a id="sGetServerList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -93,17 +93,17 @@ Initiator: Tracker.
 This is the reply to [702 Get Tracker Server List](#m702). The payload is empty
 for an empty group.
 
-Struct `TrackerServerList` (dynamic):
+Struct `TrackerServerList` (dynamic):<a id="sTrackerServerList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `servers_count` |  |
-| 0x04 | `servers_count` | ServerListEntry[] | `servers` | The client rejects more than 0xffff. |
+| 0x04 | `servers_count` | [ServerListEntry](#sServerListEntry)[] | `servers` | The client rejects more than 0xffff. |
 
 Each server record is padded to a multiple of 4: <!-- [S tracker `FUN_0804adcc`,
 client `FUN_08068da0`] -->
 
-Struct `ServerListEntry` (dynamic):
+Struct `ServerListEntry` (dynamic):<a id="sServerListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -137,7 +137,7 @@ in its file format, without the secrets. [712 Set TrackerServ Settings](#m712)
 uses the same format: a header, then up to twelve sections. Entry n of
 `sections` and byte n of `present` describe section n.
 
-Struct `TrackerSettings` (dynamic):
+Struct `TrackerSettings` (dynamic):<a id="sTrackerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -145,11 +145,11 @@ Struct `TrackerSettings` (dynamic):
 | 0x04 | 4 | char[4] | `sub_protocol` | not stored. `"TSTG"` (0x54535447). <!-- [S `FUN_0804d63c`] --> |
 | 0x08 | 2 | u16 | `version` | Must be 1. <!-- [S `FUN_0804d63c`] --> |
 | 0x0a | 2 | u8[2] | `ignored` | The parser never reads them. <!-- [S `FUN_0804d63c`] --> |
-| 0x0c | 96 | TrackerSettingsSection[12] | `sections` | Where each section is. Rust `sections` holds the bytes that each entry points to. |
+| 0x0c | 96 | [TrackerSettingsSection](#sTrackerSettingsSection)[12] | `sections` | Where each section is. Rust `sections` holds the bytes that each entry points to. |
 | 0x6c | 12 | u8[12] | `present` | The parser reads a section only when its byte is exactly 1. <!-- [S `FUN_0804d63c`] --> |
 | 0x78 | rest | u8[] | `section_data` | Rust `sections`. The sections that the entries point to, back to back, in the order below. |
 
-Struct `TrackerSettingsSection` (8 bytes):
+Struct `TrackerSettingsSection` (8 bytes):<a id="sTrackerSettingsSection"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -187,7 +187,7 @@ The offsets in the layouts below are from the start of the section.
 
 ### General settings
 
-Struct `GeneralSettings` (dynamic):
+Struct `GeneralSettings` (dynamic):<a id="sGeneralSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -219,7 +219,7 @@ The section is a run of entries. It is not verified whether each one is padded
 to a multiple of 4. <!-- [I] --> The strings are the same as in the server's
 tracker entry.
 
-Struct `UpstreamTracker` (dynamic):
+Struct `UpstreamTracker` (dynamic):<a id="sUpstreamTracker"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -256,7 +256,7 @@ The section is a run of group records. A record is 0x1c bytes plus the strings,
 padded to a multiple of 4. <!-- [O frame 80] --> The parser steps over the
 records by the four lengths at 0x18 to 0x1b. <!-- [S] -->
 
-Struct `SettingsGroup` (dynamic):
+Struct `SettingsGroup` (dynamic):<a id="sSettingsGroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -282,7 +282,7 @@ are missing.
 
 ### Admin
 
-Struct `AdminSettings` (dynamic):
+Struct `AdminSettings` (dynamic):<a id="sAdminSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -327,11 +327,11 @@ sequenceDiagram
 
 Initiator: Tracker. <!-- [S `FUN_0804cb90`, `FUN_0804cd88`; O frame 80] -->
 
-Struct `TrackerSettingsInfo` (dynamic):
+Struct `TrackerSettingsInfo` (dynamic):<a id="sTrackerSettingsInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | TrackerSettings | `settings` | See [710 Get TrackerServ Settings](#m710). |
+| 0x00 |  | [TrackerSettings](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 This is the reply to [710 Get TrackerServ Settings](#m710), in the format that
 710 describes. The tracker sets every present byte, and sends the limits and the
@@ -350,11 +350,11 @@ the limits and the server ID. <!-- [S `FUN_0806b1b0`] -->
 
 Initiator: Client.
 
-Struct `SetTrackerSettings` (dynamic):
+Struct `SetTrackerSettings` (dynamic):<a id="sSetTrackerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | TrackerSettings | `settings` | See [710 Get TrackerServ Settings](#m710). |
+| 0x00 |  | [TrackerSettings](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 The payload has the format of [711 TrackerServ Settings Info](#m711), which [710
 Get TrackerServ Settings](#m710) describes. `FUN_0804d63c` parses it. <!-- [S]
@@ -422,7 +422,7 @@ Initiator: Tracker. It matches the client's Tracker Stats window.
 
 This is the reply to [720 Get TrackerServ Statistics](#m720). It is 0x38 bytes:
 
-Struct `TrackerStats` (56 bytes):
+Struct `TrackerStats` (56 bytes):<a id="sTrackerStats"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

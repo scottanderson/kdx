@@ -41,7 +41,7 @@ sequenceDiagram
     S->>C: 1 Status (success)
 ```
 
-Struct `ChatId` (4 bytes):
+Struct `ChatId` (4 bytes):<a id="sChatId"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -76,7 +76,7 @@ sequenceDiagram
     S-->>O: 205 Chat User Joined
 ```
 
-Struct `JoinChat` (8 bytes):
+Struct `JoinChat` (8 bytes):<a id="sJoinChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -96,7 +96,7 @@ topic setter. <!-- [S server `FUN_08058710`, client `FUN_08082b90`] --> In every
 capture, the IRC lengths are 0 and the byte at 0x20 is the name's length, so no
 capture shows the order of the strings. <!-- [O] -->
 
-Struct `ChatWindowInfo` (dynamic):
+Struct `ChatWindowInfo` (dynamic):<a id="sChatWindowInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -142,11 +142,11 @@ sequenceDiagram
     S-->>O: 206 Chat User Departed
 ```
 
-Struct `LeaveChat` (4 bytes):
+Struct `LeaveChat` (4 bytes):<a id="sLeaveChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | ChatId | `chat` |  |
+| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
 
 The other members receive [206 Chat User Departed](#m206). The server deletes a
 private chat when it becomes empty. `ChatId` in `kdx_proto::msg::chat`
@@ -157,7 +157,7 @@ re-encodes 204 Leave Chat byte for byte (tests `linux_chat_rooms` and
 Initiator: Server. The server sends this to the other members after
 [202 Join Chat](#m202).
 
-Struct `ChatUserChange` (12 bytes):
+Struct `ChatUserChange` (12 bytes):<a id="sChatUserChange"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -175,11 +175,11 @@ In 205, the last four bytes are 0 (`captures/kdx-cli.pcapng` frame 417,
 Initiator: Server. The server sends this to the other members after
 [204 Leave Chat](#m204).
 
-Struct `ChatUserDeparted` (12 bytes):
+Struct `ChatUserDeparted` (12 bytes):<a id="sChatUserDeparted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 12 | ChatUserChange | `change` | The byte at 0x08 is 1, and 3 zero bytes follow. |
+| 0x00 | 12 | [ChatUserChange](#sChatUserChange) | `change` | The byte at 0x08 is 1, and 3 zero bytes follow. |
 
 The payload is a u32 chat ID, a u32 user ID, a byte 1, and 3 zero bytes
 (`captures/kdx-cli.pcapng` frame 424). <!-- [O] --> The meaning of the 1 is
@@ -204,7 +204,7 @@ sequenceDiagram
     S-->>O: 208 Receive Chat Text
 ```
 
-Struct `ChatText` (dynamic):
+Struct `ChatText` (dynamic):<a id="sChatText"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -220,11 +220,11 @@ Initiator: Server. Forwarded from [207 Send Chat Text](#m207).
 
 The server forwards the 207 layout to every member, the sender too.
 
-Struct `ReceiveChatText` (dynamic):
+Struct `ReceiveChatText` (dynamic):<a id="sReceiveChatText"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ChatText | `text` | `user_id` is the sender's. |
+| 0x00 |  | [ChatText](#sChatText) | `text` | `user_id` is the sender's. |
 
 ## <a id="m209"></a>209 Set Chat Topic
 Initiator: Client. Privilege: Set Chat Topic (35) and the chat's topic
@@ -243,7 +243,7 @@ sequenceDiagram
     S-->>O: 210 Chat Topic Changed
 ```
 
-Struct `SetChatTopic` (dynamic):
+Struct `SetChatTopic` (dynamic):<a id="sSetChatTopic"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -264,7 +264,7 @@ The members receive [210 Chat Topic Changed](#m210).
 Initiator: Server. The server sends this to the members after
 [209 Set Chat Topic](#m209).
 
-Struct `ChatTopicChanged` (dynamic):
+Struct `ChatTopicChanged` (dynamic):<a id="sChatTopicChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -293,7 +293,7 @@ sequenceDiagram
     S-->>O: 212 Chat Invitation
 ```
 
-Struct `ChatInvite` (dynamic):
+Struct `ChatInvite` (dynamic):<a id="sChatInvite"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -317,7 +317,7 @@ Initiator: Server. The server sends this to each invitee of
 
 The payload is not padded: <!-- [O] -->
 
-Struct `ChatInvitation` (dynamic):
+Struct `ChatInvitation` (dynamic):<a id="sChatInvitation"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -394,14 +394,14 @@ Initiator: Server. Reply to [214 Get Chat List](#m214).
 The payload is a u32 count, then one entry for each chat, each padded to a
 multiple of 4:
 
-Struct `ChatList` (dynamic):
+Struct `ChatList` (dynamic):<a id="sChatList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `chats_count` |  |
-| 0x04 | `chats_count` | ChatListEntry[] | `chats` |  |
+| 0x04 | `chats_count` | [ChatListEntry](#sChatListEntry)[] | `chats` |  |
 
-Struct `ChatListEntry` (dynamic):
+Struct `ChatListEntry` (dynamic):<a id="sChatListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -428,11 +428,11 @@ The reply has the layout of [203 Chat Window Info](#m203), with the creator as
 the only member. <!-- [O] --> The flags are 0 at frame 85, and the name is like
 `Private 1`.
 
-Struct `CreatePrivateChatReply` (dynamic):
+Struct `CreatePrivateChatReply` (dynamic):<a id="sCreatePrivateChatReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ChatWindowInfo | `info` | One member, the creator. |
+| 0x00 |  | [ChatWindowInfo](#sChatWindowInfo) | `info` | One member, the creator. |
 
 The 49-byte reply at frame 85 holds time 0, chat ID 0xb06d05e6, key 0x4ca93520,
 1 member, user 2, and `Private 1`. <!-- [O] --> The u32 at 0x24 is the member
@@ -467,11 +467,11 @@ private chats. 217 and 220 get [1 Status](status.md#m1) success.
 The chat record is not padded. It is `ChatRecord` in
 [encodings.md](../encodings.md#chat-record).
 
-Struct `CreateChat` (dynamic):
+Struct `CreateChat` (dynamic):<a id="sCreateChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ChatRecord | `chat` | `chat_id` is 0. |
+| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` | `chat_id` is 0. |
 
 In `captures/linux-chat-rooms.pcapng`: <!-- [O] -->
 
@@ -492,11 +492,11 @@ List](accounts.md#m505) before it opens the new-chat window (frame 39). 217 gets
 ## <a id="m218"></a>218 Get Chat
 Initiator: Client. <!-- [S `FUN_08059be8`; O] -->
 
-Struct `GetChat` (4 bytes):
+Struct `GetChat` (4 bytes):<a id="sGetChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | ChatId | `chat` |  |
+| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
 
 The request is the chat ID alone (frames 49, 59, and 136). The server replies
 with [219 Chat Info](#m219). [217 Create Chat](#m217) has the captures.
@@ -506,11 +506,11 @@ Initiator: Server. Reply to [218 Get Chat](#m218).
 
 The payload is a chat record; see [217 Create Chat](#m217).
 
-Struct `ChatInfo` (dynamic):
+Struct `ChatInfo` (dynamic):<a id="sChatInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ChatRecord | `chat` |  |
+| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` |  |
 
 ## <a id="m220"></a>220 Set Chat
 Initiator: Client. Privilege: Create/Modify Chats (37). <!-- [S `FUN_08059e24`] -->
@@ -518,17 +518,17 @@ Initiator: Client. Privilege: Create/Modify Chats (37). <!-- [S `FUN_08059e24`] 
 The request holds a chat record. The server refuses private chats. [217 Create
 Chat](#m217) has the record, the captures, and the status code.
 
-Struct `SetChat` (dynamic):
+Struct `SetChat` (dynamic):<a id="sSetChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ChatRecord | `chat` |  |
+| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` |  |
 
 ## <a id="m221"></a>221 Chat Deleted
 Initiator: Server. The server sends this to every member after
 [201 Delete Chat](#m201).
 
-Struct `ChatDeleted` (8 bytes):
+Struct `ChatDeleted` (8 bytes):<a id="sChatDeleted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -554,11 +554,11 @@ sequenceDiagram
     S->>C: 223 Chat DCC Addresses
 ```
 
-Struct `GetChatDccAddresses` (4 bytes):
+Struct `GetChatDccAddresses` (4 bytes):<a id="sGetChatDccAddresses"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | ChatId | `chat` |  |
+| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
 
 The chat must have the voice flag (bit 1), and the sender must be a member. If
 not, the reply is [1 Status](status.md#m1) 0x10014. An unknown chat gets
@@ -577,13 +577,13 @@ Initiator: Server. Reply to [222 Get Chat DCC Addresses](#m222).
 The reply has one entry for each other member whose user record has a DCC port
 (0x0a) that is not 0. Each entry is padded to a multiple of 4: <!-- [S] -->
 
-Struct `ChatDccAddresses` (dynamic):
+Struct `ChatDccAddresses` (dynamic):<a id="sChatDccAddresses"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | DccAddress[] | `addresses` |  |
+| 0x00 | rest | [DccAddress](#sDccAddress)[] | `addresses` |  |
 
-Struct `DccAddress` (dynamic):
+Struct `DccAddress` (dynamic):<a id="sDccAddress"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

@@ -12,11 +12,11 @@ This is the client's first message after the handshake. The client sends it
 again each time the user changes nick, icon, or info. The payload is a user
 record with user ID 0.
 
-Struct `SetIdentity` (dynamic):
+Struct `SetIdentity` (dynamic):<a id="sSetIdentity"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | UserRecord | `user` | `user_id` is 0. |
+| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` | `user_id` is 0. |
 
 - The nick takes effect only with the Use Any Name privilege. Without it, the
   server uses the account name. The server logs changes as `Set Name: <…> (…)`.
@@ -43,11 +43,11 @@ Initiator: Server. <!-- [S `FUN_0804af04`; O] -->
 The payload is a series of user records, one for each user who is logged in.
 After a login, it holds all of them.
 
-Struct `UserList` (dynamic):
+Struct `UserList` (dynamic):<a id="sUserList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | UserRecord[] | `users` | Each is padded to a multiple of 4. |
+| 0x00 | rest | [UserRecord](../encodings.md#sUserRecord)[] | `users` | Each is padded to a multiple of 4. |
 
 ## <a id="m102"></a>102 User Changed
 Initiator: Server. <!-- [S; O] -->
@@ -55,11 +55,11 @@ Initiator: Server. <!-- [S; O] -->
 The server sends this to all users when a user sends a later [100 Set
 Identity](#m100). The payload is one user record.
 
-Struct `UserChanged` (dynamic):
+Struct `UserChanged` (dynamic):<a id="sUserChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | UserRecord | `user` |  |
+| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` |  |
 
 ## <a id="m103"></a>103 User Joined
 Initiator: Server. <!-- [S; O] -->
@@ -67,16 +67,16 @@ Initiator: Server. <!-- [S; O] -->
 The server sends this to all other users after a user's first [100 Set
 Identity](#m100). The payload is one user record.
 
-Struct `UserJoined` (dynamic):
+Struct `UserJoined` (dynamic):<a id="sUserJoined"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | UserRecord | `user` |  |
+| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` |  |
 
 ## <a id="m104"></a>104 User Departed
 Initiator: Server. <!-- [O `captures/kdx-cli.pcapng` frames 398, 429; O `captures/linux-chat-admin.pcapng` frames 59, 116] -->
 
-Struct `UserDeparted` (8 bytes):
+Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -90,7 +90,7 @@ Struct `UserDeparted` (8 bytes):
 ## <a id="m105"></a>105 Server Info
 Initiator: Server. 86 bytes as seen. <!-- [S `FUN_0804b304`; O] -->
 
-Struct `ServerInfo` (dynamic):
+Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -121,7 +121,7 @@ the settings blob; see [171 Server Settings Info](administration.md#m171). For a
 221. <!-- [O `captures/linux-server-settings.pcapng` frames 83, 221] -->
 `kdx_proto::msg::server_info::ServerIcon` holds the bytes.
 
-Struct `ServerIcon` (dynamic):
+Struct `ServerIcon` (dynamic):<a id="sServerIcon"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -130,7 +130,7 @@ Struct `ServerIcon` (dynamic):
 ## <a id="m107"></a>107 Server Greeting
 Initiator: Server. <!-- [S `FUN_0804b738`; O] -->
 
-Struct `ServerGreeting` (dynamic):
+Struct `ServerGreeting` (dynamic):<a id="sServerGreeting"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -183,7 +183,7 @@ sequenceDiagram
     S-->>O: 111 Mini User Icon Changed
 ```
 
-Struct `MiniUserIcon` (4 bytes):
+Struct `MiniUserIcon` (4 bytes):<a id="sMiniUserIcon"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -198,12 +198,12 @@ Initiator: Server.
 When a [110 Set Mini User Icon](#m110) changes the value, the server sends this
 to all users, the sender too:
 
-Struct `MiniUserIconChanged` (8 bytes):
+Struct `MiniUserIconChanged` (8 bytes):<a id="sMiniUserIconChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `user_id` |  |
-| 0x04 | 4 | MiniUserIcon | `icon` | The payload of 110. |
+| 0x04 | 4 | [MiniUserIcon](#sMiniUserIcon) | `icon` | The payload of 110. |
 
 For user 3, `/away` sent `01 00 00 00`, and the peer got `00 00 00 03 01 00 00
 00`. <!-- [O `captures/linux-server-settings.pcapng` frames 210, 211, 213] -->
@@ -237,7 +237,7 @@ No payload.
 ## <a id="m114"></a>114 Extra Server Info
 Initiator: Server. Reply to [113 Get Extra Server Info](#m113). <!-- [S `FUN_080619d8`; O] -->
 
-Struct `ExtraServerInfo` (dynamic):
+Struct `ExtraServerInfo` (dynamic):<a id="sExtraServerInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -273,7 +273,7 @@ Initiator: Server. Reply to [115 Get My Address](#m115). <!-- [S; O] -->
 The payload is the client's address as the server sees it, as a u8 length and
 then `"a.b.c.d:port"`.
 
-Struct `YourAddress` (dynamic):
+Struct `YourAddress` (dynamic):<a id="sYourAddress"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -283,7 +283,7 @@ Struct `YourAddress` (dynamic):
 ## <a id="m117"></a>117 SKPK
 Initiator: Client, to a client. <!-- [S `FUN_0808eefc`, `FUN_0808ff64`] -->
 
-Struct `Skpk` (48 bytes):
+Struct `Skpk` (48 bytes):<a id="sSkpk"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -300,7 +300,7 @@ connection IDs 2 and 4. <!-- [O `captures/linux-dcc-voice-failed.pcapng`] -->
 ## <a id="m118"></a>118 (unnamed)
 Initiator: Client. The dispatcher handles it itself. <!-- [S `FUN_0804fdac`; O `captures/probe.pcapng` frame 165] -->
 
-Struct `RegistrationNotice` (4 bytes):
+Struct `RegistrationNotice` (4 bytes):<a id="sRegistrationNotice"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

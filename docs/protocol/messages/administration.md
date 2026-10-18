@@ -23,7 +23,7 @@ sequenceDiagram
     S-->>O: 151 Disconnect Message
 ```
 
-Struct `DisconnectUser` (dynamic):
+Struct `DisconnectUser` (dynamic):<a id="sDisconnectUser"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -52,7 +52,7 @@ The server sends this to the target of [150 Disconnect User](#m150), and
 broadcasts it for [174 Shutdown Server](#m174) and [175 Upgrade Server
 Software](#m175):
 
-Struct `DisconnectMessage` (dynamic):
+Struct `DisconnectMessage` (dynamic):<a id="sDisconnectMessage"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -85,7 +85,7 @@ sequenceDiagram
     S->>C: 153 User Info
 ```
 
-Struct `GetUserInfo` (4 bytes):
+Struct `GetUserInfo` (4 bytes):<a id="sGetUserInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -101,7 +101,7 @@ Initiator: Server. <!-- [S `FUN_0804c8a8`; O] -->
 This is the reply to [152 Get User Info](#m152), padded to a multiple of 4. It
 is 120 bytes when the prober asks about itself.
 
-Struct `UserInfo` (dynamic):
+Struct `UserInfo` (dynamic):<a id="sUserInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -142,7 +142,7 @@ sequenceDiagram
     S-->>O: 155 Rcv Broadcast Message
 ```
 
-Struct `SendBroadcast` (dynamic):
+Struct `SendBroadcast` (dynamic):<a id="sSendBroadcast"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -159,7 +159,7 @@ Initiator: Server.
 
 The server sends this to everyone for a [154 Send Broadcast Message](#m154):
 
-Struct `RcvBroadcast` (dynamic):
+Struct `RcvBroadcast` (dynamic):<a id="sRcvBroadcast"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -192,7 +192,7 @@ server compares the protocol and the sub-protocol as two separate words. <!-- [S
 This is the layout in `captures/linux-server-settings.pcapng` frames 36, 40, 56,
 221, and 225: <!-- [O] -->
 
-Struct `ServerSettings` (dynamic):
+Struct `ServerSettings` (dynamic):<a id="sServerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -200,11 +200,11 @@ Struct `ServerSettings` (dynamic):
 | 0x04 | 4 | char[4] | `sub_protocol` | not stored. `"SSTG"` (0x53535447). <!-- [S `FUN_08060268`] --> |
 | 0x08 | 2 | u16 | `version` | 1 |
 | 0x0a | 2 | u8[2] | `ignored` |  |
-| 0x0c | 88 | ServerSettingsSection[11] | `sections` | Probably 11 entries. <!-- [I] --> |
+| 0x0c | 88 | [ServerSettingsSection](#sServerSettingsSection)[11] | `sections` | Probably 11 entries. <!-- [I] --> |
 | 0x64 | 12 | u8[12] | `value_64` | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171. In a 172, 0x6b is 0, and so is 0x69 if the icon is absent. |
 | 0x70 | rest | u8[] | `body` | The sections, at the offsets in the table. Entry 0 is a `ServerSettingsMain`. |
 
-Struct `ServerSettingsSection` (8 bytes):
+Struct `ServerSettingsSection` (8 bytes):<a id="sServerSettingsSection"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -215,7 +215,7 @@ The main section is entry 0. It starts at 0x70 and is 0x68 bytes in the
 captures. Its offsets below are from its own start; add 0x70 to get the offset
 in the blob:
 
-Struct `ServerSettingsMain` (dynamic):
+Struct `ServerSettingsMain` (dynamic):<a id="sServerSettingsMain"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -267,11 +267,11 @@ sequenceDiagram
     S->>C: 173 Set Server Settings Done
 ```
 
-Struct `SetServerSettings` (dynamic):
+Struct `SetServerSettings` (dynamic):<a id="sSetServerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | ServerSettings | `settings` | The blob of [171 Server Settings Info](#m171). |
+| 0x00 |  | [ServerSettings](#sServerSettings) | `settings` | The blob of [171 Server Settings Info](#m171). |
 
 The client sends back a blob in the same layout as [171 Server Settings
 Info](#m171), and the server replies with [173 Set Server Settings
@@ -301,7 +301,7 @@ sequenceDiagram
     S-->>O: 151 Disconnect Message (flag 4)
 ```
 
-Struct `ShutdownServer` (dynamic):
+Struct `ShutdownServer` (dynamic):<a id="sShutdownServer"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -389,7 +389,7 @@ This is a record. The 183s in frames 38 to 228 use the same layout. <!-- [O
 `captures/linux-server-settings.pcapng` frames 33, 89; O
 `captures/linux-chat-admin.pcapng` frame 135] -->
 
-Struct `HistoryRecord` (dynamic):
+Struct `HistoryRecord` (dynamic):<a id="sHistoryRecord"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -408,7 +408,7 @@ Struct `HistoryRecord` (dynamic):
 |  | `nick_len` | str | `nick` | The nick before the event. |
 |  | `login_len` | str | `login` |  |
 |  | `detail_len` | str | `detail` | The new nick for [100 Set Identity](session.md#m100) (frame 197), or the chat name for [202 Join Chat](chat.md#m202) (frame 208). |
-|  | `path_len` | FilePath | `path` |  |
+|  | `path_len` | [FilePath](../encodings.md#sFilePath) | `path` |  |
 |  | pad4 | u8[] | `padding` |  |
 
 The path is a [FilePath](../encodings.md#file-paths), as in the file messages.
@@ -424,13 +424,13 @@ Initiator: Server.
 This is the reply to [180 Server History Join](#m180). It holds the buffered
 records, each padded to a multiple of 4.
 
-Struct `HistoryList` (dynamic):
+Struct `HistoryList` (dynamic):<a id="sHistoryList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `ignored` | 0 as sent. |
 | 0x04 | 4 | u32 | `records_count` |  |
-| 0x08 | `records_count` | HistoryRecord[] | `records` | Each is padded to a multiple of 4. |
+| 0x08 | `records_count` | [HistoryRecord](#sHistoryRecord)[] | `records` | Each is padded to a multiple of 4. |
 
 ## <a id="m182"></a>182 Server History Leave
 Initiator: Client. Privilege: View Server History (63). <!-- [S `FUN_080627f8`] -->
@@ -447,11 +447,11 @@ Initiator: Server. <!-- [S `FUN_08061d80`] -->
 While a client is joined with [180 Server History Join](#m180), the server sends
 this for each new record. The payload is one record, padded to a multiple of 4.
 
-Struct `HistoryAdded` (dynamic):
+Struct `HistoryAdded` (dynamic):<a id="sHistoryAdded"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | HistoryRecord | `record` |  |
+| 0x00 |  | [HistoryRecord](#sHistoryRecord) | `record` |  |
 
 ## <a id="m184"></a><a id="m185"></a><a id="m186"></a><a id="m187"></a><a id="m188"></a><a id="m189"></a><a id="m190"></a><a id="m191"></a>184 to 191 History record kinds
 Initiator: Server. <!-- [S] -->

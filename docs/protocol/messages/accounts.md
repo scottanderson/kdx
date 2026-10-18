@@ -20,7 +20,7 @@ sequenceDiagram
     S->>C: 503 Account Class Info
 ```
 
-Struct `AccountClassIndex` (1 bytes):
+Struct `AccountClassIndex` (1 bytes):<a id="sAccountClassIndex"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -31,18 +31,18 @@ Initiator: Server. Reply to [502 Get Account Class](#m502).
 
 The payload is the stored class record, padded to a multiple of 4:
 
-Struct `AccountClassInfo` (dynamic):
+Struct `AccountClassInfo` (dynamic):<a id="sAccountClassInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | Privileges | `privileges` | See [privileges.md](../privileges.md). |
+| 0x00 | 16 | [Privileges](../privileges.md#sPrivileges) | `privileges` | See [privileges.md](../privileges.md). |
 | 0x10 | 8 | u64 | `time` |  |
 | 0x18 | 13 | u8[13] | `ignored_18` | 0 as sent. 504 does not store them. <!-- [S `FUN_080553c8`] --> |
 | 0x25 | 1 | u8 | `flood_protection` | Commands per 2 minutes: 0x50 (Relaxed) for Administrator, and 0x28 (Strict) for Guest; see [Flood ban](../sequences.md#flood-ban). <!-- [S] --> 0x3c (Average) for User, which [504 Set Account Class](#m504) sets to 0x14 (Very Strict) in `linux-accounts-folder-access` frame 43. <!-- [O] --> |
 | 0x26 | 2 | u16 | `speed_limit` | Download speed limit in KiB per second for each download, unless the user has Ignore Speed Limits (26). 0 means no limit for the class. <!-- [S `FUN_08054900`, `FUN_08052440`] --> |
 | 0x28 | 8 | u8[8] | `ignored_28` | 0 as sent. 504 does not store them. <!-- [S `FUN_080553c8`] --> |
 | 0x30 | 1 | u8 | `class_index` | 0, 2 |
-| 0x31 | 3 | Color | `color` | The [color](../encodings.md#colors) of the class's users, unless an account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> `ff 00 00` for Administrator, and 0 for Guest. <!-- [O] --> |
+| 0x31 | 3 | [Color](../encodings.md#sColor) | `color` | The [color](../encodings.md#colors) of the class's users, unless an account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> `ff 00 00` for Administrator, and 0 for Guest. <!-- [O] --> |
 | 0x34 | 1 | u8 | `name_len` |  |
 | 0x35 | 1 | u8 | `second_string_len` |  |
 | 0x36 | 1 | u8 | `editor_login_len` |  |
@@ -72,11 +72,11 @@ sequenceDiagram
 The request is a [503 Account Class Info](#m503) record of at least 0x38 bytes,
 with the class index at 0x30.
 
-Struct `SetAccountClass` (dynamic):
+Struct `SetAccountClass` (dynamic):<a id="sSetAccountClass"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountClassInfo | `class` |  |
+| 0x00 |  | [AccountClassInfo](#sAccountClassInfo) | `class` |  |
 
 Client 1.620 for Linux sends it with no padding, with the time 0, and with the
 second string and the editor login empty. It is 69 bytes for Administrator
@@ -121,24 +121,24 @@ Info](#m503) record without the 8 bytes at 0x28, the second string, and the
 editor login. <!-- [O `captures/probe.pcapng`] port 50770; [S `FUN_0805572c`]
 -->
 
-Struct `AccountClassList` (dynamic):
+Struct `AccountClassList` (dynamic):<a id="sAccountClassList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `classes_count` |  |
-| 0x04 | `classes_count` | AccountClassListEntry[] | `classes` |  |
+| 0x04 | `classes_count` | [AccountClassListEntry](#sAccountClassListEntry)[] | `classes` |  |
 
-Struct `AccountClassListEntry` (dynamic):
+Struct `AccountClassListEntry` (dynamic):<a id="sAccountClassListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | Privileges | `privileges` |  |
+| 0x00 | 16 | [Privileges](../privileges.md#sPrivileges) | `privileges` |  |
 | 0x10 | 8 | u64 | `time` |  |
 | 0x18 | 13 | u8[13] | `ignored_18` | 0 as sent. |
 | 0x25 | 1 | u8 | `flood_protection` | 0 in this list. <!-- [S] --> |
 | 0x26 | 2 | u16 | `speed_limit` | 0 in this list. <!-- [S] --> |
 | 0x28 | 1 | u8 | `class_index` | 0 to 11, in list order. |
-| 0x29 | 3 | Color | `color` | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
+| 0x29 | 3 | [Color](../encodings.md#sColor) | `color` | `ff 00 00` for Administrator, `00 00 ff` for User, and 0 for the others. |
 | 0x2c | 1 | u8 | `name_len` |  |
 | 0x2d | 2 | u8[2] | `ignored_2d` | 0 as sent. The server sends no second string or editor login. <!-- [S] --> |
 | 0x2f | 1 | u8 | `ignored_2f` | 0 as sent. <!-- [S] --> |
@@ -169,19 +169,19 @@ The request is an account record. 507 Create Account, [510 Account Info](#m510),
 and [511 Set Account](#m511) use the same layout. <!-- [S `FUN_08055928`,
 `FUN_08055ff4`; O] -->
 
-Struct `Account` (dynamic):
+Struct `Account` (dynamic):<a id="sAccount"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | Privileges | `privileges` | The values of the bits set in the mask. `80 00 00 00 00 00 02 00…` for admin, and 0 for new accounts. <!-- [S `FUN_080551b0`] --> |
-| 0x10 | 16 | Privileges | `privilege_mask` | The bits that the account sets itself. The other bits come from its class. <!-- [S `FUN_080551b0`] --> |
+| 0x00 | 16 | [Privileges](../privileges.md#sPrivileges) | `privileges` | The values of the bits set in the mask. `80 00 00 00 00 00 02 00…` for admin, and 0 for new accounts. <!-- [S `FUN_080551b0`] --> |
+| 0x10 | 16 | [Privileges](../privileges.md#sPrivileges) | `privilege_mask` | The bits that the account sets itself. The other bits come from its class. <!-- [S `FUN_080551b0`] --> |
 | 0x20 | 32 | u8[32] | `key` | See below. |
 | 0x40 | 8 | u64 | `created` | The server sets it. |
 | 0x48 | 8 | u64 | `modified` | The server sets it. |
 | 0x50 | 8 | u64 | `last_login` | 0 if never. |
 | 0x58 | 30 | u8[30] | `ignored_58` | 0 as sent. |
 | 0x76 | 1 | u8 | `class_index` | Must be a class that exists, or the server gives 0x10002. |
-| 0x77 | 3 | Color | `color` | Used instead of the class's color if the account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> |
+| 0x77 | 3 | [Color](../encodings.md#sColor) | `color` | Used instead of the class's color if the account has Color Overrides Class (3). <!-- [S `FUN_08054900`] --> |
 | 0x7a | 1 | u8 | `login_len` |  |
 | 0x7b | 1 | u8 | `name_len` |  |
 | 0x7c | 1 | u8 | `third_len` |  |
@@ -211,11 +211,11 @@ The editor field holds:
   accounts that admin made (frame 253). The `admin` account that setup made has
   an empty editor.
 
-Struct `CreateAccount` (dynamic):
+Struct `CreateAccount` (dynamic):<a id="sCreateAccount"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | `account` |  |
+| 0x00 |  | [Account](#sAccount) | `account` |  |
 
 The server sets the times and the editor, and replies with [1
 Status](status.md#m1) success 0x1fb (frame 235). These are the errors:
@@ -247,7 +247,7 @@ sequenceDiagram
 
 The request is the login, with no length byte:
 
-Struct `AccountLogin` (dynamic):
+Struct `AccountLogin` (dynamic):<a id="sAccountLogin"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -281,11 +281,11 @@ sequenceDiagram
 The request is the account's login, with no length byte. This is the
 `AccountLogin` of [508 Delete Account](#m508) and [515 Account Deleted](#m515):
 
-Struct `GetAccount` (dynamic):
+Struct `GetAccount` (dynamic):<a id="sGetAccount"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountLogin | `login` |  |
+| 0x00 |  | [AccountLogin](#sAccountLogin) | `login` |  |
 
 An unknown login gets [1 Status](status.md#m1) 0x1000c. <!-- [O
 `captures/kdx-accounts.pcapng` frame 554] -->
@@ -298,11 +298,11 @@ Create Account](#m507) defines the `Account` record, with its key and editor
 fields. The padding is uninitialized memory (frame 590). <!-- [O] -->
 `kdx-proto` keeps it on a round trip.
 
-Struct `AccountInfo` (dynamic):
+Struct `AccountInfo` (dynamic):<a id="sAccountInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | `account` | Byte 0 of `key` is the has-password flag. |
+| 0x00 |  | [Account](#sAccount) | `account` | Byte 0 of `key` is the has-password flag. |
 
 ## <a id="m511"></a>511 Set Account
 Initiator: Client. Privilege: Modify Accounts (52). <!-- [S `FUN_08055ff4`; O] -->
@@ -320,11 +320,11 @@ sequenceDiagram
 
 The request is an account record whose editor field holds the current login:
 
-Struct `SetAccount` (dynamic):
+Struct `SetAccount` (dynamic):<a id="sSetAccount"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | Account | `account` | `editor` holds the current login. |
+| 0x00 |  | [Account](#sAccount) | `account` | `editor` holds the current login. |
 
 If the login field is different, the server renames the account. If the new
 login already exists, it fails with 0x1000d. The server keeps the creation and
@@ -363,14 +363,14 @@ Initiator: Server. Reply to [512 Get Account List](#m512).
 The payload is a u32 count, then one entry for each account, each padded to a
 multiple of 4:
 
-Struct `AccountList` (dynamic):
+Struct `AccountList` (dynamic):<a id="sAccountList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | u32 | `accounts_count` |  |
-| 0x04 | `accounts_count` | AccountListEntry[] | `accounts` |  |
+| 0x04 | `accounts_count` | [AccountListEntry](#sAccountListEntry)[] | `accounts` |  |
 
-Struct `AccountListEntry` (dynamic):
+Struct `AccountListEntry` (dynamic):<a id="sAccountListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -395,7 +395,7 @@ not handle it. <!-- [S] -->
 
 The payload is unknown, because no capture holds one.
 
-Struct `AccountChanged` (dynamic):
+Struct `AccountChanged` (dynamic):<a id="sAccountChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -406,11 +406,11 @@ Initiator: Server. It follows a successful [508 Delete Account](#m508).
 
 The payload is the deleted login:
 
-Struct `AccountDeleted` (dynamic):
+Struct `AccountDeleted` (dynamic):<a id="sAccountDeleted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | AccountLogin | `login` |  |
+| 0x00 |  | [AccountLogin](#sAccountLogin) | `login` |  |
 
 The server sends it to the requester as a notification, with its own txid and
 the reply bit clear (frames 607 to 610).
@@ -432,7 +432,7 @@ sequenceDiagram
 The request is the 32-byte key of the new password, not the password itself
 (`kdx_proto::msg::admin::ChangeOwnPassword`):
 
-Struct `ChangeOwnPassword` (32 bytes):
+Struct `ChangeOwnPassword` (32 bytes):<a id="sChangeOwnPassword"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

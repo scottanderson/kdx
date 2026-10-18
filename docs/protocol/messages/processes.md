@@ -7,7 +7,7 @@ Message types 800 to 804 list and stop the processes on the server's host.
 ## <a id="m800"></a>800 Open Process Monitor
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b394`] -->
 
-Struct `OpenProcessMonitor` (dynamic):
+Struct `OpenProcessMonitor` (dynamic):<a id="sOpenProcessMonitor"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@ Struct `OpenProcessMonitor` (dynamic):
 ## <a id="m801"></a>801 Close Process Monitor
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b418`] -->
 
-Struct `CloseProcessMonitor` (dynamic):
+Struct `CloseProcessMonitor` (dynamic):<a id="sCloseProcessMonitor"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -44,7 +44,7 @@ The `ps` process itself is in the list.
 ## <a id="m803"></a>803 Process List
 Initiator: Server. Reply to [802 Get Process List](#m802).
 
-Struct `ProcessList` (dynamic):
+Struct `ProcessList` (dynamic):<a id="sProcessList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -52,11 +52,11 @@ Struct `ProcessList` (dynamic):
 | 0x08 | 8 | u64 | `memory_08` | About 33 GB. <!-- [I] --> |
 | 0x10 | 12 | u8[12] | `ignored` |  |
 | 0x1c | 4 | u32 | `processes_count` |  |
-| 0x20 | `processes_count` | Process[] | `processes` |  |
+| 0x20 | `processes_count` | [Process](#sProcess)[] | `processes` |  |
 
 Each process entry is padded to a multiple of 4:
 
-Struct `Process` (dynamic):
+Struct `Process` (dynamic):<a id="sProcess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ comes first. <!-- [S `FUN_0805b454`] -->
 ## <a id="m804"></a>804 Exit/Terminate Process
 Initiator: Client. Privilege: Terminate Processes (81). <!-- [S `FUN_0805b8f4`, `FUN_08090c6c`] -->
 
-Struct `ExitTerminateProcess` (12 bytes):
+Struct `ExitTerminateProcess` (12 bytes):<a id="sExitTerminateProcess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|

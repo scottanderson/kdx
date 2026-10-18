@@ -47,7 +47,7 @@ with 0x40076.
 ## <a id="m901"></a>901 Close View Display
 Initiator: Client. It has no handler. To close the display, the client closes the connection, and sends no 901 Close View Display. <!-- [O frame 420] -->
 
-Struct `CloseViewDisplay` (dynamic):
+Struct `CloseViewDisplay` (dynamic):<a id="sCloseViewDisplay"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -56,7 +56,7 @@ Struct `CloseViewDisplay` (dynamic):
 ## <a id="m902"></a>902 View Display Params
 Initiator: Server. Reply to [900 Open View Display](#m900).
 
-Struct `ViewDisplayParams` (16 bytes):
+Struct `ViewDisplayParams` (16 bytes):<a id="sViewDisplayParams"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -66,7 +66,7 @@ Struct `ViewDisplayParams` (16 bytes):
 ## <a id="m903"></a>903 View Display Update
 Initiator: Server. It comes after [902 View Display Params](#m902) in reply to [900 Open View Display](#m900), and then each time the screen changes.
 
-Struct `ViewDisplayUpdate` (dynamic):
+Struct `ViewDisplayUpdate` (dynamic):<a id="sViewDisplayUpdate"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -136,7 +136,7 @@ sequenceDiagram
     S-->>C: 903 View Display Update
 ```
 
-Struct `ViewDisplayMouse` (12 bytes):
+Struct `ViewDisplayMouse` (12 bytes):<a id="sViewDisplayMouse"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
@@ -164,7 +164,7 @@ ignores kind 4, the wheel, and the Linux server ignores all of the message.
 Initiator: Client, on the view display connection. Privilege: Control
 Display (67). <!-- [S `FUN_0805c498`, client `FUN_0806f1f4`] -->
 
-Struct `ViewDisplayKeyboard` (12 bytes):
+Struct `ViewDisplayKeyboard` (12 bytes):<a id="sViewDisplayKeyboard"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
