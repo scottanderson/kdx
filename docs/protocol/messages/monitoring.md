@@ -25,8 +25,9 @@ sequenceDiagram
 
 No payload.
 
-140 Open Connection Monitor and [141 Close Connection Monitor](#m141) need Get
-User Info (bit 40). They set or clear a flag on the user. There is no reply.
+[140 Open Connection Monitor](#m140) and [141 Close Connection Monitor](#m141)
+need Get User Info (bit 40). They set or clear a flag on the user. There is no
+reply.
 
 ## <a id="m141"></a>141 Close Connection Monitor
 Initiator: Client. <!-- [S] -->

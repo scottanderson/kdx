@@ -30,8 +30,8 @@ Struct `OpenWindow` (24 bytes):<a id="sOpenWindow"></a>
 | 0x04 | 4 | `u32` | `color` | The client fills the window with it. |
 | 0x08 | 16 | `u8[16]` | `rest` | The client does not read these bytes. |
 
-A second 4000 Open Window fails with 0x10003. Frame 10 opened a window of 0x200
-× 0x180, filled with 0x00336699. <!-- [O] --> The color goes through
+A second [4000 Open Window](#m4000) fails with 0x10003. Frame 10 opened a window
+of 0x200 × 0x180, filled with 0x00336699. <!-- [O] --> The color goes through
 `FUN_08114bc8` first. [4001 Draw](#m4001) describes colors.
 
 ## <a id="m4001"></a>4001 Draw

@@ -88,10 +88,13 @@ sequenceDiagram
 The tracker's dispatcher, `FUN_0804b378`, handles [115 Get My
 Address](messages/session.md#m115), [700 Get Tracker Group
 List](messages/tracker.md#m700), [702 Get Tracker Server
-List](messages/tracker.md#m702), 710, 712, and 720. It ignores all other types,
-and sends no reply. <!-- [S] --> The client's tracker connection,
-`FUN_08069578`, sends 700 as soon as it logs in. It handles [1
-Status](messages/status.md#m1), 107, [116 Your
+List](messages/tracker.md#m702), [710 Get TrackerServ
+Settings](messages/tracker.md#m710), [712 Set TrackerServ
+Settings](messages/tracker.md#m712), and 720. It ignores all other types, and
+sends no reply. <!-- [S] --> The client's tracker connection, `FUN_08069578`,
+sends [700 Get Tracker Group List](messages/tracker.md#m700) as soon as it logs
+in. It handles [1 Status](messages/status.md#m1), [107 Server
+Greeting](messages/session.md#m107), [116 Your
 Address](messages/session.md#m116), [701 Tracker Group
 List](messages/tracker.md#m701), [703 Tracker Server
 List](messages/tracker.md#m703), [711 TrackerServ Settings
@@ -104,7 +107,8 @@ replies match those of Tracker 1.110 byte for byte, except for the times when a
 server was first seen. <!-- [O] 701 at 34, 234, and 247; 703 at 37, 58, 244,
 250, and 257; 711 at 80 and 237; 713 at 83 and 241; and the Status at 61
 (crates/kdx-tracker/src/tests.rs) --> In `captures/kdx-tracker.pcapng`, Server
-1.620 registers with `kdx-tracker` (frame 16), and a 703 lists it (frame 34). In
+1.620 registers with `kdx-tracker` (frame 16), and a [703 Tracker Server
+List](messages/tracker.md#m703) lists it (frame 34). In
 `captures/kdx-tracker-gui.pcapng`, Client 1.620 beta 5 lists it (frames 15 and
 33). <!-- [O] -->
 

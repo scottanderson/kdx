@@ -57,12 +57,12 @@ messages: <!-- [S] -->
 | Type | Handler | Action |
 |---:|---|---|
 | [1 Status](messages/status.md#m1) | | status |
-| 100 Set Identity | `FUN_0808fbc0` | the peer's nick, icon, and info |
-| 117 SKPK | `FUN_0808ff64` | see [117 SKPK](messages/session.md#m117) |
+| [100 Set Identity](messages/session.md#m100) | `FUN_0808fbc0` | the peer's nick, icon, and info |
+| [117 SKPK](messages/session.md#m117) | `FUN_0808ff64` | see [117 SKPK](messages/session.md#m117) |
 | [300 Send Private Message](messages/private-messages.md#m300) | | a chat line: a u32, 12 bytes, then the text, more than 0x10 bytes in all |
 
-The 300 in frame 28 is u32 1, 12 zero bytes, and then "dcc message
-body". <!-- [O] -->
+The [300 Send Private Message](messages/private-messages.md#m300) in frame 28 is
+u32 1, 12 zero bytes, and then "dcc message body". <!-- [O] -->
 
 This is the exchange after the login, up to a chat line (frames 22 to 28):
 
@@ -98,8 +98,9 @@ The caller opens a secondary connection to the peer's DCC port. The login is
 
 1. The caller sends [1000 Start Voice](messages/voice.md#m1000).
 2. The peer answers with [1001 Start Voice (R)](messages/voice.md#m1001).
-3. If the value in 1001 is 0, both sides send [1002 Set Voice
-   Format](messages/voice.md#m1002). If not, the caller stops.
+3. If the value in [1001 Start Voice (R)](messages/voice.md#m1001) is 0, both
+   sides send [1002 Set Voice Format](messages/voice.md#m1002). If not, the
+   caller stops.
 4. Both sides send [1003 Voice Data](messages/voice.md#m1003) while they record.
 
 ```mermaid
@@ -120,11 +121,13 @@ sequenceDiagram
 ```
 
 The capture confirms steps 1 to 3. <!-- [O] --> With the peer's Voice Controls
-closed, the peer answered 1000 with 1001 0x00640007 (frames 39 and 40). With
+closed, the peer answered [1000 Start Voice](messages/voice.md#m1000) with [1001
+Start Voice (R)](messages/voice.md#m1001) 0x00640007 (frames 39 and 40). With
 them open, it answered 0, and then both sides sent 1002 (frames 134 to 138). The
-lab sandbox has no sound devices, so each client answered the other's 1002 with
-status 0x10004 (unimplemented), and logged "Operation is unimplemented. (ID 1/4
-@ S101)" (frames 139 to 141). So no 1003 was sent.
+lab sandbox has no sound devices, so each client answered the other's [1002 Set
+Voice Format](messages/voice.md#m1002) with status 0x10004 (unimplemented), and
+logged "Operation is unimplemented. (ID 1/4 @ S101)" (frames 139 to 141). So no
+[1003 Voice Data](messages/voice.md#m1003) was sent.
 
 ## Open questions
 

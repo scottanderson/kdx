@@ -44,8 +44,9 @@ say "probably" in the text when a claim is a guess.
 Write in ASD-STE100 style where it reads naturally. Write the simplest
 version that keeps the nuance.
 
-Name a message by its type and title, as in 412 Download File. Write
-multi-byte fields as big-endian.
+Name a message by its type and title, as in [412 Download
+File](docs/protocol/messages/files.md#m412). Write multi-byte fields as
+big-endian.
 
 ## Code
 

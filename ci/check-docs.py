@@ -162,6 +162,27 @@ def check_conventions_link():
             errors.append(f"{path}: no link to the protocol README conventions in the first 5 lines")
 
 
+def check_message_links():
+    # Every "NNN Name" for a message outside code, comments, and links is a link.
+    names = {}
+    for path in glob.glob("docs/protocol/messages/*.md"):
+        for line in open(path, encoding="utf-8"):
+            m = re.match(r'#+ <a id="m(\d+)"></a>(\d+ .+)$', line.rstrip())
+            if m:
+                names[m.group(2)] = m.group(1)
+    pattern = re.compile("|".join(sorted((re.escape(n).replace(r"\ ", r"\s+") for n in names), key=len, reverse=True)))
+    for path in markdown_files():
+        if path.startswith("captures/") or "/messages/" in path and path.endswith("/README.md"):
+            continue
+        text = "".join(t + "\n" for _, t in read_lines(path) if not t.startswith("#"))
+        for pat in (r"\[[^\]]*\]\([^)]*\)", r"`[^`]*`", r"<!--.*?-->"):
+            text = re.sub(pat, lambda m: " " * len(m.group(0)), text, flags=re.S)
+        for m in pattern.finditer(text):
+            if not re.match(r"[\w(]", text[m.end() : m.end() + 1]) and not (m.start() and text[m.start() - 1].isalnum()):
+                line = text.count("\n", 0, m.start()) + 1
+                errors.append(f"{path}: {m.group(0)!r} near paragraph line {line} is not a link")
+
+
 def check_one_h1():
     for path in tracked_markdown():
         fence = False
@@ -567,6 +588,7 @@ def main():
     check_message_anchors()
     check_conventions_link()
     check_one_h1()
+    check_message_links()
     check_table_columns()
     check_tags()
     check_open_questions()

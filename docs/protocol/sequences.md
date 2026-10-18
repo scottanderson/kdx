@@ -31,14 +31,14 @@ sequenceDiagram
      Don't Show Greeting
    - [106 Server Icon](messages/session.md#m106), if the server has one
    - [213 Must Join Chat](messages/chat.md#m213), if the account joins chat when
-     it connects; see 100 Set Identity
+     it connects; see [100 Set Identity](messages/session.md#m100)
 
-   All other users get [103 User Joined](messages/session.md#m103).
-4. Then the client asks for the data it shows. In
-   `captures/first-connect.pcapng`, the server sends only 101 and 105, in frames
-   23 and 24. The user's later actions bring [300 Send Private
-   Message](messages/private-messages.md#m300) twice, [605 Get Newsgroup
-   List](messages/news.md#m605), and [607 Get News
+   All other users get [103 User Joined](messages/session.md#m103). 4. Then the
+   client asks for the data it shows. In `captures/first-connect.pcapng`, the
+   server sends only [101 User List](messages/session.md#m101) and [105 Server
+   Info](messages/session.md#m105), in frames 23 and 24. The user's later
+   actions bring [300 Send Private Message](messages/private-messages.md#m300)
+   twice, [605 Get Newsgroup List](messages/news.md#m605), and [607 Get News
    Messages](messages/news.md#m607). <!-- [O] -->
 
 ## Flood ban
@@ -102,7 +102,8 @@ it sets the count to zero and starts a new window. If not, it does these things:
   "Auto-banned this bastard for flooding.", and closes the connection with
   0x640004 (`FUN_0804a8c0`).
 
-The observed case, with 115 as the repeated request:
+The observed case, with [115 Get My Address](messages/session.md#m115) as the
+repeated request:
 
 ```mermaid
 %%{init: {"sequence": {"mirrorActors": false}}}%%
@@ -121,10 +122,11 @@ With Very Strict (0x14), a client logged in and then sent [115 Get My
 Address](messages/session.md#m115) every 300 ms. It got the WARNING before the
 reply to its 19th request, and the Final warning before the reply to its 23rd.
 It got no reply to its 28th, because the server closed the connection. <!-- [O]
-frames 147, 161, 178 --> Each 155 is 16 zero bytes and the text. The server
-logged "Auto-banned for flooding!" and "Banned for flooding!". The ban did not
-block 127.0.0.1: the same account logged in again 12 seconds later. <!-- [O]
-frame 188 -->
+frames 147, 161, 178 --> Each [155 Rcv Broadcast
+Message](messages/administration.md#m155) is 16 zero bytes and the text. The
+server logged "Auto-banned for flooding!" and "Banned for flooding!". The ban
+did not block 127.0.0.1: the same account logged in again 12 seconds later. <!--
+[O] frame 188 -->
 
 Server 1.52's upgrade notes say that flood protection became a setting of each
 class in that version. It is off for classes made before then.

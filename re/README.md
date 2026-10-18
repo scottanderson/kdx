@@ -176,8 +176,8 @@ Message types the protocol reference does not cover yet are listed in
 | `0x0804ef00` / `0x0804f8d0` | [422 Volume Info](../docs/protocol/messages/files.md#m422) builder (editable bits `caps & 2 \| 1`) / [423 Set Volume Info](../docs/protocol/messages/files.md#m423) handler |
 | `0x08096780` / `0x08096530` / `0x08094e6c` | Linux volume stubs: capabilities (0x39) / rename (throws 0x10005) / set comments (empty) |
 | `0x08052194` / `0x0805234c` | transfer connection: dispatcher ([400 Get File List](../docs/protocol/messages/files.md#m400), [402 Create Folder](../docs/protocol/messages/files.md#m402), [412 Download File](../docs/protocol/messages/files.md#m412), [415 Upload File](../docs/protocol/messages/files.md#m415), [900 Open View Display](../docs/protocol/messages/view-display.md#m900), [904 View Display Mouse](../docs/protocol/messages/view-display.md#m904), [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905)) / read loop that switches to streaming |
-| `0x08050984` / `0x080512b4` | 412 Download File: request / data stream |
-| `0x08051750` / `0x08051dec` | 415 Upload File: request / data stream |
+| `0x08050984` / `0x080512b4` | [412 Download File](../docs/protocol/messages/files.md#m412): request / data stream |
+| `0x08051750` / `0x08051dec` | [415 Upload File](../docs/protocol/messages/files.md#m415): request / data stream |
 | `0x08094558` / `0x080945e0` | file: 64-bit fork size (`stat64`) / read a chunk at a 64-bit offset (`lseek64`) |
 | `0x080551b0` | account privilege check for [507 Create Account](../docs/protocol/messages/accounts.md#m507)/[511 Set Account](../docs/protocol/messages/accounts.md#m511): effective bits vs the requester's (0x640005) |
 | `0x08054900` | account lookup at login: effective privileges, flood limit, speed limit, and color from the class or account |
@@ -185,13 +185,13 @@ Message types the protocol reference does not cover yet are listed in
 | `0x080553c8` | [504 Set Account Class](../docs/protocol/messages/accounts.md#m504): stores privileges, flood limit, speed limit, color, and strings |
 | `0x0805572c` | [506 Account Class List](../docs/protocol/messages/accounts.md#m506) encoder: name only, zeros elsewhere |
 | `0x08066a90` | is the key the empty password's key |
-| `0x0805c0f0` / `0x0805c344` / `0x0805c498` | 900 Open View Display (replies [902 View Display Params](../docs/protocol/messages/view-display.md#m902), [903 View Display Update](../docs/protocol/messages/view-display.md#m903)) / 904 mouse / 905 keyboard |
-| `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send 903 / run encoder / two-color encoder |
+| `0x0805c0f0` / `0x0805c344` / `0x0805c498` | [900 Open View Display](../docs/protocol/messages/view-display.md#m900) (replies [902 View Display Params](../docs/protocol/messages/view-display.md#m902), [903 View Display Update](../docs/protocol/messages/view-display.md#m903)) / [904 View Display Mouse](../docs/protocol/messages/view-display.md#m904) mouse / [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard |
+| `0x0805bb54` / `0x0805ba44` / `0x0805c5bc` | view display: grab and diff the screen, send [903 View Display Update](../docs/protocol/messages/view-display.md#m903) / run encoder / two-color encoder |
 | `0x0804fc40` | per-request flood counter: warnings, then a 2-hour ban |
 | `0x0804b7c8` | timer: license reminder ([155 Rcv Broadcast Message](../docs/protocol/messages/administration.md#m155)) to users whose [118 (unnamed)](../docs/protocol/messages/session.md#m118) value was 0 |
 | `0x0804b9b0` | [142 Get Connection Monitor Info](../docs/protocol/messages/monitoring.md#m142): connection and transfer records |
 | `0x08061598` / `0x0806172c` | [174 Shutdown Server](../docs/protocol/messages/administration.md#m174) / [175 Upgrade Server Software](../docs/protocol/messages/administration.md#m175) |
-| `0x0806155c` | timer: shut down after 174/175; mode bit 2 halts, bit 1 reboots the host |
+| `0x0806155c` | timer: shut down after [174 Shutdown Server](../docs/protocol/messages/administration.md#m174)/[175 Upgrade Server Software](../docs/protocol/messages/administration.md#m175); mode bit 2 halts, bit 1 reboots the host |
 | `0x080916e4` | run `/sbin/shutdown -h` or `-r now` |
 | `0x08092db8` | open a file by folder and name; 0x30067 when missing |
 | `0x0805b8f4` | [804 Exit/Terminate Process](../docs/protocol/messages/processes.md#m804) |
@@ -208,57 +208,57 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 |---|---|---|
 | `KDXClientBETA5-Lnx` | `0x08126aac` | message name jump table, indexed by type − 8 |
 | `KDXClientBETA5-Lnx` | `0x0804d7b4` | message dispatcher (type → handler) |
-| `KDXClientBETA5-Lnx` | `0x08084020` / `0x08080734` | 213 Must Join Chat handler / open a chat window and send [202 Join Chat](../docs/protocol/messages/chat.md#m202) |
+| `KDXClientBETA5-Lnx` | `0x08084020` / `0x08080734` | [213 Must Join Chat](../docs/protocol/messages/chat.md#m213) handler / open a chat window and send [202 Join Chat](../docs/protocol/messages/chat.md#m202) |
 | `KDXClientBETA5-Lnx` | `0x0804bac0` | connect; default port by type (10700, 10600, 10800, 10900) |
 | `KDXClientBETA5-Lnx` | `0x0812c760` | account editor privilege table: {label, bit} pairs |
-| `KDXClientBETA5-Lnx` | `0x0804c01c` | send 118 (license report) on a timer |
+| `KDXClientBETA5-Lnx` | `0x0804c01c` | send [118 (unnamed)](../docs/protocol/messages/session.md#m118) (license report) on a timer |
 | `KDXClientBETA5-Lnx` | `0x0804d654` | build the [100 Set Identity](../docs/protocol/messages/session.md#m100) user record |
 | `KDXClientBETA5-Lnx` | `0x080542b4` | draw a user list row: account color strip, background (gradient with flag bit 2), text color |
 | `KDXClientBETA5-Lnx` | `0x0808fae4` / `0x0808f77c` / `0x0808efcc` | DCC listener / accept / login callback |
-| `KDXClientBETA5-Lnx` | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send [117 SKPK](../docs/protocol/messages/session.md#m117) / handle 117 |
+| `KDXClientBETA5-Lnx` | `0x0808f3e0` / `0x0808eefc` / `0x0808ff64` | DCC primary connection loop / send [117 SKPK](../docs/protocol/messages/session.md#m117) / handle [117 SKPK](../docs/protocol/messages/session.md#m117) |
 | `KDXClientBETA5-Lnx` | `0x08092240` / `0x08094074` / `0x08094218` | voice: open secondary connection / handle [1000 Start Voice](../docs/protocol/messages/voice.md#m1000) / handle [1001 Start Voice (R)](../docs/protocol/messages/voice.md#m1001) |
-| `KDXClientBETA5-Lnx` | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send [1002 Set Voice Format](../docs/protocol/messages/voice.md#m1002) / send [1003 Voice Data](../docs/protocol/messages/voice.md#m1003) / receive 1003 (IMA ADPCM) |
-| `KDXClientBETA5-Lnx` | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / 903 pixel decoder |
-| `KDXClientBETA5-Lnx` | `0x0806f864` | 903 handler: resize the frame buffer, decode, redraw the rectangle |
+| `KDXClientBETA5-Lnx` | `0x08093ae0` / `0x08093670` / `0x0809455c` | voice: send [1002 Set Voice Format](../docs/protocol/messages/voice.md#m1002) / send [1003 Voice Data](../docs/protocol/messages/voice.md#m1003) / receive [1003 Voice Data](../docs/protocol/messages/voice.md#m1003) (IMA ADPCM) |
+| `KDXClientBETA5-Lnx` | `0x0806f9d8` / `0x0806f36c` | view display: connection loop / [903 View Display Update](../docs/protocol/messages/view-display.md#m903) pixel decoder |
+| `KDXClientBETA5-Lnx` | `0x0806f864` | [903 View Display Update](../docs/protocol/messages/view-display.md#m903) handler: resize the frame buffer, decode, redraw the rectangle |
 | `KDXClientBETA5-Lnx` | `0x0811667c` | X key event: keysym to USB HID usage through the tables at `0x081681e0` (Latin-1) and `0x081680e0` (0xff00 keysyms) |
-| `KDXClientBETA5-Lnx` | `0x080758dc` / `0x08074420` | 422 Volume Info handler / send 423 Set Volume Info with a bit per edited field |
+| `KDXClientBETA5-Lnx` | `0x080758dc` / `0x08074420` | [422 Volume Info](../docs/protocol/messages/files.md#m422) handler / send [423 Set Volume Info](../docs/protocol/messages/files.md#m423) with a bit per edited field |
 | `KDXClientBETA5-Lnx` | `0x080a0410` | make a text field read-only when its bit is clear |
-| `KDXClientBETA5-Lnx` | `0x0806fc68` / `0x0806f1f4` | send 904 mouse / 905 keyboard |
+| `KDXClientBETA5-Lnx` | `0x0806fc68` / `0x0806f1f4` | send [904 View Display Mouse](../docs/protocol/messages/view-display.md#m904) mouse / [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard |
 | `KDXClientBETA5-Lnx` | `0x0806b1b0` / `0x0806b68c` | tracker settings: read [711 TrackerServ Settings Info](../docs/protocol/messages/tracker.md#m711) / build [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) |
 | `KDXClientBETA5-Lnx` | `0x08095c84` | GConsole connection ([4000 Open Window](../docs/protocol/messages/gconsole.md#m4000), [4001 Draw](../docs/protocol/messages/gconsole.md#m4001)) |
 | `KDXClientBETA5-Lnx` | `0x0804b824` / `0x0804b938` | Connect dialog: check the peer's hello (`%HGC` switches table and scramble) / pick the connection kind by its version |
 | `KDXClientBETA5-Lnx` | `0x0809aefc` | GConsole header scramble |
 | `KDXClientBETA5-Lnx` | `0x080ea08c` / `0x080ea000` | create connection object (KDX story) / set challenge table at +0xa4, length at +0xa0 |
 | `KDXClientBETA5-Lnx` | `0x080ec058` / `0x080ec280` / `0x080ea768` | challenge table: pick our challenge / answer the peer's / check the peer's response |
-| `KDXClientBETA5-Lnx` | `0x08094be8` / `0x08095ac4` | GConsole: handle 4000 / 4001 draw records |
+| `KDXClientBETA5-Lnx` | `0x08094be8` / `0x08095ac4` | GConsole: handle [4000 Open Window](../docs/protocol/messages/gconsole.md#m4000) / [4001 Draw](../docs/protocol/messages/gconsole.md#m4001) draw records |
 | `KDXClientBETA5-Lnx` | `0x0809607c` / `0x08096188` | GConsole: send [4200 Key](../docs/protocol/messages/gconsole.md#m4200) / [4201 Mouse](../docs/protocol/messages/gconsole.md#m4201) |
-| `KDXClientBETA5-Lnx` | `0x08069578` | tracker connection: sends [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), dispatches [1 Status](../docs/protocol/messages/status.md#m1), 107, [116 Your Address](../docs/protocol/messages/session.md#m116), [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701), [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703), 711, [713 Set TrackerServ Settings Done](../docs/protocol/messages/tracker.md#m713), [721 TrackerServ Statistics](../docs/protocol/messages/tracker.md#m721) |
-| `KDXClientBETA5-Lnx` | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | 701 handler / 703 handler / send [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) |
+| `KDXClientBETA5-Lnx` | `0x08069578` | tracker connection: sends [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), dispatches [1 Status](../docs/protocol/messages/status.md#m1), [107 Server Greeting](../docs/protocol/messages/session.md#m107), [116 Your Address](../docs/protocol/messages/session.md#m116), [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701), [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703), [711 TrackerServ Settings Info](../docs/protocol/messages/tracker.md#m711), [713 Set TrackerServ Settings Done](../docs/protocol/messages/tracker.md#m713), [721 TrackerServ Statistics](../docs/protocol/messages/tracker.md#m721) |
+| `KDXClientBETA5-Lnx` | `0x08068bcc` / `0x08068da0` / `0x08069ac4` | [701 Tracker Group List](../docs/protocol/messages/tracker.md#m701) handler / [703 Tracker Server List](../docs/protocol/messages/tracker.md#m703) handler / send [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) |
 | `KDXClient1600-Win` | `0x0046d0b0` / `0x0046d430` | create connection object / set its payload limit |
 | `KDXClient1600-Win` | `0x0046e860` | session: receive and validate header (0x40075 if over the limit) |
 | `KDXClient1600-Win` | `0x00402310` | connect to a server; sets the payload limit to 0x100000 |
-| `KDXClient1600-Win` | `0x0041b970` / `0x00448830` | send 905 keyboard / GConsole 4200 Key |
+| `KDXClient1600-Win` | `0x0041b970` / `0x00448830` | send [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard / GConsole [4200 Key](../docs/protocol/messages/gconsole.md#m4200) |
 | `KDXClient1600-Win` | `0x00463870` / `0x00463970` | modifier bits from the key state / key code to character; both index the key code table at `0x004ff1e8` |
-| `KDXServer1600-Win` | `0x00418dc0` / `0x00418fc0` / `0x00419110` | 900 Open View Display / 904 mouse / 905 keyboard |
-| `KDXServer1600-Win` | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send 903 / run encoder / two-color encoder |
+| `KDXServer1600-Win` | `0x00418dc0` / `0x00418fc0` / `0x00419110` | [900 Open View Display](../docs/protocol/messages/view-display.md#m900) / [904 View Display Mouse](../docs/protocol/messages/view-display.md#m904) mouse / [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard |
+| `KDXServer1600-Win` | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send [903 View Display Update](../docs/protocol/messages/view-display.md#m903) / run encoder / two-color encoder |
 | `KDXServer1600-Win` | `0x00418d60` | view display timer: grab again every 1500 ms |
 | `KDXServer1600-Win` | `0x0041ffd0` | grab the primary screen: `BitBlt` from the desktop window into a 24-bit DIB |
 | `KDXServer1600-Win` | `0x00420270` / `0x00420380` | inject a mouse event (`mouse_event`) / a key (`keybd_event`, through the key code table at `0x0047fe98`) |
-| `KDXTrackerServ1110-Lnx` | `0x0804b378` | TCP message dispatcher: [115 Get My Address](../docs/protocol/messages/session.md#m115), 700, 702, [710 Get TrackerServ Settings](../docs/protocol/messages/tracker.md#m710), 712, [720 Get TrackerServ Statistics](../docs/protocol/messages/tracker.md#m720) |
+| `KDXTrackerServ1110-Lnx` | `0x0804b378` | TCP message dispatcher: [115 Get My Address](../docs/protocol/messages/session.md#m115), [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700), [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702), [710 Get TrackerServ Settings](../docs/protocol/messages/tracker.md#m710), [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712), [720 Get TrackerServ Statistics](../docs/protocol/messages/tracker.md#m720) |
 | `KDXTrackerServ1110-Lnx` | `0x0804bd9c` | TCP accept: connection with `%KDX`, sub-version 0x30, story table; 5 per IP |
 | `KDXTrackerServ1110-Lnx` | `0x0804bb78` / `0x0804bb4c` | login callback (guest or admin) / version callback |
-| `KDXTrackerServ1110-Lnx` | `0x0804bbf8` | session read loop: sends 107, calls the dispatcher, drops idle connections |
+| `KDXTrackerServ1110-Lnx` | `0x0804bbf8` | session read loop: sends [107 Server Greeting](../docs/protocol/messages/session.md#m107), calls the dispatcher, drops idle connections |
 | `KDXTrackerServ1110-Lnx` | `0x0804c048` | UDP receive: decrypt and validate a registration |
 | `KDXTrackerServ1110-Lnx` | `0x0804b960` / `0x0804b604` | register or refresh a server / build a server record |
 | `KDXTrackerServ1110-Lnx` | `0x0804a370` / `0x0804a3d0` | LCG XOR copy / in place |
 | `KDXTrackerServ1110-Lnx` | `0x08067ee4` | CRC-32 (same as server `0x0806fa28`) |
-| `KDXTrackerServ1110-Lnx` | `0x0804abf4` / `0x0804adcc` | 700 handler (also expires servers) / 702 handler |
-| `KDXTrackerServ1110-Lnx` | `0x0804cb90` / `0x0804cc10` / `0x0804cd88` | 710 handler / 712 handler / serialize settings (`%KDXTSTG`) |
-| `KDXTrackerServ1110-Lnx` | `0x0804b180` | 720 handler |
+| `KDXTrackerServ1110-Lnx` | `0x0804abf4` / `0x0804adcc` | [700 Get Tracker Group List](../docs/protocol/messages/tracker.md#m700) handler (also expires servers) / [702 Get Tracker Server List](../docs/protocol/messages/tracker.md#m702) handler |
+| `KDXTrackerServ1110-Lnx` | `0x0804cb90` / `0x0804cc10` / `0x0804cd88` | [710 Get TrackerServ Settings](../docs/protocol/messages/tracker.md#m710) handler / [712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) handler / serialize settings (`%KDXTSTG`) |
+| `KDXTrackerServ1110-Lnx` | `0x0804b180` | [720 Get TrackerServ Statistics](../docs/protocol/messages/tracker.md#m720) handler |
 | `KDXTrackerServ1110-Lnx` | `0x0804aa30` / `0x0804ab2c` | add a group (sets the tracker-only flag) / drop all groups and server records |
 | `KDXTrackerServ1110-Lnx` | `0x0804e81c` | parse an upstream tracker entry |
 | `KDXTrackerServ1110-Lnx` | `0x0804ca60` | rebind TCP and UDP on a new port |
-| `KDXTrackerServ1110-Lnx` | `0x0804d63c` | parse a `%KDXTSTG` settings blob (712 and the settings file) |
+| `KDXTrackerServ1110-Lnx` | `0x0804d63c` | parse a `%KDXTSTG` settings blob ([712 Set TrackerServ Settings](../docs/protocol/messages/tracker.md#m712) and the settings file) |
 | `KDXTrackerServ1110-Lnx` | `0x0804df70` | register with upstream trackers (flags bit 0) |
 | `KDXTrackerServ1110-Lnx` | `0x0804c540` | start: opens TCP and UDP on the port (default 10800) |
 | `KDXClient1110-Win` | `0x00460320` / `0x00460850` / `0x0045ef70` | session: receive and validate header / send header only / set receive cap |

@@ -41,9 +41,9 @@ The server refuses a target that has Cannot Be Disconnected, unless the server's
 address check passes. The target receives [151 Disconnect Message](#m151).
 
 In `captures/linux-chat-admin.pcapng`, the GUI (user 2) disconnected itself with
-the message `test` and no ban. The 150 Disconnect User at frame 159 is 28
-bytes. <!-- [O] --> `kdx_proto::msg::admin::DisconnectUser` re-encodes it byte
-for byte.
+the message `test` and no ban. The [150 Disconnect User](#m150) at frame 159 is
+28 bytes. <!-- [O] --> `kdx_proto::msg::admin::DisconnectUser` re-encodes it
+byte for byte.
 
 ## <a id="m151"></a>151 Disconnect Message
 Initiator: Server.
@@ -66,9 +66,9 @@ Struct `DisconnectMessage` (dynamic):<a id="sDisconnectMessage"></a>
 | 0x14 | `message_len` | `str` | `message` |  |
 |  | `name_len` | `str` | `name` |  |
 
-In the same capture, the 151 Disconnect Message at frame 161 has user ID 2,
-flags 0, and the name `kdx-lab-linux`. <!-- [O] --> The sender was also the
-target, so the capture does not show which of them 0x00 names.
+In the same capture, the [151 Disconnect Message](#m151) at frame 161 has user
+ID 2, flags 0, and the name `kdx-lab-linux`. <!-- [O] --> The sender was also
+the target, so the capture does not show which of them 0x00 names.
 `kdx_proto::msg::admin::DisconnectMessage` re-encodes it byte for byte.
 
 ## <a id="m152"></a>152 Get User Info
@@ -168,9 +168,9 @@ Struct `RcvBroadcast` (dynamic):<a id="sRcvBroadcast"></a>
 | 0x0e | 2 | `u16` | `value_0e` | Copied from 0x02 of the request. |
 | 0x10 | rest | `str` | `text` |  |
 
-For the 154 at frame 129, the peer (frame 130) and the sender (frame 132) both
-got user ID 2, 12 zero bytes, and the text. <!-- [O] -->
-`kdx_proto::msg::admin::RcvBroadcast` re-encodes them.
+For the [154 Send Broadcast Message](#m154) at frame 129, the peer (frame 130)
+and the sender (frame 132) both got user ID 2, 12 zero bytes, and the text. <!--
+[O] --> `kdx_proto::msg::admin::RcvBroadcast` re-encodes them.
 
 ## <a id="m170"></a>170 Get Server Settings
 Initiator: Client. Privilege: Modify Server Settings (61).
@@ -201,7 +201,7 @@ Struct `ServerSettings` (dynamic):<a id="sServerSettings"></a>
 | 0x08 | 2 | `u16` | `version` | 1 |
 | 0x0a | 2 | `u8[2]` | `ignored` |  |
 | 0x0c | 88 | [`ServerSettingsSection`](#sServerSettingsSection)`[11]` | `sections` | Probably 11 entries. <!-- [I] --> |
-| 0x64 | 12 | `u8[12]` | `value_64` | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171. In a 172, 0x6b is 0, and so is 0x69 if the icon is absent. |
+| 0x64 | 12 | `u8[12]` | `value_64` | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171. In a [172 Set Server Settings](#m172), 0x6b is 0, and so is 0x69 if the icon is absent. |
 | 0x70 | rest | `u8[]` | `body` | The sections, at the offsets in the table. Entry 0 is a `ServerSettingsMain`. |
 
 Struct `ServerSettingsSection` (8 bytes):<a id="sServerSettingsSection"></a>
@@ -242,14 +242,15 @@ length: <!-- [O] -->
 Entries 1 and 2 are 0xd8, 0, and entries 4, 6, and 8 to 10 are all zero in every
 capture. Each section starts on a multiple of 4. The greeting section has the
 layout of [107 Server Greeting](session.md#m107), and the icon section holds the
-bytes of [106 Server Icon](session.md#m106). A 172 can give the icon section
-length 0, and the server then keeps its icon: frames 56 and 225 sent no icon,
-and the 171 at frame 221 still holds it.
+bytes of [106 Server Icon](session.md#m106). A [172 Set Server Settings](#m172)
+can give the icon section length 0, and the server then keeps its icon: frames
+56 and 225 sent no icon, and the [171 Server Settings Info](#m171) at frame 221
+still holds it.
 
 `kdx_proto::msg::server_info::ServerSettings` decodes the table, reads the named
 fields from the main section, and keeps the other bytes as sent. It re-encodes
-all six blobs of `captures/linux-server-settings.pcapng`, and the 171 at frame
-116 of `captures/probe.pcapng`, byte for byte.
+all six blobs of `captures/linux-server-settings.pcapng`, and the [171 Server
+Settings Info](#m171) at frame 116 of `captures/probe.pcapng`, byte for byte.
 
 ## <a id="m172"></a>172 Set Server Settings
 Initiator: Client. <!-- [S `FUN_0805f638`] -->
@@ -348,15 +349,16 @@ A missing file gets 0x30067. <!-- [S] --> If the new program is not in `Bases`,
 the first open fails its `stat` with 0x30067, module 0x46, line 0x198. <!-- [O
 `captures/linux-shutdown.pcapng` frame 20] -->
 
-If it succeeds, there is no 1 Status. The server broadcasts [151 Disconnect
-Message](#m151) with flag 4 and "Upgrading server software, be back in 5
-seconds!". <!-- [O `captures/linux-upgrade.pcapng` frame 20] --> It starts the
-helper, writes history record 0xaf, and exits after 0xd48 ms with mode 1 of [174
-Shutdown Server](#m174). <!-- [S] --> The helper moves `Bases/KDXServer.lexe`
-over the server's program and starts it, whatever its version. In the lab, 175
-Upgrade Server Software downgraded Server 1.620 to 1.600. The server was back
-about 5 s after the 151, and the next login's [105 Server Info](session.md#m105)
-reports version 1600. <!-- [O `captures/linux-upgrade.pcapng` frame 37] -->
+If it succeeds, there is no [1 Status](status.md#m1). The server broadcasts [151
+Disconnect Message](#m151) with flag 4 and "Upgrading server software, be back
+in 5 seconds!". <!-- [O `captures/linux-upgrade.pcapng` frame 20] --> It starts
+the helper, writes history record 0xaf, and exits after 0xd48 ms with mode 1 of
+[174 Shutdown Server](#m174). <!-- [S] --> The helper moves
+`Bases/KDXServer.lexe` over the server's program and starts it, whatever its
+version. In the lab, [175 Upgrade Server Software](#m175) downgraded Server
+1.620 to 1.600. The server was back about 5 s after the [151 Disconnect
+Message](#m151), and the next login's [105 Server Info](session.md#m105) reports
+version 1600. <!-- [O `captures/linux-upgrade.pcapng` frame 37] -->
 
 ## <a id="m180"></a>180 Server History Join
 Initiator: Client. Privilege: View Server History (63). <!-- [S `FUN_08062674`, `FUN_080627f8`, `FUN_08061d80`] -->
@@ -415,8 +417,9 @@ The path is a [FilePath](../encodings.md#file-paths), as in the file messages.
 It is `speed.bin` for [412 Download File](files.md#m412) and [188 Finished File
 Download](#m188) (frames 108 and 190). Saving the settings logs [170 Get Server
 Settings](#m170) and [172 Set Server Settings](#m172) (frames 38 and 43).
-`kdx_proto::msg::admin::HistoryList` (181) and `HistoryRecord` (183) re-encode
-every payload byte for byte, with the unnamed bytes and the padding.
+`kdx_proto::msg::admin::HistoryList` ([181 Server History Join (R)](#m181)) and
+`HistoryRecord` ([183 Server History Added](#m183)) re-encode every payload byte
+for byte, with the unnamed bytes and the padding.
 
 ## <a id="m181"></a>181 Server History Join (R)
 Initiator: Server.

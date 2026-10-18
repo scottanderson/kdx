@@ -22,8 +22,8 @@ Struct `SetIdentity` (dynamic):<a id="sSetIdentity"></a>
 
 - The nick takes effect only with the Use Any Name privilege. Without it, the
   server uses the account name. The server logs changes as `Set Name: <…> (…)`.
-- There is no direct reply. After the first 100 Set Identity, the server sends
-  these messages, in this order:
+- There is no direct reply. After the first [100 Set Identity](#m100), the
+  server sends these messages, in this order:
   1. [101 User List](#m101)
   2. [105 Server Info](#m105)
   3. [107 Server Greeting](#m107), unless the account has Don't Show Greeting
@@ -35,9 +35,9 @@ Struct `SetIdentity` (dynamic):<a id="sSetIdentity"></a>
   Login](administration.md#m184) history record. <!-- [O
   `captures/linux-server-settings.pcapng` frames 80, 82, 83; O
   `captures/linux-chat-rooms.pcapng` frame 167] -->
-- After a later 100 Set Identity, the server sends [102 User Changed](#m102) to
-  all users, the sender too. <!-- [O `captures/linux-server-settings.pcapng`
-  frames 196, 199, 201] -->
+- After a later [100 Set Identity](#m100), the server sends [102 User
+  Changed](#m102) to all users, the sender too. <!-- [O
+  `captures/linux-server-settings.pcapng` frames 196, 199, 201] -->
 
 ## <a id="m101"></a>101 User List
 Initiator: Server. <!-- [S `FUN_0804af04`; O] --> Part of the [login
@@ -124,8 +124,9 @@ sequence](../sequences.md#login).
 The payload is the server's icon bitmap, the same bytes as the icon section of
 the settings blob; see [171 Server Settings Info](administration.md#m171). For a
 32×32 icon pasted from the user icon, it is 524 bytes that start `01 20 20 04 00
-01 00 00 00 ff cc 00`, the same as the icon section of the 171 in frame
-221. <!-- [O `captures/linux-server-settings.pcapng` frames 83, 221] -->
+01 00 00 00 ff cc 00`, the same as the icon section of the [171 Server Settings
+Info](administration.md#m171) in frame 221. <!-- [O
+`captures/linux-server-settings.pcapng` frames 83, 221] -->
 `kdx_proto::msg::server_info::ServerIcon` holds the bytes.
 
 Struct `ServerIcon` (dynamic):<a id="sServerIcon"></a>
@@ -336,5 +337,5 @@ KDX by purchasing a license." to each user whose stored value is 2, and who has
 been connected for less than 2 hours (7200000 ms). The first round runs
 217500000 ms (about 60 hours) after the server starts, <!-- [S `FUN_080531f0`]
 --> so a short lab run never shows it. The text is obfuscated in the binary at
-0x080adc00: each byte is ~b + 0xbe. The payload of the 155 is 16 zero bytes, and
-then the text.
+0x080adc00: each byte is ~b + 0xbe. The payload of the [155 Rcv Broadcast
+Message](administration.md#m155) is 16 zero bytes, and then the text.
