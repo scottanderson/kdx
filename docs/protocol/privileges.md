@@ -18,11 +18,10 @@ Struct `Privileges` (16 bytes):<a id="sPrivileges"></a>
 | 0x00 | 16 | `u128` | `bits` | A bit set. The table below names the bits. |
 
 The table gives the bits that server handlers test, found by a scan of all
-handlers for tests of user +0x44 to +0x4e. <!-- [S] --> "Login" is
-`FUN_0804b114`, the step after login that sends [105 Server
-Info](messages/session.md#m105), [107 Server
+handlers for tests of user +0x44 to +0x4e. <!-- [S] --> The server tests the
+privileges of [105 Server Info](messages/session.md#m105), [107 Server
 Greeting](messages/session.md#m107), and [213 Must Join
-Chat](messages/chat.md#m213).
+Chat](messages/chat.md#m213) in `FUN_0804b114`, the step after login.
 
 | Bit | Privilege | Tested in |
 |---:|---|---|
@@ -44,13 +43,13 @@ Chat](messages/chat.md#m213).
 | 26 | Ignore Speed Limits | |
 | 27 | View Folder Access | [505 Get Account Class List](messages/accounts.md#m505)<br>[1103 Get Folder Access](messages/folder-access.md#m1103)<br>[1106 Get Folder Access List](messages/folder-access.md#m1106) |
 | 28 | Modify Folder Access | [402 Create Folder](messages/files.md#m402)<br>[403 Create Alias](messages/files.md#m403)<br>[411 Set File/Folder Info](messages/files.md#m411)<br>[1100 Create Folder Access](messages/folder-access.md#m1100)<br>[1101 Delete Folder Access](messages/folder-access.md#m1101)<br>[1105 Set Folder Access](messages/folder-access.md#m1105) |
-| 30 | Join Chat | [202 Join Chat](messages/chat.md#m202)<br>[214 Get Chat List](messages/chat.md#m214)<br>login |
+| 30 | Join Chat | [202 Join Chat](messages/chat.md#m202)<br>[213 Must Join Chat](messages/chat.md#m213)<br>[214 Get Chat List](messages/chat.md#m214) |
 | 31 | Send Chat | [207 Send Chat Text](messages/chat.md#m207) |
 | 32 | Send Messages | [300 Send Private Message](messages/private-messages.md#m300) |
 | 33 | Broadcast | [154 Send Broadcast Message](messages/administration.md#m154) |
 | 34 | Create Private Chat | [200 Create Private Chat](messages/chat.md#m200) |
 | 35 | Set Chat Topic | [209 Set Chat Topic](messages/chat.md#m209) |
-| 36 | Join Chat On Connect | login |
+| 36 | Join Chat On Connect | [213 Must Join Chat](messages/chat.md#m213) |
 | 37 | Create/Modify Chats | [201 Delete Chat](messages/chat.md#m201)<br>[217 Create Chat](messages/chat.md#m217)<br>[218 Get Chat](messages/chat.md#m218)<br>[220 Set Chat](messages/chat.md#m220)<br>[505 Get Account Class List](messages/accounts.md#m505) |
 | 40 | Get User Info | [140 Open Connection Monitor](messages/monitoring.md#m140)<br>[141 Close Connection Monitor](messages/monitoring.md#m141)<br>[142 Get Connection Monitor Info](messages/monitoring.md#m142)<br>[152 Get User Info](messages/administration.md#m152) |
 | 41 | Disconnect Users | [150 Disconnect User](messages/administration.md#m150) |
@@ -61,9 +60,9 @@ Chat](messages/chat.md#m213).
 | 52 | Modify Accounts | [504 Set Account Class](messages/accounts.md#m504)<br>[508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511) |
 | 53 | Change Own Password | [550 Change Own Password](messages/accounts.md#m550) |
 | 54 | Protected Account | [508 Delete Account](messages/accounts.md#m508)<br>[511 Set Account](messages/accounts.md#m511) (target) |
-| 60 | Use Any Name | [100 Set Identity](messages/session.md#m100)<br>login |
-| 61 | Modify Server Settings | [113 Get Extra Server Info](messages/session.md#m113)<br>[170 Get Server Settings](messages/administration.md#m170)<br>[172 Set Server Settings](messages/administration.md#m172)<br>[450 Generate Catalog](messages/files.md#m450)<br>login ([105 Server Info](messages/session.md#m105)) |
-| 62 | Don't Show Greeting | login |
+| 60 | Use Any Name | [100 Set Identity](messages/session.md#m100) |
+| 61 | Modify Server Settings | [113 Get Extra Server Info](messages/session.md#m113)<br>[170 Get Server Settings](messages/administration.md#m170)<br>[172 Set Server Settings](messages/administration.md#m172)<br>[450 Generate Catalog](messages/files.md#m450)<br>[105 Server Info](messages/session.md#m105) |
+| 62 | Don't Show Greeting | [107 Server Greeting](messages/session.md#m107) |
 | 63 | View Server History | [180 Server History Join](messages/administration.md#m180) |
 | 64 | Shutdown Server | [174 Shutdown Server](messages/administration.md#m174)<br>[175 Upgrade Server Software](messages/administration.md#m175) |
 | 65 | Disable Encryption | [412 Download File](messages/files.md#m412)<br>[415 Upload File](messages/files.md#m415) (plain mode) |
