@@ -340,7 +340,8 @@ although [216 Create Private Chat (R)](#m216) gave the chat flags 0.
 `linux_chat_admin`).
 
 ## <a id="m213"></a>213 Must Join Chat
-Initiator: Server. <!-- [S `FUN_0804b114`; O] -->
+Initiator: Server. <!-- [S `FUN_0804b114`; O] --> Part of the [login
+sequence](../sequences.md#login).
 
 After login, the server asks the client to join, and the client joins chat 1:
 
@@ -541,7 +542,8 @@ df 4d 29 00 00 00 02` to both members (frames 125 and 127). <!-- [O] -->
 `linux_chat_rooms`).
 
 ## <a id="m222"></a>222 Get Chat DCC Addresses
-Initiator: Client. <!-- [S `FUN_0805a110`; O] -->
+Initiator: Client. <!-- [S `FUN_0805a110`; O] --> Part of the [voice call
+sequence](../dcc.md#voice).
 
 A member of a voice chat asks where the others listen:
 
@@ -572,7 +574,8 @@ Addresses right after it joins a voice chat. <!-- [O] --> `ChatId` re-encodes
 222 byte for byte (tests `linux_chat_rooms` and `linux_dcc_voice_failed`).
 
 ## <a id="m223"></a>223 Chat DCC Addresses
-Initiator: Server. Reply to [222 Get Chat DCC Addresses](#m222).
+Initiator: Server. Reply to [222 Get Chat DCC Addresses](#m222). Part of the
+[voice call sequence](../dcc.md#voice).
 
 The reply has one entry for each other member whose user record has a DCC port
 (0x0a) that is not 0. Each entry is padded to a multiple of 4: <!-- [S] -->

@@ -8,6 +8,7 @@ see [dcc.md](../dcc.md#primary-connection).
 
 ## <a id="m300"></a>300 Send Private Message
 Initiator: Client. Privilege: Send Messages (32). <!-- [S `FUN_0804d2d0`; O] -->
+Part of the [DCC connection sequence](../dcc.md#primary-connection).
 
 Struct `PrivateMessage` (dynamic):<a id="sPrivateMessage"></a>
 

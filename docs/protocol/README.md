@@ -340,3 +340,8 @@ shares the tag of its message's `Initiator:` line.
 
 On a message page, the diagram of a message's exchange comes first in its
 section: after the `Initiator:` paragraph, and before the struct table.
+
+A message page's diagram shows one request and its replies. An exchange of
+several requests goes on a topic page, such as [sequences.md](sequences.md),
+[transfers.md](transfers.md), or [dcc.md](dcc.md). The end of the `Initiator:`
+paragraph of each message in it says "Part of the" and links the sequence.

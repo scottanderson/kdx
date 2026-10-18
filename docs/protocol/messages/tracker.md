@@ -13,7 +13,8 @@ string. <!-- [S `FUN_0804b378`] -->
 
 ## <a id="m700"></a>700 Get Tracker Group List
 
-Initiator: Client. <!-- [S `FUN_0804abf4`; O frame 34] -->
+Initiator: Client. <!-- [S `FUN_0804abf4`; O frame 34] --> Part of the [tracker
+browsing sequence](../tracker.md#connection).
 
 The group list is one request and one reply:
 
@@ -32,7 +33,8 @@ The reply is [701 Tracker Group List](#m701).
 
 ## <a id="m701"></a>701 Tracker Group List
 
-Initiator: Tracker. <!-- [S `FUN_0804abf4`; O frame 34] -->
+Initiator: Tracker. <!-- [S `FUN_0804abf4`; O frame 34] --> Part of the [tracker
+browsing sequence](../tracker.md#connection).
 
 This is the reply to [700 Get Tracker Group List](#m700). A new Tracker 1.110
 has eight groups, all with no description: Business, Chat, Education, Games,
@@ -59,7 +61,8 @@ Struct `GroupListEntry` (dynamic):<a id="sGroupListEntry"></a>
 
 ## <a id="m702"></a>702 Get Tracker Server List
 
-Initiator: Client. <!-- [S `FUN_0804adcc`, client `FUN_08069ac4`; O frames 36, 37] -->
+Initiator: Client. <!-- [S `FUN_0804adcc`, client `FUN_08069ac4`; O frames 36,
+37] --> Part of the [tracker browsing sequence](../tracker.md#connection).
 
 A group's server list is one request and one reply:
 
@@ -88,7 +91,8 @@ List](#m703).
 
 ## <a id="m703"></a>703 Tracker Server List
 
-Initiator: Tracker.
+Initiator: Tracker. Part of the [tracker browsing
+sequence](../tracker.md#connection).
 
 This is the reply to [702 Get Tracker Server List](#m702). The payload is empty
 for an empty group.

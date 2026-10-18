@@ -288,9 +288,10 @@ Struct `NewsMessageReply` (dynamic):<a id="sNewsMessageReply"></a>
 | 0x00 |  | [`NewsMessage`](#sNewsMessage) | `message` |  |
 
 ## <a id="m611"></a>611 Post News Message
-Initiator: Client. Privilege: Post News (71). Unless the user has privilege
-0, the user's class must also be in the group's post classes. <!-- [S
-`FUN_0805d758`; O `captures/kdx-news.pcapng`] -->
+Initiator: Client. Privilege: Post News (71). Unless the user has privilege 0,
+the user's class must also be in the group's post classes. <!-- [S
+`FUN_0805d758`; O `captures/kdx-news.pcapng`] --> Part of the [news posting
+sequence](../sequences.md#posting-news).
 
 A post gets no reply. Each user whose class can read the group, the poster too,
 gets 613 News Message Posted:
