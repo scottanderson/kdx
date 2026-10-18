@@ -312,10 +312,10 @@ Struct `ShutdownServer` (dynamic):<a id="sShutdownServer"></a>
 | 0x04 | rest | `str` | `message` | No length byte. At most 0xff bytes. |
 
 The server broadcasts [151 Disconnect Message](#m151) with flag 4, writes
-history record 0xae, and exits after 5000 ms (`FUN_0806155c`). Mode 1 only exits
-the program. <!-- [O `captures/linux-shutdown.pcapng` frames 47, 48] --> Before
-it exits, mode bit 2 runs `/sbin/shutdown -h now`, and bit 1 runs
-`/sbin/shutdown -r now` (`FUN_080916e4`). <!-- [S] -->
+history record 0xae, and exits after 5000 ms. Mode 1 only exits the
+program. <!-- [S `FUN_0806155c`; O `captures/linux-shutdown.pcapng` frames 47,
+48] --> Before it exits, mode bit 2 runs `/sbin/shutdown -h now`, and bit 1 runs
+`/sbin/shutdown -r now`. <!-- [S `FUN_080916e4`] -->
 `kdx_proto::msg::admin::ShutdownServer` re-encodes frame 47.
 
 ## <a id="m175"></a>175 Upgrade Server Software
@@ -344,8 +344,8 @@ frame 19] -->
 
 If `KDXServer.lexe` is not in the server's folder, the reply is [1
 Status](status.md#m1) 0x1000c. The server then opens `KDXServer.lexe` in the
-folder that it finds for `Bases` (`FUN_08092db8`), and `KDXUpgradeHelper.lexe`.
-A missing file gets 0x30067. <!-- [S] --> If the new program is not in `Bases`,
+folder that it finds for `Bases`, and `KDXUpgradeHelper.lexe`. A missing file
+gets 0x30067. <!-- [S `FUN_08092db8`] --> If the new program is not in `Bases`,
 the first open fails its `stat` with 0x30067, module 0x46, line 0x198. <!-- [O
 `captures/linux-shutdown.pcapng` frame 20] -->
 

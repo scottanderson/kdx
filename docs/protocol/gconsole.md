@@ -4,11 +4,11 @@ For hex and field notation, see [Conventions](README.md#conventions).
 
 GConsole is a Haxial remote console. It is connection type 4 in the client's
 Connect dialog, on TCP port 10900; see
-[handshake.md](handshake.md#connection-types). `FUN_08095c84` handles the
-client's side. <!-- [S] --> No KDX server or tracker has GConsole, and the
-clients are only the display end. They check for a `%HGC` hello, but never send
-one. They handle [4000 Open Window](messages/gconsole.md#m4000) and [4001
-Draw](messages/gconsole.md#m4001), but never send them. <!-- [S] -->
+[handshake.md](handshake.md#connection-types). <!-- [S `FUN_08095c84`] --> No
+KDX server or tracker has GConsole, and the clients are only the display end.
+They check for a `%HGC` hello, but never send one. They handle [4000 Open
+Window](messages/gconsole.md#m4000) and [4001 Draw](messages/gconsole.md#m4001),
+but never send them. <!-- [S] -->
 
 ## Handshake
 
@@ -26,9 +26,10 @@ challenge table and a second header scramble: <!-- [S `FUN_0804b824`] -->
   `captures/linux-gconsole.pcapng`, the peer's challenge, 2832 (frame 6), is
   past the end of the KDX story, and the client's proof answers it from the
   GConsole story (frame 8). <!-- [O] -->
-- The header scramble (`FUN_0809aefc`) has the shape of the [`%KDX`
-  scramble](framing.md#header-scramble), with other rotations and masks. Before
-  encryption, it changes the header words h0 to h3 to these values:
+- The header scramble has the shape of the [`%KDX`
+  scramble](framing.md#header-scramble), with other rotations and masks. <!-- [S
+  `FUN_0809aefc`] --> Before encryption, it changes the header words h0 to h3 to
+  these values:
 
   | Word | Value |
   |---|---|

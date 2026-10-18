@@ -182,7 +182,7 @@ general, groups, and admin section from its fields. <!-- [O] -->
 |---|---|---|---|
 | 0 | general | [GeneralSettings](#general-settings) | The size must be at least 0x4c and hold the strings. |
 | 1 | upstream trackers | [UpstreamTracker](#upstream-trackers) | Replaces the whole list, even when empty. |
-| 2 | groups | [SettingsGroup](#groups) | The size must not be 0. Replaces the whole list and drops every registration (`FUN_0804ab2c`). |
+| 2 | groups | [SettingsGroup](#groups) | The size must not be 0. Replaces the whole list and drops every registration. <!-- [S `FUN_0804ab2c`] --> |
 | 3 | unused | | |
 | 4 | greeting | [ServerGreeting](session.md#m107) | A section that is absent, or shorter than 5 bytes, clears the greeting. The tracker keeps up to 0xffff bytes of a longer one. |
 | 5 | admin | [AdminSettings](#admin) | The size must be at least 0x94 and hold the login. An empty login keeps the old one. |
@@ -278,12 +278,11 @@ Struct `SettingsGroup` (dynamic):<a id="sSettingsGroup"></a>
 |  | pad4 | `u8[]` | `padding` |  |
 
 The tracker sets a group's flag (0x0c in memory) when its name contains
-`tracker` in any case. `FUN_0804aa30` calls the substring search `FUN_0808274c`
-with its case flag set. <!-- [S] --> So `Trackers` takes only trackers. The
-tracker keeps its groups sorted by name, byte for byte, so a new group `Lab`
-goes between General and Macintosh (frame 247). <!-- [S; O] --> After it parses
-the section, the tracker adds the groups `General` and `Trackers` back if they
-are missing.
+`tracker` in any case. <!-- [S `FUN_0804aa30`, `FUN_0808274c`] --> So `Trackers`
+takes only trackers. The tracker keeps its groups sorted by name, byte for byte,
+so a new group `Lab` goes between General and Macintosh (frame 247). <!-- [S; O]
+--> After it parses the section, the tracker adds the groups `General` and
+`Trackers` back if they are missing.
 
 ### Admin
 
@@ -347,12 +346,12 @@ TrackerServ`. [711 TrackerServ Settings Info](#m711) does not send a group's
 flag: the `Trackers` group has 0 there. <!-- [O frame 80] --> It leaves out the
 admin key.
 
-The client reads it in `FUN_0806b1b0` with the same checks as the tracker's
-parser. A blob under 0x78 bytes, or without the protocol, the sub-protocol, and
-version 1, is an error. The client reads a section only when its present byte is
-1 and it fits. From the general section, it takes the two flag bits, the name,
-the description, and the port. From admin, it takes only the login. It ignores
-the limits and the server ID. <!-- [S `FUN_0806b1b0`] -->
+The client reads it with the same checks as the tracker's parser. A blob under
+0x78 bytes, or without the protocol, the sub-protocol, and version 1, is an
+error. The client reads a section only when its present byte is 1 and it fits.
+From the general section, it takes the two flag bits, the name, the description,
+and the port. From admin, it takes only the login. It ignores the limits and the
+server ID. <!-- [S `FUN_0806b1b0`] -->
 
 ## <a id="m712"></a>712 Set TrackerServ Settings
 
@@ -365,21 +364,21 @@ Struct `SetTrackerSettings` (dynamic):<a id="sSetTrackerSettings"></a>
 | 0x00 |  | [`TrackerSettings`](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 The payload has the format of [711 TrackerServ Settings Info](#m711), which [710
-Get TrackerServ Settings](#m710) describes. `FUN_0804d63c` parses it. <!-- [S]
---> The tracker reads the limits and the server ID from the file only. A port of
-0, or above 0xfffe, means 10800. A new port takes effect at once
-(`FUN_0804ca60`).
+Get TrackerServ Settings](#m710) describes. <!-- [S `FUN_0804d63c`] --> The
+tracker reads the limits and the server ID from the file only. A port of 0, or
+above 0xfffe, means 10800. A new port takes effect at once. <!-- [S
+`FUN_0804ca60`] -->
 
-Client 1.620 beta 5 builds [712 Set TrackerServ Settings](#m712) in
-`FUN_0806b68c`. It sets the present bytes for general, trackers, groups, and
-greeting, but not for admin (0x71). It puts the sections in the order general,
-trackers, groups, admin, greeting, and takes the general flags from the Register
-with Trackers and Enable Greeting checkboxes. <!-- [S `FUN_0806b68c`] --> It
-writes the groups section only when the user has edited the group list (bit 12
-at list +0x24). If not, the section has offset 0 and size 0, and the tracker
-keeps its groups. <!-- [S `FUN_0806b68c`; O frames 82, 240] --> It always writes
-the greeting section, as a u32 0 and the text. So an empty greeting is 4 bytes,
-and the tracker clears its greeting. <!-- [S `FUN_0806b68c`, `FUN_0804d63c`] -->
+When Client 1.620 beta 5 builds [712 Set TrackerServ Settings](#m712), it sets
+the present bytes for general, trackers, groups, and greeting, but not for admin
+(0x71). It puts the sections in the order general, trackers, groups, admin,
+greeting, and takes the general flags from the Register with Trackers and Enable
+Greeting checkboxes. <!-- [S `FUN_0806b68c`] --> It writes the groups section
+only when the user has edited the group list (bit 12 at list +0x24). If not, the
+section has offset 0 and size 0, and the tracker keeps its groups. <!-- [S
+`FUN_0806b68c`; O frames 82, 240] --> It always writes the greeting section, as
+a u32 0 and the text. So an empty greeting is 4 bytes, and the tracker clears
+its greeting. <!-- [S `FUN_0806b68c`, `FUN_0804d63c`] -->
 
 It also writes the admin section: 0x94 zero bytes, then the login. The client
 allows a login of up to 0xff bytes, and the tracker keeps up to 0x3f. When the

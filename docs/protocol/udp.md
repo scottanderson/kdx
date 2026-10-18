@@ -127,8 +127,8 @@ field: <!-- [S tracker `FUN_0804b960`] -->
   the tracker updates the users, flags, and last-seen time.
 - If not, the tracker makes the record again from the datagram, and keeps its
   first-seen time. <!-- [S `FUN_0804b960`] -->
-- A registration with an empty name makes no record, and removes a known one,
-  because `FUN_0804b604` returns none. <!-- [S `FUN_0804b604`] -->
+- A registration with an empty name makes no record, and removes a known
+  one. <!-- [S `FUN_0804b604`] -->
 
 The tracker cuts the name to 64 bytes, and keeps the whole description. It lists
 the record in each of the record's groups that the tracker has, compared byte

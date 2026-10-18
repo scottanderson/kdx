@@ -31,8 +31,9 @@ Struct `OpenWindow` (24 bytes):<a id="sOpenWindow"></a>
 | 0x08 | 16 | `u8[16]` | `rest` | The client does not read these bytes. |
 
 A second [4000 Open Window](#m4000) fails with 0x10003. Frame 10 opened a window
-of 0x200 × 0x180, filled with 0x00336699. <!-- [O] --> The color goes through
-`FUN_08114bc8` first. [4001 Draw](#m4001) describes colors.
+of 0x200 × 0x180, filled with 0x00336699. <!-- [O] --> The client converts the
+color before it uses it. <!-- [S `FUN_08114bc8`] --> [4001 Draw](#m4001)
+describes colors.
 
 ## <a id="m4001"></a>4001 Draw
 
@@ -66,20 +67,20 @@ Each body, except that of kind 2, starts with the u16 ID of an object that kind
 2 made. Coordinates are i16, in the object. A rect does not include its right
 and bottom edges. The table shows what each kind drew in frame 14: <!-- [O] -->
 
-| Kind | Body | Drew | Handler |
-|---:|---|---|---|
-| 2 | Create: a rect (left, top, right, bottom) at 0x00 in the window, the ID at 0x0c, flags at 0x0e (0x8 shows the object), and the object type at 0x12. The only known type is 1, an off-screen image. At least 0x14 bytes. | an object, shown with flags 8 and type 1 | `FUN_08094d50` |
-| 3 | Delete. | removed object 3 and its drawing | `FUN_08094f2c` |
-| 4 | Move: x and y at 0x02, in the window. | moved object 2 | `FUN_08094fb8` |
-| 100 | u16 at 0x02, rect at 0x04, color at 0x0c | a filled rect. 0, 1, and 2 at 0x02 drew the same. | `FUN_08095058` |
-| 101 | u16 at 0x02, rect at 0x04, colors at 0x0c and 0x10 | a fill from the first color at the left to the second at the right | `FUN_0809511c` |
-| 102 | u16 line width at 0x02, rect at 0x04, color at 0x0c | a rect's outline. Widths 1 and 3 drew, and 0 drew nothing. | `FUN_080951fc` |
-| 103 | u16 at 0x02, point at 0x04, color at 0x08 | one pixel | `FUN_080952e4` |
-| 104 | byte at 0x02, line width byte at 0x03, two points at 0x04, color at 0x0c | a line, 2 wide | `FUN_08095390` |
-| 105, 106 | u16 at 0x02, rect at 0x04, 8 bytes at 0x0c, text from 0x14 to the end | the text, the same for both kinds | `FUN_08095480`, `FUN_08095590` |
-| 107 | u16 at 0x02, color at 0x04, point at 0x08, three or more points from 0x0c | a filled polygon. The point at 0x08 was (0, 0). | `FUN_080956a0` |
-| 108 | u16 at 0x02, point at 0x04, color at 0x08 | a flood fill of the area of the same color around the point | `FUN_08095904` |
-| 109 | u16 at 0x02, destination point at 0x04, source point at 0x08, u16 width and height at 0x0c | a copy within the object | `FUN_080959a4` |
+| Kind | Body | Drew |
+|---:|---|---|
+| 2 | Create: a rect (left, top, right, bottom) at 0x00 in the window, the ID at 0x0c, flags at 0x0e (0x8 shows the object), and the object type at 0x12. The only known type is 1, an off-screen image. At least 0x14 bytes. | an object, shown with flags 8 and type 1 <!-- [S `FUN_08094d50`] --> |
+| 3 | Delete. | removed object 3 and its drawing <!-- [S `FUN_08094f2c`] --> |
+| 4 | Move: x and y at 0x02, in the window. | moved object 2 <!-- [S `FUN_08094fb8`] --> |
+| 100 | u16 at 0x02, rect at 0x04, color at 0x0c | a filled rect. 0, 1, and 2 at 0x02 drew the same. <!-- [S `FUN_08095058`] --> |
+| 101 | u16 at 0x02, rect at 0x04, colors at 0x0c and 0x10 | a fill from the first color at the left to the second at the right <!-- [S `FUN_0809511c`] --> |
+| 102 | u16 line width at 0x02, rect at 0x04, color at 0x0c | a rect's outline. Widths 1 and 3 drew, and 0 drew nothing. <!-- [S `FUN_080951fc`] --> |
+| 103 | u16 at 0x02, point at 0x04, color at 0x08 | one pixel <!-- [S `FUN_080952e4`] --> |
+| 104 | byte at 0x02, line width byte at 0x03, two points at 0x04, color at 0x0c | a line, 2 wide <!-- [S `FUN_08095390`] --> |
+| 105, 106 | u16 at 0x02, rect at 0x04, 8 bytes at 0x0c, text from 0x14 to the end | the text, the same for both kinds <!-- [S `FUN_08095480`, `FUN_08095590`] --> |
+| 107 | u16 at 0x02, color at 0x04, point at 0x08, three or more points from 0x0c | a filled polygon. The point at 0x08 was (0, 0). <!-- [S `FUN_080956a0`] --> |
+| 108 | u16 at 0x02, point at 0x04, color at 0x08 | a flood fill of the area of the same color around the point <!-- [S `FUN_08095904`] --> |
+| 109 | u16 at 0x02, destination point at 0x04, source point at 0x08, u16 width and height at 0x0c | a copy within the object <!-- [S `FUN_080959a4`] --> |
 
 The client sends back two 16-byte messages, [4200 Key](#m4200) and [4201
 Mouse](#m4201), one for each key or button event in the window. <!-- [S

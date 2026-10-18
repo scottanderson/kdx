@@ -336,6 +336,6 @@ Message](administration.md#m155) "Please help fund the further development of
 KDX by purchasing a license." to each user whose stored value is 2, and who has
 been connected for less than 2 hours (7200000 ms). The first round runs
 217500000 ms (about 60 hours) after the server starts, <!-- [S `FUN_080531f0`]
---> so a short lab run never shows it. The text is obfuscated in the binary at
-0x080adc00: each byte is ~b + 0xbe. The payload of the [155 Rcv Broadcast
-Message](administration.md#m155) is 16 zero bytes, and then the text.
+--> so a short lab run never shows it. The text is obfuscated in the binary:
+each byte is ~b + 0xbe. <!-- [S] at 0x080adc00 --> The payload of the [155 Rcv
+Broadcast Message](administration.md#m155) is 16 zero bytes, and then the text.

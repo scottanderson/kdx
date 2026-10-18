@@ -63,7 +63,8 @@ Struct `FolderAccessRule` (4 bytes):<a id="sFolderAccessRule"></a>
 | 0x00 | 2 | `u16` | `permission_bits` | The MSB is bit 0. |
 | 0x02 | 2 | `u16` | `ignored` | 0 as sent. |
 
-The permission bits come from the client's menu at file offset 0xf6448:
+The permission bits come from the client's menu: <!-- [S] at file offset 0xf6448
+-->
 
 | Bit | Permission |
 |---:|---|

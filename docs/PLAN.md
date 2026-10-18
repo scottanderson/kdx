@@ -65,8 +65,9 @@ Disassembly explains *why* and finds messages the GUI rarely triggers.
   MD5 init constants, Twofish q-tables, the CRC32 table. Follow cross-references
   from `send`/`recv`/`sendto` to the framing and then to the message dispatch.
 - Recover the dispatch table that maps message type to handler. Done: the
-  dispatcher is `FUN_0804fdac`, and the name table at `FUN_08049d14` names
-  every type. Both are described in `protocol/README.md`.
+  server's dispatcher <!-- [S `FUN_0804fdac`] --> and its name table, <!-- [S
+  `FUN_08049d14`] --> which names every type, are described in
+  `protocol/README.md`.
 - Use the length-prefixed UI and error strings to name handlers ("Get Tracker
   Server List", "protocol breach", "limit in the net protocol was exceeded").
 - Keep the analysis scripts and a table of function addresses

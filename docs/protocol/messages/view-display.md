@@ -7,15 +7,14 @@ viewer.
 
 View display runs on a transfer connection, not on the session; see
 [transfers.md](../transfers.md). <!-- [S `FUN_08052194`] --> Server 1.620 for
-Linux cannot capture its screen (`FUN_080996d8` gives 0x10004). So on that
-server, [900 Open View Display](#m900) only gets an error, and the input
-functions do nothing. The layouts below come from the server's code and the
-client's decoder. <!-- [S] --> Server 1.600 for Windows has the same code at
-other addresses (`FUN_00418dc0` for [900 Open View Display](#m900),
-`FUN_00418850` for the grab). It grabs the primary screen with `BitBlt` from the
-desktop window into a 24-bit DIB. <!-- [S `FUN_0041ffd0`] --> In
-`captures/win-view-display.pcapng`, it serves Client 1.620 beta 5 under Wine.
-<!-- [O] --> Frame numbers on this page are from that capture.
+Linux cannot capture its screen: its grab gives 0x10004. <!-- [S `FUN_080996d8`]
+--> So on that server, [900 Open View Display](#m900) only gets an error, and
+the input functions do nothing. The layouts below come from the server's code
+and the client's decoder. <!-- [S] --> Server 1.600 for Windows has the same
+code. <!-- [S `FUN_00418dc0`, `FUN_00418850`] --> It grabs the primary screen
+with `BitBlt` from the desktop window into a 24-bit DIB. <!-- [S `FUN_0041ffd0`]
+--> In `captures/win-view-display.pcapng`, it serves Client 1.620 beta 5 under
+Wine. <!-- [O] --> Frame numbers on this page are from that capture.
 
 ## <a id="m900"></a>900 Open View Display
 Initiator: Client, on a transfer connection. Privilege: View Display (66).
@@ -184,17 +183,17 @@ kind. <!-- [O frames 312 to 322] --> After kind 1, the server sends the next
 The server changes kinds 1 to 3 back into events 5, 6, and 7. <!-- [S
 `FUN_0805c498`, `FUN_00419110`] --> Server 1.600 for Windows ignores the
 character and the modifiers. It finds the low byte of the key code in a table of
-256 virtual keys at 0x0047fe98, and calls `keybd_event`: key up for kind 2, and
-key down for the others. <!-- [S `FUN_00420380`] -->
+256 virtual keys, and calls `keybd_event`: key up for kind 2, and key down for
+the others. <!-- [S `FUN_00420380`] table at 0x0047fe98 -->
 
 The two clients send different key codes: <!-- [S] -->
 
-- Client 1.600 for Windows uses the codes that the server's table expects (its
-  table is at `0x004ff1e8`): `A` to `Z` 0x41 to 0x5a, `0` to `9` 0x30 to 0x39,
-  keypad 0 to 9 0x10 to 0x19, Tab 0x70, Return 0x71, Space 0x72, Home 0x80,
-  Escape 0x90, BackSpace 0x91, Left Shift 0xa1, F1 to F24 0xb0 to 0xc7.
-- Client 1.620 beta 5 sends USB HID usages, mapped from X keysyms
-  (`FUN_0811667c`, tables `0x081681e0` and `0x081680e0`).
+- Client 1.600 for Windows uses the codes that the server's table expects: `A`
+  to `Z` 0x41 to 0x5a, `0` to `9` 0x30 to 0x39, keypad 0 to 9 0x10 to 0x19, Tab
+  0x70, Return 0x71, Space 0x72, Home 0x80, Escape 0x90, BackSpace 0x91, Left
+  Shift 0xa1, F1 to F24 0xb0 to 0xc7. <!-- [S] client table at 0x004ff1e8 -->
+- Client 1.620 beta 5 sends USB HID usages, mapped from X keysyms. <!-- [S
+  `FUN_0811667c`] tables at 0x081681e0 and 0x081680e0 -->
 
 So Server 1.600 for Windows probably maps the `a` (4) of Client 1.620 to virtual
 key 0. Nothing typed in the capture reached its screen. <!-- [I] -->

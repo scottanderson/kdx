@@ -50,15 +50,14 @@ restarted. <!-- [O `captures/kdx-accounts.pcapng`] the connections after frame
 467 -->
 
 This limit is in the network layer that the server, tracker, and client share.
-The client applies it to its DCC listener. In the server, accept
-(`FUN_08097e80`) calls it (`FUN_08071c90`). <!-- [S server `FUN_08071c90`,
-server `FUN_08097e80`, tracker `FUN_0806bbac`, client `FUN_080ca7cc`] --> For
-each source address, it counts the accepted connections in a window of 300
-seconds. The 31st connection in a window puts the address on a block list for
-3600 seconds, and logs 0x40077. While the address is blocked, each new
-connection from it closes at once. The limits, 30 and 300, are defaults that
-nothing changes. This block list, unlike the server's own ban list, also blocks
-127.0.0.1.
+The client applies it to its DCC listener. The server checks it each time it
+accepts a connection. <!-- [S server `FUN_08071c90`, server `FUN_08097e80`,
+tracker `FUN_0806bbac`, client `FUN_080ca7cc`] --> For each source address, it
+counts the accepted connections in a window of 300 seconds. The 31st connection
+in a window puts the address on a block list for 3600 seconds, and logs 0x40077.
+While the address is blocked, each new connection from it closes at once. The
+limits, 30 and 300, are defaults that nothing changes. This block list, unlike
+the server's own ban list, also blocks 127.0.0.1.
 
 Two more limits apply when the server accepts a connection. <!-- [S
 `FUN_08052ad0`] --> If an address already has 6 open connections, the server
@@ -67,12 +66,11 @@ the server rejects the connection and logs it. Bans come from [150 Disconnect
 User](messages/administration.md#m150) and from the flood bans below. The ban
 list never matches 127.0.0.1. <!-- [S `FUN_08061398`] -->
 
-The server also counts the requests on each connection: the session loop calls
-`FUN_0804fc40` for each message. <!-- [S `FUN_0804fc40`] --> The limit L is the
-account class's flood protection byte, at offset 0x25 of [503 Account Class
-Info](messages/accounts.md#m503). A connection with no class yet gets 40. The
-client's menu names the values: <!-- [S] at file offset 0xf6cd8 of the client's
-resources -->
+The server also counts the requests on each connection. <!-- [S `FUN_0804fc40`]
+--> The limit L is the account class's flood protection byte, at offset 0x25 of
+[503 Account Class Info](messages/accounts.md#m503). A connection with no class
+yet gets 40. The client's menu names the values: <!-- [S] at file offset 0xf6cd8
+of the client's resources -->
 
 | Name | L |
 |---|---:|
@@ -100,7 +98,7 @@ it sets the count to zero and starts a new window. If not, it does these things:
   will be banned."
 - Above L + 8, it bans the address for 2 hours (7200000 ms) with the reason
   "Auto-banned this bastard for flooding.", and closes the connection with
-  0x640004 (`FUN_0804a8c0`).
+  0x640004. <!-- [S `FUN_0804a8c0`] -->
 
 The observed case, with [115 Get My Address](messages/session.md#m115) as the
 repeated request:

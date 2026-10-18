@@ -9,9 +9,10 @@ success. [Error codes](#error-codes) lists the codes.
 Initiator: Server. A tracker and a DCC peer send it too. It is always a
 reply. <!-- [S `FUN_08086640`, `FUN_080865c0`; O] -->
 
-The dispatcher (`FUN_0804fdac`) runs each handler in a C++ `try`. The catch at
-0x0805090c changes the exception into a [1 Status](#m1) reply to the request's
-txid. Some handlers also send [1 Status](#m1) when they succeed.
+The server's dispatcher runs each handler in a C++ `try`. The catch changes the
+exception into a [1 Status](#m1) reply to the request's txid. <!-- [S
+`FUN_0804fdac`] catch at 0x0805090c --> Some handlers also send [1 Status](#m1)
+when they succeed.
 
 Each form starts with two u32 words. The server's error form adds 16 more bytes,
 so the payload is 8 or 24 bytes.
@@ -39,8 +40,8 @@ The error form is 24 bytes: `code`, `request_type_or_value`, and one
 - `152:00000003` (there is no user 3) gets `00 01 00 0c 00 00 00 98 00…`, which
   is 0x1000c, item does not exist.
 - `400:0000` (a malformed path) gets `00 01 00 0a 00 00 01 90 00 00 00 46 00 00
-  00 98…`, which is 0x1000a, corrupt, from module 0x46 at line 0x98 of
-  `FUN_080969f8`.
+  00 98…`, which is 0x1000a, corrupt, from module 0x46 at line 0x98 of the path
+  decoder. <!-- [S `FUN_080969f8`] -->
 
 The success form is 8 bytes: `code` is 0, and `request_type_or_value` is the
 value, which is often the request type. <!-- [S `FUN_080865c0`] --> [507 Create
@@ -77,9 +78,8 @@ about it; see [dcc.md](../dcc.md#primary-connection). <!-- [S] -->
 
 These are the codes in [1 Status](#m1).
 
-The server's name table is `FUN_08066d04`. It has 79 entries, with the codes at
-0x080b1dc0 and the text pointers at 0x080b1f00. <!-- [S] --> The high 16 bits
-give the class.
+The server's table of error names has 79 entries. <!-- [S `FUN_08066d04`] codes
+at 0x080b1dc0, text pointers at 0x080b1f00 --> The high 16 bits give the class.
 
 | Code | Meaning |
 |---|---|

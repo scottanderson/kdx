@@ -21,36 +21,36 @@ Text is UTF-8 in the 1.6 builds, but the Linux server passes file names through
 as raw bytes:
 
 - Server 1.600 for Windows lists files with `FindFirstFileW`, and encodes each
-  UTF-16 name as UTF-8 (`FUN_00428640`, `FUN_00428380`). It decodes an incoming
-  path as UTF-8 before `CreateFileW` (`FUN_0042a740`, `FUN_004286e0`), so an
-  invalid byte becomes U+FFFD and the server does not find the file. <!-- [S]
-  -->
-- Client 1.600 for Windows keeps text as UTF-8, with its decoder at
-  0x00457190. <!-- [S] -->
+  UTF-16 name as UTF-8. <!-- [S `FUN_00428640`, `FUN_00428380`] --> It decodes
+  an incoming path as UTF-8 before `CreateFileW`, so an invalid byte becomes
+  U+FFFD and the server does not find the file. <!-- [S `FUN_0042a740`,
+  `FUN_004286e0`] -->
+- Client 1.600 for Windows keeps text as UTF-8. <!-- [S] decoder at
+  0x00457190 -->
 - All three Windows builds (client, server, and tracker) use only the wide Win32
   calls, and `CF_UNICODETEXT` (0xd) for the clipboard. Their only
-  `MultiByteToWideChar` calls convert font and device names (client
-  `FUN_0045ecd0`, server `FUN_0041b460`), so no Windows code page touches
-  protocol text. <!-- [S] -->
+  `MultiByteToWideChar` calls convert font and device names, so no Windows code
+  page touches protocol text. <!-- [S client `FUN_0045ecd0`, server
+  `FUN_0041b460`] -->
 - Server 1.600 for Mac OS X converts `readdir` names to NFC UTF-8 with
-  `ConvertFromUnicodeToText` (`FUN_000348cc`, encoding 0x08000100). The Carbon
-  client 1.600 converts HFS+ names in the same way. <!-- [S] -->
+  `ConvertFromUnicodeToText` (encoding 0x08000100). <!-- [S `FUN_000348cc`] -->
+  The Carbon client 1.600 converts HFS+ names in the same way. <!-- [S] -->
 - The Carbon server 1.600 (PEF) reads names with `FSGetCatalogInfoBulk` and
   makes files with `FSCreateFileUnicode`, so it gets UTF-16 names from the File
-  Manager, even on Mac OS 9. `FUN_10032a80` normalizes a name to NFC
+  Manager, even on Mac OS 9. It normalizes a name to NFC
   (`CreateTextEncoding(0x100,3,0)`) and encodes it as UTF-8. If the Text
   Encoding Converter is older than 0x1020, it encodes the name without
-  normalizing it. <!-- [S] --> The Mac builds use the system script encoding
-  (`UpgradeScriptInfoToTextEncoding`, `FUN_10060990`) only for local keyboard
-  and clipboard text. <!-- [S] -->
+  normalizing it. <!-- [S `FUN_10032a80`] --> The Mac builds use the system
+  script encoding (`UpgradeScriptInfoToTextEncoding`) only for local keyboard
+  and clipboard text. <!-- [S `FUN_10060990`] -->
 - Client 1.620 beta 5 for Linux reads keys with `Xutf8LookupString`, reads the
   clipboard as `UTF8_STRING`, and has no other codec. <!-- [S] --> It keeps
-  local file names as raw bytes (`readdir64` in `FUN_0810e6c0`). <!-- [S] -->
-- Server 1.620 for Linux copies `readdir64` names without change
-  (`FUN_08091b6c`), so a name is the bytes on disk. <!-- [S] --> Names copied
-  from a classic Mac, or uploaded by an older client, can be Mac OS Roman, such
-  as `Erik’s` with byte 0xd5. <!-- [O] user report --> The Mach-O and Linux
-  trackers also read their folders with raw `readdir`. <!-- [S] -->
+  local file names as raw bytes, from `readdir64`. <!-- [S `FUN_0810e6c0`] -->
+- Server 1.620 for Linux copies `readdir64` names without change, so a name is
+  the bytes on disk. <!-- [S `FUN_08091b6c`] --> Names copied from a classic
+  Mac, or uploaded by an older client, can be Mac OS Roman, such as `Erik’s`
+  with byte 0xd5. <!-- [O] user report --> The Mach-O and Linux trackers also
+  read their folders with raw `readdir`. <!-- [S] -->
 
 Chat, nicks, and news follow from this. Each client makes text from UTF-16 or
 UTF-8 input and has no other codec, so it sends UTF-8. <!-- [I] --> Servers
@@ -89,7 +89,7 @@ So `Erik\xd5s` shows as `Erik�`, and the `s` is lost. <!-- [S] Windows client
 client shows `caf\x8e \xd5 \xd1` as `caf� ��`: the 0xd5 lead byte uses the space
 after it, so the client draws three boxes. <!-- [O
 `captures/linux-text-encoding.pcapng` frames 195, 302] --> In the other
-direction, a lone UTF-16 surrogate becomes U+FFFD (`FUN_00428640`). <!-- [S] -->
+direction, a lone UTF-16 surrogate becomes U+FFFD. <!-- [S `FUN_00428640`] -->
 
 KDX changed to Unicode in 1.2. Each client and server archive in
 `vendor/MANIFEST.md` holds Haxial's release notes, as `UPGRADE WARNINGS.html`
@@ -156,9 +156,9 @@ The root is an empty payload, not a count of 0. A path with names must be at
 least 6 bytes; if not, the server gives 0x1000a. A [400 Get File
 List](messages/files.md#m400) of `00 00` gets this error, so `kdx-dissect` flags
 that request as invalid. <!-- [O `captures/probe.pcapng` frames 106, 107] -->
-The server joins the names with `/` and checks each one with
-`FUN_08094084`. <!-- [S] --> For example, `00 01 00 00 0c "Uploads [UL]"` is the
-folder `Uploads [UL]` at the root. <!-- [O] -->
+The server joins the names with `/` and checks each one. <!-- [S `FUN_08094084`]
+--> For example, `00 01 00 00 0c "Uploads [UL]"` is the folder `Uploads [UL]` at
+the root. <!-- [O] -->
 
 Struct `DelimitedFilePath` (dynamic):<a id="sDelimitedFilePath"></a>
 

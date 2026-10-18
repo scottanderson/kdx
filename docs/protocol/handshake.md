@@ -178,12 +178,12 @@ length, a u16, at +0xa0. <!-- [S client `FUN_080ea000`, server `FUN_0808529c`]
 --> All code that uses the table reads these two fields, so all tables work the
 same way in the client: <!-- [S] -->
 
-- `FUN_080ec058` picks the challenge for our hello: a random offset, modulo `len
-  - 0x13`.
-- `FUN_080ec280` answers the peer's challenge with the 20 bytes at its offset,
-  if the offset is at most `len - 0x14`.
-- `FUN_080ea768` checks the peer's response against the 20 bytes at our own
-  challenge.
+- It picks the challenge for our hello: a random offset, modulo `len -
+  0x13`. <!-- [S `FUN_080ec058`] -->
+- It answers the peer's challenge with the 20 bytes at its offset, if the offset
+  is at most `len - 0x14`. <!-- [S `FUN_080ec280`] -->
+- It checks the peer's response against the 20 bytes at our own challenge. <!--
+  [S `FUN_080ea768`] -->
 
 Both rules come to `offset + 0x14 <= len`, where `len` is the length of the
 table that the side holds at that time. On a GConsole connection, the client
@@ -367,8 +367,8 @@ Struct `ProofReply09x` (1 bytes):<a id="sProofReply09x"></a>
 | 0x00 | 1 | `u8` | `status` | `0x10` OK, `1` failed |
 
 If the client gets any reply other than 0x10, it gives 0x40070. Then both sides
-give the key to `FUN_1000c1f0`, <!-- [S] --> which is probably a cipher's key
-schedule. <!-- [I] -->
+give the key to a function that is probably a cipher's key schedule. <!-- [S
+`FUN_1000c1f0`; I] -->
 
 Only Server 0.921's proof code has been read. The client and tracker have the
 same hello code, <!-- [S] --> so they probably have the same proof too. <!-- [I]
