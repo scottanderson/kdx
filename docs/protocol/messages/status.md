@@ -20,18 +20,18 @@ Struct `Status` (dynamic):<a id="sStatus"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `code` | 0 in the success form. If not, an error code; see [Error codes](#error-codes). |
-| 0x04 | 4 | u32 | `request_type_or_value` | In an error, the request type, such as 0x98 for a failed [152 Get User Info](administration.md#m152). <!-- [O] --> In the success form, the value. |
-| 0x08 | rest | [StatusDetail](#sStatusDetail)[] | `detail` | Only in the server's 24-byte error form, not in the success form or the tracker form. It holds at most one `StatusDetail`. |
+| 0x00 | 4 | `u32` | `code` | 0 in the success form. If not, an error code; see [Error codes](#error-codes). |
+| 0x04 | 4 | `u32` | `request_type_or_value` | In an error, the request type, such as 0x98 for a failed [152 Get User Info](administration.md#m152). <!-- [O] --> In the success form, the value. |
+| 0x08 | rest | [`StatusDetail`](#sStatusDetail)`[]` | `detail` | Only in the server's 24-byte error form, not in the success form or the tracker form. It holds at most one `StatusDetail`. |
 
 Struct `StatusDetail` (16 bytes):<a id="sStatusDetail"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `module` | The module tag of the code that gave the error, as ASCII packed into an integer: `0x54524e` is `TRN`, and 0x46 is the path code. |
-| 0x04 | 4 | u32 | `line` | The source line of the code that gave the error. |
-| 0x08 | 4 | u32 | `extra` | A value from the code that gave the error. |
-| 0x0c | 4 | u32 | `ignored` | 0 as sent. |
+| 0x00 | 4 | `u32` | `module` | The module tag of the code that gave the error, as ASCII packed into an integer: `0x54524e` is `TRN`, and 0x46 is the path code. |
+| 0x04 | 4 | `u32` | `line` | The source line of the code that gave the error. |
+| 0x08 | 4 | `u32` | `extra` | A value from the code that gave the error. |
+| 0x0c | 4 | `u32` | `ignored` | 0 as sent. |
 
 The error form is 24 bytes: `code`, `request_type_or_value`, and one
 `StatusDetail` in `detail`. For example: <!-- [O] -->

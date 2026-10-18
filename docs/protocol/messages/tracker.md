@@ -42,20 +42,20 @@ Struct `TrackerGroupList` (dynamic):<a id="sTrackerGroupList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `groups_count` |  |
-| 0x04 | `groups_count` | [GroupListEntry](#sGroupListEntry)[] | `groups` |  |
+| 0x00 | 4 | `u32` | `groups_count` |  |
+| 0x04 | `groups_count` | [`GroupListEntry`](#sGroupListEntry)`[]` | `groups` |  |
 
 Struct `GroupListEntry` (dynamic):<a id="sGroupListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u16 | `servers` | The number of servers in the group. |
-| 0x02 | 4 | u8[4] | `value_02` | The tracker does not set it, and the client ignores it. <!-- [S client `FUN_08068bcc`] --> |
-| 0x06 | 1 | u8 | `name_len` |  |
-| 0x07 | 1 | u8 | `description_len` |  |
-| 0x08 | `name_len` | str | `name` |  |
-|  | `description_len` | str | `description` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 2 | `u16` | `servers` | The number of servers in the group. |
+| 0x02 | 4 | `u8[4]` | `value_02` | The tracker does not set it, and the client ignores it. <!-- [S client `FUN_08068bcc`] --> |
+| 0x06 | 1 | `u8` | `name_len` |  |
+| 0x07 | 1 | `u8` | `description_len` |  |
+| 0x08 | `name_len` | `str` | `name` |  |
+|  | `description_len` | `str` | `description` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 ## <a id="m702"></a>702 Get Tracker Server List
 
@@ -76,10 +76,10 @@ Struct `GetServerList` (dynamic):<a id="sGetServerList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 2 | u8[2] | `ignored_00` | 0 as sent. |
-| 0x02 | 1 | u8 | `group_len` |  |
-| 0x03 | 1 | u8 | `ignored_03` | 0 as sent. |
-| 0x04 | `group_len` | str | `group` |  |
+| 0x00 | 2 | `u8[2]` | `ignored_00` | 0 as sent. |
+| 0x02 | 1 | `u8` | `group_len` |  |
+| 0x03 | 1 | `u8` | `ignored_03` | 0 as sent. |
+| 0x04 | `group_len` | `str` | `group` |  |
 
 A payload shorter than 4 bytes plus the name gets 0x10002, and an unknown group
 gets 0x1000c. <!-- [O `captures/kdx-cli-tracker.pcapng` frame 39] --> Group
@@ -97,8 +97,8 @@ Struct `TrackerServerList` (dynamic):<a id="sTrackerServerList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `servers_count` |  |
-| 0x04 | `servers_count` | [ServerListEntry](#sServerListEntry)[] | `servers` | The client rejects more than 0xffff. |
+| 0x00 | 4 | `u32` | `servers_count` |  |
+| 0x04 | `servers_count` | [`ServerListEntry`](#sServerListEntry)`[]` | `servers` | The client rejects more than 0xffff. |
 
 Each server record is padded to a multiple of 4: <!-- [S tracker `FUN_0804adcc`,
 client `FUN_08068da0`] -->
@@ -107,21 +107,21 @@ Struct `ServerListEntry` (dynamic):<a id="sServerListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | `first_seen` | Milliseconds since 1900; see [encodings.md](../encodings.md#times). Frame 37 holds the time that registration 23 arrived. <!-- [O] --> |
-| 0x08 | 6 | u8[6] | `ignored_08` | 0 as sent. |
-| 0x0e | 2 | u16 | `flags` | From the registration. |
-| 0x10 | 2 | u16 | `users` |  |
-| 0x12 | 6 | u8[6] | `ignored_12` | 0 as sent. |
-| 0x18 | 1 | u8 | `address_len` | 6: the address and the port. |
-| 0x19 | 1 | u8 | `name_len` |  |
-| 0x1a | 1 | u8 | `description_len` |  |
-| 0x1b | 1 | u8 | `extra_len` |  |
-| 0x1c | 4 | u32 | `address` | IPv4 address, such as 0x7f000001 for 127.0.0.1. |
-| 0x20 | 2 | u16 | `port` | TCP port. |
-| 0x22 | `name_len` | str | `name` |  |
-|  | `description_len` | str | `description` |  |
-|  | `extra_len` | u8[] | `extra` | Length 0. |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 8 | `u64` | `first_seen` | Milliseconds since 1900; see [encodings.md](../encodings.md#times). Frame 37 holds the time that registration 23 arrived. <!-- [O] --> |
+| 0x08 | 6 | `u8[6]` | `ignored_08` | 0 as sent. |
+| 0x0e | 2 | `u16` | `flags` | From the registration. |
+| 0x10 | 2 | `u16` | `users` |  |
+| 0x12 | 6 | `u8[6]` | `ignored_12` | 0 as sent. |
+| 0x18 | 1 | `u8` | `address_len` | 6: the address and the port. |
+| 0x19 | 1 | `u8` | `name_len` |  |
+| 0x1a | 1 | `u8` | `description_len` |  |
+| 0x1b | 1 | `u8` | `extra_len` |  |
+| 0x1c | 4 | `u32` | `address` | IPv4 address, such as 0x7f000001 for 127.0.0.1. |
+| 0x20 | 2 | `u16` | `port` | TCP port. |
+| 0x22 | `name_len` | `str` | `name` |  |
+|  | `description_len` | `str` | `description` |  |
+|  | `extra_len` | `u8[]` | `extra` | Length 0. |
+|  | pad4 | `u8[]` | `padding` |  |
 
 `kdx-proto` re-encodes [701 Tracker Group List](#m701), 702, and 703 from frames
 34, 36, 37, 57, 58, 247, and 257 byte for byte. <!-- [O] -->
@@ -141,20 +141,20 @@ Struct `TrackerSettings` (dynamic):<a id="sTrackerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | char[4] | `protocol` | not stored. `"%KDX"` (0x254b4458). <!-- [S `FUN_0804d63c`] --> |
-| 0x04 | 4 | char[4] | `sub_protocol` | not stored. `"TSTG"` (0x54535447). <!-- [S `FUN_0804d63c`] --> |
-| 0x08 | 2 | u16 | `version` | Must be 1. <!-- [S `FUN_0804d63c`] --> |
-| 0x0a | 2 | u8[2] | `ignored` | The parser never reads them. <!-- [S `FUN_0804d63c`] --> |
-| 0x0c | 96 | [TrackerSettingsSection](#sTrackerSettingsSection)[12] | `sections` | Where each section is. Rust `sections` holds the bytes that each entry points to. |
-| 0x6c | 12 | u8[12] | `present` | The parser reads a section only when its byte is exactly 1. <!-- [S `FUN_0804d63c`] --> |
-| 0x78 | rest | u8[] | `section_data` | Rust `sections`. The sections that the entries point to, back to back, in the order below. |
+| 0x00 | 4 | `char[4]` | `protocol` | not stored. `"%KDX"` (0x254b4458). <!-- [S `FUN_0804d63c`] --> |
+| 0x04 | 4 | `char[4]` | `sub_protocol` | not stored. `"TSTG"` (0x54535447). <!-- [S `FUN_0804d63c`] --> |
+| 0x08 | 2 | `u16` | `version` | Must be 1. <!-- [S `FUN_0804d63c`] --> |
+| 0x0a | 2 | `u8[2]` | `ignored` | The parser never reads them. <!-- [S `FUN_0804d63c`] --> |
+| 0x0c | 96 | [`TrackerSettingsSection`](#sTrackerSettingsSection)`[12]` | `sections` | Where each section is. Rust `sections` holds the bytes that each entry points to. |
+| 0x6c | 12 | `u8[12]` | `present` | The parser reads a section only when its byte is exactly 1. <!-- [S `FUN_0804d63c`] --> |
+| 0x78 | rest | `u8[]` | `section_data` | Rust `sections`. The sections that the entries point to, back to back, in the order below. |
 
 Struct `TrackerSettingsSection` (8 bytes):<a id="sTrackerSettingsSection"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `offset` | From the start of the settings. 0 for an absent section. |
-| 0x04 | 4 | u32 | `size` | 0 for an absent section. |
+| 0x00 | 4 | `u32` | `offset` | From the start of the settings. 0 for an absent section. |
+| 0x04 | 4 | `u32` | `size` | 0 for an absent section. |
 
 An absent section has offset 0 and size 0. A section that is present but empty
 has size 0 and the offset where it would start. <!-- [O frames 80, 82, 237, 240]
@@ -191,19 +191,19 @@ Struct `GeneralSettings` (dynamic):<a id="sGeneralSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u16[4] | `limits` | Four limits, from the file only. 0 in 711. |
-| 0x08 | 24 | u8[24] | `ignored_08` |  |
-| 0x20 | 4 | u32 | `flags` | Bit 0: Register with Trackers. Bit 1: Enable Greeting. |
-| 0x24 | 4 | u32 | `tracker_port` | 0, or a value above 0xfffe, means 10800. |
-| 0x28 | 4 | u8[4] | `ignored_28` |  |
-| 0x2c | 12 | u96 | `server_id` | From the file only. |
-| 0x38 | 14 | u8[14] | `ignored_38` |  |
-| 0x46 | 1 | u8 | `name_len` |  |
-| 0x47 | 1 | u8 | `description_len` |  |
-| 0x48 | 4 | u8[4] | `ignored_48` | `kdx-proto` does not keep these bytes. |
-| 0x4c | `name_len` | str | `name` |  |
-|  | `description_len` | str | `description` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 8 | `u16[4]` | `limits` | Four limits, from the file only. 0 in 711. |
+| 0x08 | 24 | `u8[24]` | `ignored_08` |  |
+| 0x20 | 4 | `u32` | `flags` | Bit 0: Register with Trackers. Bit 1: Enable Greeting. |
+| 0x24 | 4 | `u32` | `tracker_port` | 0, or a value above 0xfffe, means 10800. |
+| 0x28 | 4 | `u8[4]` | `ignored_28` |  |
+| 0x2c | 12 | `u96` | `server_id` | From the file only. |
+| 0x38 | 14 | `u8[14]` | `ignored_38` |  |
+| 0x46 | 1 | `u8` | `name_len` |  |
+| 0x47 | 1 | `u8` | `description_len` |  |
+| 0x48 | 4 | `u8[4]` | `ignored_48` | `kdx-proto` does not keep these bytes. |
+| 0x4c | `name_len` | `str` | `name` |  |
+|  | `description_len` | `str` | `description` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 Flags bit 0 is Register with Trackers (tracker +0x1a4), and bit 1 is Enable
 Greeting (tracker +0x22c). <!-- [S `FUN_0804d63c`] --> The flags are a u32:
@@ -223,32 +223,32 @@ Struct `UpstreamTracker` (dynamic):<a id="sUpstreamTracker"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u8[8] | `ignored_00` |  |
-| 0x08 | 12 | u8[12] | `ignored_08` | Raw bytes. |
-| 0x14 | 1 | u8 | `name_len` |  |
-| 0x15 | 1 | u8 | `comments_len` |  |
-| 0x16 | 1 | u8 | `address_len` |  |
-| 0x17 | 1 | u8 | `login_len` |  |
-| 0x18 | 1 | u8 | `key_len` |  |
-| 0x19 | 1 | u8 | `unused_len` |  |
-| 0x1a | 1 | u8 | `group_0_len` |  |
-| 0x1b | 1 | u8 | `group_1_len` |  |
-| 0x1c | 1 | u8 | `group_2_len` |  |
-| 0x1d | 1 | u8 | `group_3_len` |  |
-| 0x1e | 1 | u8 | `group_4_len` |  |
-| 0x1f | 1 | u8 | `group_5_len` |  |
-| 0x20 | `name_len` | str | `name` |  |
-|  | `comments_len` | str | `comments` |  |
-|  | `address_len` | str | `address` |  |
-|  | `login_len` | str | `login` |  |
-|  | `key_len` | u8[] | `key` |  |
-|  | `unused_len` | str | `unused` |  |
-|  | `group_0_len` | str | `group_0` |  |
-|  | `group_1_len` | str | `group_1` |  |
-|  | `group_2_len` | str | `group_2` |  |
-|  | `group_3_len` | str | `group_3` |  |
-|  | `group_4_len` | str | `group_4` |  |
-|  | `group_5_len` | str | `group_5` |  |
+| 0x00 | 8 | `u8[8]` | `ignored_00` |  |
+| 0x08 | 12 | `u8[12]` | `ignored_08` | Raw bytes. |
+| 0x14 | 1 | `u8` | `name_len` |  |
+| 0x15 | 1 | `u8` | `comments_len` |  |
+| 0x16 | 1 | `u8` | `address_len` |  |
+| 0x17 | 1 | `u8` | `login_len` |  |
+| 0x18 | 1 | `u8` | `key_len` |  |
+| 0x19 | 1 | `u8` | `unused_len` |  |
+| 0x1a | 1 | `u8` | `group_0_len` |  |
+| 0x1b | 1 | `u8` | `group_1_len` |  |
+| 0x1c | 1 | `u8` | `group_2_len` |  |
+| 0x1d | 1 | `u8` | `group_3_len` |  |
+| 0x1e | 1 | `u8` | `group_4_len` |  |
+| 0x1f | 1 | `u8` | `group_5_len` |  |
+| 0x20 | `name_len` | `str` | `name` |  |
+|  | `comments_len` | `str` | `comments` |  |
+|  | `address_len` | `str` | `address` |  |
+|  | `login_len` | `str` | `login` |  |
+|  | `key_len` | `u8[]` | `key` |  |
+|  | `unused_len` | `str` | `unused` |  |
+|  | `group_0_len` | `str` | `group_0` |  |
+|  | `group_1_len` | `str` | `group_1` |  |
+|  | `group_2_len` | `str` | `group_2` |  |
+|  | `group_3_len` | `str` | `group_3` |  |
+|  | `group_4_len` | `str` | `group_4` |  |
+|  | `group_5_len` | `str` | `group_5` |  |
 
 ### Groups
 
@@ -260,17 +260,17 @@ Struct `SettingsGroup` (dynamic):<a id="sSettingsGroup"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 12 | u8[12] | `ignored_00` |  |
-| 0x0c | 4 | u32 | `flags` | Set when the name contains `tracker`. 0 in 711. |
-| 0x10 | 2 | u16 | `value_10` | Nothing sets it. |
-| 0x12 | 2 | u16 | `value_12` | Nothing sets it. |
-| 0x14 | 4 | u8[4] | `ignored_14` |  |
-| 0x18 | 1 | u8 | `name_len` |  |
-| 0x19 | 1 | u8 | `description_len` |  |
-| 0x1a | 2 | u8[2] | `ignored_1a` | The parser counts these as two more lengths. <!-- [S] --> |
-| 0x1c | `name_len` | str | `name` |  |
-|  | `description_len` | str | `description` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 12 | `u8[12]` | `ignored_00` |  |
+| 0x0c | 4 | `u32` | `flags` | Set when the name contains `tracker`. 0 in 711. |
+| 0x10 | 2 | `u16` | `value_10` | Nothing sets it. |
+| 0x12 | 2 | `u16` | `value_12` | Nothing sets it. |
+| 0x14 | 4 | `u8[4]` | `ignored_14` |  |
+| 0x18 | 1 | `u8` | `name_len` |  |
+| 0x19 | 1 | `u8` | `description_len` |  |
+| 0x1a | 2 | `u8[2]` | `ignored_1a` | The parser counts these as two more lengths. <!-- [S] --> |
+| 0x1c | `name_len` | `str` | `name` |  |
+|  | `description_len` | `str` | `description` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 The tracker sets a group's flag (0x0c in memory) when its name contains
 `tracker` in any case. `FUN_0804aa30` calls the substring search `FUN_0808274c`
@@ -286,14 +286,14 @@ Struct `AdminSettings` (dynamic):<a id="sAdminSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 7 | u8[7] | `ignored_00` |  |
-| 0x07 | 1 | u8 | `flags_07` | Bit 0: a key follows. |
-| 0x08 | 32 | u8[32] | `key` | The `AccountKey` of the password. 711 leaves it out. |
-| 0x28 | 104 | u8[104] | `ignored_28` |  |
-| 0x90 | 1 | u8 | `login_len` |  |
-| 0x91 | 3 | u8[3] | `ignored_91` |  |
-| 0x94 | `login_len` | str | `login` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 7 | `u8[7]` | `ignored_00` |  |
+| 0x07 | 1 | `u8` | `flags_07` | Bit 0: a key follows. |
+| 0x08 | 32 | `u8[32]` | `key` | The `AccountKey` of the password. 711 leaves it out. |
+| 0x28 | 104 | `u8[104]` | `ignored_28` |  |
+| 0x90 | 1 | `u8` | `login_len` |  |
+| 0x91 | 3 | `u8[3]` | `ignored_91` |  |
+| 0x94 | `login_len` | `str` | `login` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 The key is the `AccountKey` of the password, as for a server account. Frame 82
 holds the key of `lab-tracker-pw!2`. <!-- [O] -->
@@ -331,7 +331,7 @@ Struct `TrackerSettingsInfo` (dynamic):<a id="sTrackerSettingsInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [TrackerSettings](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
+| 0x00 |  | [`TrackerSettings`](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 This is the reply to [710 Get TrackerServ Settings](#m710), in the format that
 710 describes. The tracker sets every present byte, and sends the limits and the
@@ -354,7 +354,7 @@ Struct `SetTrackerSettings` (dynamic):<a id="sSetTrackerSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [TrackerSettings](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
+| 0x00 |  | [`TrackerSettings`](#sTrackerSettings) | `settings` | See [710 Get TrackerServ Settings](#m710). |
 
 The payload has the format of [711 TrackerServ Settings Info](#m711), which [710
 Get TrackerServ Settings](#m710) describes. `FUN_0804d63c` parses it. <!-- [S]
@@ -426,13 +426,13 @@ Struct `TrackerStats` (56 bytes):<a id="sTrackerStats"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | `start_time` | Milliseconds since 1900. |
-| 0x08 | 8 | u64 | `connections_accepted` | TCP connections accepted (`DAT_08104b00`). |
-| 0x10 | 8 | u64 | `datagrams_received` | UDP datagrams received (`DAT_08104b04`). |
-| 0x18 | 8 | u8[8] | `ignored_18` | 0 as sent. |
-| 0x20 | 4 | u32 | `hours` |  |
-| 0x24 | 4 | u32 | `connections` | TCP connections open now (tracker +0x1c). |
-| 0x28 | 4 | u32 | `servers` | The number of records listed. |
-| 0x2c | 12 | u8[12] | `ignored_2c` | 0 as sent. |
+| 0x00 | 8 | `u64` | `start_time` | Milliseconds since 1900. |
+| 0x08 | 8 | `u64` | `connections_accepted` | TCP connections accepted (`DAT_08104b00`). |
+| 0x10 | 8 | `u64` | `datagrams_received` | UDP datagrams received (`DAT_08104b04`). |
+| 0x18 | 8 | `u8[8]` | `ignored_18` | 0 as sent. |
+| 0x20 | 4 | `u32` | `hours` |  |
+| 0x24 | 4 | `u32` | `connections` | TCP connections open now (tracker +0x1c). |
+| 0x28 | 4 | `u32` | `servers` | The number of records listed. |
+| 0x2c | 12 | `u8[12]` | `ignored_2c` | 0 as sent. |
 
 `kdx-proto` re-encodes frame 86 byte for byte. <!-- [O] -->

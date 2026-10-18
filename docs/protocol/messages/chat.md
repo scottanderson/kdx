@@ -45,7 +45,7 @@ Struct `ChatId` (4 bytes):<a id="sChatId"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
+| 0x00 | 4 | `u32` | `chat_id` |  |
 
 Every member, the requester too, receives [221 Chat Deleted](#m221) before the
 requester's [1 Status](status.md#m1) success. Users outside the chat receive
@@ -80,8 +80,8 @@ Struct `JoinChat` (8 bytes):<a id="sJoinChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `key` | Needed for private chats. |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `key` | Needed for private chats. |
 
 The server replies with [203 Chat Window Info](#m203), and the other members
 receive [205 Chat User Joined](#m205).
@@ -100,25 +100,25 @@ Struct `ChatWindowInfo` (dynamic):<a id="sChatWindowInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | `time` |  |
-| 0x08 | 4 | u32 | `chat_id` |  |
-| 0x0c | 4 | u32 | `key` |  |
-| 0x10 | 4 | u8[4] | `ignored_10` |  |
-| 0x14 | 2 | u16 | `flags` | Bit 0: private. Bit 1: voice. |
-| 0x16 | 2 | u16 | `members_count` |  |
-| 0x18 | 6 | u8[6] | `ignored_18` |  |
-| 0x1e | 1 | u8 | `irc_server_len` |  |
-| 0x1f | 1 | u8 | `irc_channel_len` |  |
-| 0x20 | 1 | u8 | `name_len` |  |
-| 0x21 | 1 | u8 | `topic_len` |  |
-| 0x22 | 1 | u8 | `topic_setter_len` |  |
-| 0x23 | 1 | u8 | `ignored_23` |  |
-| 0x24 | `members_count` | u32[] | `members` |  |
-|  | `name_len` | str | `name` | <!-- [O] --> |
-|  | `topic_len` | str | `topic` |  |
-|  | `topic_setter_len` | str | `topic_setter` | The nick that set the topic. |
-|  | `irc_server_len` | str | `irc_server` |  |
-|  | `irc_channel_len` | str | `irc_channel` |  |
+| 0x00 | 8 | `u64` | `time` |  |
+| 0x08 | 4 | `u32` | `chat_id` |  |
+| 0x0c | 4 | `u32` | `key` |  |
+| 0x10 | 4 | `u8[4]` | `ignored_10` |  |
+| 0x14 | 2 | `u16` | `flags` | Bit 0: private. Bit 1: voice. |
+| 0x16 | 2 | `u16` | `members_count` |  |
+| 0x18 | 6 | `u8[6]` | `ignored_18` |  |
+| 0x1e | 1 | `u8` | `irc_server_len` |  |
+| 0x1f | 1 | `u8` | `irc_channel_len` |  |
+| 0x20 | 1 | `u8` | `name_len` |  |
+| 0x21 | 1 | `u8` | `topic_len` |  |
+| 0x22 | 1 | `u8` | `topic_setter_len` |  |
+| 0x23 | 1 | `u8` | `ignored_23` |  |
+| 0x24 | `members_count` | `u32[]` | `members` |  |
+|  | `name_len` | `str` | `name` | <!-- [O] --> |
+|  | `topic_len` | `str` | `topic` |  |
+|  | `topic_setter_len` | `str` | `topic_setter` | The nick that set the topic. |
+|  | `irc_server_len` | `str` | `irc_server` |  |
+|  | `irc_channel_len` | `str` | `irc_channel` |  |
 
 In frame 68 of `captures/probe.pcapng`, only the name (`Public Chat`) is set,
 and the payload is not padded.
@@ -146,7 +146,7 @@ Struct `LeaveChat` (4 bytes):<a id="sLeaveChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
+| 0x00 | 4 | [`ChatId`](#sChatId) | `chat` |  |
 
 The other members receive [206 Chat User Departed](#m206). The server deletes a
 private chat when it becomes empty. `ChatId` in `kdx_proto::msg::chat`
@@ -161,10 +161,10 @@ Struct `ChatUserChange` (12 bytes):<a id="sChatUserChange"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `user_id` | The user who joined or left. |
-| 0x08 | 1 | u8 | `ignored_08` | 0 in 205, and 1 in [206](#m206). |
-| 0x09 | 3 | u8[3] | `ignored_09` |  |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `user_id` | The user who joined or left. |
+| 0x08 | 1 | `u8` | `ignored_08` | 0 in 205, and 1 in [206](#m206). |
+| 0x09 | 3 | `u8[3]` | `ignored_09` |  |
 
 In 205, the last four bytes are 0 (`captures/kdx-cli.pcapng` frame 417,
 `captures/linux-chat-rooms.pcapng` frames 117 and 177, and
@@ -179,7 +179,7 @@ Struct `ChatUserDeparted` (12 bytes):<a id="sChatUserDeparted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 12 | [ChatUserChange](#sChatUserChange) | `change` | The byte at 0x08 is 1, and 3 zero bytes follow. |
+| 0x00 | 12 | [`ChatUserChange`](#sChatUserChange) | `change` | The byte at 0x08 is 1, and 3 zero bytes follow. |
 
 The payload is a u32 chat ID, a u32 user ID, a byte 1, and 3 zero bytes
 (`captures/kdx-cli.pcapng` frame 424). <!-- [O] --> The meaning of the 1 is
@@ -208,10 +208,10 @@ Struct `ChatText` (dynamic):<a id="sChatText"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `user_id` | The server fills in the sender. |
-| 0x08 | 4 | u8[4] | `ignored` |  |
-| 0x0c | rest | str | `text` | At most 0x1000 bytes. |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `user_id` | The server fills in the sender. |
+| 0x08 | 4 | `u8[4]` | `ignored` |  |
+| 0x0c | rest | `str` | `text` | At most 0x1000 bytes. |
 
 The server forwards it as [208 Receive Chat Text](#m208).
 
@@ -224,7 +224,7 @@ Struct `ReceiveChatText` (dynamic):<a id="sReceiveChatText"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [ChatText](#sChatText) | `text` | `user_id` is the sender's. |
+| 0x00 |  | [`ChatText`](#sChatText) | `text` | `user_id` is the sender's. |
 
 ## <a id="m209"></a>209 Set Chat Topic
 Initiator: Client. Privilege: Set Chat Topic (35) and the chat's topic
@@ -247,12 +247,12 @@ Struct `SetChatTopic` (dynamic):<a id="sSetChatTopic"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 6 | u8[6] | `ignored_04` | 0 from the client. |
-| 0x0a | 1 | u8 | `topic_len` |  |
-| 0x0b | 1 | u8 | `ignored_0b` | 0 from the client. |
-| 0x0c | `topic_len` | str | `topic` |  |
-|  | rest | u8[] | `rest` | The server ignores it. Empty from the client. |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 6 | `u8[6]` | `ignored_04` | 0 from the client. |
+| 0x0a | 1 | `u8` | `topic_len` |  |
+| 0x0b | 1 | `u8` | `ignored_0b` | 0 from the client. |
+| 0x0c | `topic_len` | `str` | `topic` |  |
+|  | rest | `u8[]` | `rest` | The server ignores it. Empty from the client. |
 
 A probe that put `Hello` at 0x10 with length 5 got the topic `00 00 00 00 48`,
 so the server reads from 0x0c (`captures/probe.pcapng` frames 73 and
@@ -268,15 +268,15 @@ Struct `ChatTopicChanged` (dynamic):<a id="sChatTopicChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | u64 | `time` |  |
-| 0x08 | 4 | u32 | `chat_id` |  |
-| 0x0c | 4 | u32 | `user_id` |  |
-| 0x10 | 8 | u8[8] | `ignored_10` | 0 as sent. |
-| 0x18 | 1 | u8 | `topic_len` |  |
-| 0x19 | 1 | u8 | `nick_len` |  |
-| 0x1a | 2 | u8[2] | `ignored_1a` | 0 as sent. |
-| 0x1c | `topic_len` | str | `topic` |  |
-|  | `nick_len` | str | `nick` |  |
+| 0x00 | 8 | `u64` | `time` |  |
+| 0x08 | 4 | `u32` | `chat_id` |  |
+| 0x0c | 4 | `u32` | `user_id` |  |
+| 0x10 | 8 | `u8[8]` | `ignored_10` | 0 as sent. |
+| 0x18 | 1 | `u8` | `topic_len` |  |
+| 0x19 | 1 | `u8` | `nick_len` |  |
+| 0x1a | 2 | `u8[2]` | `ignored_1a` | 0 as sent. |
+| 0x1c | `topic_len` | `str` | `topic` |  |
+|  | `nick_len` | `str` | `nick` |  |
 
 ## <a id="m211"></a>211 Chat Invite
 Initiator: Client. <!-- [S `FUN_080591ac`; O `captures/linux-chat-admin.pcapng` frames 87 to 88, 118 to 120] -->
@@ -297,13 +297,13 @@ Struct `ChatInvite` (dynamic):<a id="sChatInvite"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u8[4] | `ignored_04` |  |
-| 0x08 | 2 | u16 | `user_ids_count` |  |
-| 0x0a | 5 | u8[5] | `ignored_0a` |  |
-| 0x0f | 1 | u8 | `message_len` |  |
-| 0x10 | `user_ids_count` | u32[] | `user_ids` | At most 20. |
-|  | `message_len` | str | `message` |  |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u8[4]` | `ignored_04` |  |
+| 0x08 | 2 | `u16` | `user_ids_count` |  |
+| 0x0a | 5 | `u8[5]` | `ignored_0a` |  |
+| 0x0f | 1 | `u8` | `message_len` |  |
+| 0x10 | `user_ids_count` | `u32[]` | `user_ids` | At most 20. |
+|  | `message_len` | `str` | `message` |  |
 
 Each invitee receives [212 Chat Invitation](#m212). The client invited user 1 to
 `Private 1` (frame 87, 20 bytes), then users 1 and 4 (frame 118, 24 bytes), with
@@ -321,17 +321,17 @@ Struct `ChatInvitation` (dynamic):<a id="sChatInvitation"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `key` | For [202 Join Chat](#m202). |
-| 0x08 | 4 | u32 | `user_id` |  |
-| 0x0c | 4 | u32 | `ignored_0c` | 1 at frame 88, and 2 at frame 120. |
-| 0x10 | 2 | u16 | `ignored_10` | 1 |
-| 0x12 | 6 | u8[6] | `ignored_12` |  |
-| 0x18 | 1 | u8 | `message_len` |  |
-| 0x19 | 1 | u8 | `name_len` |  |
-| 0x1a | 2 | u8[2] | `ignored_1a` |  |
-| 0x1c | `message_len` | str | `message` | Probably the message. 0 in the captures. <!-- [I] --> |
-|  | `name_len` | str | `name` |  |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `key` | For [202 Join Chat](#m202). |
+| 0x08 | 4 | `u32` | `user_id` |  |
+| 0x0c | 4 | `u32` | `ignored_0c` | 1 at frame 88, and 2 at frame 120. |
+| 0x10 | 2 | `u16` | `ignored_10` | 1 |
+| 0x12 | 6 | `u8[6]` | `ignored_12` |  |
+| 0x18 | 1 | `u8` | `message_len` |  |
+| 0x19 | 1 | `u8` | `name_len` |  |
+| 0x1a | 2 | `u8[2]` | `ignored_1a` |  |
+| 0x1c | `message_len` | `str` | `message` | Probably the message. 0 in the captures. <!-- [I] --> |
+|  | `name_len` | `str` | `name` |  |
 
 Frames 88 and 120 are 37 bytes each. <!-- [O] --> The u32 at 0x0c may be the
 request's invitee count, or a running count. <!-- [I] --> The u16 at 0x10 is 1,
@@ -398,23 +398,23 @@ Struct `ChatList` (dynamic):<a id="sChatList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chats_count` |  |
-| 0x04 | `chats_count` | [ChatListEntry](#sChatListEntry)[] | `chats` |  |
+| 0x00 | 4 | `u32` | `chats_count` |  |
+| 0x04 | `chats_count` | [`ChatListEntry`](#sChatListEntry)`[]` | `chats` |  |
 
 Struct `ChatListEntry` (dynamic):<a id="sChatListEntry"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `key` |  |
-| 0x08 | 6 | u8[6] | `ignored` |  |
-| 0x0e | 2 | u16 | `flags` | Bit 1: voice. |
-| 0x10 | 2 | u16 | `member_count` |  |
-| 0x12 | 1 | u8 | `name_len` |  |
-| 0x13 | 1 | u8 | `description_len` |  |
-| 0x14 | `name_len` | str | `name` |  |
-|  | `description_len` | str | `description` |  |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `key` |  |
+| 0x08 | 6 | `u8[6]` | `ignored` |  |
+| 0x0e | 2 | `u16` | `flags` | Bit 1: voice. |
+| 0x10 | 2 | `u16` | `member_count` |  |
+| 0x12 | 1 | `u8` | `name_len` |  |
+| 0x13 | 1 | `u8` | `description_len` |  |
+| 0x14 | `name_len` | `str` | `name` |  |
+|  | `description_len` | `str` | `description` |  |
+|  | pad4 | `u8[]` | `padding` |  |
 
 The lab has Public Chat (1), Voice Chat (2, flags 2), and Admin Lounge (3).
 Chats made with [217 Create Chat](#m217) follow, with random chat IDs
@@ -432,7 +432,7 @@ Struct `CreatePrivateChatReply` (dynamic):<a id="sCreatePrivateChatReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [ChatWindowInfo](#sChatWindowInfo) | `info` | One member, the creator. |
+| 0x00 |  | [`ChatWindowInfo`](#sChatWindowInfo) | `info` | One member, the creator. |
 
 The 49-byte reply at frame 85 holds time 0, chat ID 0xb06d05e6, key 0x4ca93520,
 1 member, user 2, and `Private 1`. <!-- [O] --> The u32 at 0x24 is the member
@@ -471,7 +471,7 @@ Struct `CreateChat` (dynamic):<a id="sCreateChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` | `chat_id` is 0. |
+| 0x00 |  | [`ChatRecord`](../encodings.md#sChatRecord) | `chat` | `chat_id` is 0. |
 
 In `captures/linux-chat-rooms.pcapng`: <!-- [O] -->
 
@@ -496,7 +496,7 @@ Struct `GetChat` (4 bytes):<a id="sGetChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
+| 0x00 | 4 | [`ChatId`](#sChatId) | `chat` |  |
 
 The request is the chat ID alone (frames 49, 59, and 136). The server replies
 with [219 Chat Info](#m219). [217 Create Chat](#m217) has the captures.
@@ -510,7 +510,7 @@ Struct `ChatInfo` (dynamic):<a id="sChatInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` |  |
+| 0x00 |  | [`ChatRecord`](../encodings.md#sChatRecord) | `chat` |  |
 
 ## <a id="m220"></a>220 Set Chat
 Initiator: Client. Privilege: Create/Modify Chats (37). <!-- [S `FUN_08059e24`] -->
@@ -522,7 +522,7 @@ Struct `SetChat` (dynamic):<a id="sSetChat"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [ChatRecord](../encodings.md#sChatRecord) | `chat` |  |
+| 0x00 |  | [`ChatRecord`](../encodings.md#sChatRecord) | `chat` |  |
 
 ## <a id="m221"></a>221 Chat Deleted
 Initiator: Server. The server sends this to every member after
@@ -532,8 +532,8 @@ Struct `ChatDeleted` (8 bytes):<a id="sChatDeleted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `chat_id` |  |
-| 0x04 | 4 | u32 | `user_id` | The requester. |
+| 0x00 | 4 | `u32` | `chat_id` |  |
+| 0x04 | 4 | `u32` | `user_id` | The requester. |
 
 In `captures/linux-chat-rooms.pcapng`, deleting `lab-chat` (0xe8df4d29) sent `e8
 df 4d 29 00 00 00 02` to both members (frames 125 and 127). <!-- [O] -->
@@ -558,7 +558,7 @@ Struct `GetChatDccAddresses` (4 bytes):<a id="sGetChatDccAddresses"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | [ChatId](#sChatId) | `chat` |  |
+| 0x00 | 4 | [`ChatId`](#sChatId) | `chat` |  |
 
 The chat must have the voice flag (bit 1), and the sender must be a member. If
 not, the reply is [1 Status](status.md#m1) 0x10014. An unknown chat gets
@@ -581,18 +581,18 @@ Struct `ChatDccAddresses` (dynamic):<a id="sChatDccAddresses"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | [DccAddress](#sDccAddress)[] | `addresses` |  |
+| 0x00 | rest | [`DccAddress`](#sDccAddress)`[]` | `addresses` |  |
 
 Struct `DccAddress` (dynamic):<a id="sDccAddress"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` |  |
-| 0x04 | 10 | u8[10] | `ignored_04` | 0 as sent. |
-| 0x0e | 1 | u8 | `address_len` |  |
-| 0x0f | 1 | u8 | `ignored_0f` | 0 as sent. |
-| 0x10 | `address_len` | str | `address` | `ip:port`: the member's address and DCC port. |
-|  | pad4 | u8[] | `padding` |  |
+| 0x00 | 4 | `u32` | `user_id` |  |
+| 0x04 | 10 | `u8[10]` | `ignored_04` | 0 as sent. |
+| 0x0e | 1 | `u8` | `address_len` |  |
+| 0x0f | 1 | `u8` | `ignored_0f` | 0 as sent. |
+| 0x10 | `address_len` | `str` | `address` | `ip:port`: the member's address and DCC port. |
+|  | pad4 | `u8[]` | `padding` |  |
 
 In `captures/linux-chat-rooms.pcapng`, the reply was empty when the client was
 alone (frames 72 and 73), and when a `kdx` CLI peer was also a member (frames

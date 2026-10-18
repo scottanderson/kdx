@@ -449,9 +449,15 @@ def check_struct(path, n, name, size, rows, blank, structs):
                 err(line, f"Off {off} should be {hex(expect)}")
         if typ == "char[]":
             err(line, "use str for text of variable size")
-        link = re.fullmatch(r"\[(\w+)\]\(([^)]*)\)(.*)", typ)
+        link = re.fullmatch(r"\[`(\w+)`\]\(([^)]*)\)(?:`(\[[^\]]*\])`)?", typ)
+        plain = re.fullmatch(r"`([^`]+)`", typ)
+        if not link and not plain:
+            err(line, f"wrap Type {typ!r} in backticks, and put a struct link outside them")
+            typ = typ.strip("`")
+        elif plain:
+            typ = plain.group(1)
         if link:
-            typ = link.group(1) + link.group(3)
+            typ = link.group(1) + (link.group(3) or "")
             want = os.path.relpath(structs[link.group(1)][0].split(":")[0], os.path.dirname(path)) if link.group(1) in structs else None
             if want is not None and link.group(2) != (f"#s{link.group(1)}" if want == os.path.basename(path) else f"{want}#s{link.group(1)}"):
                 err(line, f"link for {link.group(1)} should point to its caption")

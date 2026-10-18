@@ -16,7 +16,7 @@ Struct `SetIdentity` (dynamic):<a id="sSetIdentity"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` | `user_id` is 0. |
+| 0x00 |  | [`UserRecord`](../encodings.md#sUserRecord) | `user` | `user_id` is 0. |
 
 - The nick takes effect only with the Use Any Name privilege. Without it, the
   server uses the account name. The server logs changes as `Set Name: <…> (…)`.
@@ -47,7 +47,7 @@ Struct `UserList` (dynamic):<a id="sUserList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | [UserRecord](../encodings.md#sUserRecord)[] | `users` | Each is padded to a multiple of 4. |
+| 0x00 | rest | [`UserRecord`](../encodings.md#sUserRecord)`[]` | `users` | Each is padded to a multiple of 4. |
 
 ## <a id="m102"></a>102 User Changed
 Initiator: Server. <!-- [S; O] -->
@@ -59,7 +59,7 @@ Struct `UserChanged` (dynamic):<a id="sUserChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` |  |
+| 0x00 |  | [`UserRecord`](../encodings.md#sUserRecord) | `user` |  |
 
 ## <a id="m103"></a>103 User Joined
 Initiator: Server. <!-- [S; O] -->
@@ -71,7 +71,7 @@ Struct `UserJoined` (dynamic):<a id="sUserJoined"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 |  | [UserRecord](../encodings.md#sUserRecord) | `user` |  |
+| 0x00 |  | [`UserRecord`](../encodings.md#sUserRecord) | `user` |  |
 
 ## <a id="m104"></a>104 User Departed
 Initiator: Server. <!-- [O `captures/kdx-cli.pcapng` frames 398, 429; O `captures/linux-chat-admin.pcapng` frames 59, 116] -->
@@ -80,9 +80,9 @@ Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` |  |
-| 0x04 | 1 | u8 | `value_4` | 7 in all captures. |
-| 0x05 | 3 | u8[3] | `ignored` | 0 as sent. |
+| 0x00 | 4 | `u32` | `user_id` |  |
+| 0x04 | 1 | `u8` | `value_4` | 7 in all captures. |
+| 0x05 | 3 | `u8[3]` | `ignored` | 0 as sent. |
 
 `kdx_proto::msg::user::UserDeparted` encodes it again byte for byte (test
 `linux_chat_admin`).
@@ -94,20 +94,20 @@ Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 32 | u8[32] | `session_key` | From the user object (+0x74). Probably a session ID for transfer connections. <!-- [I] --> |
-| 0x20 | 4 | u32 | `file_transfer_port` | The server's optional File Transfer port (settings +0x260), or 0 if it has none. If it is not 0, the client opens transfer connections to it. <!-- [S client `FUN_08052cc0`] --> |
-| 0x24 | 4 | u32 | `user_id` | 7 and 8 in two probes, one after the other. <!-- [O] --> |
-| 0x28 | 2 | u16 | `version` | 0x0654 = 1620 |
-| 0x2a | 2 | u16 | `can_modify_settings` | 1 with Modify Server Settings. |
-| 0x2c | 26 | u8[26] | `ignored_2c` |  |
-| 0x46 | 2 | u16 | `value_46` | 2. If it is not 2, the client compares the version, and warns about an older or newer server. <!-- [S] --> Server 1.620 always sends 2, so the warning never shows. |
-| 0x48 | 1 | u8 | `name_len` |  |
-| 0x49 | 1 | u8 | `description_len` |  |
-| 0x4a | 1 | u8 | `third_len` |  |
-| 0x4b | 1 | u8 | `ignored_4b` |  |
-| 0x4c | `name_len` | str | `name` | "New Server". <!-- [O] --> At most 0x3f bytes. |
-|  | `description_len` | str | `description` | At most 0xff bytes. |
-|  | `third_len` | str | `third` | At most 0x7f bytes. |
+| 0x00 | 32 | `u8[32]` | `session_key` | From the user object (+0x74). Probably a session ID for transfer connections. <!-- [I] --> |
+| 0x20 | 4 | `u32` | `file_transfer_port` | The server's optional File Transfer port (settings +0x260), or 0 if it has none. If it is not 0, the client opens transfer connections to it. <!-- [S client `FUN_08052cc0`] --> |
+| 0x24 | 4 | `u32` | `user_id` | 7 and 8 in two probes, one after the other. <!-- [O] --> |
+| 0x28 | 2 | `u16` | `version` | 0x0654 = 1620 |
+| 0x2a | 2 | `u16` | `can_modify_settings` | 1 with Modify Server Settings. |
+| 0x2c | 26 | `u8[26]` | `ignored_2c` |  |
+| 0x46 | 2 | `u16` | `value_46` | 2. If it is not 2, the client compares the version, and warns about an older or newer server. <!-- [S] --> Server 1.620 always sends 2, so the warning never shows. |
+| 0x48 | 1 | `u8` | `name_len` |  |
+| 0x49 | 1 | `u8` | `description_len` |  |
+| 0x4a | 1 | `u8` | `third_len` |  |
+| 0x4b | 1 | `u8` | `ignored_4b` |  |
+| 0x4c | `name_len` | `str` | `name` | "New Server". <!-- [O] --> At most 0x3f bytes. |
+|  | `description_len` | `str` | `description` | At most 0xff bytes. |
+|  | `third_len` | `str` | `third` | At most 0x7f bytes. |
 
 The whole message is at most 0x400 bytes.
 
@@ -125,7 +125,7 @@ Struct `ServerIcon` (dynamic):<a id="sServerIcon"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | rest | u8[] | `icon` | The bitmap. |
+| 0x00 | rest | `u8[]` | `icon` | The bitmap. |
 
 ## <a id="m107"></a>107 Server Greeting
 Initiator: Server. <!-- [S `FUN_0804b738`; O] -->
@@ -134,8 +134,8 @@ Struct `ServerGreeting` (dynamic):<a id="sServerGreeting"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u8[4] | `ignored` | 0 as sent. |
-| 0x04 | rest | str | `text` | To the end of the payload. |
+| 0x00 | 4 | `u8[4]` | `ignored` | 0 as sent. |
+| 0x04 | rest | `str` | `text` | To the end of the payload. |
 
 If the server has no greeting, it sends `(No greeting.)`. <!-- [O
 `captures/probe.pcapng` frame 163] --> If it has a greeting that is not enabled,
@@ -187,8 +187,8 @@ Struct `MiniUserIcon` (4 bytes):<a id="sMiniUserIcon"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | `status` | 1 after `/away`, and 0 after `/back`. <!-- [O] --> |
-| 0x01 | 3 | u8[3] | `ignored` | 0 as sent. The payload must be at least 4 bytes. |
+| 0x00 | 1 | `u8` | `status` | 1 after `/away`, and 0 after `/back`. <!-- [O] --> |
+| 0x01 | 3 | `u8[3]` | `ignored` | 0 as sent. The payload must be at least 4 bytes. |
 
 There is no reply.
 
@@ -202,8 +202,8 @@ Struct `MiniUserIconChanged` (8 bytes):<a id="sMiniUserIconChanged"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `user_id` |  |
-| 0x04 | 4 | [MiniUserIcon](#sMiniUserIcon) | `icon` | The payload of 110. |
+| 0x00 | 4 | `u32` | `user_id` |  |
+| 0x04 | 4 | [`MiniUserIcon`](#sMiniUserIcon) | `icon` | The payload of 110. |
 
 For user 3, `/away` sent `01 00 00 00`, and the peer got `00 00 00 03 01 00 00
 00`. <!-- [O `captures/linux-server-settings.pcapng` frames 210, 211, 213] -->
@@ -241,15 +241,15 @@ Struct `ExtraServerInfo` (dynamic):<a id="sExtraServerInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | u8[16] | `ignored_00` |  |
-| 0x10 | 8 | u64 | `start_time` | In ms. |
-| 0x18 | 8 | u64 | `now` | In ms. |
-| 0x20 | 4 | u32 | `uptime` | In seconds. |
-| 0x24 | 4 | u32 | `os_value_24` | 0x1000 in the lab. |
-| 0x28 | 4 | u32 | `os_value_28` | 1000 in the lab. |
-| 0x2c | 1 | u8 | `os_len` |  |
-| 0x2d | 3 | u8[3] | `ignored_2d` |  |
-| 0x30 | `os_len` | str | `os` | As `uname` gives it. |
+| 0x00 | 16 | `u8[16]` | `ignored_00` |  |
+| 0x10 | 8 | `u64` | `start_time` | In ms. |
+| 0x18 | 8 | `u64` | `now` | In ms. |
+| 0x20 | 4 | `u32` | `uptime` | In seconds. |
+| 0x24 | 4 | `u32` | `os_value_24` | 0x1000 in the lab. |
+| 0x28 | 4 | `u32` | `os_value_28` | 1000 in the lab. |
+| 0x2c | 1 | `u8` | `os_len` |  |
+| 0x2d | 3 | `u8[3]` | `ignored_2d` |  |
+| 0x30 | `os_len` | `str` | `os` | As `uname` gives it. |
 
 ## <a id="m115"></a>115 Get My Address
 Initiator: Client. The dispatcher handles it itself. <!-- [S; O] -->
@@ -277,8 +277,8 @@ Struct `YourAddress` (dynamic):<a id="sYourAddress"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 1 | u8 | `address_len` |  |
-| 0x01 | `address_len` | str | `address` | `a.b.c.d:port` |
+| 0x00 | 1 | `u8` | `address_len` |  |
+| 0x01 | `address_len` | `str` | `address` | `a.b.c.d:port` |
 
 ## <a id="m117"></a>117 SKPK
 Initiator: Client, to a client. <!-- [S `FUN_0808eefc`, `FUN_0808ff64`] -->
@@ -287,11 +287,11 @@ Struct `Skpk` (48 bytes):<a id="sSkpk"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 32 | u8[32] | `key` | The sender's key for secondary connections to it. |
-| 0x20 | 4 | u32 | `dcc_port` | The sender's listener. |
-| 0x24 | 4 | u32 | `connection_id` | The sender's ID for this primary connection. Each client numbers its own connections. |
-| 0x28 | 2 | u16 | `client_version` | 0x0654 (1620). The receiver warns if it is older or newer. |
-| 0x2a | 6 | u8[6] | `ignored` | 0 as sent. |
+| 0x00 | 32 | `u8[32]` | `key` | The sender's key for secondary connections to it. |
+| 0x20 | 4 | `u32` | `dcc_port` | The sender's listener. |
+| 0x24 | 4 | `u32` | `connection_id` | The sender's ID for this primary connection. Each client numbers its own connections. |
+| 0x28 | 2 | `u16` | `client_version` | 0x0654 (1620). The receiver warns if it is older or newer. |
+| 0x2a | 6 | `u8[6]` | `ignored` | 0 as sent. |
 
 Frames 22, 25, 119, and 122 match this layout, with ports 0x2968 and 0x2969, and
 connection IDs 2 and 4. <!-- [O `captures/linux-dcc-voice-failed.pcapng`] -->
@@ -304,7 +304,7 @@ Struct `RegistrationNotice` (4 bytes):<a id="sRegistrationNotice"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | u32 | `value` |  |
+| 0x00 | 4 | `u32` | `value` |  |
 
 There is no reply. The server stores 1 at user +0x3b if the value is not 0, and
 2 if it is 0. The probe sent `00 00 00 01` and got no reply. <!-- [O] -->
