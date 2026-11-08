@@ -1,6 +1,6 @@
 # Find a build from between 0.921 and 1.110
 
-Status: ready-for-human
+Status: done
 
 The 0.9x handshake (Client and Server 0.915–0.921) and the 1.x one (Client
 1.110 and Server 1.300 on) have no build between them in
@@ -16,3 +16,7 @@ checksum, or the search is recorded as fruitless.
 Ready for a human because `vendor/fetch` reads only Wayback captures of
 haxial.com. A build from another site needs the maintainer to approve that
 source and decide how the manifest records it.
+
+Done: Client and Server 1.000 for Mac come from Info-Mac
+(`vendor/MANIFEST.md`). They have the 1.x handshake with a single
+sub-version; see `docs/protocol/versions.md`.
