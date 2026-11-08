@@ -1,7 +1,7 @@
 //! Checks against `captures/linux-chat-admin.pcapng`: Client 1.620 for Linux as `admin`.
 
 use kdx_proto::msg::admin::{
-    DisconnectMessage, DisconnectUser, HistoryList, RcvBroadcast, SendBroadcast,
+    DisconnectMessage, DisconnectUser, HistoryList, ProcessList, RcvBroadcast, SendBroadcast,
 };
 use kdx_proto::msg::chat::{
     ChatInvitation, ChatInvite, ChatUserChange, ChatWindowInfo, PUBLIC_CHAT,
@@ -274,4 +274,25 @@ fn server_history() {
     assert_eq!(records.len(), 0x12);
     assert_eq!(records[0].kind, MessageType::HISTORY_SERVER_STARTED);
     assert_eq!(list.encode().unwrap(), wire);
+}
+
+#[test]
+fn process_monitor() {
+    let session = client();
+    // Frames 153, 155, and 157: 800 and 801 are empty, and 803 answers 800.
+    let (open, wire) = one(&session, MessageType::OPEN_PROCESS_MONITOR);
+    assert!(wire.is_empty());
+    let (reply, wire) = one(&session, MessageType::PROCESS_LIST);
+    assert_eq!(reply.txid, open.txid);
+    let list = ProcessList::decode(wire).unwrap();
+    assert!(list.memory_used < list.memory_total);
+    let cpu: Vec<u8> = list.processes.iter().map(|p| p.cpu_percent).collect();
+    assert_eq!(cpu, [0, 0, 0x32]);
+    assert!(list
+        .processes
+        .iter()
+        .all(|p| p.pid_high == 0 && p.memory_size == 0));
+    assert_eq!(list.encode().unwrap(), wire);
+    let (_, wire) = one(&session, MessageType::CLOSE_PROCESS_MONITOR);
+    assert!(wire.is_empty());
 }

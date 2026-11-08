@@ -72,8 +72,8 @@ Struct `ProcessList` (dynamic):<a id="sProcessList"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | `u64` | `memory_00` | About 33 GB, probably the host's memory. <!-- [I] --> |
-| 0x08 | 8 | `u64` | `memory_08` | About 33 GB. <!-- [I] --> |
+| 0x00 | 8 | `u64` | `memory_used` | Bytes of memory in use: on Linux, `MemTotal` minus `MemFree` from `/proc/meminfo`. <!-- [S `FUN_0808f8cc`] --> On a Mac, logical RAM minus `TempFreeMem`. <!-- [S server `FUN_10053970`] Server 1.000 --> |
+| 0x08 | 8 | `u64` | `memory_total` | Bytes of memory: `MemTotal` on Linux, and physical RAM on a Mac. |
 | 0x10 | 12 | `u8[12]` | `ignored` |  |
 | 0x1c | 4 | `u32` | `processes_count` |  |
 | 0x20 | `processes_count` | [`Process`](#sProcess)`[]` | `processes` |  |
@@ -84,10 +84,16 @@ Struct `Process` (dynamic):<a id="sProcess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | `u32` | `pid` |  |
-| 0x04 | 4 | `u8[4]` | `ignored_04` |  |
-| 0x08 | 8 | `u64` | `start_time` |  |
-| 0x10 | 41 | `u8[41]` | `ignored_10` |  |
+| 0x00 | 4 | `u32` | `pid` | The process ID. On a Mac, the low word of the process serial number. |
+| 0x04 | 4 | `u32` | `pid_high` | 0 on Linux. On a Mac, the high word of the process serial number, which [804 Exit/Terminate Process](#m804) sends back. <!-- [S server `FUN_10053f20`] Server 1.000 --> |
+| 0x08 | 8 | `u64` | `start_time` | Milliseconds since 1900, from the `START` column of `ps`. |
+| 0x10 | 8 | `u64` | `memory_used` | 0 on Linux. On a Mac, the bytes in use of the process's memory partition. |
+| 0x18 | 8 | `u64` | `memory_size` | 0 on Linux. On a Mac, the size of the process's memory partition. |
+| 0x20 | 4 | `u32` | `cpu_time` | Seconds, from the `TIME` column of `ps`. <!-- [S `FUN_08084f4c`] --> 0 on a Mac. |
+| 0x24 | 4 | `u32` | `background` | 0 on Linux. On a Mac, 1 for a background-only process. <!-- [S server `FUN_10053f20`] Server 1.000 --> |
+| 0x28 | 1 | `u8` | `cpu_percent` | From the `%CPU` column of `ps`, or 0xff if `ps` has none. `/bin/ps` gets 0x32 in frame 155 of `captures/linux-chat-admin.pcapng`. <!-- [O] --> |
+| 0x29 | 1 | `u8` | `memory_percent` | From the `%MEM` column, or 0xff. |
+| 0x2a | 15 | `u8[15]` | `ignored_2a` | 0 as sent. |
 | 0x39 | 1 | `u8` | `user_len` |  |
 | 0x3a | 1 | `u8` | `command_len` |  |
 | 0x3b | 1 | `u8` | `string_3b_len` |  |
@@ -97,7 +103,12 @@ Struct `Process` (dynamic):<a id="sProcess"></a>
 |  | pad4 | `u8[]` | `padding` |  |
 
 The strings come in the order command, `string_3b`, user, but the user's length
-comes first. <!-- [S `FUN_0805b454`] -->
+comes first. <!-- [S `FUN_0805b454`] --> The Linux server takes the columns
+`USER`, `PID`, `%CPU`, `%MEM`, `START` or `STARTED`, `TIME`, and `COMMAND` by
+name from the header line of `ps`, and always sends `string_3b` empty. <!-- [S
+`FUN_08090524`] --> Server 1.000 for Mac fills the entry from
+`GetProcessInformation`. It sends the process name as the command, and no user.
+<!-- [S server `FUN_10053f20`, server `FUN_10010d00`] Server 1.000 -->
 
 ## <a id="m804"></a>804 Exit/Terminate Process
 Initiator: Client. Privilege: Terminate Processes (81). <!-- [S `FUN_0805b8f4`, `FUN_08090c6c`] -->

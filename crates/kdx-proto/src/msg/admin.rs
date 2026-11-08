@@ -994,10 +994,10 @@ impl AccountListEntry {
 /// 803 Process List.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ProcessList {
-    /// Probably the host's memory in bytes.
-    pub memory_00: u64,
-    /// Probably the host's memory in bytes.
-    pub memory_08: u64,
+    /// Bytes of memory in use on the host.
+    pub memory_used: u64,
+    /// Bytes of memory on the host.
+    pub memory_total: u64,
     /// Bytes 0x10 to 0x1b; meaning unknown.
     pub ignored: [u8; 0x0c],
     /// The processes.
@@ -1005,39 +1005,36 @@ pub struct ProcessList {
 }
 
 /// A process in 803 Process List.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Process {
-    /// Process ID.
+    /// Process ID; on a Mac, the low word of the process serial number.
     pub pid: u32,
-    /// Bytes 0x04 to 0x07; meaning unknown.
-    pub ignored_04: [u8; 4],
+    /// 0 on Linux; on a Mac, the high word of the process serial number.
+    pub pid_high: u32,
     /// Start time in milliseconds.
     pub start_time: u64,
-    /// Bytes 0x10 to 0x38; meaning unknown.
-    pub ignored_10: [u8; 0x29],
+    /// 0 on Linux; on a Mac, the bytes in use of the process's memory partition.
+    pub memory_used: u64,
+    /// 0 on Linux; on a Mac, the size of the process's memory partition.
+    pub memory_size: u64,
+    /// CPU time in seconds, from `ps`; 0 on a Mac.
+    pub cpu_time: u32,
+    /// 0 on Linux; on a Mac, 1 for a background-only process.
+    pub background: u32,
+    /// `%CPU` from `ps`, or 0xff if unknown.
+    pub cpu_percent: u8,
+    /// `%MEM` from `ps`, or 0xff if unknown.
+    pub memory_percent: u8,
+    /// Bytes 0x2a to 0x38; 0 as sent.
+    pub ignored_2a: [u8; 0x0f],
     /// Command line, cut at 0xff bytes.
     pub command: Vec<u8>,
-    /// Third string, between the command and the user name; empty in captures.
+    /// Third string, between the command and the user name; always empty on Linux.
     pub string_3b: Vec<u8>,
     /// User name.
     pub user: Vec<u8>,
     /// Bytes after the user name up to the next multiple of 4, as received; empty in a new entry.
     pub padding: Vec<u8>,
-}
-
-impl Default for Process {
-    fn default() -> Self {
-        Self {
-            pid: 0,
-            ignored_04: [0; 4],
-            start_time: 0,
-            ignored_10: [0; 0x29],
-            command: Vec::new(),
-            string_3b: Vec::new(),
-            user: Vec::new(),
-            padding: Vec::new(),
-        }
-    }
 }
 
 impl ProcessList {
@@ -1059,9 +1056,15 @@ impl ProcessList {
             let (padding, padded) = padding(entry, end);
             let process = Process {
                 pid: u32_at(entry, 0),
-                ignored_04: entry[4..8].try_into().expect("4 bytes"),
+                pid_high: u32_at(entry, 4),
                 start_time: u64_at(entry, 8),
-                ignored_10: entry[0x10..0x39].try_into().expect("41 bytes"),
+                memory_used: u64_at(entry, 0x10),
+                memory_size: u64_at(entry, 0x18),
+                cpu_time: u32_at(entry, 0x20),
+                background: u32_at(entry, 0x24),
+                cpu_percent: entry[0x28],
+                memory_percent: entry[0x29],
+                ignored_2a: entry[0x2a..0x39].try_into().expect("15 bytes"),
                 command,
                 string_3b,
                 user,
@@ -1070,8 +1073,8 @@ impl ProcessList {
             Ok((process, padded))
         })?;
         Ok(Self {
-            memory_00: u64_at(buf, 0),
-            memory_08: u64_at(buf, 8),
+            memory_used: u64_at(buf, 0),
+            memory_total: u64_at(buf, 8),
             ignored: buf[0x10..0x1c].try_into().expect("12 bytes"),
             processes,
         })
@@ -1080,15 +1083,21 @@ impl ProcessList {
     /// Encodes the payload.
     pub fn encode(&self) -> Result<Vec<u8>, EncodeError> {
         let mut out = vec![0; Self::HEADER_LEN];
-        out[0..8].copy_from_slice(&self.memory_00.to_be_bytes());
-        out[8..0x10].copy_from_slice(&self.memory_08.to_be_bytes());
+        out[0..8].copy_from_slice(&self.memory_used.to_be_bytes());
+        out[8..0x10].copy_from_slice(&self.memory_total.to_be_bytes());
         out[0x10..0x1c].copy_from_slice(&self.ignored);
         encode_counted(&mut out, &self.processes, |process| {
             let mut entry = vec![0; Self::ENTRY_LEN];
             entry[0..4].copy_from_slice(&process.pid.to_be_bytes());
-            entry[4..8].copy_from_slice(&process.ignored_04);
+            entry[4..8].copy_from_slice(&process.pid_high.to_be_bytes());
             entry[8..0x10].copy_from_slice(&process.start_time.to_be_bytes());
-            entry[0x10..0x39].copy_from_slice(&process.ignored_10);
+            entry[0x10..0x18].copy_from_slice(&process.memory_used.to_be_bytes());
+            entry[0x18..0x20].copy_from_slice(&process.memory_size.to_be_bytes());
+            entry[0x20..0x24].copy_from_slice(&process.cpu_time.to_be_bytes());
+            entry[0x24..0x28].copy_from_slice(&process.background.to_be_bytes());
+            entry[0x28] = process.cpu_percent;
+            entry[0x29] = process.memory_percent;
+            entry[0x2a..0x39].copy_from_slice(&process.ignored_2a);
             entry[0x39] = len_u8(&process.user, "user")?;
             entry[0x3a] = len_u8(&process.command, "command")?;
             entry[0x3b] = len_u8(&process.string_3b, "string_3b")?;

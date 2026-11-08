@@ -416,7 +416,7 @@ fn nonzero_gaps_round_trip() {
         }],
         ..ProcessList::default()
     };
-    let process_gaps = at(0x20, &[4..8, 0x10..0x39, 0x3d..0x40]);
+    let process_gaps = at(0x20, &[0x2a..0x39, 0x3d..0x40]);
     gaps(
         "803",
         processes.encode().unwrap(),
