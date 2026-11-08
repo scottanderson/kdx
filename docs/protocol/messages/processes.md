@@ -9,20 +9,41 @@ They grew out of RemoteAdminTool's types 100 to 104; see [rat.md](../rat.md).
 ## <a id="m800"></a>800 Open Process Monitor
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b394`] -->
 
-Struct `OpenProcessMonitor` (dynamic):<a id="sOpenProcessMonitor"></a>
+The server sends the list at once, and then each time it changes, until the
+client closes the monitor:
 
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | rest | `u8[]` | `ignored` | The payload is unknown. Nobody has read the handler for it yet. <!-- [I] --> |
+```mermaid
+%%{init: {"sequence": {"mirrorActors": false}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Server
+    C->>S: 800 Open Process Monitor
+    S->>C: 803 Process List
+    S-->>C: 803 Process List (each change)
+    C->>S: 801 Close Process Monitor
+```
+
+No payload.
+
+If the user already has the monitor open, the reply is 0x10003. If not, the
+reply is a [803 Process List](#m803), as for [802 Get Process List](#m802), and
+the server sets a flag on the user. While any user has the flag, the server
+watches for processes that start and quit. On each change, it sends a new [803
+Process List](#m803) to each user with the flag, as a notification. <!-- [S
+`FUN_0805b344`] -->
+
+Server 1.000 for Mac watches with a Carbon event handler. <!-- [S server
+`FUN_10010bf0`, server `FUN_100541b0`] Server 1.000 --> On Linux, the function
+that starts the watch is empty, so Server 1.620 sends only the first list. <!--
+[S `FUN_08090c2c`] -->
 
 ## <a id="m801"></a>801 Close Process Monitor
-Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b418`] -->
+Initiator: Client. <!-- [S `FUN_0805b418`, server `FUN_10010cb0`] -->
 
-Struct `CloseProcessMonitor` (dynamic):<a id="sCloseProcessMonitor"></a>
+No payload.
 
-| Off | Size | Type | Field | Notes |
-|---|---|---|---|---|
-| 0x00 | rest | `u8[]` | `ignored` | The payload is unknown. Nobody has read the handler for it yet. <!-- [I] --> |
+This clears the flag of [800 Open Process Monitor](#m800). When no user has the
+flag, the server stops the watch. It checks no privilege, and there is no reply.
 
 ## <a id="m802"></a>802 Get Process List
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b454`; O] -->
@@ -44,7 +65,8 @@ The server runs `/bin/ps auxwww`, and replies with [803 Process List](#m803).
 The `ps` process itself is in the list.
 
 ## <a id="m803"></a>803 Process List
-Initiator: Server. Reply to [802 Get Process List](#m802).
+Initiator: Server. Reply to [800 Open Process Monitor](#m800) or [802 Get
+Process List](#m802), or a notification to an open monitor.
 
 Struct `ProcessList` (dynamic):<a id="sProcessList"></a>
 

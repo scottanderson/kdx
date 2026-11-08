@@ -229,10 +229,10 @@ types](../README.md#message-types) tells where the names come from.
 
 | Type | Message | Role | Client↔Client (DCC) | Client↔Server | Client↔Tracker | Client↔GConsole |
 |---:|---|---|:---:|:---:|:---:|:---:|
-| 800 | [Open Process Monitor](processes.md#m800) | Request |  | Client |  |  |
+| 800 | [Open Process Monitor](processes.md#m800) | Request, reply [803 Process List](processes.md#m803) |  | Client |  |  |
 | 801 | [Close Process Monitor](processes.md#m801) | Request |  | Client |  |  |
 | 802 | [Get Process List](processes.md#m802) | Request, reply [803 Process List](processes.md#m803) |  | Client |  |  |
-| 803 | ↳ [Process List](processes.md#m803) | Reply to [802 Get Process List](processes.md#m802) |  | Server |  |  |
+| 803 | ↳ [Process List](processes.md#m803) | Reply to [800 Open Process Monitor](processes.md#m800) or [802 Get Process List](processes.md#m802), or a notification |  | Server |  |  |
 | 804 | [Exit/Terminate Process](processes.md#m804) | Request |  | Client |  |  |
 
 ### [View display](view-display.md), 900 to 905
