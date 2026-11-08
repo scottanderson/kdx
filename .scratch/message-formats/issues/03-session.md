@@ -36,7 +36,7 @@ in issue 14.
 - [ ] 112: a provisional name. No Linux build names it; check the name
   tables of the Windows client 1.600 and Windows server 1.600, and settle
   on a name or keep it provisional with the evidence.
-- [ ] 113/114 Extra Server Info: 0x00, 0x10 bytes; the "OS values" at 0x24
+- [x] 113/114 Extra Server Info: 0x00, 0x10 bytes; the "OS values" at 0x24
   and 0x28 (`ExtraServerInfo::os_value_24`, `os_value_28`); 0x2d..0x2f.
   Read how the Linux server fills them (`FUN_080619d8`).
 - [ ] 118: "reports whether the client is registered", <!-- [I] --> and the name

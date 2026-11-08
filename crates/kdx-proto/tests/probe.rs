@@ -247,7 +247,10 @@ fn server_info() {
     let info = ExtraServerInfo::decode(wire).unwrap();
     assert_eq!(info.uptime, 301);
     assert_eq!(info.now - info.start_time, 301_740);
-    assert_eq!((info.os_value_24, info.os_value_28), (0x1000, 1000));
+    assert_eq!(
+        (info.os_kind, info.os_version),
+        (ExtraServerInfo::OS_UNIX, 1000)
+    );
     assert!(info.os.starts_with(b"Linux "));
     assert_eq!(info.encode().unwrap(), wire);
 

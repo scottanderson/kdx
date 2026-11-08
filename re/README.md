@@ -267,6 +267,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClient1600-Win` | `0x00463870` / `0x00463970` | modifier bits from the key state / key code to character; both index the key code table at `0x004ff1e8` |
 | `KDXServer1600-Win` | `0x00418dc0` / `0x00418fc0` / `0x00419110` | [900 Open View Display](../docs/protocol/messages/view-display.md#m900) / [904 View Display Mouse](../docs/protocol/messages/view-display.md#m904) mouse / [905 View Display Keyboard](../docs/protocol/messages/view-display.md#m905) keyboard |
 | `KDXServer1600-Win` | `0x00418850` / `0x00418740` / `0x00418470` | view display: grab and diff the screen, send [903 View Display Update](../docs/protocol/messages/view-display.md#m903) / run encoder / two-color encoder |
+| `KDXServer1600-Win` | `0x004157b0` / `0x0042ff90` | handler for type 113 / OS kind, version, and name from `GetVersionExA` |
 | `KDXServer1600-Win` | `0x00418d60` | view display timer: grab again every 1500 ms |
 | `KDXServer1600-Win` | `0x0041ffd0` | grab the primary screen: `BitBlt` from the desktop window into a 24-bit DIB |
 | `KDXServer1600-Win` | `0x00420270` / `0x00420380` | inject a mouse event (`mouse_event`) / a key (`keybd_event`, through the key code table at `0x0047fe98`) |
@@ -344,4 +345,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXServer1000-Mac` | `0x10060270` / `0x100606c0` / `0x10010a40` | session: receive and validate header / send header only / header scramble (not a Ghidra function) |
 | `KDXServer1000-Mac` | `0x10010fe0` / `0x10054270` | handler for type 804 / quit or restart a process by its serial number |
 | `KDXServer1000-Mac` | `0x10010bf0` / `0x10010cb0` / `0x10010d00` / `0x10053f20` | handlers for types 800, 801, and 802 / list processes |
+| `KDXServer1000-Mac` | `0x1000eb60` / `0x10055b70` | handler for type 113 / OS kind, version, and name from Gestalt |
+| `KDXServer1000-Mac` | `0x100554d0` / `0x10018ac0` | MacRoman to pre-1.2 wire text / wire text to UTF-16 |
 | `KDXServer1600-MacUnix` | `0x0003c334` / `0x0003c7b8` / `0x00003e70` | session: receive and validate header / send header only / header scramble (not a Ghidra function) |
+| `KDXServer1600-MacUnix` | `0x00019470` | OS kind, version, and name from `uname` |

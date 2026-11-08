@@ -11,25 +11,36 @@ use super::{
 /// 114 Extra Server Info.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ExtraServerInfo {
-    /// Bytes 0x00 to 0x0f; meaning unknown.
+    /// Bytes 0x00 to 0x0f; 0 as sent.
     pub ignored_00: [u8; 0x10],
-    /// Server start time in milliseconds.
+    /// Server start time in milliseconds since 1900, UTC.
     pub start_time: u64,
-    /// Current server time in milliseconds.
+    /// Server local time in milliseconds since 1900.
     pub now: u64,
     /// Uptime in seconds.
     pub uptime: u32,
-    /// An operating system value; 0x1000 in the lab.
-    pub os_value_24: u32,
-    /// An operating system value; 1000 in the lab.
-    pub os_value_28: u32,
-    /// Bytes 0x2d to 0x2f; meaning unknown.
+    /// Operating system family, such as [`Self::OS_UNIX`].
+    pub os_kind: u32,
+    /// Operating system version, such as 5001 for Windows 5.1.
+    pub os_version: u32,
+    /// Bytes 0x2d to 0x2f; 0 as sent.
     pub ignored_2d: [u8; 3],
-    /// Operating system description, as from `uname`.
+    /// Operating system name and version, such as `uname` gives.
     pub os: Vec<u8>,
 }
 
 impl ExtraServerInfo {
+    /// `os_kind` of classic Mac OS.
+    pub const OS_MAC: u32 = 0x10;
+    /// `os_kind` of Win32s.
+    pub const OS_WIN32S: u32 = 0x100;
+    /// `os_kind` of Windows 95, 98, and Me.
+    pub const OS_WIN9X: u32 = 0x300;
+    /// `os_kind` of Windows NT.
+    pub const OS_WINNT: u32 = 0x500;
+    /// `os_kind` of Linux and Mac OS X.
+    pub const OS_UNIX: u32 = 0x1000;
+
     /// Size of the fixed part before the string.
     pub const HEADER_LEN: usize = 0x30;
 
@@ -42,8 +53,8 @@ impl ExtraServerInfo {
             start_time: u64_at(buf, 0x10),
             now: u64_at(buf, 0x18),
             uptime: u32_at(buf, 0x20),
-            os_value_24: u32_at(buf, 0x24),
-            os_value_28: u32_at(buf, 0x28),
+            os_kind: u32_at(buf, 0x24),
+            os_version: u32_at(buf, 0x28),
             ignored_2d: buf[0x2d..0x30].try_into().expect("3 bytes"),
             os,
         })
@@ -56,8 +67,8 @@ impl ExtraServerInfo {
         out[0x10..0x18].copy_from_slice(&self.start_time.to_be_bytes());
         out[0x18..0x20].copy_from_slice(&self.now.to_be_bytes());
         out[0x20..0x24].copy_from_slice(&self.uptime.to_be_bytes());
-        out[0x24..0x28].copy_from_slice(&self.os_value_24.to_be_bytes());
-        out[0x28..0x2c].copy_from_slice(&self.os_value_28.to_be_bytes());
+        out[0x24..0x28].copy_from_slice(&self.os_kind.to_be_bytes());
+        out[0x28..0x2c].copy_from_slice(&self.os_version.to_be_bytes());
         out[0x2c] = len_u8(&self.os, "OS string")?;
         out[0x2d..0x30].copy_from_slice(&self.ignored_2d);
         out.extend_from_slice(&self.os);

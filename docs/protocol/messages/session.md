@@ -246,19 +246,43 @@ No payload.
 ## <a id="m114"></a>114 Extra Server Info
 Initiator: Server. Reply to [113 Get Extra Server Info](#m113). <!-- [S `FUN_080619d8`; O] -->
 
+The server clears the 0x30 bytes before it fills them, so the gaps are 0.
+`start_time` is the time the server started, and `now` is the server's local
+time: UTC plus the server's time zone offset. So `now − start_time` is more
+than `uptime` by that offset. <!-- [S `FUN_080619d8`, `FUN_08090f64`, server
+`FUN_1000eb60`, `FUN_100547e0`] --> On Linux, the offset comes from the
+`tz_minuteswest` of `gettimeofday`, which is probably 0 on most systems. <!--
+[I] --> In the lab, the difference is 0.74 s. <!-- [O] probe connection 50770
+-->
+
+Each build fills `os_kind`, `os_version`, and `os` in its own way. The rows
+come from the Linux builds, Server 1.600 for Mac OS X, Server 1.000 for Mac,
+and Server 1.600 for Windows. <!-- [S `FUN_080915a8`, server `FUN_00019470`,
+server `FUN_10055b70`, server `FUN_0042ff90`] -->
+
+| Build | `os_kind` | `os_version` | `os` |
+|---|---|---|---|
+| Linux, Mac OS X | 0x1000 | 1000 | `uname` sysname, release, and version, joined by spaces |
+| Mac OS, Server 1.000 | 0x10 | System version from Gestalt `sysv`, so 9.2.2 gives 9220 | `"MacOS "`, then the two bytes of `sysv` |
+| Windows NT | 0x500 | major × 1000 + minor, so 5.1 gives 5001 | `"MS Windows NT "`, then major.minor |
+| Windows 95, 98, Me | 0x300 | as for NT | `"MS Windows "`, then major.minor |
+| Win32s | 0x100 | as for NT | as for 95 |
+
+The server sends at most 0x7f bytes of `os`.
+
 Struct `ExtraServerInfo` (dynamic):<a id="sExtraServerInfo"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 16 | `u8[16]` | `ignored_00` |  |
-| 0x10 | 8 | `u64` | `start_time` | In ms. |
-| 0x18 | 8 | `u64` | `now` | In ms. |
+| 0x00 | 16 | `u8[16]` | `ignored_00` | 0 as sent. |
+| 0x10 | 8 | `u64` | `start_time` | Milliseconds since 1900, UTC; see [encodings.md](../encodings.md#times). |
+| 0x18 | 8 | `u64` | `now` | Milliseconds since 1900, local time. |
 | 0x20 | 4 | `u32` | `uptime` | In seconds. |
-| 0x24 | 4 | `u32` | `os_value_24` | 0x1000 in the lab. |
-| 0x28 | 4 | `u32` | `os_value_28` | 1000 in the lab. |
+| 0x24 | 4 | `u32` | `os_kind` | 0x1000 in the lab. |
+| 0x28 | 4 | `u32` | `os_version` | 1000 in the lab. |
 | 0x2c | 1 | `u8` | `os_len` |  |
-| 0x2d | 3 | `u8[3]` | `ignored_2d` |  |
-| 0x30 | `os_len` | `str` | `os` | As `uname` gives it. |
+| 0x2d | 3 | `u8[3]` | `ignored_2d` | 0 as sent. |
+| 0x30 | `os_len` | `str` | `os` | At most 0x7f bytes. |
 
 ## <a id="m115"></a>115 Get My Address
 Initiator: Client. The dispatcher handles it itself. <!-- [S; O] --> Part of the
