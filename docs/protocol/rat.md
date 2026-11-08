@@ -54,14 +54,16 @@ the same work.
 | 404 | View Display Keyboard | Client | [905 View Display Keyboard](messages/view-display.md#m905) |
 
 The server's handler for each request: <!-- [S server `FUN_10000730`,
-`FUN_100008a0`, `FUN_10000b90`, `FUN_10000d10`, `FUN_10001020`, `FUN_10001130`,
-`FUN_10002c50`] -->
+`FUN_10001600`, `FUN_10044f40`, `FUN_100008a0`, `FUN_10000b90`,
+`FUN_10000d10`, `FUN_10001020`, `FUN_10001130`, `FUN_10002c50`] -->
 
-- 51 Time Info is 20 bytes. The client shows "Server Started At:", "Local
-  Server Time:", and "Duration Of Time:", so it probably holds those three
-  times.
-- The server sends 52 OS Info without a request. It holds two u32 values and a
-  string of at most 0x7f bytes, probably the system version.
+- 51 Time Info is 20 bytes: `start_time`, `now`, and `uptime`, as at 0x10 to
+  0x23 of [114 Extra Server Info](messages/session.md#m114). The client shows
+  them as "Server Started At:", "Local Server Time:", and "Duration Of Time:".
+- The server sends 52 OS Info without a request. It holds `os_kind` (0x10) and
+  `os_version` as in [114 Extra Server Info](messages/session.md#m114), then
+  the name, such as `"MacOS "` and the version, with no length byte. The name
+  is at most 0x7f bytes and runs to the end of the payload.
 - 102 to 104 carry the 8-byte Mac process serial number of the process. KDX
   combined them into the flags of [804 Exit/Terminate
   Process](messages/processes.md#m804), whose bit 2 restarts the process.
