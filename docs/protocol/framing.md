@@ -130,8 +130,8 @@ RAT 1.080 (2003) uses the same header, cipher, and checks, with no scramble.
 A new connection's receive cap is 0x40000. The client sets 0xc0000 on its
 connection to the server, and 0x1000000 on a second connection that it opens
 from a 600 × 400 window. <!-- [S client `FUN_10052b40`, `FUN_10004670`,
-`FUN_10006450`] --> That window is probably the view display, which 1.x also
-runs on its own connection. <!-- [I] -->
+`FUN_10006450`] --> That window is probably the view display, because 1.x
+clients also set 0x1000000 on their view display connection. <!-- [I] -->
 
 All builds except Tracker 1.110 for Windows can send a header alone, with the
 48-bit length check. <!-- [S] -->
@@ -146,7 +146,7 @@ build: <!-- [S] -->
 | Client, 1.110 to beta 5 | 0x100000 | connection to a server |
 | Client, 1.110 to beta 5 | 0x8000 | transfer connection (sends [402 Create Folder](messages/files.md#m402), [412 Download File](messages/files.md#m412), [415 Upload File](messages/files.md#m415), or [417 Upload File (D)](messages/files.md#m417)) |
 | Client, 1.110 to beta 5 | 0x80000 | DCC listener (see [dcc.md](dcc.md)) |
-| Client 1.600, beta 5 | 0x1000000 | one caller, not identified <!-- [S `FUN_0041bde0`, `FUN_0806f61c`] --> |
+| Client 1.600, beta 5 | 0x1000000 | view display connection (see [view-display.md](messages/view-display.md)), from the function that opens the "View Display @" window <!-- [S client `FUN_0041bde0`, client `FUN_0806f61c`] --> |
 
 Client 1.110 is `KDXClient-Win.zip`, from a Wayback capture of Haxial's
 downloadstatic folder on 2003-12-15; see `vendor/MANIFEST.md`.
