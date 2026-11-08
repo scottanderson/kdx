@@ -29,6 +29,12 @@ re/ghidra /work/projects KDXServer1620-Lnx -import /work/bin/KDXServer1620-Lnx/e
 re/ghidra /work/projects KDXClient1600-Win -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
 re/ghidra /work/projects KDXServer1600-Win -import /work/bin/KDXServer1600-Win/extracted/KDXServer1600-Win/KDXServer.exe
 re/ghidra /work/projects KDXServer0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXServer Folder/KDXServer"
+# RAT 1.080 is an archive inside KDX___Haxial_Bundle.sit; unpack it first
+unar -q -D -o "vendor/haxial/KDX___Haxial_Bundle/nested/RAT1080-Mac" \
+  "vendor/haxial/KDX___Haxial_Bundle/extracted/KDX & Haxial Bundle/Haxial Remote Access 108.sit"
+for p in RATClient RATServer; do
+  re/ghidra /work/projects "${p}1080-Mac" -import "/work/bin/KDX___Haxial_Bundle/nested/RAT1080-Mac/$p"
+done
 # older 1.x builds, as project/binary (see "Across versions" in framing.md)
 for p in KDXClient1320-Win/KDXClient.exe KDXClient1400-Win/KDXClient.exe \
     KDXClient1500-Win/KDXClient.exe KDXClient1520-Win/KDXClient.exe \
@@ -287,3 +293,19 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXClient0921-Mac` | `0x10057db0` / `0x10057ea0` | send 0.9x HELLO / validate its header |
 | `KDXClient0921-Mac` | `0x1001b410` | connect to a tracker (`%KDt`) |
 | `KDXTrackerServ0902-Mac` | `0x10021c10` / `0x10021d00` | send 0.9x HELLO / validate its header |
+| `KDXServer0921-Mac` | `0x100107b0` | account_key(password), the same as 1.x |
+| `KDXServer0921-Mac` | `0x1000c1f0` | Twofish key schedule (q0 and q1 interleaved at `0x10048334`) |
+| `KDXClient0921-Mac` | `0x10025450` | account_key(password) |
+| `RATClient1080-Mac` | `0x10052b40` / `0x10052d30` / `0x10052c70` | create connection object (`%RAT`, 1) / set receive cap / set login name and key |
+| `RATClient1080-Mac` | `0x100539e0` | 0.9x handshake state machine |
+| `RATClient1080-Mac` | `0x10053500` / `0x10053610` / `0x10053860` | send 0.9x HELLO / validate its header / check the server's HELLO |
+| `RATClient1080-Mac` | `0x10053730` | send the PROOF: SHA-1 of the key and the server's nonce |
+| `RATClient1080-Mac` | `0x10013f10` / `0x10009a10` | account_key(password) / FNV-1 (seeded) |
+| `RATClient1080-Mac` | `0x1000c940` / `0x1000c9b0` | SHA-1 (one-shot / init) |
+| `RATClient1080-Mac` | `0x1000f950` | Twofish key schedule |
+| `RATClient1080-Mac` | `0x10053d10` / `0x10053f70` | session: receive and validate header / send message |
+| `RATClient1080-Mac` | `0x10004670` / `0x10006450` | connect to a server (cap 0xc0000) / open the second connection (cap 0x1000000) |
+| `RATServer1080-Mac` | `0x1004e280` | 0.9x handshake state machine; state 5 checks the client's PROOF |
+| `RATServer1080-Mac` | `0x1004e1a0` / `0x10056d00` | send the one-byte login reply (0x10 OK, 1 failed) / login callback: returns the account key |
+| `RATServer1080-Mac` | `0x10008d60` / `0x1000bb20` | SHA-1 (one-shot) / Twofish key schedule |
+| `RATServer1080-Mac` | `0x1004e5b0` / `0x1004e810` | session: receive and validate header / send message |

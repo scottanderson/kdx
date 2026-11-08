@@ -271,13 +271,19 @@ gives these codes:
 
 ## Version 0.9x
 
-The 2001 Mac builds and NetFone 1.400 use an older handshake, with no XOR layer,
-no Twofish, and no challenge table. A 0.9x peer cannot talk to a 1.x peer. These
-builds are PowerPC PEF files from `KDX0915.sit.bin` to `KDX0921.sit.bin`,
-`KDXTrackerServ0900.sit.bin`, `KDXTrackerServ0902.sit.bin`, and
-`NetFone1400-Mac.sit`; see `vendor/MANIFEST.md`. Addresses are in the Ghidra
-projects `KDXServer0921-Mac`, `KDXClient0921-Mac`, and `KDXTrackerServ0902-Mac`,
-made as `re/README.md` describes.
+The 2001 Mac builds, NetFone 1.400, and RemoteAdminTool (RAT) 1.080 use an
+older handshake, with no XOR layer, no challenge table, and no Twofish until the
+proof is accepted. A 0.9x peer cannot talk to a 1.x peer. These builds are
+PowerPC PEF files from `KDX0915.sit.bin` to `KDX0921.sit.bin`,
+`KDXTrackerServ0900.sit.bin`, `KDXTrackerServ0902.sit.bin`,
+`NetFone1400-Mac.sit`, and `KDX___Haxial_Bundle.sit`; see `vendor/MANIFEST.md`.
+Addresses are in the Ghidra projects `KDXServer0921-Mac`, `KDXClient0921-Mac`,
+`KDXTrackerServ0902-Mac`, `RATClient1080-Mac`, and `RATServer1080-Mac`, made as
+`re/README.md` describes.
+
+RAT 1.080 is from May 2003, two years after the KDX builds, <!-- [S] file dates
+in its archive --> but it still uses this handshake. Its client is the only 0.9x
+client whose proof code has been read; see PROOF below.
 
 ### Sub-protocols
 
@@ -285,6 +291,7 @@ made as `re/README.md` describes.
 |---|---:|---|
 | `%KDX` | 1 | Client and Server 0.915 to 0.921 <!-- [S server `FUN_10005b40`, client `FUN_10000a50`] --> |
 | `%KDt` | 1 | Tracker 0.900 and 0.902, and Client 0.920 and 0.921 when they browse a tracker <!-- [S tracker `0x1000154c`, client `FUN_1001b410`] --> |
+| `%RAT` (0x25524154) | 1 | RAT 1.080, client and server <!-- [S client `FUN_10052b40`] --> |
 | `%NFO` | 1 | NetFone 1.400, probably. The tag and the argument 1 have the same call shape as in the KDX programs. <!-- [I] read from the raw code, because Ghidra 12.1.4's PEF loader fails on NetFone's relocations --> |
 
 A peer must send the same sub-protocol and exactly the same sub-version. If not,
@@ -367,9 +374,21 @@ Struct `ProofReply09x` (1 bytes):<a id="sProofReply09x"></a>
 | 0x00 | 1 | `u8` | `status` | `0x10` OK, `1` failed |
 
 If the client gets any reply other than 0x10, it gives 0x40070. Then both sides
-give the key to a function that is probably a cipher's key schedule. <!-- [S
-`FUN_1000c1f0`; I] -->
+give the key to the Twofish key schedule, and the session is Twofish-256 ECB
+with this key; see [framing.md](framing.md#across-versions). <!-- [S
+`FUN_1000c1f0`] reads the q0 and q1 tables, interleaved, at 0x10048334 -->
 
-Only Server 0.921's proof code has been read. The client and tracker have the
-same hello code, <!-- [S] --> so they probably have the same proof too. <!-- [I]
---> Nobody knows yet if the 32-byte key is the same as the `account_key` of 1.x.
+The RAT 1.080 client computes its proof in the same way: SHA-1 over the 32-byte
+key and then the server's 12-byte nonce, 0x2c bytes in all. <!-- [S client
+`FUN_10053730`, `FUN_100539e0`] --> The RAT server checks it against SHA-1 of
+the key and its own nonce, and sends the one-byte reply. <!-- [S server
+`FUN_1004e280`, `FUN_1004e1a0`] --> The KDX 0.921 client and the tracker have
+the same hello code as Server 0.921, <!-- [S] --> so they probably make the same
+proof too.
+
+The 32-byte key is the [`account_key`](#account_keypassword) of 1.x: SHA-1 of
+the password, then its first 8 bytes again, then FNV-1 of the password with seed 1,
+and the same fixed key for an empty password. Server 0.921, Client 0.921, and
+RAT 1.080 each have this function, and Tracker 0.902 has the empty password's
+key. <!-- [S `FUN_100107b0`, client `FUN_10025450`] RAT FUN_10013f10 --> No
+capture of a 0.9x session confirms it yet.

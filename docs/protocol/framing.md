@@ -112,8 +112,20 @@ probably do the same. <!-- [I] -->
 Server 0.921 (Mac PEF) has the same 16-byte header, with no scramble hook. Its
 receive function makes the same checks, and its function that sends only a
 header makes the same 48-bit check. <!-- [S `FUN_10035790`, `FUN_10035b20`] -->
-It encrypts with a cipher at connection offset 0x12a that is not yet
-identified. <!-- [S] -->
+It encrypts with Twofish-256 ECB at connection offset 0x12a, keyed with the
+[`account_key`](handshake.md#account_keypassword) from the 0.9x proof. <!-- [S
+`FUN_1000c1f0`] --> So Twofish was there from 0.9x, and 1.x added the header
+scramble around it.
+
+RAT 1.080 (2003) uses the same header, cipher, and checks, with no scramble.
+<!-- [S client `FUN_10053d10`, `FUN_10053f70`, server `FUN_1004e5b0`,
+`FUN_1004e810`] --> It pads a payload's last block with `txid * 0x41c64e6d +
+0x3039` as 1.x does, and its connection object has the same magic, 0x2aa24aec.
+A new connection's receive cap is 0x40000. The client sets 0xc0000 on its
+connection to the server, and 0x1000000 on a second connection that it opens
+from a 600 × 400 window. <!-- [S client `FUN_10052b40`, `FUN_10004670`,
+`FUN_10006450`] --> That window is probably the view display, which 1.x also
+runs on its own connection. <!-- [I] -->
 
 All builds except Tracker 1.110 for Windows can send a header alone, with the
 48-bit length check. <!-- [S] -->
