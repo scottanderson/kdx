@@ -17,22 +17,31 @@ LAB=(KDXServer1620-Lnx.zip KDXTrackerServ1110-Lnx.zip KDXClient1600-Win.zip KDXC
 die() { echo "fetch: $*" >&2; exit 1; }
 command -v unar >/dev/null || die "needs unar (apt install unar)"
 
-# Rows of the manifest table: archive, Wayback timestamp, SHA-256.
+# Rows of the manifest table: archive, source (Wayback timestamp or URL), SHA-256.
 manifest() {
-  awk -F'|' '$2 ~ /\.(zip|sit)/ { gsub(/ /, "", $2); gsub(/ /, "", $4); gsub(/ /, "", $5); print $2, $4, $5 }' \
+  awk -F'|' '$2 ~ /\.(zip|sit|hqx)/ { gsub(/ /, "", $2); gsub(/ /, "", $4); gsub(/ /, "", $5); print $2, $4, $5 }' \
     "$VENDOR/MANIFEST.md"
 }
 
 fetch_one() {
-  local archive="$1" ts="$2" sha="$3"
+  local archive="$1" src="$2" sha="$3"
   local name="${archive##*/}"
   local dir="$HAXIAL/${name%.*}"
   local file="$dir/$name"
   mkdir -p "$dir"
   if [[ ! -f "$file" ]] || ! echo "$sha  $file" | sha256sum -c --quiet 2>/dev/null; then
+    local url
+    if [[ "$src" != https://* ]]; then
+      # shellcheck disable=SC2059
+      url="$(printf "$URL" "$src" "$archive")"
+    elif [[ "${src##*/}" == "$name" ]]; then
+      url="$src"
+    else
+      echo "fetch: skipping $name; download it by hand from $src into $dir/" >&2
+      return 0
+    fi
     echo "fetch: downloading $archive"
-    # shellcheck disable=SC2059
-    curl -fsSL --retry 3 -o "$file.part" "$(printf "$URL" "$ts" "$archive")"
+    curl -fsSL --retry 3 -o "$file.part" "$url"
     echo "$sha  $file.part" | sha256sum -c --quiet || { rm -f "$file.part"; die "checksum mismatch for $archive"; }
     mv "$file.part" "$file"
     rm -rf "$dir/extracted"
