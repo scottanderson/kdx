@@ -3,7 +3,8 @@
 For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 900 to 905 show the screen of the server's host to a remote
-viewer.
+viewer. They grew out of RemoteAdminTool's types 400 to 404, which have the
+same layouts and pixel stream; see [rat.md](../rat.md). <!-- [S] -->
 
 View display runs on a transfer connection, not on the session; see
 [transfers.md](../transfers.md). <!-- [S `FUN_08052194`] --> Server 1.620 for

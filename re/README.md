@@ -309,3 +309,9 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `RATServer1080-Mac` | `0x1004e1a0` / `0x10056d00` | send the one-byte login reply (0x10 OK, 1 failed) / login callback: returns the account key |
 | `RATServer1080-Mac` | `0x10008d60` / `0x1000bb20` | SHA-1 (one-shot) / Twofish key schedule |
 | `RATServer1080-Mac` | `0x1004e5b0` / `0x1004e810` | session: receive and validate header / send message |
+| `RATServer1080-Mac` | `0x10001380` / `0x10000640` | message dispatcher (type → handler) / log a request by name |
+| `RATServer1080-Mac` | `0x100008a0` / `0x10001130` / `0x10000d10` | Get Process List / Get Volume List / Get Launch List (RAT types 100, 300, 200) |
+| `RATServer1080-Mac` | `0x10002c50` / `0x10002d40` / `0x10002e50` | View Display Start / Mouse / Keyboard (RAT types 400, 403, 404) |
+| `RATServer1080-Mac` | `0x10002850` / `0x10002720` / `0x100024f0` | view display: grab and diff the screen, send RAT type 402 / run encoder / two-color encoder |
+| `RATServer1080-Mac` | `0x10001600` | send OS Info (RAT type 52) |
+| `RATClient1080-Mac` | `0x10002d50` | message type → name |

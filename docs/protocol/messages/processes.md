@@ -3,6 +3,8 @@
 For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 800 to 804 list and stop the processes on the server's host.
+They probably grew out of RemoteAdminTool's types 100 to 104; see
+[rat.md](../rat.md). <!-- [I] -->
 
 ## <a id="m800"></a>800 Open Process Monitor
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b394`] -->
