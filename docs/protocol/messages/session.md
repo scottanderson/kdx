@@ -81,12 +81,20 @@ Initiator: Server. <!-- [O `captures/kdx-cli.pcapng` frames 398, 429; O
 `captures/linux-chat-admin.pcapng` frames 59, 116] --> Part of the [logout
 sequence](../sequences.md#logout).
 
+`kind` tells the client how to show the departure. With 9, the client removes
+the user and does nothing more. With any other value, it also writes a line
+with the user's name and the time in each chat that the user shared, and plays
+the logout sound. <!-- [S client `FUN_08056718`] --> Every server sends 7: the
+Linux builds, Server 1.000 for Mac, and Server 1.600 for Windows and Mac OS X
+have no other sender of this type. <!-- [S `FUN_0804a930`, server
+`FUN_10000440`, server `FUN_00401310`, server `FUN_00004210`] -->
+
 Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `user_id` |  |
-| 0x04 | 1 | `u8` | `value_4` | 7 in all captures. |
+| 0x04 | 1 | `u8` | `kind` | 7 shows a notice, 9 is quiet. 7 in all captures. <!-- [O] --> |
 | 0x05 | 3 | `u8[3]` | `ignored` | 0 as sent. |
 
 `kdx_proto::msg::user::UserDeparted` encodes it again byte for byte (test

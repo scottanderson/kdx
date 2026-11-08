@@ -171,7 +171,7 @@ fn user_departed() {
         departed,
         [3, 4].map(|user_id| UserDeparted {
             user_id,
-            value_4: 7,
+            kind: UserDeparted::KIND_NOTICE,
             ..UserDeparted::default()
         })
     );

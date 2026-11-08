@@ -547,7 +547,7 @@ fn summary(kind: MessageType, payload: &[u8]) -> Result<Option<String>> {
             .join("; "),
         MessageType::USER_DEPARTED => {
             let departed = UserDeparted::decode(payload)?;
-            format!("user {} value {}", departed.user_id, departed.value_4)
+            format!("user {} kind {}", departed.user_id, departed.kind)
         }
         MessageType::SERVER_INFO => {
             let info = ServerInfo::decode(payload)?;

@@ -132,13 +132,19 @@ impl UserRecord {
 pub struct UserDeparted {
     /// The user who left.
     pub user_id: u32,
-    /// Meaning unknown; 7 in every capture.
-    pub value_4: u8,
-    /// Bytes 0x05 to 0x07; meaning unknown.
+    /// How the client shows the departure, such as [`Self::KIND_NOTICE`].
+    pub kind: u8,
+    /// Bytes 0x05 to 0x07; 0 as sent.
     pub ignored: [u8; 3],
 }
 
 impl UserDeparted {
+    /// Show a line in each shared chat and play the logout sound; every
+    /// server sends it.
+    pub const KIND_NOTICE: u8 = 7;
+    /// Remove the user without a line or a sound.
+    pub const KIND_QUIET: u8 = 9;
+
     /// Payload length.
     pub const LEN: usize = 8;
 
@@ -147,7 +153,7 @@ impl UserDeparted {
         need(buf, Self::LEN)?;
         Ok(Self {
             user_id: u32_at(buf, 0),
-            value_4: buf[4],
+            kind: buf[4],
             ignored: buf[5..8].try_into().expect("3 bytes"),
         })
     }
@@ -156,7 +162,7 @@ impl UserDeparted {
     pub fn encode(&self) -> [u8; Self::LEN] {
         let mut out = [0; Self::LEN];
         out[..4].copy_from_slice(&self.user_id.to_be_bytes());
-        out[4] = self.value_4;
+        out[4] = self.kind;
         out[5..].copy_from_slice(&self.ignored);
         out
     }
