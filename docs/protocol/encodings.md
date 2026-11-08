@@ -99,8 +99,30 @@ still connect to the previous version, but the text can be "somewhat mutilated";
 and text made by earlier versions has the same problem. <!-- [S] --> The Windows
 client's `WINDOWS XP REQUIRED.html` gives Unicode as the reason that it needs
 Windows NT. <!-- [S] --> The notes in the tracker archives are older than that
-entry. The repo has no builds before 1.2, so their charset is unknown. It was
-probably Mac OS Roman on a Mac and a Windows code page on a PC. <!-- [I] -->
+entry.
+
+Before 1.2, the wire carried one 8-bit charset on all platforms. The Mac builds
+from 0.921 to 1.000 hold the same two tables: <!-- [S server `FUN_100554d0`,
+server `FUN_10018ac0`] Server 1.000; the same tables are in Client 0.921, Server
+0.921, and Client 1.000 -->
+
+- One changes Mac OS Roman to the wire charset. The server uses it on the names
+  of processes, and on typed keys.
+- One changes the wire charset to UTF-16, for the names of files.
+
+The wire charset is Latin-1 (ISO 8859-1), with some changes:
+
+- 0x83, 0x85 to 0x87, 0x91 to 0x95, 0x97, and 0x99 are the Windows-1252
+  characters `ƒ … † ‡ ‘ ’ “ ” • — ™`. The other bytes from 0x80 to 0x9f stay
+  C1 controls, so 0x80 is not `€`.
+- The control bytes 0x12, 0x13, and 0x19 to 0x1f carry Mac OS Roman characters
+  that Latin-1 does not have: `√ ◊ ∞ π ∆ ≠ ≈ ≤ ≥`.
+- The Mac OS Roman characters with no place, `∂ ∑ ∫ Ω Œ œ ﬁ ﬂ ˘ ˇ`, become
+  `*` (0x2a). So do the control bytes other than 0x00, 0x09, 0x0b, 0x0d, 0x10,
+  0x12, and 0x13.
+
+So text from a pre-1.2 Windows client is Windows-1252, which almost matches, and
+a pre-1.2 Mac converts its text to match. <!-- [I] -->
 
 Nothing negotiates the charset. The handshake's sub-version is 0x10 for all 1.6
 clients, and Server 1.620 accepts only 0x10; see [handshake.md](handshake.md).
