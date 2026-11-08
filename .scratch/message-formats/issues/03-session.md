@@ -21,9 +21,9 @@ in issue 14.
   `ServerInfo::server_value` says "unknown meaning". Rename the field, and
   confirm with a capture whose server has a File Transfer port set
   (Linux). Every 105 in the 22 captures has 0 there, so none covers it.
-- [ ] 105 0x2c..0x45 are missing from the table.
+- [x] 105 0x2c..0x45 are missing from the table.
 - [ ] 105 0x46, u16 2: name it from the client's version check.
-- [ ] 105 third string (≤ 0x7f): what fills it, and does the client show
+- [x] 105 third string (≤ 0x7f): what fills it, and does the client show
   it?
 - [ ] 107 Server Greeting 0x00, u32 0.
 - [ ] 108 Ping / 109 Pong: only `kdx-probe` has sent them. Does Client

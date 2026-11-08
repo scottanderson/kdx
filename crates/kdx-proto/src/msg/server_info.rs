@@ -16,7 +16,7 @@ pub struct ServerInfo {
     pub version: u16,
     /// 1 if the user may change the server settings, else 0.
     pub can_modify_settings: u16,
-    /// Bytes 0x2c to 0x45; meaning unknown.
+    /// Bytes 0x2c to 0x45; 0 as sent.
     pub ignored_2c: [u8; 0x1a],
     /// The u16 at 0x46; Server 1.620 always sends 2, which stops the client's version warning.
     pub value_46: u16,
@@ -26,8 +26,8 @@ pub struct ServerInfo {
     pub name: Vec<u8>,
     /// Server description.
     pub description: Vec<u8>,
-    /// A third string of unknown meaning.
-    pub third: Vec<u8>,
+    /// The server's address from its settings, or empty for the address the client used.
+    pub address: Vec<u8>,
 }
 
 impl Default for ServerInfo {
@@ -43,7 +43,7 @@ impl Default for ServerInfo {
             ignored_4b: 0,
             name: Vec::new(),
             description: Vec::new(),
-            third: Vec::new(),
+            address: Vec::new(),
         }
     }
 }
@@ -56,7 +56,7 @@ impl ServerInfo {
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x48, 0x49, 0x4a].map(|at| usize::from(buf[at]));
-        let ([name, description, third], _) = strings(buf, Self::HEADER_LEN, lens)?;
+        let ([name, description, address], _) = strings(buf, Self::HEADER_LEN, lens)?;
         Ok(Self {
             session_key: buf[..32].try_into().expect("32 bytes"),
             file_transfer_port: u32_at(buf, 0x20),
@@ -68,7 +68,7 @@ impl ServerInfo {
             ignored_4b: buf[0x4b],
             name,
             description,
-            third,
+            address,
         })
     }
 
@@ -84,9 +84,9 @@ impl ServerInfo {
         out[0x46..0x48].copy_from_slice(&self.value_46.to_be_bytes());
         out[0x48] = len_u8(&self.name, "server name")?;
         out[0x49] = len_u8(&self.description, "server description")?;
-        out[0x4a] = len_u8(&self.third, "third string")?;
+        out[0x4a] = len_u8(&self.address, "address")?;
         out[0x4b] = self.ignored_4b;
-        for part in [&self.name, &self.description, &self.third] {
+        for part in [&self.name, &self.description, &self.address] {
             out.extend_from_slice(part);
         }
         Ok(out)
@@ -106,7 +106,7 @@ impl std::fmt::Debug for ServerInfo {
             .field("ignored_4b", &self.ignored_4b)
             .field("name", &String::from_utf8_lossy(&self.name))
             .field("description", &String::from_utf8_lossy(&self.description))
-            .field("third", &String::from_utf8_lossy(&self.third))
+            .field("address", &String::from_utf8_lossy(&self.address))
             .finish()
     }
 }

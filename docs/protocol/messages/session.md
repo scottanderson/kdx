@@ -101,7 +101,7 @@ Struct `UserDeparted` (8 bytes):<a id="sUserDeparted"></a>
 `linux_chat_admin`).
 
 ## <a id="m105"></a>105 Server Info
-Initiator: Server. 86 bytes as seen. <!-- [S `FUN_0804b304`; O] --> Part of the
+Initiator: Server. 86 bytes as seen. <!-- [S `FUN_0804b114`; O] --> Part of the
 [login sequence](../sequences.md#login).
 
 Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
@@ -113,15 +113,15 @@ Struct `ServerInfo` (dynamic):<a id="sServerInfo"></a>
 | 0x24 | 4 | `u32` | `user_id` | 7 and 8 in two probes, one after the other. <!-- [O] --> |
 | 0x28 | 2 | `u16` | `version` | 0x0654 = 1620 |
 | 0x2a | 2 | `u16` | `can_modify_settings` | 1 with Modify Server Settings. |
-| 0x2c | 26 | `u8[26]` | `ignored_2c` |  |
+| 0x2c | 26 | `u8[26]` | `ignored_2c` | 0 as sent. <!-- [S `FUN_0804b114`] --> |
 | 0x46 | 2 | `u16` | `value_46` | 2. If it is not 2, the client compares the version, and warns about an older or newer server. <!-- [S] --> Server 1.620 always sends 2, so the warning never shows. |
 | 0x48 | 1 | `u8` | `name_len` |  |
 | 0x49 | 1 | `u8` | `description_len` |  |
-| 0x4a | 1 | `u8` | `third_len` |  |
+| 0x4a | 1 | `u8` | `address_len` |  |
 | 0x4b | 1 | `u8` | `ignored_4b` |  |
 | 0x4c | `name_len` | `str` | `name` | "New Server". <!-- [O] --> At most 0x3f bytes. |
 |  | `description_len` | `str` | `description` | At most 0xff bytes. |
-|  | `third_len` | `str` | `third` | At most 0x7f bytes. |
+|  | `address_len` | `str` | `address` | At most 0x7f bytes. The address in the server settings (+0x1d8). If it is empty, the client uses the address it connected to. The client drops a final `:10700` and shows the rest in the server info window and in a new bookmark. <!-- [S `FUN_0804b114`, client `FUN_08052cc0`, client `FUN_080587c0`, client `FUN_0808e44c`] --> |
 
 The whole message is at most 0x400 bytes.
 
