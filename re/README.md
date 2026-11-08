@@ -32,6 +32,7 @@ re/ghidra /work/projects KDXServer0921-Mac -import "/work/bin/KDX0921.sit/extrac
 re/ghidra /work/projects KDXClient0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXClient"
 re/ghidra /work/projects KDXServer1000-Mac -import /work/bin/kdx-server-1000/extracted/KDXServer1000-Mac/KDXServer
 re/ghidra /work/projects KDXClient1000-Mac -import /work/bin/kdx-client-1000/extracted/KDXClient1000-Mac/KDXClient
+re/ghidra /work/projects KDXServer1600-MacUnix -import /work/bin/KDXServer1600-MacUnix/extracted/KDXServer1600-MacUnix/KDXServer.command
 # RAT 1.080 is an archive inside KDX___Haxial_Bundle.sit; unpack it first
 unar -q -D -o "vendor/haxial/KDX___Haxial_Bundle/nested/RAT1080-Mac" \
   "vendor/haxial/KDX___Haxial_Bundle/extracted/KDX & Haxial Bundle/Haxial Remote Access 108.sit"
@@ -340,3 +341,7 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `KDXServer1000-Mac` | `0x1005fcb0` | check the 1.x HELLO: version 1, and a sub-version equal to its own |
 | `KDXClient1000-Mac` | `0x10034ba0` | message type → name (the same 134 names) |
 | `KDXClient1000-Mac` | `0x100987d0` | create connection object (`%KDX`, sub-version 1) |
+| `KDXServer1000-Mac` | `0x10060270` / `0x100606c0` / `0x10010a40` | session: receive and validate header / send header only / header scramble (not a Ghidra function) |
+| `KDXServer1000-Mac` | `0x10010fe0` / `0x10054270` | handler for type 804 / quit or restart a process by its serial number |
+| `KDXServer1000-Mac` | `0x10010bf0` / `0x10010cb0` / `0x10010d00` / `0x10053f20` | handlers for types 800, 801, and 802 / list processes |
+| `KDXServer1600-MacUnix` | `0x0003c334` / `0x0003c7b8` / `0x00003e70` | session: receive and validate header / send header only / header scramble (not a Ghidra function) |

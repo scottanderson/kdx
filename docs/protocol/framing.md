@@ -106,8 +106,14 @@ They differ only in how they give the error. Server 1.620 and Client betas 4 and
 All 1.x builds have the four constants of the header scramble: Windows, Linux,
 Mac PEF, and Mach-O, from Client 1.110 and Server 1.300 on. The `%HGC` constants
 first appear in Client 1.320. <!-- [S] re/scan_consts.py --> The x86 builds use
-the constants in the same scramble. The Mac builds are not decompiled, but
-probably do the same. <!-- [I] -->
+the constants in the same scramble. So do Server 1.000 for Mac (PEF) and Server
+1.600 for Mac OS X (Mach-O), in the same two branches, encode and decode. <!--
+[S server `FUN_10060270`, server `FUN_100606c0`] Server 1.000; scramble at
+0x10010a40, which Ghidra does not mark as a function --> <!-- [S server
+`FUN_0003c334`, server `FUN_0003c7b8`] Server 1.600 Mach-O; scramble at
+0x00003e70 --> Their receive functions and their functions that send only a
+header make the same checks as the x86 builds. The Mach-O build calls the
+scramble through the hook at +0x08, as Linux does.
 
 Server 0.921 (Mac PEF) has the same 16-byte header, with no scramble hook. Its
 receive function makes the same checks, and its function that sends only a
