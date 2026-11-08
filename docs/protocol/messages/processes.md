@@ -3,8 +3,8 @@
 For hex and field notation, see [Conventions](../README.md#conventions).
 
 Message types 800 to 804 list and stop the processes on the server's host.
-They probably grew out of RemoteAdminTool's types 100 to 104; see
-[rat.md](../rat.md). <!-- [I] -->
+They grew out of RemoteAdminTool's types 100 to 104; see [rat.md](../rat.md).
+<!-- [S] -->
 
 ## <a id="m800"></a>800 Open Process Monitor
 Initiator: Client. Privilege: View Processes (80). <!-- [S `FUN_0805b394`] -->
@@ -84,9 +84,9 @@ Struct `ExitTerminateProcess` (12 bytes):<a id="sExitTerminateProcess"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 4 | `u32` | `flags` | Bit 0 is kill, bit 1 exit, and bit 2 an extra flag. Bit 0 or bit 1 must be set, or the server gives 0x10002. |
+| 0x00 | 4 | `u32` | `flags` | Bit 0 is kill, bit 1 exit, and bit 2 restart. Bit 0 or bit 1 must be set, or the server gives 0x10002. |
 | 0x04 | 4 | `u32` | `pid` |  |
-| 0x08 | 4 | `u32` | `value_08` | Must be 0, or nothing happens. |
+| 0x08 | 4 | `u32` | `value_08` | Must be 0 on Linux, or nothing happens. On a Mac, `pid` and this field are the 8-byte process serial number. <!-- [S server `FUN_10010fe0`] Server 1.000 --> |
 
 On Linux, kill sends SIGKILL to the PID, and exit sends SIGTERM. On Linux, bit 2
 gets 0x10005 (unsupported). If `kill()` fails, the reply is the OS error. If it
@@ -94,3 +94,10 @@ succeeds, there is no reply, and the server logs `Terminate Process` and writes
 history record 0x324. <!-- [S] --> The client's Exit Process sends flags 2
 (exit). <!-- [O `captures/linux-shutdown.pcapng` frame 25] -->
 `kdx_proto::msg::admin::ExitTerminateProcess` encodes it again byte for byte.
+
+Server 1.000 for Mac shows what bit 2 does. <!-- [S server `FUN_10010fe0`,
+server `FUN_10054270`, server `FUN_10030450`] Server 1.000 --> Kill and exit
+both send the process a Quit Apple Event. With bit 2, the server first saves the
+process's file, waits 900 ms for the process to quit, and then asks the Finder
+to open the file again. So bit 2 restarts the process, as RAT's 104
+Restart Process did. If no Finder runs, the error is -600.

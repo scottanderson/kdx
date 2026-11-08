@@ -1105,11 +1105,11 @@ impl ProcessList {
 /// 804 Exit/Terminate Process.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ExitTerminateProcess {
-    /// [`Self::KILL`] or [`Self::EXIT`], optionally with [`Self::EXTRA`].
+    /// [`Self::KILL`] or [`Self::EXIT`], optionally with [`Self::RESTART`].
     pub flags: u32,
     /// Process ID.
     pub pid: u32,
-    /// Must be 0, or the server does nothing.
+    /// Must be 0 on Linux; on a Mac, the low half of the process serial number.
     pub value_08: u32,
 }
 
@@ -1120,8 +1120,8 @@ impl ExitTerminateProcess {
     pub const KILL: u32 = 1;
     /// Sends SIGTERM on Linux.
     pub const EXIT: u32 = 2;
-    /// Meaning unknown; unsupported (0x10005) on Linux.
-    pub const EXTRA: u32 = 4;
+    /// Starts the process again after it quits; unsupported (0x10005) on Linux.
+    pub const RESTART: u32 = 4;
 
     /// Decodes the payload.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {

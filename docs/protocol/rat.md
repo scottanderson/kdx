@@ -39,7 +39,7 @@ the same work.
 | 101 | Process List | Server, reply to 100 | [803 Process List](messages/processes.md#m803) |
 | 102 | Terminate Process | Client | [804 Exit/Terminate Process](messages/processes.md#m804), flags bit 0 |
 | 103 | Exit Process | Client | [804 Exit/Terminate Process](messages/processes.md#m804), flags bit 1 |
-| 104 | Restart Process | Client | [804 Exit/Terminate Process](messages/processes.md#m804), flags bit 2, probably |
+| 104 | Restart Process | Client | [804 Exit/Terminate Process](messages/processes.md#m804), flags bit 2 |
 | 200 | Get Launch List | Client | none |
 | 201 | Launch List | Server, reply to 200 and 202 | none |
 | 202 | Refresh Launch List | Client | none |
@@ -64,7 +64,7 @@ The server's handler for each request: <!-- [S server `FUN_10000730`,
   string of at most 0x7f bytes, probably the system version.
 - 102 to 104 carry the 8-byte Mac process serial number of the process. KDX
   combined them into the flags of [804 Exit/Terminate
-  Process](messages/processes.md#m804), whose bit 2 has no known use on Linux.
+  Process](messages/processes.md#m804), whose bit 2 restarts the process.
 - 101 Process List and 301 Volume List have entries of 0x3c bytes and two
   strings, padded to 4. [803 Process List](messages/processes.md#m803) has the
   same 0x3c-byte entries, with a third string.
