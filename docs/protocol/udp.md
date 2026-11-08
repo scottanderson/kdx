@@ -146,5 +146,7 @@ arrival time of frame 255, not of frame 23. <!-- [O] -->
 
 The tracker removes records that it has not seen for more than 850 (0x352). The
 sweep runs from the [700 Get Tracker Group List](messages/tracker.md#m700)
-handler, at most once every 600. <!-- [S `FUN_0804abf4`] --> Both are probably
-seconds. <!-- [I] -->
+handler, at most once every 600. Both are seconds, by `time()`. <!-- [S
+`FUN_0804abf4`, `FUN_08085b84`, `FUN_080a2c94`] --> Tracker 0.902 has the same
+sweep with the same values, in seconds from the Mac's `GetDateTime`. <!-- [S
+tracker `FUN_100005f0`, tracker `FUN_10001250`] -->

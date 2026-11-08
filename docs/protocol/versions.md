@@ -89,6 +89,19 @@ The tracker had its own sub-protocol, `%KDt`. Tracker 0.902 listens on TCP port
 already has the encryption of [udp.md](udp.md#encryption), with the same LCG
 and CRC seed. <!-- [S server `FUN_10007e90`, `FUN_10007d50`] -->
 
+Tracker 0.902 handles only [700 Get Tracker Group
+List](messages/tracker.md#m700) and [702 Get Tracker Server
+List](messages/tracker.md#m702), and its replies have the layouts of 1.x, with
+two differences: <!-- [S tracker `FUN_10000b30`, tracker `FUN_100005f0`, tracker
+`FUN_10000910`] -->
+
+- A group in [701 Tracker Group List](messages/tracker.md#m701) has no
+  description. The tracker does not set `description_len`, and each entry is 8
+  bytes and the name, padded to 4. Group descriptions came in TrackerServ 0.908.
+  <!-- [I] Haxial's version history in vendor/refs -->
+- A server in [703 Tracker Server List](messages/tracker.md#m703) has `flags`
+  0, so the registration probably had no flags yet. <!-- [I] -->
+
 ## 0.950
 
 The version history says that 0.950 made "security enhancements to the KDX

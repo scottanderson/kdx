@@ -68,9 +68,9 @@ Greeting](messages/session.md#m107) before the client's [700 Get Tracker Group
 List](messages/tracker.md#m700). <!-- [S `FUN_0804bbf8`; O frame 117] --> Each
 IP address can have 5 connections. The tracker closes a sixth at once, but
 counts it in the connection counter of 720. The tracker closes a connection that
-is idle for more than 1200 (0x4b0), probably seconds. <!-- [S `FUN_0804bd9c`,
-`FUN_0804bbf8`; I] --> The receive cap is 0x10000 bytes. <!-- [S `FUN_0804bd9c`]
--->
+is idle for more than 1200 (0x4b0) seconds, by `time()`. <!-- [S
+`FUN_0804bd9c`, `FUN_0804bbf8`, `FUN_080a2c94`] --> The receive cap is 0x10000
+bytes. <!-- [S `FUN_0804bd9c`] -->
 
 This is a browse after the login, as the client's tracker window does it:
 
@@ -115,8 +115,3 @@ List](messages/tracker.md#m703) lists it (frame 34). In
 33). <!-- [O] -->
 
 [messages/tracker.md](messages/tracker.md) describes the messages.
-
-## Open questions
-
-- What are the units of the sweep values 850 and 600, and of the idle limit
-  1200?
