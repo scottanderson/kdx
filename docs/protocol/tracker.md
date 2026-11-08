@@ -17,7 +17,10 @@ The static evidence comes from these Ghidra projects; see `re/README.md`:
 
 The tracker opens TCP and UDP on the same port, 10800 (0x2a30) by
 default. <!-- [S tracker `FUN_0804c540`, tracker `FUN_0804c7a8`] FUN_0804c540
-sets it, with the default in FUN_0804c7a8 -->
+sets it, with the default in FUN_0804c7a8 --> Before TrackerServ 1.100, the
+tracker used TCP port 10699 and UDP port 10698; see
+[versions.md](versions.md#09x). <!-- [S tracker `FUN_10001960`] Tracker 0.902
+-->
 
 If a tracker address has no `:port`, the server adds `:10800` before it sends a
 registration. <!-- [S server `FUN_08060e4c`] --> The client picks the default

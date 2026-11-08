@@ -189,6 +189,7 @@ dynamically linked against `libstdc++.so.5`, and store UI text as Pascal
   they are Haxial's text). Each one is the last good Wayback capture of
   `http://www.haxial.com:80/products/<path>`; fetch it again with
   `https://web.archive.org/web/<timestamp>id_/<that URL>`.
+  [docs/protocol/versions.md](../docs/protocol/versions.md) cites them.
 
   | File | Path | Timestamp | SHA-256 |
   |---|---|---|---|

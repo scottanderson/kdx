@@ -67,6 +67,7 @@ on the page for its area, linked below.
 | Whole exchanges: login, flood ban, posting news | [sequences.md](sequences.md) |
 | Strings, times, paths, and the user and chat records | [encodings.md](encodings.md) |
 | RemoteAdminTool 1.080, where the process and view display messages come from | [rat.md](rat.md) |
+| How the protocol changed from 0.9x to 1.620 | [versions.md](versions.md) |
 | How the work is planned | [PLAN.md](../PLAN.md) |
 
 ## Conventions

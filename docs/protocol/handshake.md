@@ -284,7 +284,8 @@ Addresses are in the Ghidra projects `KDXServer0921-Mac`, `KDXClient0921-Mac`,
 RAT 1.080 is from May 2003, two years after the KDX builds, <!-- [S] file dates
 in its archive --> but it still uses this handshake. Its client is the only 0.9x
 client whose proof code has been read; see PROOF below. For its messages, see
-[rat.md](rat.md).
+[rat.md](rat.md). For how the protocol changed after 0.9x, see
+[versions.md](versions.md).
 
 ### Sub-protocols
 
