@@ -185,3 +185,16 @@ dynamically linked against `libstdc++.so.5`, and store UI text as Pascal
   license is unknown): https://hlwiki.com/index.php/KDX_Protocol (UDP tracker
   LCG constants: init `0xA5A16C4A`, mul `0x41D28485`, add `12843`; notes on
   MD5/CRC32/Twofish and story text mixed into packets).
+- Haxial's version history pages (local snapshots only, not committed because
+  they are Haxial's text). Each one is the last good Wayback capture of
+  `http://www.haxial.com:80/products/<path>`; fetch it again with
+  `https://web.archive.org/web/<timestamp>id_/<that URL>`.
+
+  | File | Path | Timestamp | SHA-256 |
+  |---|---|---|---|
+  | `kdx-vh.html` | `kdx/kdx-vh.html` | 20041205094958 | `d12f471304c5cf301e3d86443ce90d5d102d0e166c0e308b23ced3f5fbeae427` |
+  | `kdx-vh-old.html` | `kdx/kdx-vh-old.html` | 20020529042135 | `07712d67cfed686e0b97a9e7536ad587ed934b53b5335be94c944632a9f3fcef` |
+  | `kdxtracker-vh.html` | `kdx/kdxtracker-vh.html` | 20040409140425 | `73daea4abc6e9ca76f39bf6f4bd65164f1c9acd8d6f2b62d2d73e8e67874bf5e` |
+  | `rat-vh.html` | `rat/rat-vh.html` | 20050211155503 | `ef599998283532e424dad6456303afda3ef0d777a71839141c1506d401415453` |
+  | `netfone-vh.html` | `netfone/netfone-vh.html` | 20060113082401 | `dc75714b1fc8d701945ad8181d5be1a3bf3d16ff98068be57f45817cfe469d0d` |
+  | `logview-vh.html` | `kdx/logview/logview-vh.html` | 20090215122050 | `e739c274d553e31fa70b3db7e5d44e4cc0b44f62ed0b45264d110438143d6bae` |

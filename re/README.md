@@ -29,6 +29,9 @@ re/ghidra /work/projects KDXServer1620-Lnx -import /work/bin/KDXServer1620-Lnx/e
 re/ghidra /work/projects KDXClient1600-Win -import /work/bin/KDXClient1600-Win/extracted/KDXClient1600-Win/KDXClient.exe
 re/ghidra /work/projects KDXServer1600-Win -import /work/bin/KDXServer1600-Win/extracted/KDXServer1600-Win/KDXServer.exe
 re/ghidra /work/projects KDXServer0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXServer Folder/KDXServer"
+re/ghidra /work/projects KDXClient0921-Mac -import "/work/bin/KDX0921.sit/extracted/*KDX0921/KDXClient"
+re/ghidra /work/projects KDXServer1000-Mac -import /work/bin/kdx-server-1000/extracted/KDXServer1000-Mac/KDXServer
+re/ghidra /work/projects KDXClient1000-Mac -import /work/bin/kdx-client-1000/extracted/KDXClient1000-Mac/KDXClient
 # RAT 1.080 is an archive inside KDX___Haxial_Bundle.sit; unpack it first
 unar -q -D -o "vendor/haxial/KDX___Haxial_Bundle/nested/RAT1080-Mac" \
   "vendor/haxial/KDX___Haxial_Bundle/extracted/KDX & Haxial Bundle/Haxial Remote Access 108.sit"
@@ -83,6 +86,21 @@ Scripts (PyGhidra / Python 3):
 `re/scan_consts.py` runs without Ghidra. It reports which header scramble
 constants (`%KDX` and `%HGC`) each binary has, for x86 and PowerPC builds
 alike: `python3 -I re/scan_consts.py vendor/haxial/*/extracted/*/KDX*`.
+
+`re/name_table.py` also runs without Ghidra, on the `all.c` of a PowerPC Mac
+build. Those builds name each message type with a tree of `if` tests, and the
+script evaluates the tree for each type and reads the names from the binary.
+For Server 1.000:
+
+```sh
+python3 -I re/name_table.py re/out/KDXServer1000-Mac/all.c 1000ff90 \
+  vendor/haxial/kdx-server-1000/extracted/KDXServer1000-Mac/KDXServer \
+  "Server History Added" 183
+```
+
+The 0.9x builds return a TOC slot instead of an offset; for them, pass
+`--toc` and the first name of the block, `"Set Identity"`. The landmarks below
+give each build's name function.
 
 `callers.py` takes a function's address. To find the code that reads a
 table, give the table's address to `find_scalars.py`. Each run logs a
@@ -315,3 +333,10 @@ their TOC slots are `lwz rN,off(r2)` from the data section's start. Ghidra
 | `RATServer1080-Mac` | `0x10002850` / `0x10002720` / `0x100024f0` | view display: grab and diff the screen, send RAT type 402 / run encoder / two-color encoder |
 | `RATServer1080-Mac` | `0x10001600` | send OS Info (RAT type 52) |
 | `RATClient1080-Mac` | `0x10002d50` | message type → name |
+| `KDXClient0921-Mac` | `0x100013f0` | message type → name (TOC slots, 79 names) |
+| `KDXServer0921-Mac` | `0x10007e90` / `0x10007d50` | build the UDP tracker registration / its LCG XOR (the same as 1.x) |
+| `KDXServer1000-Mac` | `0x1000ff90` | message type → name (134 names) |
+| `KDXServer1000-Mac` | `0x1005ebe0` / `0x1005ee10` | create connection object (`%KDX`, sub-version 1, challenge table) / set receive cap |
+| `KDXServer1000-Mac` | `0x1005fcb0` | check the 1.x HELLO: version 1, and a sub-version equal to its own |
+| `KDXClient1000-Mac` | `0x10034ba0` | message type → name (the same 134 names) |
+| `KDXClient1000-Mac` | `0x100987d0` | create connection object (`%KDX`, sub-version 1) |
