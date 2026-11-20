@@ -74,7 +74,7 @@ Decoded by `kdx-dissect captures/openkdx-server-settings.pcapng --inventory --pa
 10  C->S  127.0.0.1:43622 -> 127.0.0.1:10700  100 Set Identity
 11  S->C  127.0.0.1:43622 -> 127.0.0.1:10700  101 User List
 12  S->C  127.0.0.1:43622 -> 127.0.0.1:10700  105 Server Info
-13  C->S  127.0.0.1:43622 -> 127.0.0.1:10700  118 (unnamed; license report)
+13  C->S  127.0.0.1:43622 -> 127.0.0.1:10700  118
 15  C->S  127.0.0.1:43622 -> 127.0.0.1:10700  170 Get Server Settings
 17  S->C  127.0.0.1:43622 -> 127.0.0.1:10700  171 Server Settings Info (reply)
 18  C->S  127.0.0.1:43622 -> 127.0.0.1:10700  170 Get Server Settings
@@ -90,7 +90,7 @@ Decoded by `kdx-dissect captures/openkdx-server-settings.pcapng --inventory --pa
 36  C->S  127.0.0.1:43628 -> 127.0.0.1:10700  100 Set Identity
 37  S->C  127.0.0.1:43628 -> 127.0.0.1:10700  101 User List
 38  S->C  127.0.0.1:43628 -> 127.0.0.1:10700  105 Server Info
-39  C->S  127.0.0.1:43628 -> 127.0.0.1:10700  118 (unnamed; license report)
+39  C->S  127.0.0.1:43628 -> 127.0.0.1:10700  118
 46  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  hello
 48  S->C  127.0.0.1:43636 -> 127.0.0.1:10700  hello
 50  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  proof
@@ -98,7 +98,7 @@ Decoded by `kdx-dissect captures/openkdx-server-settings.pcapng --inventory --pa
 52  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  100 Set Identity
 53  S->C  127.0.0.1:43636 -> 127.0.0.1:10700  101 User List
 54  S->C  127.0.0.1:43636 -> 127.0.0.1:10700  105 Server Info
-55  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  118 (unnamed; license report)
+55  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  118
 57  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  170 Get Server Settings
 59  S->C  127.0.0.1:43636 -> 127.0.0.1:10700  171 Server Settings Info (reply)
 60  C->S  127.0.0.1:43636 -> 127.0.0.1:10700  172 Set Server Settings

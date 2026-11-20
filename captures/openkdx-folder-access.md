@@ -78,7 +78,7 @@ Decoded by `kdx-dissect captures/openkdx-folder-access.pcapng --inventory --pass
 10  C->S  127.0.0.1:52352 -> 127.0.0.1:10700  100 Set Identity
 11  S->C  127.0.0.1:52352 -> 127.0.0.1:10700  101 User List
 12  S->C  127.0.0.1:52352 -> 127.0.0.1:10700  105 Server Info
-13  C->S  127.0.0.1:52352 -> 127.0.0.1:10700  118 (unnamed; license report)
+13  C->S  127.0.0.1:52352 -> 127.0.0.1:10700  118
 15  C->S  127.0.0.1:52352 -> 127.0.0.1:10700  1106 Get Folder Access List
 17  S->C  127.0.0.1:52352 -> 127.0.0.1:10700  1107 Folder Access List (reply)
 18  C->S  127.0.0.1:52352 -> 127.0.0.1:10700  1103 Get Folder Access

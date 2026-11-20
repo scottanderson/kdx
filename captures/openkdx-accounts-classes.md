@@ -98,7 +98,7 @@ Decoded by `kdx-dissect captures/openkdx-accounts-classes.pcapng --inventory --p
 10  C->S  127.0.0.1:46784 -> 127.0.0.1:10700  100 Set Identity
 11  S->C  127.0.0.1:46784 -> 127.0.0.1:10700  101 User List
 12  S->C  127.0.0.1:46784 -> 127.0.0.1:10700  105 Server Info
-13  C->S  127.0.0.1:46784 -> 127.0.0.1:10700  118 (unnamed; license report)
+13  C->S  127.0.0.1:46784 -> 127.0.0.1:10700  118
 15  C->S  127.0.0.1:46784 -> 127.0.0.1:10700  505 Get Account Class List
 17  S->C  127.0.0.1:46784 -> 127.0.0.1:10700  506 Account Class List (reply)
 18  C->S  127.0.0.1:46784 -> 127.0.0.1:10700  502 Get Account Class
