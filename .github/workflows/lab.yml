@@ -1,0 +1,43 @@
+name: Lab
+
+# Differential tests against the original KDX Server 1.620 and Tracker 1.110,
+# on a self-hosted runner that holds the Haxial binaries. The scripts live in
+# spitfire915/OpenKDX (lab/), which this job checks out beside the crates.
+# Repositories without such a runner leave the KDX_LAB_RUNNER variable unset,
+# and the job is skipped.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lab:
+    if: vars.KDX_LAB_RUNNER == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: [self-hosted, lab]
+    env:
+      LAB_WAIT: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: spitfire915/OpenKDX
+          ref: phase3b/convergence
+          path: openkdx
+      - name: Differential tests against Server 1.620 and Tracker 1.110
+        run: |
+          if openkdx/lab/differential.sh --supports-kdx-src; then
+            openkdx/lab/differential.sh "$GITHUB_WORKSPACE"
+          else
+            echo "lab: differential.sh does not take a kdx checkout yet; not wired"
+          fi
+      - name: Legacy formats against the original programs
+        run: |
+          if openkdx/lab/legacy.sh --supports-kdx-src; then
+            openkdx/lab/legacy.sh "$GITHUB_WORKSPACE"
+          else
+            echo "lab: legacy.sh does not take a kdx checkout yet; not wired"
+          fi
