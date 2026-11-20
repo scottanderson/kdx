@@ -79,7 +79,7 @@ Struct `FileListEntry` (dynamic):<a id="sFileListEntry"></a>
 | 0x36 | 1 | `u8` | `kind_len` |  |
 | 0x37 | 1 | `u8` | `ignored_37` |  |
 | 0x38 | `name_len` | `str` | `name` |  |
-|  | `kind_len` | `str` | `kind` | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). |
+|  | `kind_len` | `str` | `kind` | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). Also empty for a `.txt` file whose [413 Download File (R)](#m413) says `text/plain`, so the server has a type table and does not always fill this field. <!-- [O `captures/openkdx-files-basic.pcapng` frames 16, 28] --> |
 |  | pad4 | `u8[]` | `padding` | Uninitialized. <!-- [O] --> |
 
 In `captures/kdx-cli.pcapng`, a 600000-byte `cli-big.bin` is listed with size
@@ -406,7 +406,7 @@ Struct `UploadReply` (24 bytes):<a id="sUploadReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | `u64` | `data_offset` | From a partial upload. The server resumes at this value, rounded down to a multiple of 0x1000. |
+| 0x00 | 8 | `u64` | `data_offset` | From a partial upload. The server resumes at this value, rounded down to a multiple of 0x1000. The partial is kept as `<name>.prt` in the folder, where [401 File List](#m401) shows it, and is written in large chunks: an upload cut after 150000 bytes left 131072 on disk and this field at 0x20000; one cut after 20000 bytes left an empty `.prt` and 0. <!-- [O `captures/openkdx-upload-resume.pcapng` frames 61, 88] --> |
 | 0x08 | 8 | `u64` | `rsrc_offset` | Always all ones. Resource forks do not resume. |
 | 0x10 | 8 | `u8[8]` | `ignored` | 0 as sent. |
 

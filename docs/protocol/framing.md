@@ -21,13 +21,19 @@ bytes from the server, with the handshakes. <!-- [O] -->
   `ceil(len/16)` payload blocks. Each block is encrypted separately.
 - **Padding:** before the payload bytes are copied into the last payload block,
   its unused end is filled with `p = txid * 0x41c64e6d + 0x3039`, as repeated
-  32-bit memory words. <!-- [S; O] --> Receivers ignore it.
+  32-bit memory words. <!-- [S; O] --> The word is laid down little-endian and
+  in phase with the payload: byte `i` of the padded payload is byte `i mod 4`
+  of `p`. <!-- [O `captures/openkdx-first-connect.pcapng` frames 10, 13] -->
+  <!-- [O `captures/openkdx-files-basic.pcapng` frames 16, 28] --> Receivers
+  ignore it.
 - **Transfer data padding:** Client 1.620 for Linux pads the data after a [417
   Upload File (D)](messages/files.md#m417) header in the same way, with the txid
   of that header. <!-- [O `captures/linux-files.pcapng` frame 47] --> Server
   1.620 pads the data after a [414 Download File (D)](messages/files.md#m414)
-  header with a different repeated 32-bit value. <!-- [O
-  `captures/linux-files.pcapng` frames 69, 113] -->
+  header with a different repeated 32-bit value, `fedc7e9f` for txid
+  `28814ca0` in one capture; the formula is not known. <!-- [O
+  `captures/linux-files.pcapng` frames 69, 113] --> <!-- [O
+  `captures/openkdx-files-basic.pcapng` frame 30] -->
 
 ## Header scramble
 
