@@ -1,15 +1,13 @@
 //! A logged-in session with typed requests.
+//!
+//! The requests by area are in the sibling modules: `chat`, `news`, `files`,
+//! `accounts` and `folder_access`.
 
 use std::collections::VecDeque;
 use std::net::SocketAddr;
 
 use anyhow::{bail, Context, Result};
-use kdx_proto::msg::admin::{Account, AccountClass, AccountListEntry};
-use kdx_proto::msg::chat::{ChatListEntry, ChatText, ChatWindowInfo, JoinChat};
-use kdx_proto::msg::file::FileListEntry;
-use kdx_proto::msg::news::{
-    NewsMessage, NewsMessageId, NewsMessages, NewsgroupEntry, NewsgroupId, PostNewsMessage,
-};
+use kdx_proto::msg::status::error_name;
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, MessageType};
@@ -17,7 +15,7 @@ use kdx_proto::{AccountKey, ChallengeTable};
 use tokio::io::{AsyncRead, AsyncSeek, AsyncSeekExt, AsyncWrite};
 use tokio::net::{lookup_host, ToSocketAddrs};
 
-use crate::{Connection, Login, Responses};
+use crate::{Connection, Login, Notice, Responses};
 
 /// A request the server refused with 1 Status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -29,6 +27,13 @@ pub struct ServerError {
     pub code: u32,
 }
 
+impl ServerError {
+    /// The code's meaning in the server's table of error names, if it has one.
+    pub const fn name(&self) -> Option<&'static str> {
+        error_name(self.code)
+    }
+}
+
 /// A message the server sent on its own, such as 208 Receive Chat Text.
 pub type Event = (Header, Vec<u8>);
 
@@ -38,7 +43,7 @@ pub struct Client {
     conn: Connection,
     addr: SocketAddr,
     responses: Responses,
-    events: VecDeque<Event>,
+    pub(crate) events: VecDeque<Event>,
     /// The 105 Server Info received at login.
     pub info: ServerInfo,
     /// The 101 User List received at login.
@@ -100,7 +105,8 @@ impl Client {
 
     /// Sends a request and waits for its reply, queueing other messages as events.
     ///
-    /// A 1 Status error reply becomes a [`ServerError`].
+    /// A 1 Status error reply becomes a [`ServerError`]; a success Status
+    /// returns an empty payload.
     pub async fn request(&mut self, kind: MessageType, payload: &[u8]) -> Result<Vec<u8>> {
         let txid = self.conn.send(kind, payload).await?;
         wait_reply(&mut self.conn, kind, txid, &mut self.events).await
@@ -114,39 +120,37 @@ impl Client {
         }
     }
 
-    /// 214 Get Chat List.
-    pub async fn chat_list(&mut self) -> Result<Vec<ChatListEntry>> {
-        let reply = self.request(MessageType::GET_CHAT_LIST, &[]).await?;
-        Ok(ChatListEntry::decode_list(&reply)?)
+    /// The next message the server sent on its own, decoded as a [`Notice`].
+    ///
+    /// A payload that does not decode comes through as [`Notice::Other`].
+    pub async fn next_notice(&mut self) -> Result<Notice> {
+        let (header, payload) = self.next_event().await?;
+        Ok(Notice::decode(&header, &payload).unwrap_or(Notice::Other(header, payload)))
     }
 
-    /// 202 Join Chat.
-    pub async fn join_chat(&mut self, chat_id: u32, key: u32) -> Result<ChatWindowInfo> {
-        let request = JoinChat { chat_id, key }.encode();
-        let reply = self.request(MessageType::JOIN_CHAT, &request).await?;
-        Ok(ChatWindowInfo::decode(&reply)?)
-    }
-
-    /// 204 Leave Chat.
-    pub async fn leave_chat(&mut self, chat_id: u32) -> Result<()> {
-        self.send(MessageType::LEAVE_CHAT, &chat_id.to_be_bytes())
-            .await
-    }
-
-    /// 207 Send Chat Text.
-    pub async fn send_chat(&mut self, chat_id: u32, text: &[u8]) -> Result<()> {
-        let message = ChatText {
-            chat_id,
-            user_id: 0,
-            text: text.to_vec(),
-            ..ChatText::default()
-        };
-        self.send(MessageType::SEND_CHAT_TEXT, &message.encode()?)
-            .await
+    /// The first event that satisfies `wanted`, waiting for it if none is
+    /// queued; the others stay queued in order.
+    pub(crate) async fn wait_event(
+        &mut self,
+        mut wanted: impl FnMut(&Header, &[u8]) -> bool,
+    ) -> Result<Event> {
+        if let Some(at) = self.events.iter().position(|(h, p)| wanted(h, p)) {
+            return Ok(self.events.remove(at).expect("found above"));
+        }
+        loop {
+            let (header, payload) = self.conn.recv().await?;
+            if wanted(&header, &payload) {
+                return Ok((header, payload));
+            }
+            self.events.push_back((header, payload));
+        }
     }
 
     /// 300 Send Private Message.
     pub async fn send_private_message(&mut self, user_id: u32, text: &[u8]) -> Result<()> {
+        if text.is_empty() {
+            bail!("empty private message");
+        }
         let message = PrivateMessage {
             user_id,
             text: text.to_vec(),
@@ -164,73 +168,20 @@ impl Client {
         Ok(UserInfo::decode(&reply)?)
     }
 
-    /// 400 Get File List.
-    pub async fn file_list(&mut self, path: &FilePath) -> Result<Vec<FileListEntry>> {
-        let reply = self
-            .request(MessageType::GET_FILE_LIST, &path.encode()?)
-            .await?;
-        Ok(FileListEntry::decode_list(&reply)?)
-    }
-
-    /// 605 Get Newsgroup List.
-    pub async fn newsgroups(&mut self) -> Result<Vec<NewsgroupEntry>> {
-        let reply = self.request(MessageType::GET_NEWSGROUP_LIST, &[]).await?;
-        Ok(NewsgroupEntry::decode_list(&reply)?)
-    }
-
-    /// 607 Get News Messages.
-    pub async fn news(&mut self, group_id: u32) -> Result<NewsMessages> {
-        let reply = self
-            .request(
-                MessageType::GET_NEWS_MESSAGES,
-                &NewsgroupId(group_id).encode(),
-            )
-            .await?;
-        Ok(NewsMessages::decode(&reply)?)
-    }
-
-    /// 609 Get News Message.
-    pub async fn news_message(&mut self, group_id: u32, message_id: u32) -> Result<NewsMessage> {
-        let request = NewsMessageId {
-            group_id,
-            message_id,
-        }
-        .encode();
-        let reply = self
-            .request(MessageType::GET_NEWS_MESSAGE, &request)
-            .await?;
-        Ok(NewsMessage::decode(&reply)?.0)
-    }
-
-    /// 611 Post News Message.
-    pub async fn post_news(&mut self, group_id: u32, subject: &[u8], body: &[u8]) -> Result<()> {
-        let request = PostNewsMessage {
-            group_id,
-            subject: subject.to_vec(),
-            body: body.to_vec(),
-            ..PostNewsMessage::default()
-        };
-        self.send_checked(MessageType::POST_NEWS_MESSAGE, &request.encode()?)
-            .await
-    }
-
-    /// 612 Delete News Message.
-    pub async fn delete_news(&mut self, group_id: u32, message_id: u32) -> Result<()> {
-        let request = NewsMessageId {
-            group_id,
-            message_id,
-        }
-        .encode();
-        self.send_checked(MessageType::DELETE_NEWS_MESSAGE, &request)
-            .await
-    }
-
     /// Sends a request that has no reply on success and checks that no error came back.
     ///
     /// The server handles requests in order, so an error reply arrives before
-    /// the reply to a 115 Get My Address sent after the request.
+    /// the reply to a 115 Get My Address sent after the request. A success
+    /// Status for the request is accepted too; a Status for another
+    /// transaction stays queued as an event.
     pub async fn send_checked(&mut self, kind: MessageType, payload: &[u8]) -> Result<()> {
         let txid = self.conn.send(kind, payload).await?;
+        self.barrier(kind, txid).await
+    }
+
+    /// Waits for the server to reach the request `txid` of `kind`, and takes
+    /// its 1 Status reply out of the queue if there is one.
+    pub(crate) async fn barrier(&mut self, kind: MessageType, txid: u32) -> Result<()> {
         self.request(MessageType::GET_MY_ADDRESS, &[]).await?;
         let Some(at) = self
             .events
@@ -241,56 +192,18 @@ impl Client {
         };
         let (header, payload) = self.events.remove(at).expect("found above");
         match header.kind {
-            MessageType::STATUS => Err(status_error(kind, &payload)),
+            MessageType::STATUS => match Status::decode(&payload)? {
+                Status::Success { .. } => Ok(()),
+                Status::Error { code, .. } | Status::TrackerError { code, .. } => {
+                    Err(ServerError {
+                        request: kind,
+                        code,
+                    }
+                    .into())
+                }
+            },
             other => bail!("unexpected {other} reply to {kind}"),
         }
-    }
-
-    /// 505 Get Account Class List.
-    pub async fn account_classes(&mut self) -> Result<Vec<AccountClass>> {
-        let reply = self
-            .request(MessageType::GET_ACCOUNT_CLASS_LIST, &[])
-            .await?;
-        Ok(AccountClass::decode_list(&reply)?)
-    }
-
-    /// 512 Get Account List.
-    pub async fn accounts(&mut self) -> Result<Vec<AccountListEntry>> {
-        let reply = self.request(MessageType::GET_ACCOUNT_LIST, &[]).await?;
-        Ok(AccountListEntry::decode_list(&reply)?)
-    }
-
-    /// 509 Get Account.
-    pub async fn account(&mut self, login: &[u8]) -> Result<Account> {
-        let reply = self.request(MessageType::GET_ACCOUNT, login).await?;
-        Ok(Account::decode(&reply)?)
-    }
-
-    /// 507 Create Account.
-    pub async fn create_account(&mut self, account: &Account) -> Result<()> {
-        self.request(MessageType::CREATE_ACCOUNT, &account.encode()?)
-            .await?;
-        Ok(())
-    }
-
-    /// 511 Set Account; `account.editor` names the account to change.
-    pub async fn set_account(&mut self, account: &Account) -> Result<()> {
-        self.request(MessageType::SET_ACCOUNT, &account.encode()?)
-            .await?;
-        Ok(())
-    }
-
-    /// 508 Delete Account.
-    pub async fn delete_account(&mut self, login: &[u8]) -> Result<()> {
-        self.send_checked(MessageType::DELETE_ACCOUNT, login).await
-    }
-
-    /// 550 Change Own Password.
-    pub async fn change_password(&mut self, password: &[u8]) -> Result<()> {
-        let key = AccountKey::from_password(password);
-        self.request(MessageType::CHANGE_OWN_PASSWORD, &key.0)
-            .await?;
-        Ok(())
     }
 
     /// Downloads a file's data fork from `offset` into `sink` on a new transfer connection.
@@ -393,7 +306,7 @@ impl Client {
         }
     }
 
-    async fn attach(&self) -> Result<Connection> {
+    pub(crate) async fn attach(&self) -> Result<Connection> {
         Connection::attach_with(
             self.addr,
             self.info.user_id,
@@ -402,6 +315,11 @@ impl Client {
         )
         .await
         .context("opening a transfer connection")
+    }
+
+    /// Sends `kind` and returns its transaction ID, for a reply awaited later.
+    pub(crate) async fn send_txid(&mut self, kind: MessageType, payload: &[u8]) -> Result<u32> {
+        self.conn.send(kind, payload).await
     }
 }
 
@@ -431,7 +349,7 @@ pub(crate) async fn wait_reply(
     }
 }
 
-fn status_error(request: MessageType, payload: &[u8]) -> anyhow::Error {
+pub(crate) fn status_error(request: MessageType, payload: &[u8]) -> anyhow::Error {
     match Status::decode(payload) {
         Ok(Status::Error { code, .. } | Status::TrackerError { code, .. }) => {
             ServerError { request, code }.into()
@@ -439,4 +357,11 @@ fn status_error(request: MessageType, payload: &[u8]) -> anyhow::Error {
         Ok(Status::Success { .. }) => anyhow::anyhow!("unexpected 1 Status success"),
         Err(err) => err.into(),
     }
+}
+
+/// Pads `bytes` to a multiple of 4 with zeros, as the server requires of
+/// records that end in padding.
+pub(crate) fn pad4(mut bytes: Vec<u8>) -> Vec<u8> {
+    bytes.resize(bytes.len().next_multiple_of(4), 0);
+    bytes
 }

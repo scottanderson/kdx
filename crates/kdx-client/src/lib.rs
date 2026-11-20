@@ -18,13 +18,25 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_util::codec::Framed;
 
+mod accounts;
+mod chat;
 mod client;
+mod files;
+mod folder_access;
+#[cfg(any(test, feature = "mock"))]
+pub mod mock;
+mod news;
+mod notice;
 pub mod table;
 #[cfg(test)]
 mod tests;
 mod tracker;
 
+pub use accounts::{format_privileges, new_account, parse_privileges, privilege_slug};
+pub use chat::PUBLIC_CHAT;
 pub use client::{Client, Event, ServerError};
+pub use news::to_cr_lines;
+pub use notice::Notice;
 pub use tracker::Tracker;
 
 /// Login details for [`Connection::connect`].
