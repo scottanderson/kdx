@@ -30,3 +30,22 @@ started from; see [the lab](../lab/README.md) for how they are recorded.
 | [linux-upgrade.md](linux-upgrade.md) | Linux client replaces Server 1.620 with the staged 1.600 through Upgrade | Upgrade messages and the server restart | [linux-shutdown](linux-shutdown.md) |
 | [probe.md](probe.md) | `kdx-probe` sends raw requests, 18 connections | Which requests a server answers and how | [first-connect](first-connect.md) |
 | [win-view-display.md](win-view-display.md) | Linux client and `kdx` against Server 1.600 for Windows under Wine | View display messages | fresh first-run setup |
+| [openkdx-first-connect.md](openkdx-first-connect.md) | Windows client 1.600 logs in as the administrator | Handshake and login baseline from the OpenKDX lab | OpenKDX lab, fresh server |
+| [openkdx-guest-login.md](openkdx-guest-login.md) | Windows client logs in with empty login and password | Guest login and its session key | OpenKDX lab, fresh server |
+| [openkdx-chat-basic.md](openkdx-chat-basic.md) | Windows client joins Public Chat, sends a line, a `/me` action, sets the topic | The action flag of 207 and 208 | OpenKDX lab, fresh server |
+| [openkdx-pm-basic.md](openkdx-pm-basic.md) | Two clients exchange private messages | 300 and 301 each way | OpenKDX lab, fresh server |
+| [openkdx-news-basic.md](openkdx-news-basic.md) | Windows client lists, reads, and posts news | 605 to 611 | OpenKDX lab, fresh server |
+| [openkdx-files-basic.md](openkdx-files-basic.md) | Windows client lists the base folder and downloads a 3-byte file | File list, a transfer connection, two 414 headers | OpenKDX lab, fresh server |
+| [openkdx-tracker-basic.md](openkdx-tracker-basic.md) | Server registers with Tracker 1.110; Windows client browses | UDP registration and 700 to 703 with the original tracker | OpenKDX lab, fresh server |
+| [openkdx-upload-resume.md](openkdx-upload-resume.md) | OpenKDX client cuts a 256 KiB upload at 150000 bytes and resumes it | The `.prt` partial and the 416 resume offset | OpenKDX lab, fresh server |
+| [openkdx-accounts-classes.md](openkdx-accounts-classes.md) | OpenKDX client lists classes and creates, shows, sets, deletes an account | 502 to 515 | OpenKDX lab, fresh server |
+| [openkdx-folder-access.md](openkdx-folder-access.md) | OpenKDX client lists, creates, binds and deletes a folder access item | 1100 to 1107 and 402 with `access` | OpenKDX lab, fresh server |
+| [openkdx-server-settings.md](openkdx-server-settings.md) | OpenKDX client reads settings and renames the server | 170 to 173, the name length byte, a fresh 105 | OpenKDX lab, fresh server |
+| [openkdx-broadcast.md](openkdx-broadcast.md) | OpenKDX client broadcasts to a guest, another admin and itself | 154 and 155 at every session | OpenKDX lab, fresh server |
+| [openkdx-disconnect-ban.md](openkdx-disconnect-ban.md) | OpenKDX client fails a login, then disconnects a user with a 10 s ban | Proof status 1, 151 with flag 2, loopback not banned | OpenKDX lab, fresh server |
+| [openkdx-server-history.md](openkdx-server-history.md) | OpenKDX client joins the server history while a guest logs in and fails to post | 180 to 183 | OpenKDX lab, fresh server |
+| [openkdx-connection-monitor.md](openkdx-connection-monitor.md) | OpenKDX client polls the connection monitor during a 4 MiB download | 143 with a transfer record | OpenKDX lab, fresh server |
+
+The `openkdx-*` captures come from the OpenKDX lab
+(https://github.com/spitfire915/OpenKDX, its lab scenario scripts), where the
+administrator password is the published `openkdx-lab`.

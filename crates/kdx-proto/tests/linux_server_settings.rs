@@ -65,7 +65,7 @@ fn server_settings() {
         assert_eq!(settings.encode(), wire);
         assert_eq!(settings.version, 1);
         assert_eq!(
-            settings.sections[ServerSettings::MAIN],
+            settings.sections()[ServerSettings::MAIN],
             kdx_proto::msg::server_info::SettingsSection {
                 offset: 0x70,
                 len: 0x68
