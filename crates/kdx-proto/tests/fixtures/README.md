@@ -188,3 +188,12 @@ uninitialized ones included. The `captures` test runs it over every capture
 and checks its findings against `NO_CODEC`, which lists only `no
 codec` types. `tests/round_trip.rs` re-encodes the fixtures' payloads of
 the types that store padding or unknown bytes.
+
+The `openkdx-*` fixtures come from the OpenKDX lab captures
+(`captures/openkdx-*.pcapng`); every one of their connections logs in as the
+administrator with the published password `openkdx-lab`, except
+`openkdx-upload-resume-36680`, the transfer connection of
+`openkdx-upload-resume-36678`, keyed by that session's [105 Server Info](../../../../docs/protocol/messages/session.md#m105), and
+`openkdx-disconnect-ban-54332`, a guest (the empty-password key).
+`openkdx-disconnect-ban-54320` is a login with a wrong password: it ends after
+the server's proof, whose status is 1.
