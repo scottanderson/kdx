@@ -329,7 +329,10 @@ Struct `SetAccount` (dynamic):<a id="sSetAccount"></a>
 | 0x00 |  | [`Account`](#sAccount) | `account` | `editor` holds the current login. |
 
 If the login field is different, the server renames the account. If the new
-login already exists, it fails with 0x1000d. The server keeps the creation and
+login already exists, it fails with 0x1000d. Note that [510 Account
+Info](#m510) returns the *last editor* in `editor`, so a client that sends a 510
+record back unchanged asks for a rename to that editor's login, and gets
+0x1000d when it exists. <!-- [O `captures/openkdx-accounts-classes.pcapng`] --> The server keeps the creation and
 last-login times, sets the modified time, and replies with [1
 Status](status.md#m1) success 0x1ff (frames 412 and 413). Users who are logged
 in to the account get the new login and privileges at once.

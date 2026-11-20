@@ -30,7 +30,11 @@ Info](#m1104), and [1105 Set Folder Access](#m1105) use it. <!-- [S
 231; O `captures/linux-accounts-folder-access.pcapng`; O
 `captures/linux-folder-access-guest.pcapng`] --> The last two captures show the
 record in [1105 Set Folder Access](#m1105). Its total length, padded to a
-multiple of 4, must equal the payload length.
+multiple of 4, must equal the payload length; an unpadded record gets [1
+Status](status.md#m1) 0x1000a, corrupt data, as do unpadded [507 Create
+Account](accounts.md#m507), [511 Set Account](accounts.md#m511) and [504 Set
+Account Class](accounts.md#m504) records. <!-- [O
+`captures/openkdx-folder-access.pcapng`] -->
 `kdx_proto::msg::admin::FolderAccess` encodes the three captured records again
 byte for byte, with their padding (test `linux_files`).
 
