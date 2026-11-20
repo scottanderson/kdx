@@ -1291,7 +1291,7 @@ pub struct FolderAccess {
     pub ignored_00: u32,
     /// [`Self::BUILT_IN`] and [`Self::OWNER_IN_NAME`].
     pub flags: u32,
-    /// Icon, such as 0x2c for Dropbox.
+    /// Icon: one of the `ICON_*` constants, such as [`Self::ICON_DROPBOX`].
     pub icon: u32,
     /// Probably the owner's rule; permission bits in the top u16.
     pub rule: u32,
@@ -1320,6 +1320,16 @@ impl FolderAccess {
     pub const HEADER_LEN: usize = 0xb8;
     /// In [`Self::flags`], the item is built in, as `[Default]` is.
     pub const BUILT_IN: u32 = 1;
+    /// `icon` of a plain folder.
+    pub const ICON_NORMAL: u32 = 0x28;
+    /// `icon` of the Uploads folder.
+    pub const ICON_UPLOADS: u32 = 0x2b;
+    /// `icon` of a drop box.
+    pub const ICON_DROPBOX: u32 = 0x2c;
+    /// `icon` of a pictures folder.
+    pub const ICON_PICTURES: u32 = 0x34;
+    /// `icon` of an audio folder.
+    pub const ICON_AUDIO: u32 = 0x35;
     /// In [`Self::flags`], folder names carry the owner login.
     pub const OWNER_IN_NAME: u32 = 2;
 

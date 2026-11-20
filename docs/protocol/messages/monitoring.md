@@ -66,7 +66,7 @@ Struct `MonitoredConnection` (dynamic):<a id="sMonitoredConnection"></a>
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `user_id` |  |
-| 0x04 | 4 | `u32` | `transfer_id` | 0 in a connection record. The transfer's ID in a transfer record. <!-- [S] --> |
+| 0x04 | 4 | `u32` | `transfer_id` | 0 in a connection record. The transfer's ID in a transfer record. A 4 MiB download shows beside the session records with its `bytes_total` and `path`. <!-- [S; O `captures/openkdx-connection-monitor.pcapng` frame 70] --> |
 | 0x08 | 8 | `u64` | `login_time` | The transfer's start time in a transfer record. <!-- [S] --> |
 | 0x10 | 8 | `u64` | `time_10` | 0 in a transfer record. <!-- [S] --> |
 | 0x18 | 8 | `u64` | `time_18` | <!-- [S] --> |

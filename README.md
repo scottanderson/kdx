@@ -32,6 +32,7 @@ for each claim.
 | `kdx-proto` | Wire format: handshake, encryption, framing, typed payloads. No I/O | [crates/kdx-proto/README.md](crates/kdx-proto/README.md) |
 | `kdx-codec` | `tokio_util::codec` framing for connections | [crates/kdx-codec/README.md](crates/kdx-codec/README.md) |
 | `kdx-client` | Async library for writing KDX clients | [crates/kdx-client/README.md](crates/kdx-client/README.md) |
+| `kdx-legacy` | The original programs' files, read and written byte for byte | [crates/kdx-legacy/README.md](crates/kdx-legacy/README.md) |
 | `kdx-cli` | The `kdx` and `kdx-probe` programs | [crates/kdx-cli/README.md](crates/kdx-cli/README.md) |
 | `kdx-tracker` | The tracker program and library | [crates/kdx-tracker/README.md](crates/kdx-tracker/README.md) |
 | `kdx-dissect` | The capture dissector | [crates/kdx-dissect/README.md](crates/kdx-dissect/README.md) |
@@ -47,6 +48,8 @@ for each claim.
   [tracker](docs/protocol/tracker.md), [client to client](docs/protocol/dcc.md),
   and [GConsole](docs/protocol/gconsole.md): one page for each kind of
   connection.
+- [File formats](docs/formats/README.md): the files the original programs
+  keep on disk, as `kdx-legacy` reads and writes them.
 - [Plan](docs/PLAN.md): the phases and what is open.
 - [Contributing](CONTRIBUTING.md): the checks, doc conventions, commits, and
   legal rules.
