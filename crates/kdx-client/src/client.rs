@@ -1,18 +1,17 @@
 //! A logged-in session with typed requests.
 //!
 //! The requests by area are in the sibling modules: `chat`, `news`, `files`,
-//! `accounts` and `folder_access`.
+//! `accounts`, `folder_access`, `admin` and `transfer`.
 
 use std::collections::VecDeque;
 use std::net::SocketAddr;
 
 use anyhow::{bail, Context, Result};
+use kdx_proto::msg::admin::DisconnectMessage;
 use kdx_proto::msg::status::error_name;
-use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
-use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
+use kdx_proto::msg::{PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
 use kdx_proto::session::{Header, MessageType};
 use kdx_proto::{AccountKey, ChallengeTable};
-use tokio::io::{AsyncRead, AsyncSeek, AsyncSeekExt, AsyncWrite};
 use tokio::net::{lookup_host, ToSocketAddrs};
 
 use crate::{Connection, Login, Notice, Responses};
@@ -206,106 +205,6 @@ impl Client {
         }
     }
 
-    /// Downloads a file's data fork from `offset` into `sink` on a new transfer connection.
-    ///
-    /// The server resumes at `offset` rounded down to 0x1000, or so it
-    /// should. The data is written at the start the server's length implies,
-    /// which is also returned.
-    pub async fn download(
-        &mut self,
-        path: &FilePath,
-        offset: u64,
-        sink: &mut (impl AsyncWrite + AsyncSeek + Unpin),
-    ) -> Result<(DownloadInfo, u64)> {
-        let mut conn = self.attach().await?;
-        let request = DownloadFile {
-            data_offset: offset,
-            rsrc_offset: 0,
-            options: 0,
-            path: path.clone(),
-            ..DownloadFile::default()
-        };
-        let txid = conn
-            .send(MessageType::DOWNLOAD_FILE, &request.encode()?)
-            .await?;
-        let reply = wait_reply(
-            &mut conn,
-            MessageType::DOWNLOAD_FILE,
-            txid,
-            &mut VecDeque::new(),
-        )
-        .await?;
-        let info = DownloadInfo::decode(&reply)?;
-
-        let data = conn.recv_data_header().await?;
-        if data.kind != MessageType::DOWNLOAD_FILE_DATA || data.txid != txid {
-            bail!("expected the data fork, got {}", data.kind);
-        }
-        let start = info
-            .data_size
-            .checked_sub(data.len)
-            .context("more data than the file holds")?;
-        sink.seek(std::io::SeekFrom::Start(start)).await?;
-        conn.recv_data_body(&data, sink).await?;
-        conn.recv_data(&mut tokio::io::sink()).await?;
-        Ok((info, start))
-    }
-
-    /// Uploads `len` bytes from `source` as `name` into `folder` on a new transfer connection.
-    ///
-    /// If an earlier upload of the same name was cut short, the server resumes
-    /// it; `source` is then read from the returned offset onward, so it must
-    /// support skipping there.
-    pub async fn upload(
-        &mut self,
-        folder: &FilePath,
-        name: &[u8],
-        len: u64,
-        source: &mut (impl AsyncRead + AsyncSeek + Unpin),
-    ) -> Result<u64> {
-        let mut conn = self.attach().await?;
-        let request = UploadFile {
-            data_size: len,
-            rsrc_size: 0,
-            options: 0,
-            strings: FileStrings {
-                name: name.to_vec(),
-                ..FileStrings::default()
-            },
-            folder: folder.clone(),
-            ..UploadFile::default()
-        };
-        let txid = conn
-            .send(MessageType::UPLOAD_FILE, &request.encode()?)
-            .await?;
-        let reply = wait_reply(
-            &mut conn,
-            MessageType::UPLOAD_FILE,
-            txid,
-            &mut VecDeque::new(),
-        )
-        .await?;
-        let start = UploadReply::decode(&reply)?.data_offset.min(len);
-
-        source.seek(std::io::SeekFrom::Start(start)).await?;
-        let left = len - start;
-        if left > Header::MAX_LEN {
-            bail!("file too large for one transfer");
-        }
-        conn.send_data(MessageType::UPLOAD_FILE_DATA, left, source)
-            .await?;
-        conn.send_data(MessageType::UPLOAD_FILE_DATA, 0, &mut tokio::io::empty())
-            .await?;
-        loop {
-            let (header, payload) = conn.recv().await?;
-            match header.kind {
-                MessageType::UPLOAD_FILE_COMPLETE => return Ok(start),
-                MessageType::STATUS => bail!(status_error(MessageType::UPLOAD_FILE, &payload)),
-                _ => {}
-            }
-        }
-    }
-
     pub(crate) async fn attach(&self) -> Result<Connection> {
         Connection::attach_with(
             self.addr,
@@ -330,7 +229,10 @@ pub(crate) async fn wait_reply(
     events: &mut VecDeque<Event>,
 ) -> Result<Vec<u8>> {
     loop {
-        let (header, payload) = conn.recv().await?;
+        let (header, payload) = match conn.recv().await {
+            Ok(message) => message,
+            Err(err) => return Err(disconnect_context(err, events)),
+        };
         if header.txid != txid || !header.is_reply() {
             events.push_back((header, payload));
         } else if header.kind == MessageType::STATUS {
@@ -346,6 +248,22 @@ pub(crate) async fn wait_reply(
         } else {
             return Ok(payload);
         }
+    }
+}
+
+/// When the connection ends after a 151 Disconnect Message, names its reason.
+fn disconnect_context(err: anyhow::Error, events: &VecDeque<Event>) -> anyhow::Error {
+    let bye = events
+        .iter()
+        .rev()
+        .find(|(header, _)| header.kind == MessageType::DISCONNECT_MESSAGE)
+        .and_then(|(_, payload)| DisconnectMessage::decode(payload).ok());
+    match bye {
+        Some(bye) => err.context(format!(
+            "disconnected: {}",
+            String::from_utf8_lossy(&bye.message)
+        )),
+        None => err,
     }
 }
 

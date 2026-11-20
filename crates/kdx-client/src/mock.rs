@@ -172,6 +172,13 @@ impl MockServer {
     /// Waits for every script to finish, then [`Self::check`]s; panics after 5
     /// seconds. The captured messages stay readable afterwards.
     pub async fn finish(&self) {
+        self.wait().await;
+        self.check();
+    }
+
+    /// Waits for every script to finish without checking it; panics after 5
+    /// seconds. For a test that expects the client to break the script.
+    pub async fn wait(&self) {
         let handle = self.handle.lock().expect("handle").take();
         if let Some(handle) = handle {
             tokio::time::timeout(Duration::from_secs(5), handle)
@@ -179,7 +186,6 @@ impl MockServer {
                 .expect("mock server finished")
                 .expect("mock server task");
         }
-        self.check();
     }
 
     /// Panics if the client violated a script.
@@ -266,19 +272,24 @@ async fn serve(
                     }
                 };
                 let mut got = Vec::new();
+                let mut cut_short = None;
                 while (got.len() as u64) < header.len {
                     match session.next().await {
                         Some(Ok(Frame::Data(chunk))) => got.extend_from_slice(&chunk),
                         other => {
-                            let failure = format!("expected data, got {other:?}");
-                            captured.lock().expect("captured").failures.push(failure);
-                            return;
+                            cut_short = Some(format!("expected data, got {other:?}"));
+                            break;
                         }
                     }
                 }
+                // A stream cut short is recorded as far as it got, then fails.
                 let mut cap = captured.lock().expect("captured");
                 cap.data_headers.push((header.txid, header.is_reply()));
                 cap.data.push((header.len, got));
+                if let Some(failure) = cut_short {
+                    cap.failures.push(failure);
+                    return;
+                }
             }
             Step::Close => return,
             Step::Sleep(duration) => tokio::time::sleep(duration).await,
