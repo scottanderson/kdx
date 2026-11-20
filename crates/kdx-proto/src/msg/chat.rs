@@ -214,15 +214,24 @@ pub struct ChatText {
     pub chat_id: u32,
     /// The sender in 208 Receive Chat Text; the server ignores it in 207.
     pub user_id: u32,
-    /// Bytes 0x08 to 0x0b; meaning unknown.
-    pub ignored: [u8; 4],
-    /// Message text.
+    /// [`Self::FLAG_ACTION`] for a `/me` action; the server echoes it in 208.
+    pub flags: u16,
+    /// Bytes 0x0a and 0x0b; meaning unknown.
+    pub ignored_0a: [u8; 2],
+    /// Message text; without the `/me ` prefix for an action.
     pub text: Vec<u8>,
 }
 
 impl ChatText {
     /// Size of the fixed part before the text.
     pub const HEADER_LEN: usize = 0x0c;
+    /// The text is an action: the client typed `/me `, and the receiver renders `* nick text`.
+    pub const FLAG_ACTION: u16 = 1;
+
+    /// Whether the text is a `/me` action.
+    pub const fn is_action(&self) -> bool {
+        self.flags & Self::FLAG_ACTION != 0
+    }
     /// Longest text the server accepts.
     pub const MAX_TEXT_LEN: usize = 0x1000;
 
@@ -232,7 +241,8 @@ impl ChatText {
         Ok(Self {
             chat_id: u32_at(buf, 0),
             user_id: u32_at(buf, 4),
-            ignored: buf[8..0x0c].try_into().expect("4 bytes"),
+            flags: u16_at(buf, 8),
+            ignored_0a: buf[0x0a..0x0c].try_into().expect("2 bytes"),
             text: buf[Self::HEADER_LEN..].to_vec(),
         })
     }
@@ -245,7 +255,8 @@ impl ChatText {
         let mut out = vec![0; Self::HEADER_LEN];
         out[..4].copy_from_slice(&self.chat_id.to_be_bytes());
         out[4..8].copy_from_slice(&self.user_id.to_be_bytes());
-        out[8..0x0c].copy_from_slice(&self.ignored);
+        out[8..0x0a].copy_from_slice(&self.flags.to_be_bytes());
+        out[0x0a..0x0c].copy_from_slice(&self.ignored_0a);
         out.extend_from_slice(&self.text);
         Ok(out)
     }
