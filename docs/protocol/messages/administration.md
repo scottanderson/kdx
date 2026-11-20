@@ -200,33 +200,88 @@ Struct `ServerSettings` (dynamic):<a id="sServerSettings"></a>
 | 0x04 | 4 | `char[4]` | `sub_protocol` | not stored. `"SSTG"` (0x53535447). <!-- [S `FUN_08060268`] --> |
 | 0x08 | 2 | `u16` | `version` | 1 |
 | 0x0a | 2 | `u8[2]` | `ignored` |  |
-| 0x0c | 88 | [`ServerSettingsSection`](#sServerSettingsSection)`[11]` | `sections` | Probably 11 entries. <!-- [I] --> |
-| 0x64 | 12 | `u8[12]` | `value_64` | `01 01 01 01 00 01 00 02 00 00 00 00` in a 171. In a [172 Set Server Settings](#m172), 0x6b is 0, and so is 0x69 if the icon is absent. |
-| 0x70 | rest | `u8[]` | `body` | The sections, at the offsets in the table. Entry 0 is a `ServerSettingsMain`. |
+| 0x0c | 88 | [`SettingsSection`](#sSettingsSection)`[11]` | `sections` | not stored. Derived from the sections on encode; an empty section gets the running offset where Rust `placeholders` says so, else 0, 0. |
+| 0x64 | 11 | `u8[11]` | `value_64` | `01 01 01 01 00 01 00 02 00 00 00` in a 171. In a [172 Set Server Settings](#m172), 0x6b is 0, and so is 0x69 if the icon is absent. |
+| 0x6f | 1 | `u8` | `tracker_count` | not stored. The number of records in section 1. <!-- [O `captures/openkdx-server-settings.pcapng`] --> |
+| 0x70 | rest | `u8[]` | `main` | The sections, each at its table offset; section 0 is a [`MainSettings`](#sMainSettings). Each section starts on a multiple of 4; the sections that follow are Rust `trackers` (1, [`TrackerEntry`](#sTrackerEntry) records back to back), Rust `allow_deny` (2, [`AddressRule`](#sAddressRule) records), Rust `greeting` (3, the layout of [107 Server Greeting](session.md#m107)), Rust `icon` (5, the bytes of [106 Server Icon](session.md#m106)), Rust `chats` (7, [219 Chat Info](chat.md#m219) records back to back; empty in every 171 seen, filled in the settings file), Rust `other` (4, 6, 8 to 10, never seen non-empty), and Rust `trailing` after the last section's padding, never seen non-empty. |
 
-Struct `ServerSettingsSection` (8 bytes):<a id="sServerSettingsSection"></a>
+Struct `SettingsSection` (8 bytes):<a id="sSettingsSection"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `offset` | From the start of the blob. |
-| 0x04 | 4 | `u32` | `length` | 0 for an empty or absent section. |
+| 0x04 | 4 | `u32` | `len` | 0 for an empty or absent section. |
 
 The main section is entry 0. It starts at 0x70 and is 0x68 bytes in the
 captures. Its offsets below are from its own start; add 0x70 to get the offset
-in the blob:
+in the blob. The fields beyond `flags`, the speed limit and the name were pinned
+by changing one setting at a time in the server's dialog and diffing its
+settings file. <!-- [O `captures/openkdx-server-settings.pcapng`] -->
 
-Struct `ServerSettingsMain` (dynamic):<a id="sServerSettingsMain"></a>
+Struct `MainSettings` (dynamic):<a id="sMainSettings"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 35 | `u8[35]` | `ignored_00` |  |
-| 0x23 | 1 | `u8` | `flags` | Bit 1: the greeting is on. 0x93 in the blob. |
-| 0x24 | 20 | `u8[20]` | `ignored_24` |  |
+| 0x00 | 18 | `u8[18]` | `ignored_00` |  |
+| 0x12 | 2 | `u16` | `file_transfer_port` | 0 when not set. |
+| 0x14 | 2 | `u8[2]` | `ignored_14` |  |
+| 0x16 | 2 | `u16` | `alternate_port` | 0 when not set. |
+| 0x18 | 4 | `u32` | `history_kinds` | Server History, "Record Server History to File": bit 0 login, 1 disconnected, 2 download, 3 upload, 4 delete, 5 file list, 6 other file, 7 modify account, 8 other account, 9 server settings, 10 other. |
+| 0x1c | 4 | `u32` | `history_max_file_size` | "Start new file when size exceeds", in bytes; 0x100000 by default. |
+| 0x20 | 3 | `u8[3]` | `ignored_20` |  |
+| 0x23 | 1 | `u8` | `flags` | Bit 0: register with trackers. Bit 1: the greeting is on. 0x93 in the blob. |
+| 0x24 | 2 | `u8[2]` | `ignored_24` |  |
+| 0x26 | 2 | `u16` | `port` | 10700 by default. |
+| 0x28 | 4 | `u8[4]` | `ignored_28` |  |
+| 0x2c | 12 | `u8[12]` | `ignored_2c` | Differs per server directory; probably an identifier. <!-- [I] --> |
 | 0x38 | 4 | `u32` | `total_outgoing_speed_limit` | Bytes per second. 0x5000, or 0 when off. 0xa8 in the blob. |
 | 0x3c | 22 | `u8[22]` | `ignored_3c` |  |
-| 0x52 | 1 | `u8` | `ignored_52` | 0x0a, the length of both names in the captures. Probably the name's length. <!-- [I] --> 0xc2 in the blob. |
-| 0x53 | 9 | `u8[9]` | `ignored_53` |  |
-| 0x5c | rest | `str` | `server_name` | NUL-terminated, at the end of the main section. 0xcc in the blob. |
+| 0x52 | 1 | `u8` | `name_len` | 0xc2 in the blob. A [172 Set Server Settings](#m172) that changes the name without this byte leaves the server with the old length: `OpenKDX Lab` read back as `OpenKDX La`. <!-- [O `captures/openkdx-server-settings.pcapng` frames 10, 29] --> |
+| 0x53 | 1 | `u8` | `description_len` |  |
+| 0x54 | 1 | `u8` | `ignored_54` | 0. |
+| 0x55 | 1 | `u8` | `address_len` |  |
+| 0x56 | 6 | `u8[6]` | `ignored_56` |  |
+| 0x5c | `name_len` | `str` | `name` | 0xcc in the blob. |
+|  | `description_len` | `str` | `description` |  |
+|  | `address_len` | `str` | `address` |  |
+|  | pad4 | `u8[]` | `padding` | Zeros; kept only when they are not. |
+
+Struct `TrackerEntry` (dynamic):<a id="sTrackerEntry"></a>
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 20 | `u8[20]` | `ignored_00` |  |
+| 0x14 | 1 | `u8` | `name_len` |  |
+| 0x15 | 1 | `u8` | `comments_len` |  |
+| 0x16 | 1 | `u8` | `address_len` |  |
+| 0x17 | 1 | `u8` | `login_len` |  |
+| 0x18 | 2 | `u8[2]` | `ignored_18` | 0. |
+| 0x1a | 1 | `u8` | `groups_len` |  |
+| 0x1b | 1 | `u8` | `ignored_1b` | 0. |
+| 0x1c | 4 | `u8[4]` | `ignored_1c` |  |
+| 0x20 | `name_len` | `str` | `name` |  |
+|  | `comments_len` | `str` | `comments` |  |
+|  | `address_len` | `str` | `address` |  |
+|  | `login_len` | `str` | `login` |  |
+|  | `groups_len` | `str` | `groups` | As typed in the dialog. |
+|  | pad4 | `u8[]` | `padding` | Zeros; kept only when they are not. |
+
+Struct `AddressRule` (dynamic):<a id="sAddressRule"></a>
+
+| Off | Size | Type | Field | Notes |
+|---|---|---|---|---|
+| 0x00 | 8 | `u64` | `expires` | Milliseconds since 1900; 0 for never. |
+| 0x08 | 8 | `u8[8]` | `ignored_08` |  |
+| 0x10 | 2 | `u16` | `allow` | 1 allow, 0 deny. |
+| 0x12 | 6 | `u8[6]` | `ignored_12` |  |
+| 0x18 | 1 | `u8` | `address_len` |  |
+| 0x19 | 1 | `u8` | `name_len` |  |
+| 0x1a | 1 | `u8` | `comments_len` |  |
+| 0x1b | 1 | `u8` | `ignored_1b` | 0. |
+| 0x1c | `address_len` | `str` | `address` |  |
+|  | `name_len` | `str` | `name` |  |
+|  | `comments_len` | `str` | `comments` |  |
+|  | pad4 | `u8[]` | `padding` | Zeros; kept only when they are not. |
 
 These are the section table entries in the captures, as offset and
 length: <!-- [O] -->
@@ -247,10 +302,11 @@ can give the icon section length 0, and the server then keeps its icon: frames
 56 and 225 sent no icon, and the [171 Server Settings Info](#m171) at frame 221
 still holds it.
 
-`kdx_proto::msg::server_info::ServerSettings` decodes the table, reads the named
-fields from the main section, and keeps the other bytes as sent. It re-encodes
-all six blobs of `captures/linux-server-settings.pcapng`, and the [171 Server
-Settings Info](#m171) at frame 116 of `captures/probe.pcapng`, byte for byte.
+`kdx_proto::msg::server_info::ServerSettings` types sections 0, 1, 2, 3, 5 and
+7 and keeps the others as bytes. It re-encodes all six blobs of
+`captures/linux-server-settings.pcapng`, the [171 Server Settings Info](#m171)
+at frame 116 of `captures/probe.pcapng`, and every blob of
+`captures/openkdx-server-settings.pcapng` byte for byte.
 
 ## <a id="m172"></a>172 Set Server Settings
 Initiator: Client. <!-- [S `FUN_0805f638`] -->
