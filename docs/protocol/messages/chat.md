@@ -211,10 +211,12 @@ Struct `ChatText` (dynamic):<a id="sChatText"></a>
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `chat_id` |  |
 | 0x04 | 4 | `u32` | `user_id` | The server fills in the sender. |
-| 0x08 | 4 | `u8[4]` | `ignored` |  |
+| 0x08 | 2 | `u16` | `flags` | 1: an action. Client 1.600 sets it when the user types `/me `, and sends the text without that prefix. <!-- [O `captures/openkdx-chat-basic.pcapng` frames 24, 25] --> |
+| 0x0a | 2 | `u8[2]` | `ignored_0a` |  |
 | 0x0c | rest | `str` | `text` | At most 0x1000 bytes. |
 
-The server forwards it as [208 Receive Chat Text](#m208).
+The server forwards it as [208 Receive Chat Text](#m208), with the same flags.
+`kdx_proto::msg::chat::ChatText::FLAG_ACTION` names the action bit.
 
 ## <a id="m208"></a>208 Receive Chat Text
 Initiator: Server. Forwarded from [207 Send Chat Text](#m207).
