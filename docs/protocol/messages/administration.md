@@ -174,7 +174,8 @@ and the sender (frame 132) both got user ID 2, 12 zero bytes, and the text. <!--
 
 ## <a id="m170"></a>170 Get Server Settings
 Initiator: Client. Privilege: Modify Server Settings (61).
-<!-- [S `FUN_0805f598`; O `captures/linux-server-settings.pcapng`] -->
+<!-- [S `FUN_0805f598`; O `captures/linux-server-settings.pcapng` frames 35,
+36] -->
 
 No payload.
 

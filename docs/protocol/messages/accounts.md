@@ -118,8 +118,8 @@ Initiator: Server. Reply to [505 Get Account Class List](#m505).
 The payload is a u32 count (12 classes in the lab), then one record for each
 class, padded to a multiple of 4 with zeros. A record is the [503 Account Class
 Info](#m503) record without the 8 bytes at 0x28, the second string, and the
-editor login. <!-- [O `captures/probe.pcapng`] port 50770; [S `FUN_0805572c`]
--->
+editor login. <!-- [O `captures/probe.pcapng` frame 46] port 50770; [S
+`FUN_0805572c`] -->
 
 Struct `AccountClassList` (dynamic):<a id="sAccountClassList"></a>
 

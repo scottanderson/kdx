@@ -27,10 +27,10 @@ The request is a folder access record, which the client's folder access editor
 also reads. [1100 Create Folder Access](#m1100), [1104 Folder Access
 Info](#m1104), and [1105 Set Folder Access](#m1105) use it. <!-- [S
 `FUN_080572f0`, `FUN_08057634`; O `captures/linux-files.pcapng` frames 226, 229,
-231; O `captures/linux-accounts-folder-access.pcapng`; O
-`captures/linux-folder-access-guest.pcapng`] --> The last two captures show the
-record in [1105 Set Folder Access](#m1105). Its total length, padded to a
-multiple of 4, must equal the payload length.
+231; O `captures/linux-accounts-folder-access.pcapng` frame 63; O
+`captures/linux-folder-access-guest.pcapng` frames 30, 40] --> The last two
+captures show the record in [1105 Set Folder Access](#m1105). Its total length,
+padded to a multiple of 4, must equal the payload length.
 `kdx_proto::msg::admin::FolderAccess` encodes the three captured records again
 byte for byte, with their padding (test `linux_files`).
 

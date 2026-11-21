@@ -46,8 +46,8 @@ sequenceDiagram
 After 30 connections from 127.0.0.1 in about a minute, the server logged "Banned
 for flooding. (ID 4/119)". Then it closed each new connection before it sent its
 hello. The ban lasted at least five minutes, and ended when the server
-restarted. <!-- [O `captures/kdx-accounts.pcapng`] the connections after frame
-467 -->
+restarted. <!-- [O `captures/kdx-accounts.pcapng`
+frames 487 to 521] -->
 
 This limit is in the network layer that the server, tracker, and client share.
 The client applies it to its DCC listener. The server checks it each time it
@@ -86,9 +86,10 @@ With 0, there is no check.
 
 Each request adds 1 to the count, starting with the [100 Set
 Identity](messages/session.md#m100) of the login. <!-- [O
-`captures/linux-accounts-folder-access.pcapng`] --> When the count gets to L,
-the server looks at the time since the window started. At 121 seconds or more,
-it sets the count to zero and starts a new window. If not, it does these things:
+`captures/linux-accounts-folder-access.pcapng` frames 146, 147] --> When the
+count gets to L, the server looks at the time since the window started. At 121
+seconds or more, it sets the count to zero and starts a new window. If not, it
+does these things:
 
 - At count L, it sends [155 Rcv Broadcast
   Message](messages/administration.md#m155) "WARNING: The server has detected

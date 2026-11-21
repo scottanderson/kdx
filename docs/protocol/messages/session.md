@@ -340,7 +340,8 @@ Struct `Skpk` (48 bytes):<a id="sSkpk"></a>
 | 0x2a | 6 | `u8[6]` | `ignored` | 0 as sent. |
 
 Frames 22, 25, 119, and 122 match this layout, with ports 0x2968 and 0x2969, and
-connection IDs 2 and 4. <!-- [O `captures/linux-dcc-voice-failed.pcapng`] -->
+connection IDs 2 and 4. <!-- [O `captures/linux-dcc-voice-failed.pcapng`
+frames 22, 25, 119, 122] -->
 `kdx_proto::msg::dcc::Skpk` encodes frames 22 and 25 again byte for byte.
 
 ## <a id="m118"></a>118 (unnamed)
