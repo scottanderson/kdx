@@ -215,7 +215,9 @@ def check_table_columns():
 
 
 TAG = re.compile(r"(?<=<!-- )\[[OSI][^\]]*\]")
-TAG_O = r"O(?: `captures/[\w-]+\.pcapng`)?(?: frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*)?"
+FRAMES = r" frames? \d+(?: to \d+)?(?:, \d+(?: to \d+)?)*"
+# A tag that names a capture cites its frames too.
+TAG_O = rf"O(?: `captures/[\w-]+\.pcapng`{FRAMES}|{FRAMES})?"
 
 TAG_S = r"S(?: (?:(?:client|server|tracker) )?`[^`]+`(?:, (?:(?:client|server|tracker) )?`[^`]+`)*)?"
 

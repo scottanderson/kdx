@@ -195,7 +195,8 @@ payload. `kdx_proto::msg::FilePath::decode_delimited` reads it.
 
 ## User record
 
-<!-- [S `FUN_0804af04`, `FUN_0804b304`; O `captures/first-connect.pcapng`] -->
+<!-- [S `FUN_0804af04`, `FUN_0804b304`; O `captures/first-connect.pcapng`
+frames 22, 23] -->
 
 [100 Set Identity](messages/session.md#m100) (from the client, with user ID 0),
 [101 User List](messages/session.md#m101), [102 User

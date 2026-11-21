@@ -130,7 +130,7 @@ fnv1(h, b) = (h * 0x01000193) ^ b   for each byte, starting at h = 1
 The constant for an empty password is not what the formula gives for an empty
 input. Words 0, 2, 4, 6, and 7 are the five words of SHA-1(""), and words 1, 3,
 and 5 are other values. Use the bytes exactly as they are above. Both sides of a
-guest login use them. <!-- [O `captures/kdx-news.pcapng`; O
+guest login use them. <!-- [O `captures/kdx-news.pcapng` frames 169 to 174; O
 `captures/linux-accounts-news.pcapng` frames 94 to 100] the kdx CLI on port
 40434, and Client 1.620 beta 5 -->
 
