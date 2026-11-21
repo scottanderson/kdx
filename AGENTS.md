@@ -106,6 +106,7 @@ cargo fmt --all
 cargo clippy --workspace --all-targets   # no warnings
 cargo test --workspace
 python3 -I ci/check-docs.py              # CI checks over the Markdown docs
+gitlint --commits origin/main..HEAD      # Co-Authored-By names the model
 codespell                                # en-US spelling
 cargo run -p kdx-dissect -- captures/first-connect.pcapng --password 'lab-only-pw!1'
 cargo run -p kdx-dissect -- captures/linux-tracker.pcapng \

@@ -8,3 +8,5 @@
 /re/projects/
 /re/out/
 /vendor/refs/
+# Python bytecode from gitlint loading .gitlint-rules/
+__pycache__/
