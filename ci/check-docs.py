@@ -90,9 +90,9 @@ def check_orphans():
 
 
 def check_paths():
-    # Backticked repo paths must exist.
+    # Backticked repo paths must exist, in capture notes too.
     tops = {d for d in os.listdir(".") if os.path.isdir(d) and not d.startswith(".")}
-    for path in tracked_markdown():
+    for path in markdown_files():
         fence = False
         for n, line in enumerate(open(path, encoding="utf-8"), 1):
             if line.startswith("```"):

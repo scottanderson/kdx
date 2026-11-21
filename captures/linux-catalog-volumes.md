@@ -5,9 +5,9 @@
 - Client: linux 1.620 beta 5, and the `kdx` CLI for the download
 - Server state: the server from linux-server-settings (admin / lab-only-pw!1,
   server name "Lab Server"), plus `Bases/Default/lab-files/` with `a.txt`
-  and `b.txt` (6 bytes each) and `hello.sh` (30 bytes, prints a line), and
-  `speed.bin` (2 MiB) in the base. Administrator starts without See All
-  Volumes (`e8` in byte 2 of its privileges) and with no speed limit.
+  and `b.txt` (6 bytes each) and `lab-files/hello.sh` (30 bytes, prints a
+  line), and `speed.bin` (2 MiB) in the base. Administrator starts without See
+  All Volumes (`e8` in byte 2 of its privileges) and with no speed limit.
 
 ## Steps
 
@@ -21,9 +21,9 @@ file's 2 MiB, which `linux-server-settings` already has.
 2. Commands → 127.0.0.1 → Generate File Catalog: 450 at 23, then two 451 at
    24 and 26.
 3. Search Files... for `a.txt`: 452/453 at 28/29, one result.
-4. Right-clicked `hello.sh`, Launch Program, and confirmed: 420 at 31,
-   1 Status success at 32. The server ran the script; `hello from lab` went
-   to the server log.
+4. Right-clicked `lab-files/hello.sh`, Launch Program, and confirmed: 420 at
+   31, 1 Status success at 32. The server ran the script; `hello from lab`
+   went to the server log.
 5. Account Classes → Administrator: ticked See All Volumes and saved (502/503
    at 37/38, 504 at 40, Status at 43, 506 at 45). The root listed nine
    volumes (400/401 at 47/48). Get Info on `/tmp` (409 → 422 at 50/51).
