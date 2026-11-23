@@ -88,7 +88,7 @@ Decoded by `kdx-dissect captures/cli-broadcast.pcapng --inventory --password ope
 10  C->S  127.0.0.1:44198 -> 127.0.0.1:10700  100 Set Identity
 11  S->C  127.0.0.1:44198 -> 127.0.0.1:10700  101 User List
 12  S->C  127.0.0.1:44198 -> 127.0.0.1:10700  105 Server Info
-13  C->S  127.0.0.1:44198 -> 127.0.0.1:10700  118 (unnamed; license report)
+13  C->S  127.0.0.1:44198 -> 127.0.0.1:10700  118
 18  C->S  127.0.0.1:44204 -> 127.0.0.1:10700  hello
 20  S->C  127.0.0.1:44204 -> 127.0.0.1:10700  hello
 22  C->S  127.0.0.1:44204 -> 127.0.0.1:10700  proof
@@ -97,7 +97,7 @@ Decoded by `kdx-dissect captures/cli-broadcast.pcapng --inventory --password ope
 25  S->C  127.0.0.1:44204 -> 127.0.0.1:10700  101 User List
 26  S->C  127.0.0.1:44204 -> 127.0.0.1:10700  105 Server Info
 27  S->C  127.0.0.1:44198 -> 127.0.0.1:10700  103 User Joined
-28  C->S  127.0.0.1:44204 -> 127.0.0.1:10700  118 (unnamed; license report)
+28  C->S  127.0.0.1:44204 -> 127.0.0.1:10700  118
 34  C->S  127.0.0.1:44210 -> 127.0.0.1:10700  hello
 36  S->C  127.0.0.1:44210 -> 127.0.0.1:10700  hello
 38  C->S  127.0.0.1:44210 -> 127.0.0.1:10700  proof
@@ -107,7 +107,7 @@ Decoded by `kdx-dissect captures/cli-broadcast.pcapng --inventory --password ope
 42  S->C  127.0.0.1:44210 -> 127.0.0.1:10700  105 Server Info
 43  S->C  127.0.0.1:44198 -> 127.0.0.1:10700  103 User Joined
 45  S->C  127.0.0.1:44204 -> 127.0.0.1:10700  103 User Joined
-47  C->S  127.0.0.1:44210 -> 127.0.0.1:10700  118 (unnamed; license report)
+47  C->S  127.0.0.1:44210 -> 127.0.0.1:10700  118
 48  C->S  127.0.0.1:44210 -> 127.0.0.1:10700  154 Send Broadcast Message
 50  S->C  127.0.0.1:44198 -> 127.0.0.1:10700  155 Rcv Broadcast Message
 52  S->C  127.0.0.1:44204 -> 127.0.0.1:10700  155 Rcv Broadcast Message

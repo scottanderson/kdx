@@ -99,7 +99,7 @@ Decoded by `kdx-dissect captures/cli-disconnect-ban.pcapng --inventory --passwor
 22  C->S  127.0.0.1:54332 -> 127.0.0.1:10700  100 Set Identity
 23  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  101 User List
 24  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  105 Server Info
-25  C->S  127.0.0.1:54332 -> 127.0.0.1:10700  118 (unnamed; license report)
+25  C->S  127.0.0.1:54332 -> 127.0.0.1:10700  118
 30  C->S  127.0.0.1:54336 -> 127.0.0.1:10700  hello
 32  S->C  127.0.0.1:54336 -> 127.0.0.1:10700  hello
 34  C->S  127.0.0.1:54336 -> 127.0.0.1:10700  proof
@@ -108,7 +108,7 @@ Decoded by `kdx-dissect captures/cli-disconnect-ban.pcapng --inventory --passwor
 37  S->C  127.0.0.1:54336 -> 127.0.0.1:10700  101 User List
 38  S->C  127.0.0.1:54336 -> 127.0.0.1:10700  105 Server Info
 39  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  103 User Joined
-40  C->S  127.0.0.1:54336 -> 127.0.0.1:10700  118 (unnamed; license report)
+40  C->S  127.0.0.1:54336 -> 127.0.0.1:10700  118
 44  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  104 User Departed
 49  C->S  127.0.0.1:54344 -> 127.0.0.1:10700  hello
 51  S->C  127.0.0.1:54344 -> 127.0.0.1:10700  hello
@@ -118,7 +118,7 @@ Decoded by `kdx-dissect captures/cli-disconnect-ban.pcapng --inventory --passwor
 56  S->C  127.0.0.1:54344 -> 127.0.0.1:10700  101 User List
 57  S->C  127.0.0.1:54344 -> 127.0.0.1:10700  105 Server Info
 58  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  103 User Joined
-59  C->S  127.0.0.1:54344 -> 127.0.0.1:10700  118 (unnamed; license report)
+59  C->S  127.0.0.1:54344 -> 127.0.0.1:10700  118
 62  C->S  127.0.0.1:54344 -> 127.0.0.1:10700  150 Disconnect User
 64  S->C  127.0.0.1:54332 -> 127.0.0.1:10700  151 Disconnect Message
 67  S->C  127.0.0.1:54344 -> 127.0.0.1:10700  1 Status (reply)
@@ -130,5 +130,5 @@ Decoded by `kdx-dissect captures/cli-disconnect-ban.pcapng --inventory --passwor
 84  C->S  127.0.0.1:54350 -> 127.0.0.1:10700  100 Set Identity
 85  S->C  127.0.0.1:54350 -> 127.0.0.1:10700  101 User List
 86  S->C  127.0.0.1:54350 -> 127.0.0.1:10700  105 Server Info
-87  C->S  127.0.0.1:54350 -> 127.0.0.1:10700  118 (unnamed; license report)
+87  C->S  127.0.0.1:54350 -> 127.0.0.1:10700  118
 ```
