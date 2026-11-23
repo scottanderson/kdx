@@ -1,12 +1,13 @@
 //! A logged-in session with typed requests.
 //!
 //! The requests by area are in the sibling modules: `chat`, `news`, `files`,
-//! `accounts` and `folder_access`.
+//! `accounts`, `folder_access` and `admin`.
 
 use std::collections::VecDeque;
 use std::net::SocketAddr;
 
 use anyhow::{bail, Context, Result};
+use kdx_proto::msg::admin::DisconnectMessage;
 use kdx_proto::msg::status::error_name;
 use kdx_proto::msg::transfer::{DownloadFile, DownloadInfo, FileStrings, UploadFile, UploadReply};
 use kdx_proto::msg::{FilePath, PrivateMessage, ServerInfo, Status, UserInfo, UserRecord};
@@ -330,7 +331,10 @@ pub(crate) async fn wait_reply(
     events: &mut VecDeque<Event>,
 ) -> Result<Vec<u8>> {
     loop {
-        let (header, payload) = conn.recv().await?;
+        let (header, payload) = match conn.recv().await {
+            Ok(message) => message,
+            Err(err) => return Err(disconnect_context(err, events)),
+        };
         if header.txid != txid || !header.is_reply() {
             events.push_back((header, payload));
         } else if header.kind == MessageType::STATUS {
@@ -346,6 +350,22 @@ pub(crate) async fn wait_reply(
         } else {
             return Ok(payload);
         }
+    }
+}
+
+/// When the connection ends after a 151 Disconnect Message, names its reason.
+fn disconnect_context(err: anyhow::Error, events: &VecDeque<Event>) -> anyhow::Error {
+    let bye = events
+        .iter()
+        .rev()
+        .find(|(header, _)| header.kind == MessageType::DISCONNECT_MESSAGE)
+        .and_then(|(_, payload)| DisconnectMessage::decode(payload).ok());
+    match bye {
+        Some(bye) => err.context(format!(
+            "disconnected: {}",
+            String::from_utf8_lossy(&bye.message)
+        )),
+        None => err,
     }
 }
 

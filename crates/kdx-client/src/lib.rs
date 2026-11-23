@@ -19,6 +19,7 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_util::codec::Framed;
 
 mod accounts;
+mod admin;
 mod chat;
 mod client;
 mod files;
@@ -33,6 +34,7 @@ mod tests;
 mod tracker;
 
 pub use accounts::{format_privileges, new_account, parse_privileges, privilege_slug};
+pub use admin::set_server_name;
 pub use chat::PUBLIC_CHAT;
 pub use client::{Client, Event, ServerError};
 pub use news::to_cr_lines;
