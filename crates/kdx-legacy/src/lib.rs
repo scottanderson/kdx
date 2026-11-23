@@ -8,13 +8,17 @@
 
 pub mod bases;
 pub mod civil;
+pub mod client_stg;
 pub mod error;
 pub mod scramble;
+pub mod server_stg;
 pub mod store;
 pub mod time;
+pub mod tracker_stg;
 pub mod wire;
 
 pub use bases::{format_base_name, parse_base_name, BaseName, BaseTag};
 pub use error::{LegacyError, Result};
+pub use kdx_proto::msg::server_info::ServerSettings;
 pub use store::{LegacyDir, ServerFile};
 pub use time::Time1900;
