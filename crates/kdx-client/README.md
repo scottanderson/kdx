@@ -29,6 +29,13 @@ what the client sent and `finish()` panics if the client broke the script.
 kdx-client = { version = "0.1", features = ["mock"] }
 ```
 
+`Client::next_notice()` decodes the messages a server pushes ([208 Receive
+Chat Text](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/chat.md#m208),
+[301 Incoming Private Message](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/private-messages.md#m301),
+[151 Disconnect Message](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/administration.md#m151),
+...) into the `Notice` enum; a type it does not know comes through as
+`Notice::Other`.
+
 See the [message
 index](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/README.md)
 for the messages, and [docs.rs](https://docs.rs/kdx-client) for the API.

@@ -21,12 +21,14 @@ use tokio_util::codec::Framed;
 mod client;
 #[cfg(any(test, feature = "mock"))]
 pub mod mock;
+mod notice;
 pub mod table;
 #[cfg(test)]
 mod tests;
 mod tracker;
 
 pub use client::{Client, Event, ServerError};
+pub use notice::Notice;
 pub use tracker::Tracker;
 
 /// Login details for [`Connection::connect`].
