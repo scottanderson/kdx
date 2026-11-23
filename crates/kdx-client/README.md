@@ -4,7 +4,8 @@ An async library, on tokio, for writing clients of the Haxial KDX protocol.
 
 - `Connection` runs the handshake and sends raw session messages.
 - `Client` logs in to a server and offers typed requests: users, chats, files,
-  news, and accounts.
+  news, accounts and classes, folder access, administration, and transfers to
+  and from local files with progress and resume.
 - `Tracker` does the same for a tracker.
 
 It works against KDX Server 1.620 and Tracker 1.110. The [kdx command-line
