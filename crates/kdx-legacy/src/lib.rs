@@ -6,10 +6,13 @@
 //! `encode(decode(file)) == file`; see `docs/formats/`. The wire structs the
 //! files embed come from `kdx-proto`; times are [`time::Time1900`].
 
+pub mod accounts;
 pub mod bases;
+pub mod catalog;
 pub mod civil;
 pub mod client_stg;
 pub mod error;
+pub mod news;
 pub mod scramble;
 pub mod server_stg;
 pub mod store;
@@ -17,6 +20,7 @@ pub mod time;
 pub mod tracker_stg;
 pub mod wire;
 
+pub use accounts::AccountsFile;
 pub use bases::{format_base_name, parse_base_name, BaseName, BaseTag};
 pub use error::{LegacyError, Result};
 pub use kdx_proto::msg::server_info::ServerSettings;
