@@ -19,6 +19,8 @@ use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_util::codec::Framed;
 
 mod client;
+#[cfg(any(test, feature = "mock"))]
+pub mod mock;
 pub mod table;
 #[cfg(test)]
 mod tests;
