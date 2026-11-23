@@ -28,6 +28,7 @@ mock = ["tokio/macros", "tokio/rt", "tokio/sync", "tokio/time"]
 
 [dev-dependencies]
 kdx-client = { path = ".", features = ["mock"] }
+kdx-test-tables.workspace = true
 tokio = { version = "1.53.2", features = ["io-util", "macros", "net", "rt", "sync", "time"] }
 
 [lints]
