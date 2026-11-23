@@ -74,6 +74,10 @@ struct Args {
     /// After each payload, say whether its `kdx-proto` codec re-encodes it byte for byte.
     #[arg(long)]
     audit: bool,
+    /// Print only a fenced inventory: one line per hello, proof, message and
+    /// registration, in frame order, as the capture notes carry it.
+    #[arg(long)]
+    inventory: bool,
 }
 
 /// The ports the capture's programs listen on.
@@ -182,11 +186,20 @@ fn main() -> Result<()> {
     let ports = &args.ports;
     let mut connections: BTreeMap<(SocketAddr, SocketAddr), [Flow; 2]> = BTreeMap::new();
     let mut registrations = 0;
+    let mut inventory: Vec<(usize, usize, String)> = Vec::new();
     for frame in &frames {
         let (src, dst, tcp) = match parse_transport(frame) {
             Some((src, dst, Transport::Udp(payload))) if dst.port() == ports.tracker_port => {
                 registrations += 1;
-                print!("{}", registration(frame.number, src, dst, &payload));
+                if args.inventory {
+                    inventory.push((
+                        frame.number,
+                        0,
+                        format!("{}  {src} -> {dst}  UDP registration", frame.number),
+                    ));
+                } else {
+                    print!("{}", registration(frame.number, src, dst, &payload));
+                }
                 continue;
             }
             Some((src, dst, Transport::Tcp(tcp))) => (src, dst, tcp),
@@ -220,10 +233,10 @@ fn main() -> Result<()> {
         ));
     }
 
-    if registrations > 0 {
+    if registrations > 0 && !args.inventory {
         println!();
     }
-    if connections.is_empty() {
+    if connections.is_empty() && !args.inventory {
         println!("no TCP connections on port {ports}");
     }
     let mut pending = Vec::new();
@@ -239,14 +252,19 @@ fn main() -> Result<()> {
         let kind = ports
             .kind(server.port())
             .expect("each connection is to a listening port");
-        pending.push((format!("{kind} {client} -> {server}\n"), streams, None));
+        pending.push((
+            format!("{kind} {client} -> {server}\n"),
+            streams,
+            None,
+            format!("{client} -> {server}"),
+        ));
     }
 
     // Transfer and DCC secondary connections use a key from another connection's
     // 105 Server Info or 117 SKPK, so retry until no new key turns up.
     loop {
         let mut found = Vec::new();
-        for (_, streams, output) in pending.iter_mut().filter(|(_, _, o)| o.is_none()) {
+        for (_, streams, output, _) in pending.iter_mut().filter(|(_, _, o, _)| o.is_none()) {
             let mut out = String::new();
             match dissect(streams, &keys, args.audit, &mut out) {
                 Ok(Some(new_keys)) => {
@@ -266,7 +284,7 @@ fn main() -> Result<()> {
         keys.extend(found);
     }
 
-    for (title, streams, output) in pending {
+    for (index, (title, streams, output, conn)) in pending.into_iter().enumerate() {
         let output = output.unwrap_or_else(|| {
             let mut out = String::new();
             dissect(&streams, &keys, args.audit, &mut out).ok();
@@ -275,9 +293,51 @@ fn main() -> Result<()> {
             );
             out
         });
-        println!("{title}{output}");
+        if args.inventory {
+            inventory.extend(output.lines().filter_map(inventory_line).map(
+                |(frame, dir, what)| (frame, index + 1, format!("{frame}  {dir}  {conn}  {what}")),
+            ));
+        } else {
+            println!("{title}{output}");
+        }
+    }
+    if args.inventory {
+        inventory.sort_by_key(|(frame, flow, _)| (*frame, *flow));
+        println!("```");
+        for (_, _, line) in inventory {
+            println!("{line}");
+        }
+        println!("```");
     }
     Ok(())
+}
+
+/// The inventory item of one line of a connection's output: frame, direction, and what it carried.
+fn inventory_line(line: &str) -> Option<(usize, &str, String)> {
+    let rest = line.strip_prefix("  [")?;
+    let (frame, rest) = rest.split_once("] ")?;
+    let frame: usize = frame.parse().ok()?;
+    let (dir, rest) = rest.split_once(' ')?;
+    let what = if rest.starts_with("hello:") {
+        "hello".to_owned()
+    } else if rest.starts_with("proof:") {
+        "proof".to_owned()
+    } else if let Some(rest) = rest.strip_prefix("txid ") {
+        let (_, rest) = rest.split_once(' ')?;
+        match rest.strip_prefix("type ") {
+            Some(typed) => {
+                let (kind, _) = typed.split_once(" len ")?;
+                match kind.strip_suffix(" reply") {
+                    Some(kind) => format!("{kind} (reply)"),
+                    None => kind.to_owned(),
+                }
+            }
+            None => format!("stopped: {rest}"),
+        }
+    } else {
+        format!("stopped: {rest}")
+    };
+    Some((frame, dir, what))
 }
 
 /// Writes one connection to `out`, and returns the keys its 105 Server Info and
