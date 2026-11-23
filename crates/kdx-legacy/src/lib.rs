@@ -1,0 +1,20 @@
+//! The original programs' files: `Accounts.dat`, `News.dat`, `Catalog.dat`,
+//! the `.stg` settings of server, client and tracker, `.hap` themes, history
+//! and news archive text, and the sound list names under `Bases/`.
+//!
+//! Every reader keeps the bytes it does not understand, so that
+//! `encode(decode(file)) == file`; see `docs/formats/`. The wire structs the
+//! files embed come from `kdx-proto`; times are [`time::Time1900`].
+
+pub mod bases;
+pub mod civil;
+pub mod error;
+pub mod scramble;
+pub mod store;
+pub mod time;
+pub mod wire;
+
+pub use bases::{format_base_name, parse_base_name, BaseName, BaseTag};
+pub use error::{LegacyError, Result};
+pub use store::{LegacyDir, ServerFile};
+pub use time::Time1900;

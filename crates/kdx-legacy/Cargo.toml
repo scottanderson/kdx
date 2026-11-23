@@ -1,0 +1,20 @@
+[package]
+name = "kdx-legacy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "The original programs' files: Accounts.dat, News.dat, .stg, .hap, catalogs, history, read and written byte for byte"
+
+[dependencies]
+kdx-proto.workspace = true
+thiserror = "2.0.21"
+
+[dev-dependencies]
+hex = "0.4.3"
+tempfile = "3"
+
+[lints]
+workspace = true
