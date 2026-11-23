@@ -653,11 +653,16 @@ impl ChatRecord {
 
     /// Decodes the record.
     pub fn decode(buf: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self::decode_with_len(buf)?.0)
+    }
+
+    /// Decodes the record at the start of `buf`, returning it and its length.
+    pub fn decode_with_len(buf: &[u8]) -> Result<(Self, usize), DecodeError> {
         need(buf, Self::HEADER_LEN)?;
         let lens = [0x2a, 0x2b, 0x2c, 0x2d].map(|at| usize::from(buf[at]));
-        let ([name, description, irc_server, irc_channel], _) =
+        let ([name, description, irc_server, irc_channel], end) =
             strings(buf, Self::HEADER_LEN, lens)?;
-        Ok(Self {
+        let record = Self {
             chat_id: u32_at(buf, 0),
             key: u32_at(buf, 4),
             ignored_08: buf[8..0x14].try_into().expect("12 bytes"),
@@ -671,7 +676,8 @@ impl ChatRecord {
             description,
             irc_server,
             irc_channel,
-        })
+        };
+        Ok((record, end))
     }
 
     /// Encodes the record.
