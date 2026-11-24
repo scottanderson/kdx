@@ -17,7 +17,7 @@ use kdx_proto::{AccountKey, ChallengeTable};
 use tokio::io::{AsyncRead, AsyncSeek, AsyncSeekExt, AsyncWrite};
 use tokio::net::{lookup_host, ToSocketAddrs};
 
-use crate::{Connection, Login, Responses};
+use crate::{Connection, Login, Notice, Responses};
 
 /// A request the server refused with 1 Status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -112,6 +112,14 @@ impl Client {
             Some(event) => Ok(event),
             None => self.conn.recv().await,
         }
+    }
+
+    /// The next message the server sent on its own, decoded as a [`Notice`].
+    ///
+    /// A payload that does not decode comes through as [`Notice::Other`].
+    pub async fn next_notice(&mut self) -> Result<Notice> {
+        let (header, payload) = self.next_event().await?;
+        Ok(Notice::decode(&header, &payload).unwrap_or(Notice::Other(header, payload)))
     }
 
     /// 214 Get Chat List.

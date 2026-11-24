@@ -409,6 +409,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "getrandom 0.3.4",
+ "kdx-client",
  "kdx-codec",
  "kdx-proto",
  "sha2",
