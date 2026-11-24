@@ -41,6 +41,8 @@ Put details in those files. Keep this file to rules.
   evidence. Build them from the repository as it stands, with only code that
   is merged or in the same pull request, and give each command in full in the
   capture's note.
+- Prefer existing passwords from
+  [captures/README.md](captures/README.md#passwords).
 - Run Python that reads downloaded or extracted files with `python3 -I`.
 
 ## Docs
