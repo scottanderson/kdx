@@ -59,6 +59,25 @@ Then give the steps, with the frames, ports, and user IDs each one shows,
 and each command of this repository's tools in full. Write the observations
 last.
 
+## Passwords
+
+Use the passwords that the other captures share:
+
+- (empty)
+- `lab-only-pw!1`
+- `lab-peer-pw!1`
+- `lab-tracker-pw!1`
+- `lab-tracker-pw!2`
+
+If a capture needs another password, give it the next number, such as
+`lab-peer-pw!2` or `lab-tracker-pw!3`. A login that should be refused can use
+any wrong password.
+
+Every password a capture uses goes in the list that
+`crates/kdx-dissect/tests/captures.rs` tries on every capture, and in each note
+and test that decodes it. To keep that list short, use only passwords from this
+scheme when possible. The other passwords in the list come from older captures.
+
 ## Index
 
 State lineage names the capture whose server state this one started from.
