@@ -8,11 +8,13 @@
 
 ## Steps
 
-Each step is one `kdx` run as admin (`--login admin`), nick `kdx-rs` unless
-given.
+Each step is one run of `lab/kdx-lab run target/debug/kdx --login admin
+--password 'lab-only-pw!1'` with the step's command, as nick `kdx-rs` unless the
+step gives another.
 
 1. `who`, `chats`, `ls` (the root, which lists `cli-big.bin`).
-2. `kdx-probe 400` (raw 401 File List with a file entry).
+2. `lab/kdx-lab run target/debug/kdx-probe --login admin --password
+   'lab-only-pw!1' 400` (raw 401 File List with a file entry).
 3. `ls 'Uploads [UL]'` (empty).
 4. `get cli-big.bin`: the whole 600000 bytes.
 5. `get cli-big.bin --resume` into a local copy of its first 300000 bytes.

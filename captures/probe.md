@@ -22,6 +22,86 @@ requests, and disconnected. There were 18 connections in all.
    100-byte `probe-ul.bin` with 412 Download File and 415 Upload File. Both
    files were removed from the server afterwards.
 
+## Commands
+
+These commands send the requests in the capture. The requests are synthetic;
+only the server's replies are evidence.
+
+```sh
+# The first eight runs, one per connection, ports 59490 to 50984.
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  605
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  108 113 115 214 505 512
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  202:0000000100000000 207:00000001000000000000000048656c6c6f \
+  209:0000000100000000000005000000000048656c6c6f 218:00000001 152:00000001 \
+  204:00000001
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  152:00000003 400 400:0000 602:00000001 609:0000000100000001 170
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  400:000100000c55706c6f616473205b554c5d \
+  409:000100000c55706c6f616473205b554c5d 605 607:00000001
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  112 118:00000001
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  152:00000001 152:00000002 152:00000004 502:00 502:02 509:61646d696e 512 1106 \
+  802 142
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  152:00000008 152:00000009 140 142 141
+
+# The five attached runs, ports 33068/33082 to 48784/48796. Each logs in,
+# then sends on an attached connection. --wait 1500 matches the 1.5 s
+# between their requests.
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  --attach --wait 1500 \
+  400 \
+  412:000000000000000000000000000000000000000000000000000100000c70726f62652d646c2e62696e \
+  108
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  --attach --wait 1500 \
+  412:000000000000000000000000000000000000000000000000000100000c70726f62652d646c2e62696e
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  --attach --wait 1500 \
+  412:000000000001117000000000000000000000000000000000000100000c70726f62652d646c2e62696e \
+  108
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  --attach --wait 1500 \
+  412:000000000000138800000000000000000000000000000000000100000c70726f62652d646c2e62696e \
+  108
+
+lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' \
+  --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe \
+  --attach --wait 1500 \
+  415:0000000000000064000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110c00000070726f62652d756c2e62696e000100000c55706c6f616473205b554c5d \
+  417:000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f60616263 \
+  417 400:000100000c55706c6f616473205b554c5d
+```
+
 ## Observations
 
 - `kdx-dissect` decodes the admin connections. It can't decode the attached

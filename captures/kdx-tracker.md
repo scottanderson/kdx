@@ -18,7 +18,8 @@ tracker side with `--password 'lab-tracker-pw!1'`.
    ```sh
    KDX_TRACKER_PASSWORD='lab-tracker-pw!1' lab/kdx-lab run \
      target/debug/kdx-tracker --settings lab/run/kdx-tracker/kdx-tracker.stg \
-     --admin-login admin --table <KDXServer.lexe>
+     --admin-login admin \
+     --table vendor/haxial/KDXServer1620-Lnx/extracted/KDXServer1620-Lnx/KDXServer.lexe
    ```
 
 2. Logged in to the server as admin with `kdx-probe` (port 38842, frames
@@ -26,7 +27,12 @@ tracker side with `--password 'lab-tracker-pw!1'`.
    `linux-tracker` frame 20: a tracker entry with Address `127.0.0.1`,
    Login `trk-login`, and Groups `Lab, Lab2` (14; 173 at 15). The server
    sent its registration at once (frame 16, UDP to 10800), and the tracker
-   logged `registered "Lab Server" port 10700`.
+   logged `registered "Lab Server" port 10700`. The command:
+
+   ```sh
+   lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' 172:254b445853535447000100000000007000000068000000d800000048000001200000000000000120000000170000000000000000000001380000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010101010000000000000001000000000000000000000000000000000000000000000000000000000010000000000003000029cc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0000000000000000004c616220536572766572000000000000000000000000000000000000000000000308090900000900000000006c6162636f6d6d656e74733132372e302e302e3174726b2d6c6f67696e4c61622c204c61623200000000000057656c636f6d6520746f20746865206c61622e00
+   ```
+
 3. Browsed the tracker as guest with `kdx-probe --addr 127.0.0.1:10800
    --no-login 700 702:0000070047656e6572616c` (port 36474, frames 21–38):
    700/701 at 30/31, 702/703 for General at 33/34.

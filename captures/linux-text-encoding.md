@@ -32,7 +32,13 @@ Test text: `café ’ — 日本 😀`, 25 bytes in UTF-8.
    208 at 234).
 8. Private message to peer with the test text (300 at 249, 301 at 250).
    Replies: `kdx msg` as `peer-utf8` (user 9, 301 at 274) and `kdx-probe` 300
-   as `peer-mac` (user 10, 301 at 302).
+   as `peer-mac` (user 10, 301 at 302). The two `kdx-probe` commands:
+
+   ```sh
+   lab/kdx-lab run target/debug/kdx-probe --login peer --password 'lab-peer-pw!1' --nick peer-mac 202:0000000100000000 207:0000000100000000000000006d61633a206361668e20d520d1
+   lab/kdx-lab run target/debug/kdx-probe --login peer --password 'lab-peer-pw!1' --nick peer-mac 300:000000020000000000000000000000006d61633a206361668e20d520d1
+   ```
+
 9. News: posted the test text as subject and body (611 at 319, 613 at 322,
    610 at 325).
 10. Settings → Identity: nick `Zoë-日本` (100 at 327, 102 at 330). Quit.

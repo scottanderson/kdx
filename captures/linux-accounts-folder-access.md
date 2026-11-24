@@ -25,7 +25,15 @@ in one pass.
 5. Right-clicked `lab-item`, Delete: 1101 at 70, 1102 at 71.
 6. `kdx-probe` logged in as `peer` with nick `peer-flood` (port 52182, user
    3, frames 76–86) and sent thirty 115 Get My Address, 300 ms apart, from
-   frame 92. The server disconnected it at 178.
+   frame 92. The server disconnected it at 178. The command:
+
+   ```sh
+   lab/kdx-lab run target/debug/kdx-probe --login peer --password 'lab-peer-pw!1' --nick peer-flood \
+     --wait 300 \
+     115 115 115 115 115 115 115 115 115 115 115 115 115 115 115 \
+     115 115 115 115 115 115 115 115 115 115 115 115 115 115 115
+   ```
+
 7. `kdx who` as `peer` with nick `peer-retry` (port 40734, user 4, frames
    188–199) logged in at once and left. Quit the client.
 

@@ -8,7 +8,9 @@
 
 ## Steps
 
-Each step is one `kdx` run as admin unless it names another login.
+Each step is one run of `lab/kdx-lab run target/debug/kdx --login admin
+--password 'lab-only-pw!1'` with the step's command, unless the step names
+another login.
 
 1. `account classes`, `account list`.
 2. `account add rs-test --name 'RS Test' --class 1 --new-password …`, then

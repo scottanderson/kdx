@@ -8,9 +8,11 @@
 
 ## Steps
 
-Each step is one `kdx` run as admin (`--login admin`), nick `kdx-rs`, unless
-it says guest (no login, nick `guest-rs`). A `listen` run sat in Public Chat
-during steps 1–2 (nick `listener`) and 9–12 (nick `listener3`).
+Each step is one run of `lab/kdx-lab run target/debug/kdx --login admin
+--password 'lab-only-pw!1'` with the step's command, as nick `kdx-rs`. A guest
+step runs `lab/kdx-lab run target/debug/kdx --nick guest-rs` instead. A `listen`
+run sat in Public Chat during steps 1–2 (nick `listener`) and 9–12 (nick
+`listener3`).
 
 1. `post 1 'Hello from kdx-rs'` with the body on standard input. This build
    waited for a reply that never came and was killed; the post was stored.

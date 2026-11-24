@@ -15,8 +15,9 @@ the server side with `--password 'lab-only-pw!1'`.
 
 ## Steps
 
-Each step is one `kdx tracker` run against `127.0.0.1` (port 10800 by
-default), as guest unless given.
+Each step is one run of `lab/kdx-lab run target/debug/kdx tracker` with the
+step's command and the address `127.0.0.1` (port 10800 by default), as guest
+unless the step gives a login.
 
 1. `groups` (port 57336, 700/701 at 10/11): eight groups, each with 0
    servers.
@@ -28,7 +29,12 @@ default), as guest unless given.
 6. `kdx-probe --login admin 172:…` to the server (port 53770, 74–85) sent
    the 172 of `linux-tracker` frame 252: name `Lab Server`, a tracker entry
    for `127.0.0.1` with Login `trk-login` and Groups `Lab`. 173 at 85, and
-   the server registered at once (UDP, 86).
+   the server registered at once (UDP, 86). The command:
+
+   ```sh
+   lab/kdx-lab run target/debug/kdx-probe --login admin --password 'lab-only-pw!1' 172:254b445853535447000100000000007000000068000000d800000040000001180000000000000118000000170000000000000000000001300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010101010000000000000001000000000000000000000000000000000000000000000000000000000010000000000003000029cc0000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0000000000000000004c616220536572766572000000000000000000000000000000000000000000000308090900000300000000006c6162636f6d6d656e74733132372e302e302e3174726b2d6c6f67696e4c61620000000057656c636f6d6520746f20746865206c61622e00
+   ```
+
 7. `groups` (53546, 100/101): General has 1 server. `servers General`
    (53556, 114/115): `Lab Server`. `stats --login admin` (53572, 128/129).
 8. `groups --login admin` with a wrong password (53576): proof status 1 at
