@@ -1,10 +1,13 @@
 # Scenario: kdx-cli
 
-- Date: 2026-10-08T23:27Z to 23:31Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: none; the `kdx` CLI (this repository) only, no GUI
-- Server state: the first-connect server (admin / lab-only-pw!1), plus a
-  600000-byte test file `cli-big.bin` in the base folder
+- Date: 2026-10-08T23:29Z to 23:30Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: none
+- Tools: `kdx` and `kdx-probe`
+- Server state: the server from first-connect, with admin / `lab-only-pw!1`,
+  plus a 600000-byte test file `cli-big.bin` in the base folder
+- Decode: `kdx-dissect captures/kdx-cli.pcapng --password 'lab-only-pw!1'`
 
 ## Steps
 

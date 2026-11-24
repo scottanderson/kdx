@@ -53,10 +53,12 @@ lab/kdx-lab down             # stop capture, kill everything in the lab network
 
 In the client, connect to `127.0.0.1` (or `0`). The default port is 10700.
 
-`up` also writes `captures/<scenario>.md`. Fill in its steps and observations,
-because a capture without its GUI steps is hard to interpret later. Use one
-scenario per feature you're exercising, and keep scenarios small. Add a row
-to the [capture index](../captures/README.md) for each new one.
+`up` also writes `captures/<scenario>.md`, with a header of placeholders. Fill
+in the header as the [capture notes](../captures/README.md#notes) describe, then
+the steps and observations, because a capture without its GUI steps is hard to
+interpret later. Use one scenario per feature you're exercising, and keep
+scenarios small. Add a row to the [capture index](../captures/README.md#index)
+for each new one.
 
 Two Linux clients share the lab's loopback, so only the first can listen for DCC
 on TCP 10600. The second logs a harmless error and can still call the first;

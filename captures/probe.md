@@ -1,9 +1,13 @@
 # Scenario: probe
 
-- Date: 2026-10-08T08:35Z to 18:49Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: none; `kdx-probe` (this repository) only, no GUI
-- Server state: the first-connect server (admin / lab-only-pw!1)
+- Date: 2026-10-08T08:35Z to 09:02Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: none
+- Tools: `kdx-probe`. The attached runs used `--attach` a minute before it was
+  committed.
+- Server state: the server from first-connect, with admin / `lab-only-pw!1`
+- Decode: `kdx-dissect captures/probe.pcapng --password 'lab-only-pw!1'`
 
 ## Steps
 

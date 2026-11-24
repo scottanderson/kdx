@@ -1,17 +1,16 @@
 # Scenario: kdx-cli-tracker
 
 - Date: 2026-10-12T20:02Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Tracker: KDXTrackerServ 1.110 Linux (sha256 80dbc5658717a0fe), fresh.
-  First-run console setup with admin login `admin`, password
-  `lab-tracker-pw!1`.
-- Client: none; the `kdx` CLI (this repository) only, and `kdx-probe` for
-  the server settings
-- Server state: fresh (admin / lab-only-pw!1, guest access yes)
-
-Decode the tracker side with
-`kdx-dissect captures/kdx-cli-tracker.pcapng --password 'lab-tracker-pw!1'`, and
-the server side with `--password 'lab-only-pw!1'`.
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Tracker: Tracker 1.110 for Linux, sha256
+  `80dbc5658717a0feb5e765600253240b0fb42eb973e1b847b0dff50a368004fa`, fresh, set
+  up at its console with admin / `lab-tracker-pw!1`
+- Client: none
+- Tools: `kdx` and `kdx-probe`
+- Server state: fresh, with admin / `lab-only-pw!1` and guest access on
+- Decode: `kdx-dissect captures/kdx-cli-tracker.pcapng --password
+  'lab-only-pw!1' --password 'lab-tracker-pw!1'`
 
 ## Steps
 

@@ -1,14 +1,14 @@
 # Scenario: linux-gconsole
 
-- Date: 2026-10-13T07:04Z
-- Server: none. The peer is `kdx-probe --listen`, playing GConsole (`%HGC`
-  0x40) on 127.0.0.1:10900 in the lab namespace.
-- Client: linux 1.620 beta 5
-- Server state: not applicable; the peer accepts `admin` with
-  `lab-only-pw!1`.
-
-Decode it with `kdx-dissect captures/linux-gconsole.pcapng --password
-'lab-only-pw!1'`.
+- Date: 2026-10-13T07:04Z to 07:06Z
+- Server: none; `kdx-probe --listen` plays GConsole (`%HGC` 0x40) on
+  127.0.0.1:10900 in the lab namespace
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx-probe`
+- Server state: none; the peer accepts `admin` with `lab-only-pw!1`
+- Decode: `kdx-dissect captures/linux-gconsole.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

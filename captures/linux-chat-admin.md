@@ -1,10 +1,16 @@
 # Scenario: linux-chat-admin
 
-- Date: 2026-10-09T19:41Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5
-- Server state: the server from linux-first-connect (admin / lab-only-pw!1,
-  guest enabled)
+- Date: 2026-10-09T19:42Z to 19:49Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx`, run as `lab/kdx-lab run target/debug/kdx` with the arguments in
+  the steps
+- Server state: the server from linux-first-connect, with admin /
+  `lab-only-pw!1` and guest access on
+- Decode: `kdx-dissect captures/linux-chat-admin.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

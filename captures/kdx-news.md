@@ -1,10 +1,13 @@
 # Scenario: kdx-news
 
 - Date: 2026-10-08T23:41Z to 23:46Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: none; the `kdx` CLI (this repository) only, no GUI
-- Server state: the first-connect server (admin / lab-only-pw!1, guest
-  enabled), with only the default "Welcome" message in group 1
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: none
+- Tools: `kdx`. Steps 1 to 8 ran an earlier build, as step 9 says.
+- Server state: the server from first-connect, with admin / `lab-only-pw!1`,
+  guest access on, and only the default "Welcome" message in group 1
+- Decode: `kdx-dissect captures/kdx-news.pcapng --password 'lab-only-pw!1'`
 
 ## Steps
 

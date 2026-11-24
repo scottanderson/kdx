@@ -1,14 +1,16 @@
 # Scenario: linux-dcc-voice-failed
 
-- Date: 2026-10-13T09:12Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: two linux 1.620 beta 5: A (`client linux`, DCC listener on TCP 10600)
-  and B (`client linux2`, its own state in `lab/run/client-linux2/`)
-- Server state: existing `lab/run/server/` (admin `lab-only-pw!1`, guest access
-  on, a "Voice Chat" chat)
-
-Decode it with
-`kdx-dissect captures/linux-dcc-voice-failed.pcapng --password 'lab-only-pw!1'`.
+- Date: 2026-10-13T09:16Z to 09:28Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: two copies of Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`: A (`client
+  linux`, DCC listener on TCP 10600) and B (`client linux2`, its own state in
+  `lab/run/client-linux2/`)
+- Server state: the existing `lab/run/server/`, with admin / `lab-only-pw!1`,
+  guest access on, and a "Voice Chat" chat
+- Decode: `kdx-dissect captures/linux-dcc-voice-failed.pcapng --password
+  'lab-only-pw!1'`
 
 The capture follows `.scratch/capture-gaps/issues/07-dcc-voice.md`. The operator
 drove both clients; the steps below are read back from the traffic. The

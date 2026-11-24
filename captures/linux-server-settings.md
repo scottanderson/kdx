@@ -1,12 +1,17 @@
 # Scenario: linux-server-settings
 
-- Date: 2026-10-10T01:20Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5
-- Server state: the server from linux-first-connect (admin / lab-only-pw!1),
-  plus a 2 MB random file `Bases/Default/speed.bin` in the file root
-- Peer: `kdx -l admin --nick cli-peer listen` (port 52888), joined to Public
-  Chat
+- Date: 2026-10-10T01:20Z to 01:38Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx`, run as a peer with `lab/kdx-lab run target/debug/kdx -l admin
+  --nick cli-peer listen` (port 52888) in Public Chat
+- Server state: the server from linux-first-connect, with admin /
+  `lab-only-pw!1`, plus a 2 MB random file `Bases/Default/speed.bin` in the file
+  root
+- Decode: `kdx-dissect captures/linux-server-settings.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

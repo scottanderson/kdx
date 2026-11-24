@@ -1,11 +1,14 @@
 # Scenario: linux-folder-access-guest
 
-- Date: 2026-10-12T06:19Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5
-- Server state: the server from linux-accounts-folder-access (admin /
-  lab-only-pw!1), with folder access items `[Default]`, `DB`, `test`, and
-  `UL`.
+- Date: 2026-10-12T06:19Z to 06:21Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Server state: the server from linux-accounts-folder-access, with admin /
+  `lab-only-pw!1` and folder access items `[Default]`, `DB`, `test`, and `UL`
+- Decode: `kdx-dissect captures/linux-folder-access-guest.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

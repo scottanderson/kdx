@@ -1,16 +1,18 @@
 # Scenario: linux-tracker
 
-- Date: 2026-10-12T07:13Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Tracker: KDXTrackerServ 1.110 Linux, fresh. First-run console setup with
-  admin login `admin`, password `lab-tracker-pw!1`.
-- Client: linux 1.620 beta 5, LANG C.UTF-8
-- Server state: the server from linux-text-encoding (admin /
-  lab-only-pw!1, name `Lab Server`, greeting `Welcome to the lab.`).
-
-Decode everything, the registrations included, with `kdx-dissect
-captures/linux-tracker.pcapng --password 'lab-only-pw!1' --password
-'lab-tracker-pw!1'`.
+- Date: 2026-10-12T07:14Z to 07:36Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Tracker: Tracker 1.110 for Linux, sha256
+  `80dbc5658717a0feb5e765600253240b0fb42eb973e1b847b0dff50a368004fa`, fresh, set
+  up at its console with admin / `lab-tracker-pw!1`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`, with
+  `LANG=C.UTF-8`
+- Server state: the server from linux-text-encoding, with admin /
+  `lab-only-pw!1`, name `Lab Server`, and greeting `Welcome to the lab.`
+- Decode: `kdx-dissect captures/linux-tracker.pcapng --password 'lab-only-pw!1'
+  --password 'lab-tracker-pw!1'`
 
 ## Steps
 

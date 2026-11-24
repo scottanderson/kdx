@@ -1,12 +1,18 @@
 # Scenario: linux-accounts-folder-access
 
-- Date: 2026-10-12T06:06Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5, the `kdx` CLI, and `kdx-probe`
-- Server state: the server from linux-catalog-volumes (admin / lab-only-pw!1),
-  plus account `peer` (class User, password `lab-peer-pw!1`). Class User
-  starts with Flood Protection Average (`3c`). Folder access items
+- Date: 2026-10-12T06:07Z to 06:08Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx` and `kdx-probe`. `kdx` ran as `lab/kdx-lab run target/debug/kdx`
+  with the arguments in the steps.
+- Server state: the server from linux-catalog-volumes, with admin /
+  `lab-only-pw!1`, plus account `peer` (class User, password `lab-peer-pw!1`).
+  Class User starts with Flood Protection Average (`3c`). Folder access items
   `[Default]`, `DB`, `test`, and `UL`.
+- Decode: `kdx-dissect captures/linux-accounts-folder-access.pcapng --password
+  'lab-only-pw!1' --password 'lab-peer-pw!1'`
 
 ## Steps
 

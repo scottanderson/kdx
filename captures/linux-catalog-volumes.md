@@ -1,13 +1,20 @@
 # Scenario: linux-catalog-volumes
 
-- Date: 2026-10-12T03:53Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5, and the `kdx` CLI for the download
-- Server state: the server from linux-server-settings (admin / lab-only-pw!1,
-  server name "Lab Server"), plus `Bases/Default/lab-files/` with `a.txt`
-  and `b.txt` (6 bytes each) and `lab-files/hello.sh` (30 bytes, prints a
-  line), and `speed.bin` (2 MiB) in the base. Administrator starts without See
-  All Volumes (`e8` in byte 2 of its privileges) and with no speed limit.
+- Date: 2026-10-12T03:53Z to 03:58Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx`, run as `lab/kdx-lab run target/debug/kdx` with the arguments in
+  step 9
+- Server state: the server from linux-server-settings, with admin /
+  `lab-only-pw!1` and server name "Lab Server", plus `Bases/Default/lab-files/`
+  with `a.txt` and `b.txt` (6 bytes each) and `lab-files/hello.sh` (30 bytes,
+  prints a line), and `speed.bin` (2 MiB) in the base. Administrator starts
+  without See All Volumes (`e8` in byte 2 of its privileges) and with no speed
+  limit.
+- Decode: `kdx-dissect captures/linux-catalog-volumes.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

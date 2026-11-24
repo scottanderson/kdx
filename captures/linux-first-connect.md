@@ -1,11 +1,16 @@
 # Scenario: linux-first-connect
 
-- Date: 2026-10-09T19:24Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5, first run in the lab
-- Server state: the server from the earlier captures (admin / lab-only-pw!1,
-  guest enabled), with `cli-big.bin` in the root folder and only the Welcome
-  message in General News
+- Date: 2026-10-09T19:30Z to 19:36Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`, on its
+  first run in the lab
+- Server state: the server from the earlier captures, with admin /
+  `lab-only-pw!1`, guest access on, `cli-big.bin` in the root folder, and only
+  the Welcome message in General News
+- Decode: `kdx-dissect captures/linux-first-connect.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 
