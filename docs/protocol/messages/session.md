@@ -345,7 +345,7 @@ frames 22, 25, 119, 122] -->
 `kdx_proto::msg::dcc::Skpk` encodes frames 22 and 25 again byte for byte.
 
 ## <a id="m118"></a>118 (unnamed)
-Initiator: Client. The dispatcher handles it itself. <!-- [S `FUN_0804fdac`; O `captures/probe.pcapng` frame 165] -->
+Initiator: Client. The dispatcher handles it itself. <!-- [S `FUN_0804fdac`] -->
 
 Struct `RegistrationNotice` (4 bytes):<a id="sRegistrationNotice"></a>
 

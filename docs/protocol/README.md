@@ -284,8 +284,9 @@ These rules are for writers. `ci/check-docs.py` enforces most of them.
 
 Each claim has a tag for its evidence, in an HTML comment right after the claim:
 
-- `[O]`: seen in a capture or a lab probe. The lab probes are in
-  `captures/probe.pcapng`; see `captures/probe.md`.
+- `[O]`: seen in a capture. Where this repository's tools send to a Haxial
+  program, as in `captures/probe.pcapng`, only the Haxial program's side is
+  evidence; what the tool sends is synthetic.
 - `[S]`: read in a binary, with the function address when there is one.
 - `[I]`: inferred, from neither of the above directly.
 
@@ -293,7 +294,7 @@ A tag gives its evidence in the order S, I, O, with semicolons between them, as
 in this example:
 
 ```
-<!-- [S `FUN_08085a04`, `FUN_0808584c`; I; O `captures/probe.pcapng` frames 3 to 9] -->
+<!-- [S `FUN_08085a04`, `FUN_0808584c`; I; O `captures/first-connect.pcapng` frames 16 to 21] -->
 ```
 
 The S part names the functions, with commas between them. A binary name (client,

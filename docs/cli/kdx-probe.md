@@ -2,6 +2,7 @@
 
 `kdx-probe` logs in to a server and sends the requests you give it, then dumps
 the replies. It is how undocumented messages are tried against a lab server.
+What it sends is synthetic, so only the server's replies are evidence.
 
 ```sh
 cargo run -p kdx-cli --bin kdx-probe -- --login admin --password secret 142 400:00000000

@@ -16,6 +16,14 @@ coding agents. This file covers the ones a newcomer needs first.
   `.gitignore` covers the first three. Code reads the table at run time.
 - Run the Haxial binaries only through `lab/kdx-lab`, never on the host.
 
+## Captures
+
+Captures are the ground truth for the protocol docs, so only Haxial programs and
+this repository's own tools may be on the wire. Never learn anything from a
+third-party client. What our tools send is synthetic: only the Haxial program's
+replies are evidence, and the tool's code must be merged or be part of the same
+pull request. See [captures/README.md](captures/README.md).
+
 ## Checks
 
 Run these before each commit. Clippy must report no warnings. CI runs the
