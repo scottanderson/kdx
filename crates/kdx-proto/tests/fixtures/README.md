@@ -188,3 +188,14 @@ uninitialized ones included. The `captures` test runs it over every capture
 and checks its findings against `NO_CODEC`, which lists only `no
 codec` types. `tests/round_trip.rs` re-encodes the fixtures' payloads of
 the types that store padding or unknown bytes.
+
+The `cli-*` and `win-*` fixtures come from `captures/cli-*.pcapng` and
+`captures/win-*.pcapng`. Every one of their connections logs in as the
+administrator with the published password `openkdx-lab`, except these:
+
+- `cli-upload-resume-36680` is the transfer connection of
+  `cli-upload-resume-36678`, keyed by that session's [105 Server
+  Info](../../../../docs/protocol/messages/session.md#m105).
+- `cli-disconnect-ban-54332` is a guest, with the empty-password key.
+- `cli-disconnect-ban-54320` is a login with a wrong password: it ends after
+  the server's proof, whose status is 1.

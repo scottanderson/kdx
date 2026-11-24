@@ -329,10 +329,18 @@ Struct `SetAccount` (dynamic):<a id="sSetAccount"></a>
 | 0x00 |  | [`Account`](#sAccount) | `account` | `editor` holds the current login. |
 
 If the login field is different, the server renames the account. If the new
-login already exists, it fails with 0x1000d. The server keeps the creation and
-last-login times, sets the modified time, and replies with [1
-Status](status.md#m1) success 0x1ff (frames 412 and 413). Users who are logged
-in to the account get the new login and privileges at once.
+login already exists, it fails with 0x1000d. [510 Account Info](#m510) returns
+`admin` in `editor` before and after a 511 sent by `admin`. <!-- [O
+`captures/cli-accounts-classes.pcapng` frames 25, 27, 31] --> If that is the
+*last editor*, a client that sends a 510 record back unchanged asks for a rename
+to that editor's login, and gets 0x1000d when it exists. <!-- [I] --> The server
+keeps the creation and last-login times, sets the modified time, and replies
+with [1 Status](status.md#m1) success 0x1ff (frames 412 and 413). Users who are
+logged in to the account get the new login and privileges at once.
+
+An account record that is not padded to a multiple of 4 in [507 Create
+Account](#m507) or 511 probably gets [1 Status](status.md#m1) 0x1000a, corrupt
+data. <!-- [I] -->
 
 These are the errors:
 
