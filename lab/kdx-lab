@@ -39,7 +39,8 @@ usage: kdx-lab <command> [args]
   server [-d]         run KDX Server 1.620 (Linux); -d detaches (needs first-run setup done)
   server win [-d]     run KDX Server 1.600 (Windows) under Wine; -d detaches
   tracker [-d]        run KDX Tracker 1.110 (Linux); -d detaches
-  client [win|linux]  run KDX Client 1.600 under Wine (default) or Client 1.620 beta 5 (Linux)
+  client [linux]      run KDX Client 1.620 beta 5 (Linux)
+  client win          run KDX Client 1.600 under Wine
   client linux2       run a second Client 1.620 beta 5 with its own state, e.g. for DCC
   shell               open a shell inside the lab network (for nc, tshark, ip, ...)
   run <cmd...>        run a trusted host command inside the lab network (e.g. a Rust probe)
@@ -251,7 +252,7 @@ cmd_tracker() { run_console tracker "$TRACKER_BIN" "$@"; }
 
 cmd_client() {
   require_up
-  local kind="${1:-win}" x11
+  local kind="${1:-linux}" x11
   case "$kind" in
     win) wine_app "$RUN/client-win" "$CLIENT_WIN_DIR" KDXClient.exe ;;
     linux|linux2)
@@ -259,7 +260,7 @@ cmd_client() {
       install_bin "$CLIENT_LNX_BIN" "$RUN/client-$kind"
       sandbox "$RUN/client-$kind" "${x11[@]}" -- ./KDXClient.lexe
       ;;
-    *) die "client kind must be win, linux, or linux2" ;;
+    *) die "client kind must be linux, linux2, or win" ;;
   esac
 }
 
