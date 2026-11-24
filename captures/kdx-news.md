@@ -1,16 +1,21 @@
 # Scenario: kdx-news
 
 - Date: 2026-10-08T23:41Z to 23:46Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: none; the `kdx` CLI (this repository) only, no GUI
-- Server state: the first-connect server (admin / lab-only-pw!1, guest
-  enabled), with only the default "Welcome" message in group 1
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: none
+- Tools: `kdx`. Steps 1 to 8 ran an earlier build, as step 9 says.
+- Server state: the server from first-connect, with admin / `lab-only-pw!1`,
+  guest access on, and only the default "Welcome" message in group 1
+- Decode: `kdx-dissect captures/kdx-news.pcapng --password 'lab-only-pw!1'`
 
 ## Steps
 
-Each step is one `kdx` run as admin (`--login admin`), nick `kdx-rs`, unless
-it says guest (no login, nick `guest-rs`). A `listen` run sat in Public Chat
-during steps 1–2 (nick `listener`) and 9–12 (nick `listener3`).
+Each step is one run of `lab/kdx-lab run target/debug/kdx --login admin
+--password 'lab-only-pw!1'` with the step's command, as nick `kdx-rs`. A guest
+step runs `lab/kdx-lab run target/debug/kdx --nick guest-rs` instead. A `listen`
+run sat in Public Chat during steps 1–2 (nick `listener`) and 9–12 (nick
+`listener3`).
 
 1. `post 1 'Hello from kdx-rs'` with the body on standard input. This build
    waited for a reply that never came and was killed; the post was stored.

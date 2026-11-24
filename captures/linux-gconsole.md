@@ -1,14 +1,14 @@
 # Scenario: linux-gconsole
 
-- Date: 2026-10-13T07:04Z
-- Server: none. The peer is `kdx-probe --listen`, playing GConsole (`%HGC`
-  0x40) on 127.0.0.1:10900 in the lab namespace.
-- Client: linux 1.620 beta 5
-- Server state: not applicable; the peer accepts `admin` with
-  `lab-only-pw!1`.
-
-Decode it with `kdx-dissect captures/linux-gconsole.pcapng --password
-'lab-only-pw!1'`.
+- Date: 2026-10-13T07:04Z to 07:06Z
+- Server: none; `kdx-probe --listen` plays GConsole (`%HGC` 0x40) on
+  127.0.0.1:10900 in the lab namespace
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx-probe`
+- Server state: none; the peer accepts `admin` with `lab-only-pw!1`
+- Decode: `kdx-dissect captures/linux-gconsole.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 
@@ -21,8 +21,11 @@ drove the client with `xdotool`; the GConsole window's content starts at
 
    ```sh
    lab/kdx-lab run target/debug/kdx-probe --listen 127.0.0.1:10900 \
-     --password 'lab-only-pw!1' --table <Client 1.620 beta 5 KDXClient.lexe> \
-     --wait 1000 4000:<hex> 4001:<hex>
+     --password 'lab-only-pw!1' \
+     --table vendor/haxial/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClient.lexe \
+     --wait 1000 \
+     4000:020001800033669900000000000000000000000000000000 \
+     4001:0080001400000000020001800000000000010008000001001900001000010000001000100050005000ff000019000010000100010060001000a0005000ff0000190000100001000200b0001000f0005000ff00001940001400010001011000100150005000ff0000000000ff1b00000c0001000001700030000000ff198000100001000000100060005000a000ffffff19800010000100010060006000a000a000ffffff198000100001000300b0006000f000a000ffffff1ac00018000100000000ff0000000000011000a001300060015000a019c0000c000100000180008000ffff001a00001000010002001000b001f000b00000ff001a40002100010000001000c001f000d800000000000000006b696e642031303520746578740000001a80002100010000001000e001f000f800000000000000006b696e642031303620746578740000001b40001000010000001001100010001000400040008000140100011001400150000000000002000800000100190000100002000100000000004000400000ff00010000060002018001200000008000140080011000c001500000000000030008000001001900001000030001000000000040004000ff000000c0000200030000
    ```
 
 2. `kdx-lab client linux`. Connect, Type GConsole, Address `127.0.0.1`,

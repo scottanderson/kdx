@@ -24,6 +24,8 @@ CLIENT_LNX_BIN="$VENDOR/KDXClient-Lnx-beta5/extracted/KDXClientBETA5-Lnx/KDXClie
 HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
 
+sha() { sha256sum "$1" 2>/dev/null | cut -c1-64; }
+
 die() { echo "kdx-lab: $*" >&2; exit 1; }
 
 usage() {
@@ -138,12 +140,18 @@ cmd_up() {
   [[ -e "$notes" ]] || cat > "$notes" <<EOF
 # Scenario: $scenario
 
-- Date: $(date -u +%Y-%m-%dT%H:%MZ)
-- Server: KDXServer 1.620 Linux (sha256 $(sha256sum "$SERVER_BIN" 2>/dev/null | cut -c1-16))
-- Client: <win 1.600 | linux 1.620 beta 5>
-- Server state: <fresh | describe accounts/settings>
+- Date: <the minutes of the first and last frames; ci/check-docs.py gives them>
+- Server: <Server 1.620 for Linux, sha256 \`$(sha "$SERVER_BIN")\`
+  | Server 1.600 for Windows, sha256 \`$(sha "$SERVER_WIN_DIR/KDXServer.exe")\`>
+- Tracker: <Tracker 1.110 for Linux, sha256 \`$(sha "$TRACKER_BIN")\`, or delete this line>
+- Client: <Client 1.620 beta 5 for Linux, sha256 \`$(sha "$CLIENT_LNX_BIN")\`
+  | Client 1.600 for Windows, sha256 \`$(sha "$CLIENT_WIN_DIR/KDXClient.exe")\` | none>
+- Tools: <each of this repository's tools on the wire, or delete this line>
+- Server state: <fresh | the server from <capture>>, with <each login and password>
+- Decode: \`kdx-dissect captures/$scenario.pcapng --password '<each password>'\`
 
 ## Steps
+
 1.
 
 ## Observations

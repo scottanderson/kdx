@@ -1,10 +1,16 @@
 # Scenario: win-view-display
 
-- Date: 2026-10-13T03:23Z
-- Server: KDXServer 1.600 Windows under Wine (sha256 bc121d47c7f5e408)
-- Client: linux 1.620 beta 5, plus the `kdx` CLI for the checks in step 2
-- Server state: fresh; first-run dialog filled in with admin / lab-only-pw!1,
-  guest access allowed
+- Date: 2026-10-13T03:23Z to 03:27Z
+- Server: Server 1.600 for Windows, sha256
+  `bc121d47c7f5e408cd5cffbbfaa4bf087b52e59dafa7ba01b8552464dc33ba58`, under Wine
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx`, run as `lab/kdx-lab run target/debug/kdx` with the arguments in
+  step 2
+- Server state: fresh, set up in the first-run dialog with admin /
+  `lab-only-pw!1` and guest access allowed
+- Decode: `kdx-dissect captures/win-view-display.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

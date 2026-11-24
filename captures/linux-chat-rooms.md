@@ -1,12 +1,17 @@
 # Scenario: linux-chat-rooms
 
-- Date: 2026-10-10T05:05Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5
-- Server state: the server from linux-server-settings (admin /
-  lab-only-pw!1, server name "Lab Server", greeting enabled)
-- Peers: `kdx -l admin listen` as `cli-peer` in Public Chat (port 39318) and
-  `cli-member` in `lab-chat` (port 55916)
+- Date: 2026-10-10T05:05Z to 05:09Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`
+- Tools: `kdx`, run as two peers with `lab/kdx-lab run target/debug/kdx -l admin
+  listen`: `cli-peer` in Public Chat (port 39318) and `cli-member` in `lab-chat`
+  (port 55916)
+- Server state: the server from linux-server-settings, with admin /
+  `lab-only-pw!1`, server name "Lab Server", and the greeting on
+- Decode: `kdx-dissect captures/linux-chat-rooms.pcapng --password
+  'lab-only-pw!1'`
 
 ## Steps
 

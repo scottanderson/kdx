@@ -179,6 +179,24 @@ dynamically linked against `libstdc++.so.5`, and store UI text as Pascal
 (length-prefixed) strings. The server's default port appears to be 10700
 (`setport 10700` usage text).
 
+## Lab binaries
+
+`lab/kdx-lab` runs these files from the archives above. A capture note names
+each Haxial program on the wire by its program name and the sha256 of its file
+here, and `ci/check-docs.py` checks both against this table.
+
+| Program | Archive | File | SHA-256 |
+|---|---|---|---|
+| Server 1.620 for Linux | KDXServer1620-Lnx | `KDXServer1620-Lnx/KDXServer.lexe` | ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943 |
+| Server 1.600 for Linux | old/KDXServer1600-Lnx | `KDXServer1600-Lnx/KDXServer.lexe` | f57467a724087a578d940511d3a5642119fb5cac3fd82354c4ee5f9d76f3075e |
+| Server 1.600 for Windows | KDXServer1600-Win | `KDXServer1600-Win/KDXServer.exe` | bc121d47c7f5e408cd5cffbbfaa4bf087b52e59dafa7ba01b8552464dc33ba58 |
+| Client 1.600 for Windows | KDXClient1600-Win | `KDXClient1600-Win/KDXClient.exe` | 99d4a8f45c61fca1ee5753028de28479e040f43a08c507ccfcc23be92c20b983 |
+| Client 1.620 beta 5 for Linux | KDXClient-Lnx-beta5 | `KDXClientBETA5-Lnx/KDXClient.lexe` | e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961 |
+| Tracker 1.110 for Linux | KDXTrackerServ1110-Lnx | `KDXTrackerServ1110-Lnx/KDXTrackerServ.lexe` | 80dbc5658717a0feb5e765600253240b0fb42eb973e1b847b0dff50a368004fa |
+
+The Archive column leaves out the extension so that `vendor/fetch` does not
+read these rows. Each file is under `vendor/haxial/<archive>/extracted/`.
+
 ## refs/
 
 - `hlwiki-KDX_Protocol.html` (local snapshot only, not committed because its

@@ -1,14 +1,20 @@
 # Scenario: linux-text-encoding
 
-- Date: 2026-10-12T06:25Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: linux 1.620 beta 5, LANG C.UTF-8
-- Server state: the server from linux-accounts-folder-access (admin /
-  lab-only-pw!1, peer / lab-peer-pw!1). `Bases/Default/lab-utf8/` holds
-  `caf\xc3\xa9.txt` (UTF-8 é), `caf\x8e.txt` and `it\xd5s.txt` (Mac Roman é
-  and ’), `\xe6\x97\xa5\xe6\x9c\xac.txt` (日本), and
-  `emoji-\xf0\x9f\x98\x80.txt` (😀). The client's folder holds
-  `na\xc3\xafve-\xc3\xbc.txt` (naïve-ü).
+- Date: 2026-10-12T06:25Z to 06:38Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`, with
+  `LANG=C.UTF-8`
+- Tools: `kdx` and `kdx-probe`. `kdx` ran as `lab/kdx-lab run target/debug/kdx`
+  with the arguments in the steps.
+- Server state: the server from linux-accounts-folder-access, with admin /
+  `lab-only-pw!1` and peer / `lab-peer-pw!1`. `Bases/Default/lab-utf8/` holds
+  `caf\xc3\xa9.txt` (UTF-8 é), `caf\x8e.txt` and `it\xd5s.txt` (Mac Roman é and
+  ’), `\xe6\x97\xa5\xe6\x9c\xac.txt` (日本), and `emoji-\xf0\x9f\x98\x80.txt` (😀).
+  The client's folder holds `na\xc3\xafve-\xc3\xbc.txt` (naïve-ü).
+- Decode: `kdx-dissect captures/linux-text-encoding.pcapng --password
+  'lab-only-pw!1' --password 'lab-peer-pw!1'`
 
 Test text: `café ’ — 日本 😀`, 25 bytes in UTF-8.
 
@@ -32,7 +38,13 @@ Test text: `café ’ — 日本 😀`, 25 bytes in UTF-8.
    208 at 234).
 8. Private message to peer with the test text (300 at 249, 301 at 250).
    Replies: `kdx msg` as `peer-utf8` (user 9, 301 at 274) and `kdx-probe` 300
-   as `peer-mac` (user 10, 301 at 302).
+   as `peer-mac` (user 10, 301 at 302). The two `kdx-probe` commands:
+
+   ```sh
+   lab/kdx-lab run target/debug/kdx-probe --login peer --password 'lab-peer-pw!1' --nick peer-mac 202:0000000100000000 207:0000000100000000000000006d61633a206361668e20d520d1
+   lab/kdx-lab run target/debug/kdx-probe --login peer --password 'lab-peer-pw!1' --nick peer-mac 300:000000020000000000000000000000006d61633a206361668e20d520d1
+   ```
+
 9. News: posted the test text as subject and body (611 at 319, 613 at 322,
    610 at 325).
 10. Settings → Identity: nick `Zoë-日本` (100 at 327, 102 at 330). Quit.

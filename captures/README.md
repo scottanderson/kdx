@@ -10,9 +10,58 @@ Haxial program's replies are evidence. Build the tool from this repository as it
 stands when you record the capture, with only code that is merged here or part
 of the same pull request, and give each command in full in the note.
 
-Each capture is a pcapng file with a log of the same name that lists the steps
-performed. State lineage names the capture whose server state this one
-started from; see [the lab](../lab/README.md) for how they are recorded.
+Each capture is a pcapng file with a note of the same name that lists the steps
+performed. See [the lab](../lab/README.md) for how they are recorded.
+
+## Notes
+
+Each note starts with a header that `ci/check-docs.py` checks. `lab/kdx-lab up`
+writes it with placeholders. Give the fields in this order:
+
+- **Date:** the UTC minutes of the first and last frames, such as
+  `2026-10-08T07:17Z to 07:19Z`. Give the date again if the capture runs past
+  midnight, and give one time if both frames fall in the same minute.
+- **Server**, **Tracker**, and **Client:** each Haxial program on the wire,
+  named as in the Lab binaries table of
+  [`vendor/MANIFEST.md`](../vendor/MANIFEST.md), with the full sha256 of its
+  file. Write `none` if no such program is on the wire, or name this
+  repository's tool that plays the part. Leave Tracker out if no tracker is
+  on the wire.
+- **Tools:** each of this repository's tools on the wire. Leave it out if no
+  tool is on the wire. The note shows each command in full, as
+  `lab/kdx-lab run target/debug/kdx-probe …`, here or in the steps.
+- **Server state:** the state the server started from, with each login and
+  password.
+- **Decode:** the `kdx-dissect` command that decodes the capture, with each
+  password it needs.
+
+For example:
+
+```markdown
+# Scenario: linux-tracker
+
+- Date: 2026-10-12T07:14Z to 07:36Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Tracker: Tracker 1.110 for Linux, sha256
+  `80dbc5658717a0feb5e765600253240b0fb42eb973e1b847b0dff50a368004fa`, fresh, set
+  up at its console with admin / `lab-tracker-pw!1`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`, with
+  `LANG=C.UTF-8`
+- Server state: the server from linux-text-encoding, with admin /
+  `lab-only-pw!1`, name `Lab Server`, and greeting `Welcome to the lab.`
+- Decode: `kdx-dissect captures/linux-tracker.pcapng --password
+  'lab-only-pw!1' --password 'lab-tracker-pw!1'`
+```
+
+Then give the steps, with the frames, ports, and user IDs each one shows,
+and each command of this repository's tools in full. Write the observations
+last.
+
+## Index
+
+State lineage names the capture whose server state this one started from.
 
 | File | Scenario | Purpose | State lineage |
 |---|---|---|---|

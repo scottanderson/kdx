@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 SKIP = ("vendor/", "target/", "re/out/", "re/projects/", ".git/")
 ID = re.compile(r'<a id="([^"]+)"></a>')
@@ -582,6 +583,146 @@ def check_message_sections(structs):
                     errors.append(f"{path}:{ln}: layout table is not in the struct shape")
 
 
+FIELDS = ("Date", "Server", "Tracker", "Client", "Tools", "Server state", "Decode")
+REQUIRED = ("Date", "Server", "Client", "Server state", "Decode")
+TOOL_NAME = r"kdx|kdx-probe|kdx-tracker|kdx-daemon"
+TOOL = rf"(?:{TOOL_NAME})[` ]"
+SHA256 = re.compile(r"sha256 `([0-9a-f]*)`")
+PASSWORD = r"(?: --password '[^']+')*"
+
+
+def lab_binaries():
+    # The Lab binaries table in vendor/MANIFEST.md: program by sha256.
+    found = {}
+    for line in open("vendor/MANIFEST.md", encoding="utf-8"):
+        row = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(row) == 4 and re.fullmatch(r"[0-9a-f]{64}", row[3]):
+            found[row[3]] = row[0]
+    return found
+
+
+def pcapng_minutes(path):
+    # The UTC minutes of the first and last packets, as the Date field writes them.
+    data = open(path, "rb").read()
+    order, pos, scale, stamps = "little", 0, [], []
+    while pos + 12 <= len(data):
+        if data[pos:pos + 4] == b"\x0a\x0d\x0d\x0a":
+            # A section header sets the byte order and starts a new interface list.
+            order = "little" if data[pos + 8:pos + 12] == b"\x4d\x3c\x2b\x1a" else "big"
+            scale = []
+        kind = int.from_bytes(data[pos:pos + 4], order)
+        size = int.from_bytes(data[pos + 4:pos + 8], order)
+        body = data[pos + 8:pos + size - 4]
+        if kind == 1:
+            resol, opt = 6, 8
+            while opt + 4 <= len(body):
+                code = int.from_bytes(body[opt:opt + 2], order)
+                length = int.from_bytes(body[opt + 2:opt + 4], order)
+                if code == 0:
+                    break
+                if code == 9:
+                    resol = body[opt + 4]
+                opt += 4 + (length + 3) // 4 * 4
+            scale.append(2 ** (resol & 0x7F) if resol & 0x80 else 10 ** resol)
+        elif kind == 6:
+            iface = int.from_bytes(body[0:4], order)
+            ts = int.from_bytes(body[4:8], order) << 32 | int.from_bytes(body[8:12], order)
+            stamps.append(ts // scale[iface])
+        pos += size
+    return [time.strftime("%Y-%m-%dT%H:%MZ", time.gmtime(s)) for s in (min(stamps), max(stamps))]
+
+
+def note_fields(path, lines):
+    # The header list after the title: one field per item, continuation lines joined.
+    fields = []
+    for n, line in enumerate(lines[2:], 3):
+        if not line.strip():
+            break
+        if line.startswith("- "):
+            key, sep, value = line[2:].partition(": ")
+            fields.append([n, key if sep else line[2:], value])
+        elif line.startswith("  ") and fields:
+            fields[-1][2] += " " + line.strip()
+        else:
+            errors.append(f"{path}:{n}: the header is a list of fields")
+            break
+    return fields
+
+
+def check_program(path, n, key, value, binaries):
+    # A Haxial program by its name and full sha256, a tool of this repository, or none.
+    if value == "none" or value.startswith("none; ") or re.match("`" + TOOL, value):
+        return
+    if not SHA256.search(value):
+        errors.append(f"{path}:{n}: give the {key}'s program and sha256 from vendor/MANIFEST.md, or none")
+    start = 0
+    for m in SHA256.finditer(value):
+        program = binaries.get(m.group(1))
+        if program is None:
+            errors.append(f"{path}:{n}: sha256 {m.group(1)} is not in the Lab binaries of vendor/MANIFEST.md")
+        elif program + ", sha256 " not in value[start:m.end()]:
+            errors.append(f"{path}:{n}: name sha256 {m.group(1)[:16]}… as \"{program}, sha256\"")
+        start = m.end()
+
+
+def check_captures():
+    # Each capture has a note whose header follows captures/README.md.
+    binaries = lab_binaries()
+    names = {os.path.basename(p)[:-7] for p in glob.glob("captures/*.pcapng")}
+    notes = {os.path.basename(p)[:-3] for p in glob.glob("captures/*.md")} - {"README"}
+    for name in sorted(names ^ notes):
+        errors.append(f"captures/{name}: a capture needs both a .pcapng and a .md")
+    for name in sorted(names & notes):
+        path = f"captures/{name}.md"
+        lines = open(path, encoding="utf-8").read().splitlines()
+        if lines[:2] != [f"# Scenario: {name}", ""]:
+            errors.append(f"{path}:1: start with \"# Scenario: {name}\" and a blank line")
+            continue
+        fields = note_fields(path, lines)
+        keys = [key for _, key, _ in fields]
+        for n, key, _ in fields:
+            if key not in FIELDS:
+                errors.append(f"{path}:{n}: unknown header field {key!r}; use {', '.join(FIELDS)}")
+        if [k for k in FIELDS if k in keys] != [k for k in keys if k in FIELDS] or len(set(keys)) != len(keys):
+            errors.append(f"{path}:3: give each header field once, in the order {', '.join(FIELDS)}")
+        for key in REQUIRED:
+            if key not in keys:
+                errors.append(f"{path}:3: the header has no {key} field")
+        value = {key: (n, v) for n, key, v in fields}
+        for n, key, v in fields:
+            if re.search(r"<[^>]*>", v):
+                errors.append(f"{path}:{n}: fill in the placeholder in {key}")
+        body = "\n".join(lines)
+        for m in re.finditer(r"sha256 \(?(`?)([0-9a-f]+)", re.sub(r"\s*\n\s*", " ", body)):
+            if not m.group(1) or len(m.group(2)) != 64:
+                errors.append(f"{path}: write sha256 {m.group(2)} in full, as sha256 `<64 hex digits>`")
+        if "Date" in value:
+            n, date = value["Date"]
+            first, last = pcapng_minutes(f"captures/{name}.pcapng")
+            want = first if first == last else f"{first} to {last if last[:11] != first[:11] else last[11:]}"
+            if date != want:
+                errors.append(f"{path}:{n}: the first and last frames give \"Date: {want}\"")
+        for key in ("Server", "Tracker", "Client"):
+            if key in value:
+                n, program = value[key]
+                check_program(path, n, key, program, binaries)
+        if re.search(r"`(?:target/debug/)?" + TOOL, body) and "Tools" not in value:
+            errors.append(f"{path}:3: the note uses this repository's tools, so give the Tools field")
+        if "Tools" in value:
+            n, tools = value["Tools"]
+            named = re.match(rf"`(?:{TOOL_NAME})`(?:(?:,| and) `(?:{TOOL_NAME})`)*", tools)
+            if not named:
+                errors.append(f"{path}:{n}: start Tools with the tools, such as `kdx` and `kdx-probe`")
+            commands = re.sub(r"\s*\\\n\s*|\s+", " ", "\n".join(lines))
+            for tool in re.findall(r"`([\w-]+)`", named.group(0) if named else ""):
+                if not re.search(rf"lab/kdx-lab run target/debug/{tool}[ `]", commands):
+                    errors.append(f"{path}:{n}: show how `{tool}` ran, as `lab/kdx-lab run target/debug/{tool} …`")
+        if "Decode" in value:
+            n, decode = value["Decode"]
+            if not re.fullmatch(rf"`kdx-dissect captures/{re.escape(name)}\.pcapng{PASSWORD}`", decode):
+                errors.append(f"{path}:{n}: write \"Decode: `kdx-dissect captures/{name}.pcapng --password '…'`\"")
+
+
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), ".."))
     check_links()
@@ -595,6 +736,7 @@ def main():
     check_tags()
     check_open_questions()
     check_message_sections(check_structs())
+    check_captures()
     for error in errors:
         print(error)
     if errors:

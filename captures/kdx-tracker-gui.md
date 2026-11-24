@@ -1,15 +1,18 @@
 # Scenario: kdx-tracker-gui
 
-- Date: 2026-10-13T03:03Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23), state from
-  `kdx-cli-tracker`: name `Lab Server`, a tracker entry for `127.0.0.1`
-  with Login `trk-login` and Groups `Lab`.
-- Tracker: `kdx-tracker` from this repository, run in the lab network with
-  `lab/kdx-lab run`, settings from `kdx-tracker`, admin / `lab-tracker-pw!1`.
-- Client: linux 1.620 beta 5, driven by hand.
-
-Decode the tracker side with
-`kdx-dissect captures/kdx-tracker-gui.pcapng --password 'lab-tracker-pw!1'`.
+- Date: 2026-10-13T03:04Z to 03:06Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Tracker: `kdx-tracker`, run with `lab/kdx-lab run`, with the settings from
+  kdx-tracker and admin / `lab-tracker-pw!1`
+- Client: Client 1.620 beta 5 for Linux, sha256
+  `e7189c55b67a89f35edfdf09570a1d55a096b198579b8633f3adfa50f9d13961`, driven by
+  hand
+- Tools: `kdx-tracker`
+- Server state: the server from kdx-cli-tracker, with name `Lab Server` and a
+  tracker entry for `127.0.0.1` with Login `trk-login` and Groups `Lab`
+- Decode: `kdx-dissect captures/kdx-tracker-gui.pcapng --password
+  'lab-tracker-pw!1'`
 
 ## Steps
 

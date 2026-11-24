@@ -1,14 +1,20 @@
 # Scenario: kdx-accounts
 
-- Date: 2026-10-08T23:53Z to 2026-10-09T00:00Z
-- Server: KDXServer 1.620 Linux (sha256 ad6fba4bdd01dc23)
-- Client: none; the `kdx` CLI (this repository) only, no GUI
-- Server state: the first-connect server (admin / lab-only-pw!1, guest
-  enabled), with only the `admin` and `guest` accounts
+- Date: 2026-10-08T23:54Z to 2026-10-09T00:00Z
+- Server: Server 1.620 for Linux, sha256
+  `ad6fba4bdd01dc237abde2b76054e3bbbb43c6d0c79a28d4e0de3b23e546f943`
+- Client: none
+- Tools: `kdx`. Step 2 ran an earlier build, as the step says.
+- Server state: the server from first-connect, with admin / `lab-only-pw!1`,
+  guest access on, and only the `admin` and `guest` accounts
+- Decode: `kdx-dissect captures/kdx-accounts.pcapng --password 'lab-only-pw!1'
+  --password 'rs-test-pw' --password 'rs-test-pw2' --password 'rs-test-pw3'`
 
 ## Steps
 
-Each step is one `kdx` run as admin unless it names another login.
+Each step is one run of `lab/kdx-lab run target/debug/kdx --login admin
+--password 'lab-only-pw!1'` with the step's command, unless the step names
+another login.
 
 1. `account classes`, `account list`.
 2. `account add rs-test --name 'RS Test' --class 1 --new-password …`, then
