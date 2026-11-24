@@ -15,6 +15,27 @@ The handshake needs Haxial's challenge tables, which are not distributed with
 this crate; see [challenge
 tables](https://github.com/scottanderson/kdx/blob/main/docs/setup/challenge-tables.md).
 
+## Testing against the mock
+
+The `mock` feature adds `kdx_client::mock`, an in-process server for tests.
+It runs the real handshake and framing from `kdx-codec` over a script of
+steps: expect a message type from the client, reply to it, push a message,
+stream or consume transfer data, close. Both sides use
+`ChallengeTable::default()`, so no Haxial table is needed. The mock records
+what the client sent and `finish()` panics if the client broke the script.
+
+```toml
+[dev-dependencies]
+kdx-client = { version = "0.1", features = ["mock"] }
+```
+
+`Client::next_notice()` decodes the messages a server pushes ([208 Receive
+Chat Text](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/chat.md#m208),
+[301 Incoming Private Message](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/private-messages.md#m301),
+[151 Disconnect Message](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/administration.md#m151),
+...) into the `Notice` enum; a type it does not know comes through as
+`Notice::Other`.
+
 See the [message
 index](https://github.com/scottanderson/kdx/blob/main/docs/protocol/messages/README.md)
 for the messages, and [docs.rs](https://docs.rs/kdx-client) for the API.

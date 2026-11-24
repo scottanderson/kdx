@@ -22,8 +22,13 @@ futures-util = { version = "0.3.34", features = ["sink"] }
 tokio = { version = "1.53.2", features = ["io-util", "net"] }
 tokio-util = { version = "0.7.20", features = ["codec"] }
 
+[features]
+# A scripted in-process server for testing clients; see `kdx_client::mock`.
+mock = ["tokio/macros", "tokio/rt", "tokio/sync", "tokio/time"]
+
 [dev-dependencies]
-tokio = { version = "1.53.2", features = ["io-util", "macros", "net", "rt"] }
+kdx-client = { path = ".", features = ["mock"] }
+tokio = { version = "1.53.2", features = ["io-util", "macros", "net", "rt", "sync", "time"] }
 
 [lints]
 workspace = true
