@@ -1,5 +1,15 @@
 # Captures
 
+Captures are the ground truth for the
+[protocol docs](../docs/protocol/README.md): they show what the Haxial programs
+really do. Only Haxial programs and this repository's own tools may be on the
+wire. Never learn anything from a third-party client.
+
+What this repository's tools send to a Haxial program is synthetic, so only the
+Haxial program's replies are evidence. Build the tool from this repository as it
+stands when you record the capture, with only code that is merged here or part
+of the same pull request, and give each command in full in the note.
+
 Each capture is a pcapng file with a log of the same name that lists the steps
 performed. State lineage names the capture whose server state this one
 started from; see [the lab](../lab/README.md) for how they are recorded.

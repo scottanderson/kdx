@@ -35,6 +35,12 @@ Put details in those files. Keep this file to rules.
   other commands.
 - Agents may drive the GUI clients with `xdotool`, except for the license
   agreement. Record each capture's steps in `captures/<scenario>.md`.
+- Put only Haxial programs and this repository's own tools on the wire. Never
+  learn anything from a third-party client.
+- Treat what our tools send as synthetic: only the Haxial program's replies are
+  evidence. Build them from the repository as it stands, with only code that
+  is merged or in the same pull request, and give each command in full in the
+  capture's note.
 - Run Python that reads downloaded or extracted files with `python3 -I`.
 
 ## Docs
