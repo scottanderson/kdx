@@ -79,7 +79,7 @@ Struct `FileListEntry` (dynamic):<a id="sFileListEntry"></a>
 | 0x36 | 1 | `u8` | `kind_len` |  |
 | 0x37 | 1 | `u8` | `ignored_37` |  |
 | 0x38 | `name_len` | `str` | `name` |  |
-|  | `kind_len` | `str` | `kind` | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). |
+|  | `kind_len` | `str` | `kind` | Empty for folders. `exttype/bin` for a `.bin` file, as in [413 Download File (R)](#m413). Also empty for a `.txt` file whose [413 Download File (R)](#m413) says `text/plain`. <!-- [O `captures/win-files-basic.pcapng` frames 16, 28] --> So the server probably has a type table, and does not always fill this field. <!-- [I] --> |
 |  | pad4 | `u8[]` | `padding` | Uninitialized. <!-- [O] --> |
 
 In `captures/kdx-cli.pcapng`, a 600000-byte `cli-big.bin` is listed with size
@@ -406,7 +406,7 @@ Struct `UploadReply` (24 bytes):<a id="sUploadReply"></a>
 
 | Off | Size | Type | Field | Notes |
 |---|---|---|---|---|
-| 0x00 | 8 | `u64` | `data_offset` | From a partial upload. The server resumes at this value, rounded down to a multiple of 0x1000. |
+| 0x00 | 8 | `u64` | `data_offset` | From a partial upload: the size of the partial on disk, which the server resumes from. The partial is kept as `<name>.prt` in the folder, where [401 File List](#m401) shows it. A client that stopped after sending 150000 bytes, as its note's steps say, left a `.prt` of 131072 bytes, and the next 416 gave 0x20000. <!-- [O `captures/cli-upload-resume.pcapng` frames 61, 88] --> The offset is not the 150000 bytes sent, nor those rounded down to a multiple of 0x1000, which would be 0x24000. The server probably writes the partial in large chunks. <!-- [I] --> |
 | 0x08 | 8 | `u64` | `rsrc_offset` | Always all ones. Resource forks do not resume. |
 | 0x10 | 8 | `u8[8]` | `ignored` | 0 as sent. |
 
