@@ -4,6 +4,7 @@ members = [
     "crates/kdx-proto",
     "crates/kdx-codec",
     "crates/kdx-client",
+    "crates/kdx-legacy",
     "crates/kdx-cli",
     "crates/kdx-server",
     "crates/kdx-daemon",
@@ -30,6 +31,7 @@ missing_const_for_fn = "warn"
 kdx-proto = { path = "crates/kdx-proto", version = "0.1.0" }
 kdx-codec = { path = "crates/kdx-codec", version = "0.1.0" }
 kdx-client = { path = "crates/kdx-client", version = "0.1.0" }
+kdx-legacy = { path = "crates/kdx-legacy", version = "0.1.0" }
 kdx-server = { path = "crates/kdx-server", version = "0.1.0" }
 kdx-test-tables = { path = "crates/kdx-test-tables" }
 
