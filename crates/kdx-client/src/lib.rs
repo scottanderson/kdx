@@ -18,14 +18,30 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tokio_util::codec::Framed;
 
+mod accounts;
+mod admin;
+mod chat;
 mod client;
+mod files;
+mod folder_access;
+#[cfg(any(test, feature = "mock"))]
+pub mod mock;
+mod news;
+mod notice;
 pub mod table;
 #[cfg(test)]
 mod tests;
 mod tracker;
+mod transfer;
 
+pub use accounts::{format_privileges, new_account, parse_privileges, privilege_slug};
+pub use admin::set_server_name;
+pub use chat::PUBLIC_CHAT;
 pub use client::{Client, Event, ServerError};
+pub use news::to_cr_lines;
+pub use notice::Notice;
 pub use tracker::Tracker;
+pub use transfer::{kind_for, Progress};
 
 /// Login details for [`Connection::connect`].
 #[derive(Debug, Clone, Default)]
@@ -212,6 +228,22 @@ impl Connection {
         len: u64,
         source: &mut (impl AsyncRead + Unpin),
     ) -> Result<u32> {
+        self.send_data_with(kind, len, source, |_| {}, None).await
+    }
+
+    /// [`Self::send_data`], reporting the bytes sent so far after each chunk.
+    ///
+    /// With `stop_after`, the stream is cut after exactly that many bytes:
+    /// they are flushed, and the call fails, as a test of the server's
+    /// resume needs.
+    pub(crate) async fn send_data_with(
+        &mut self,
+        kind: MessageType,
+        len: u64,
+        source: &mut (impl AsyncRead + Unpin),
+        mut on_sent: impl FnMut(u64),
+        stop_after: Option<u64>,
+    ) -> Result<u32> {
         let txid = self.next_txid();
         let header = Header {
             txid,
@@ -221,9 +253,14 @@ impl Connection {
         };
         self.framed.feed(Frame::DataHeader(header)).await?;
         let mut left = len;
+        let mut sent = 0;
         let mut chunk = vec![0; DATA_CHUNK];
         while left > 0 {
-            let n = left.min(DATA_CHUNK as u64) as usize;
+            let mut n = left.min(DATA_CHUNK as u64);
+            if let Some(limit) = stop_after {
+                n = n.min(limit - sent);
+            }
+            let n = n as usize;
             source
                 .read_exact(&mut chunk[..n])
                 .await
@@ -232,6 +269,12 @@ impl Connection {
                 .feed(Frame::Data(Bytes::copy_from_slice(&chunk[..n])))
                 .await?;
             left -= n as u64;
+            sent += n as u64;
+            on_sent(sent);
+            if stop_after == Some(sent) {
+                self.framed.flush().await?;
+                bail!("stopped on request after {sent} bytes");
+            }
         }
         self.framed.flush().await?;
         Ok(txid)

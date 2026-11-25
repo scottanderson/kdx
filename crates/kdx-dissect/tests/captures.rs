@@ -7,7 +7,7 @@ use std::process::Command;
 use kdx_proto::MessageType;
 
 /// Every lab password the captures' notes give.
-const PASSWORDS: [&str; 7] = [
+const PASSWORDS: [&str; 9] = [
     "lab-only-pw!1",
     "lab-peer-pw!1",
     "lab-tracker-pw!1",
@@ -15,12 +15,19 @@ const PASSWORDS: [&str; 7] = [
     "rs-test-pw",
     "rs-test-pw2",
     "rs-test-pw3",
+    // The published admin password of the `cli-` and `win-` captures.
+    "openkdx-lab",
+    "wrong-password",
 ];
 
 /// Every problem the dissector reports, as `<capture> <source port>: <line>`.
 ///
 /// Each one is a step in the capture's notes, not a decoding fault.
 const EXPECTED: &[&str] = &[
+    // Step 1: a login with the wrong password; the server's proof carries status 1.
+    "cli-disconnect-ban 54320: key: --password #9 (server proof DOES NOT match)",
+    // Step 2: the client cuts a 256 KiB upload after 150000 bytes.
+    "cli-upload-resume 36662: [26] C->S txid c6c184d7: need 262144 payload bytes",
     // Step 2: admin's password tried for `rs-test`.
     "kdx-accounts 40714: key: --password #1 (server proof DOES NOT match)",
     "kdx-accounts 40718: key: --password #1 (server proof DOES NOT match)",
