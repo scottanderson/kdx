@@ -1,0 +1,49 @@
+# Scenario: win-first-connect
+
+- Date: 2026-11-10
+- Server: KDX Server 1.620 for Linux
+- Programs: KDX Server 1.620 (Linux), KDX Client 1.600 (Windows under Wine 6.0.3)
+- Server state: fresh first-run setup; admin `admin`, password `openkdx-lab` (published), guest access on
+- Frames: 14
+
+
+## Steps
+
+1. Start KDX Server 1.620 (Linux) in the sandbox; first-run setup creates admin 'admin', guest access enabled.
+1. Start KDX Client 1.600 (Windows, under Wine); accept the license; set user name 'labuser'.
+1. Start capturing loopback.
+1. Connect → address '127.0.0.1', login 'admin', password (set); press Connect.
+1. Wait 5 s connected (idle), then stop capturing.
+
+## Observations
+
+Server log:
+
+```
+26/11/10 12:03:17 AM [] KDX Server started o
+26/11/10 12:03:37 AM [1 unnamed] Incoming connection from 127.0.0.1:58652
+26/11/10 12:03:39 AM [1 unnamed] Set Name: <labuser> (admin)
+```
+
+## Decoded handshake
+
+ The first two payloads, XOR stream undone per the reference spec (`docs/protocol/handshake.md`):
+
+- client → server, 44 bytes: protocol `%TXP` sub `%KDX` version 1 sub_version 0x10 name_len 5 challenge 0x40d nonce `49f403a414c2980df0150354` name `admin`
+- server → client, 36 bytes: protocol `%TXP` sub `%KDX` version 1 sub_version 0x20 name_len 0 challenge 0x373 nonce `d51503a414c2987f0d832176` name ``
+
+The lab admin password is `openkdx-lab`, so the session after the handshake can be decrypted with the reference spec's `account_key`.
+
+## Messages
+
+Decoded by `kdx-dissect captures/win-first-connect.pcapng --inventory --password openkdx-lab`.
+
+```
+4  C->S  127.0.0.1:58652 -> 127.0.0.1:10700  hello
+6  S->C  127.0.0.1:58652 -> 127.0.0.1:10700  hello
+8  C->S  127.0.0.1:58652 -> 127.0.0.1:10700  proof
+9  S->C  127.0.0.1:58652 -> 127.0.0.1:10700  proof
+10  C->S  127.0.0.1:58652 -> 127.0.0.1:10700  100 Set Identity
+12  S->C  127.0.0.1:58652 -> 127.0.0.1:10700  101 User List
+13  S->C  127.0.0.1:58652 -> 127.0.0.1:10700  105 Server Info
+```

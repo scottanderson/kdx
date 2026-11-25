@@ -435,5 +435,5 @@ fn default_server_settings() {
     assert_eq!(settings.greeting(), None);
     assert!(settings.icon().is_empty());
     assert_eq!(settings.speed_limit(), 0);
-    assert_eq!(settings.encode(), wire);
+    assert_eq!(settings.encode().unwrap(), wire);
 }

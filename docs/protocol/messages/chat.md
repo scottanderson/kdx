@@ -211,10 +211,13 @@ Struct `ChatText` (dynamic):<a id="sChatText"></a>
 |---|---|---|---|---|
 | 0x00 | 4 | `u32` | `chat_id` |  |
 | 0x04 | 4 | `u32` | `user_id` | The server fills in the sender. |
-| 0x08 | 4 | `u8[4]` | `ignored` |  |
+| 0x08 | 2 | `u16` | `flags` | Probably a `u16` whose value 1 marks an action. <!-- [I] --> The four bytes from 0x08 are `00 00 00 00` in an ordinary line and `00 01 00 00` in the `/me` line. <!-- [O `captures/win-chat-basic.pcapng` frames 21, 22, 24, 25] --> The client sends the text without the `/me ` prefix: `waves`. <!-- [O `captures/win-chat-basic.pcapng` frame 24] --> |
+| 0x0a | 2 | `u8[2]` | `ignored_0a` |  |
 | 0x0c | rest | `str` | `text` | At most 0x1000 bytes. |
 
-The server forwards it as [208 Receive Chat Text](#m208).
+The server forwards it as [208 Receive Chat Text](#m208), with the same flags. <!-- [O
+`captures/win-chat-basic.pcapng` frames 24, 25] -->
+`kdx_proto::msg::chat::ChatText::FLAG_ACTION` names the action bit.
 
 ## <a id="m208"></a>208 Receive Chat Text
 Initiator: Server. Forwarded from [207 Send Chat Text](#m207).

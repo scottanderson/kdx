@@ -171,6 +171,9 @@ impl Hello {
 pub enum Status {
     /// The sender accepted our hello.
     Ok,
+    /// The proof did not verify: the password is wrong. Server 1.620 sends
+    /// it with only the auth word set and closes; its log says `Login failed`.
+    Failed,
     /// The sender does not speak our protocol or sub-protocol.
     UnknownProtocol,
     /// The sender considers us too old.
@@ -186,6 +189,7 @@ impl Status {
     pub const fn from_byte(byte: u8) -> Self {
         match byte {
             0x10 => Self::Ok,
+            1 => Self::Failed,
             2 => Self::UnknownProtocol,
             3 => Self::TooOld,
             4 => Self::TooNew,
@@ -197,6 +201,7 @@ impl Status {
     pub const fn to_byte(self) -> u8 {
         match self {
             Self::Ok => 0x10,
+            Self::Failed => 1,
             Self::UnknownProtocol => 2,
             Self::TooOld => 3,
             Self::TooNew => 4,

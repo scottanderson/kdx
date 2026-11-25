@@ -285,9 +285,9 @@ fn nonzero_gaps_round_trip() {
     });
     gaps(
         "171",
-        ServerSettings::default().encode(),
+        ServerSettings::default().encode().unwrap(),
         &[0x0a..0x0c],
-        |p| ServerSettings::decode(p).unwrap().encode(),
+        |p| ServerSettings::decode(p).unwrap().encode().unwrap(),
     );
     gaps(
         "114",
