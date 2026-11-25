@@ -94,13 +94,17 @@ Struct `Proof` (44 bytes):<a id="sProof"></a>
 |---|---|---|---|---|
 | 0x00 | 20 | `u8[20]` | `auth` | The first 4 bytes are also the XOR key for the rest. |
 | 0x14 | 20 | `u8[20]` | `response` | The 20 bytes of the challenge table at the offset that the **peer's** hello gives. |
-| 0x28 | 1 | `u8` | `status` | `0x10` OK, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new. <!-- [S] --> |
+| 0x28 | 1 | `u8` | `status` | `0x10` OK, `1` failed, `2` unknown protocol or sub-protocol, `3` peer too old, `4` peer too new. <!-- [S] --> A wrong password gets `1`. <!-- [O `captures/cli-disconnect-ban.pcapng` frame 9] --> |
 | 0x29 | 3 | `u8[3]` | `ignored` | 0 as sent. <!-- [S `FUN_08085a04`; O] --> |
 
 Bytes 0x04 to 0x2b are XORed with the stream whose key is bytes 0 to 3.
 
 If the status is not OK, `auth` is all zeros, except the key word, which is
-`peer_nonce[4..8] XOR 0x201f7790`. <!-- [S `FUN_0808751c`] -->
+`peer_nonce[4..8] XOR 0x201f7790`. <!-- [S `FUN_0808751c`] --> Server 1.620
+answers a wrong password this way with status `1` and a zero response. <!-- [O
+`captures/cli-disconnect-ban.pcapng` frame 9] --> It then closes the connection,
+and its log says `Login failed`, as the note of the capture records.
+`kdx_proto::handshake::Status::Failed` is that status.
 
 This computation gives both proofs in the capture exactly: <!-- [O] -->
 

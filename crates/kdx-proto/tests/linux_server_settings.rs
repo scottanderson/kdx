@@ -1,7 +1,7 @@
 //! Checks against `captures/linux-server-settings.pcapng`: Client 1.620 for Linux as `admin`.
 
 use kdx_proto::msg::admin::{HistoryList, HistoryRecord};
-use kdx_proto::msg::server_info::{ServerGreeting, ServerIcon, ServerSettings};
+use kdx_proto::msg::server_info::{MainSettings, ServerGreeting, ServerIcon, ServerSettings};
 use kdx_proto::msg::transfer::NotifySpeedLimit;
 use kdx_proto::msg::user::{MiniUserIcon, MiniUserIconChanged};
 use kdx_proto::msg::FilePath;
@@ -62,10 +62,10 @@ fn server_settings() {
     );
     let decode = |wire: &[u8]| {
         let settings = ServerSettings::decode(wire).unwrap();
-        assert_eq!(settings.encode(), wire);
+        assert_eq!(settings.encode().unwrap(), wire);
         assert_eq!(settings.version, 1);
         assert_eq!(
-            settings.sections[ServerSettings::MAIN],
+            settings.sections()[ServerSettings::MAIN],
             kdx_proto::msg::server_info::SettingsSection {
                 offset: 0x70,
                 len: 0x68
@@ -91,7 +91,7 @@ fn server_settings() {
 
     // Frame 56 enables the greeting and leaves out the icon.
     assert_eq!(enabled.flags(), 0);
-    assert_eq!(enable.flags(), ServerSettings::GREETING_ENABLED);
+    assert_eq!(enable.flags(), MainSettings::GREETING_ENABLED);
     assert!(enable.icon().is_empty());
 
     // The server kept the icon (frame 221); frame 225 turns the limit off.

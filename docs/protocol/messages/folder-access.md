@@ -96,7 +96,8 @@ Struct `CreateFolderAccess` (dynamic):<a id="sCreateFolderAccess"></a>
 | 0x00 |  | [`FolderAccess`](#sFolderAccess) | `item` |  |
 
 An invalid name gets 0x1001e, and a name that already exists gets 0x1000d. If it
-succeeds, the reply is [1 Status](status.md#m1) 0x44c. Frame 231 makes `test`
+succeeds, the reply is [1 Status](status.md#m1) 0x44c. <!-- [O
+`captures/cli-folder-access.pcapng` frame 21] --> Frame 231 makes `test`
 with all other fields 0, and frame 234 is the success.
 
 ## <a id="m1101"></a>1101 Delete Folder Access

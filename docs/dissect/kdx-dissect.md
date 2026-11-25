@@ -27,6 +27,7 @@ one whose proof matches. The empty password is always tried.
 | `--password`, `-p` | A candidate account password |
 | `--export DIR` | Write each connection's reassembled streams to DIR, named by source port, for use as test fixtures |
 | `--audit` | After each payload, say whether its codec re-encodes it byte for byte |
+| `--inventory` | Print only a fenced list of every hello, proof, message and registration, one line per frame: `frame  direction  client -> server  what`. The `cli-` and `win-` capture notes end with it, and `crates/kdx-dissect/tests/inventory.rs` checks that they match |
 | `--client-port`, `--server-port`, `--tracker-port`, `--gconsole-port` | Where each kind of service listens, if not on the default |
 
 ## The audit
